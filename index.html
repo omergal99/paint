@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>omerpaint</title>
+<link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+<div id="app">
+
+  <!-- ===================== RIBBON ===================== -->
+  <header class="ribbon" id="ribbon">
+
+    <!-- File group -->
+    <section class="ribbon-group">
+      <div class="rbtn-row">
+        <button class="rbtn" id="btn-new" title="New (Ctrl+N)"><svg viewBox="0 0 20 20"><rect x="4" y="2" width="11" height="16" rx="1"/><path d="M11 2v4h4" fill="none"/></svg><span>New</span></button>
+        <button class="rbtn" id="btn-open" title="Open (Ctrl+O)"><svg viewBox="0 0 20 20"><path d="M2 6h4l2 2h10v9a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6z"/></svg><span>Open</span></button>
+        <button class="rbtn" id="btn-save" title="Save (Ctrl+S)"><svg viewBox="0 0 20 20"><rect x="3" y="3" width="14" height="14" rx="1"/><rect class="op-cut" x="6" y="3" width="8" height="5"/><rect class="op-cut" x="6" y="12" width="8" height="5"/></svg><span>Save</span></button>
+      </div>
+      <input type="file" id="file-input" accept="image/*" hidden />
+      <div class="ribbon-group-title">File</div>
+    </section>
+
+    <div class="separator"></div>
+
+    <!-- Clipboard group -->
+    <section class="ribbon-group">
+      <div class="rbtn-row">
+        <button class="rbtn big" id="btn-paste" title="Paste (Ctrl+V)"><svg viewBox="0 0 20 20"><rect x="4" y="3" width="12" height="15" rx="1"/><rect x="7" y="1" width="6" height="3" rx="1"/><path d="M7 9h6M7 12h6M7 15h3" stroke-linecap="round"/></svg><span>Paste</span></button>
+        <div class="rbtn-stack">
+          <button class="rbtn small" id="btn-cut" title="Cut (Ctrl+X)"><svg viewBox="0 0 20 20"><circle cx="5" cy="5" r="2"/><circle cx="5" cy="15" r="2"/><path d="M6.5 6.5L17 17M6.5 13.5L17 3" stroke-linecap="round"/></svg><span>Cut</span></button>
+          <button class="rbtn small" id="btn-copy" title="Copy (Ctrl+C)"><svg viewBox="0 0 20 20"><rect x="2" y="6" width="10" height="12" rx="1"/><rect x="6" y="2" width="10" height="12" rx="1" class="op-outline-only"/></svg><span>Copy</span></button>
+        </div>
+      </div>
+      <div class="ribbon-group-title">Clipboard</div>
+    </section>
+
+    <div class="separator"></div>
+
+    <!-- Image group -->
+    <section class="ribbon-group">
+      <div class="rbtn-row">
+        <button class="rbtn tool-btn" data-tool="select" title="Select (S)"><svg viewBox="0 0 20 20"><rect x="3" y="3" width="14" height="14" rx="1" stroke-dasharray="2.5 2"/></svg><span>Select</span></button>
+        <button class="rbtn" id="btn-crop" title="Crop to selection"><svg viewBox="0 0 20 20"><path d="M5 1v14a1 1 0 0 0 1 1h13M1 5h14a1 1 0 0 1 1 1v13" stroke-linecap="round"/></svg><span>Crop</span></button>
+        <button class="rbtn" id="btn-canvas-size" title="Resize canvas"><svg viewBox="0 0 20 20"><rect x="2" y="6" width="9" height="9"/><path d="M14 2l4 4M18 2v4h-4" stroke-linecap="round"/></svg><span>Resize</span></button>
+      </div>
+      <div class="ribbon-group-title">Image</div>
+    </section>
+
+    <div class="separator"></div>
+
+    <!-- Tools group -->
+    <section class="ribbon-group">
+      <div class="tool-grid">
+        <button class="rbtn cell tool-btn" data-tool="pencil" title="Pencil (P)"><svg viewBox="0 0 20 20"><path d="M3 17l1-4L13 4l3 3-9 9-4 1z"/><path d="M11 6l3 3"/></svg></button>
+        <button class="rbtn cell tool-btn" data-tool="brush" title="Brush (B)"><svg viewBox="0 0 20 20"><path d="M14 2c2 0 4 2 4 4-3 1-3 4-6 4l-2-2c0-3 2-6 4-6z"/><path d="M10 10c-1 1-1 3-2 4-1.5 1.5-4 1.5-5 1 0-1 0-3.5 1.5-5 1-1 3-1 4-2z"/></svg></button>
+        <button class="rbtn cell tool-btn" data-tool="fill" title="Fill (F)"><svg viewBox="0 0 20 20"><path d="M3 9l6-6 7 7-6 6z"/><path d="M3 9l6 6" fill="none"/><circle cx="16" cy="15" r="2.4"/></svg></button>
+        <button class="rbtn cell tool-btn" data-tool="eraser" title="Eraser (E)"><svg viewBox="0 0 20 20"><path d="M13 2l5 5-9 9H5l-2-2L13 2z"/><path d="M9 18H5l-2-2" fill="none"/></svg></button>
+        <button class="rbtn cell tool-btn" data-tool="text" title="Text (T)"><svg viewBox="0 0 20 20"><path d="M4 4h12M10 4v13" stroke-linecap="round"/></svg></button>
+        <button class="rbtn cell tool-btn" data-tool="eyedropper" title="Color picker (K)"><svg viewBox="0 0 20 20"><path d="M13 2l5 5-3 3-5-5z"/><path d="M12 7L4 15l-1 4 4-1 8-8z"/></svg></button>
+        <button class="rbtn cell tool-btn" data-tool="zoom" title="Magnifier (Z)"><svg viewBox="0 0 20 20"><circle cx="8.5" cy="8.5" r="5.5" fill="none"/><path d="M13 13l5 5" stroke-linecap="round"/></svg></button>
+      </div>
+      <div class="ribbon-group-title">Tools</div>
+    </section>
+
+    <div class="separator"></div>
+
+    <!-- Shapes group -->
+    <section class="ribbon-group">
+      <div class="rbtn-row">
+        <div class="shape-grid">
+          <button class="rbtn cell shape-btn active" data-shape="line" title="Line"><svg viewBox="0 0 20 20"><path d="M3 17L17 3" stroke-linecap="round"/></svg></button>
+          <button class="rbtn cell shape-btn" data-shape="rectangle" title="Rectangle"><svg viewBox="0 0 20 20"><rect x="3" y="5" width="14" height="10"/></svg></button>
+          <button class="rbtn cell shape-btn" data-shape="rounded-rectangle" title="Rounded rectangle"><svg viewBox="0 0 20 20"><rect x="3" y="5" width="14" height="10" rx="3"/></svg></button>
+          <button class="rbtn cell shape-btn" data-shape="ellipse" title="Ellipse"><svg viewBox="0 0 20 20"><ellipse cx="10" cy="10" rx="7" ry="5"/></svg></button>
+          <button class="rbtn cell shape-btn" data-shape="triangle" title="Triangle"><svg viewBox="0 0 20 20"><polygon points="10,3 17,17 3,17"/></svg></button>
+        </div>
+        <div class="fillmode-col">
+          <button class="rbtn micro fillmode-btn active" data-fillmode="outline" title="Outline only"><svg viewBox="0 0 20 20"><rect x="3" y="3" width="14" height="14"/></svg></button>
+          <button class="rbtn micro fillmode-btn" data-fillmode="outline-fill" title="Outline + fill"><svg viewBox="0 0 20 20"><rect x="3" y="3" width="14" height="14" class="op-half-fill"/></svg></button>
+          <button class="rbtn micro fillmode-btn" data-fillmode="fill" title="Fill, no outline"><svg viewBox="0 0 20 20"><rect x="3" y="3" width="14" height="14" class="op-full-fill"/></svg></button>
+        </div>
+        <label class="size-select">
+          <span>Size</span>
+          <select id="line-size">
+            <option value="1">1px</option>
+            <option value="2">2px</option>
+            <option value="3" selected>3px</option>
+            <option value="5">5px</option>
+            <option value="8">8px</option>
+            <option value="12">12px</option>
+            <option value="20">20px</option>
+          </select>
+        </label>
+      </div>
+      <div class="ribbon-group-title">Shapes</div>
+    </section>
+
+    <div class="separator"></div>
+
+    <!-- Color group -->
+    <section class="ribbon-group">
+      <div class="rbtn-row">
+        <div class="swatch-stack" title="Click to edit colors">
+          <button id="primary-swatch" class="swatch primary"></button>
+          <button id="secondary-swatch" class="swatch secondary"></button>
+          <input type="color" id="color-picker" class="hidden-color-input" />
+        </div>
+        <div class="palette-grid" id="palette-grid"></div>
+      </div>
+      <div class="ribbon-group-title">Colors</div>
+    </section>
+
+    <div class="separator"></div>
+
+    <!-- Undo/Redo -->
+    <section class="ribbon-group">
+      <div class="rbtn-row">
+        <button class="rbtn" id="btn-undo" title="Undo (Ctrl+Z)" disabled><svg viewBox="0 0 20 20"><path d="M5 9H14a4 4 0 0 1 0 8H8" fill="none" stroke-linecap="round"/><path d="M8 5L4 9l4 4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Undo</span></button>
+        <button class="rbtn" id="btn-redo" title="Redo (Ctrl+Y)" disabled><svg viewBox="0 0 20 20"><path d="M15 9H6a4 4 0 0 0 0 8h6" fill="none" stroke-linecap="round"/><path d="M12 5l4 4-4 4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Redo</span></button>
+      </div>
+      <div class="ribbon-group-title">History</div>
+    </section>
+  </header>
+
+  <!-- ============== COLOR INSPECTOR (new, point 7) ============== -->
+  <div class="color-inspector" id="color-inspector">
+    <span class="ci-label">Color picker:</span>
+    <span class="ci-swatch" id="ci-swatch"></span>
+    <span class="ci-field">RGB <code id="ci-rgb">—</code><button class="ci-copy" data-copy-target="ci-rgb" title="Copy RGB">⧉</button></span>
+    <span class="ci-field">HEX <code id="ci-hex">—</code><button class="ci-copy" data-copy-target="ci-hex" title="Copy HEX">⧉</button></span>
+    <span class="ci-hint">Pick the eyedropper tool, then click anywhere on the canvas to sample a color.</span>
+  </div>
+
+  <!-- ===================== CANVAS AREA ===================== -->
+  <main class="canvas-viewport" id="canvas-viewport">
+    <div class="canvas-stage" id="canvas-stage">
+      <canvas id="paint-canvas"></canvas>
+      <canvas id="overlay-canvas"></canvas>
+      <div class="resize-handle handle-right" id="handle-right"></div>
+      <div class="resize-handle handle-bottom" id="handle-bottom"></div>
+      <div class="resize-handle handle-corner" id="handle-corner"></div>
+      <div class="resize-ghost" id="resize-ghost"></div>
+    </div>
+  </main>
+
+  <!-- ===================== STATUS BAR ===================== -->
+  <footer class="status-bar">
+    <span class="status-item" id="status-pointer">Pointer: —</span>
+    <span class="status-item" id="status-selection"></span>
+    <span class="status-item" id="status-canvas-size">800 × 600px</span>
+    <span class="status-item" id="status-flash"></span>
+    <span class="status-spacer"></span>
+    <span class="status-item zoom-controls">
+      <button id="zoom-out" title="Zoom out">−</button>
+      <input type="range" id="zoom-slider" min="10" max="800" step="10" value="100" />
+      <input type="number" id="zoom-input" min="10" max="800" value="100" />
+      <span>%</span>
+      <button id="zoom-in" title="Zoom in">+</button>
+    </span>
+  </footer>
+
+</div>
+
+<!-- ===================== Resize-canvas dialog ===================== -->
+<dialog id="resize-dialog">
+  <form method="dialog" id="resize-form">
+    <h3>Resize canvas</h3>
+    <label>Width (px) <input type="number" id="resize-width" min="1" max="10000" /></label>
+    <label>Height (px) <input type="number" id="resize-height" min="1" max="10000" /></label>
+    <label class="checkbox-row"><input type="checkbox" id="resize-keep-aspect" /> Maintain aspect ratio</label>
+    <div class="dialog-actions">
+      <button type="button" id="resize-cancel">Cancel</button>
+      <button type="submit" id="resize-ok">OK</button>
+    </div>
+  </form>
+</dialog>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
