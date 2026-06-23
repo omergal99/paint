@@ -138,7 +138,7 @@ body {
   border-color: var(--w10-active-border);
 }
 
-.rbtn.active svg {
+.rbtn.active .icon {
   stroke: var(--w10-accent);
   fill: var(--w10-accent);
 }
@@ -156,7 +156,7 @@ body {
   min-width: 56px;
   padding: 4px 8px;
 }
-.rbtn.big svg {
+.rbtn.big .icon {
   width: 30px;
   height: 30px;
 }
@@ -167,7 +167,7 @@ body {
   justify-content: flex-start;
   padding: 3px 6px;
 }
-.rbtn.small svg {
+.rbtn.small .icon {
   width: 16px;
   height: 16px;
 }
@@ -176,16 +176,16 @@ body {
   min-width: 26px;
   padding: 2px;
 }
-.rbtn.cell svg {
+.rbtn.cell .icon {
   width: 18px;
   height: 18px;
 }
 
 .rbtn.micro {
-  min-width: 26px;
-  padding: 3px;
+  min-width: 18px;
+  padding: 0px;
 }
-.rbtn.micro svg {
+.rbtn.micro .icon {
   width: 14px;
   height: 14px;
 }
