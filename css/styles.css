@@ -99,7 +99,7 @@ html, body {
   min-width: 44px;
 }
 
-.rbtn svg {
+.rbtn .icon-m {
   width: 20px;
   height: 20px;
   fill: #2b2b2b;
@@ -161,7 +161,7 @@ html, body {
 
 .shape-grid {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 2px;
 }
 
@@ -213,7 +213,7 @@ html, body {
 
 .palette-grid {
   display: grid;
-  grid-template-columns: repeat(14, 16px);
+  grid-template-columns: repeat(10, 16px);
   grid-template-rows: repeat(2, 16px);
   gap: 2px;
 }
@@ -271,7 +271,7 @@ html, body {
   flex: 1;
   overflow: auto;
   background: var(--w10-canvas-bg);
-  padding: 40px;
+  padding: 10px;
   position: relative;
 }
 
