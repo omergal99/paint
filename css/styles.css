@@ -87,7 +87,7 @@ html, body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 3px;
+  gap: 2px;
   background: transparent;
   border: 1px solid transparent;
   border-radius: 2px;
