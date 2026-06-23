@@ -393,8 +393,8 @@ body {
 .handle-corner {
   right: -5px;
   bottom: -5px;
-  width: 10px;
-  height: 10px;
+  width: clamp(10px, 1vw, 1vw);
+  height: clamp(10px, 1vw, 1vw);
   cursor: nwse-resize;
   border-radius: 50%;
   border: 1.5px solid #fff;
