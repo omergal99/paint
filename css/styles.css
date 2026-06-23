@@ -54,7 +54,7 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 2px 8px 3px;
+  padding: 2px 2px 2px;
   min-width: max-content;
 }
 
@@ -74,7 +74,6 @@ body {
 .rbtn-stack {
   display: flex;
   flex-direction: column;
-  gap: 1px;
 }
 
 .separator {
@@ -152,20 +151,10 @@ body {
   border-color: transparent;
 }
 
-.rbtn.big {
-  min-width: 56px;
-  padding: 4px 8px;
-}
-.rbtn.big .icon {
-  width: 30px;
-  height: 30px;
-}
-
 .rbtn.small {
   flex-direction: row;
-  min-width: 70px;
   justify-content: flex-start;
-  padding: 3px 6px;
+  padding: 3px 3px;
 }
 .rbtn.small .icon {
   width: 16px;
