@@ -15,15 +15,25 @@ export class ToolManager {
 
     this.onToolChange = null; // callback(toolName)
 
+    // Use pointer events for broader device support (mouse, touch, stylus).
     surface.addEventListener('contextmenu', (e) => e.preventDefault());
-    surface.addEventListener('mousedown', (e) => this._handle('onDown', e));
-    surface.addEventListener('mousemove', (e) => this._handle('onMove', e));
-    window.addEventListener('mouseup', (e) => {
+    surface.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      try {
+        surface.setPointerCapture?.(e.pointerId);
+      } catch (err) {}
+      this._handle('onDown', e);
+    });
+    surface.addEventListener('pointermove', (e) => this._handle('onMove', e));
+    window.addEventListener('pointerup', (e) => {
       if (this._dragging) this._handle('onUp', e);
       this._dragging = false;
+      try {
+        surface.releasePointerCapture?.(e.pointerId);
+      } catch (err) {}
     });
-    surface.addEventListener('mousemove', (e) => this._reportPosition(e));
-    surface.addEventListener('mouseleave', () => this.statusBar?.setPointer(null));
+    surface.addEventListener('pointermove', (e) => this._reportPosition(e));
+    surface.addEventListener('pointerleave', () => this.statusBar?.setPointer(null));
   }
 
   register(tool) {
