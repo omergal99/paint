@@ -293,6 +293,11 @@ body {
   font-size: 12px;
   color: var(--w10-text);
 }
+.ci-swatch-container{
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
 .ci-label {
   color: var(--w10-text-dim);
 }

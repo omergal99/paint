@@ -260,7 +260,16 @@
       <!-- ============== COLOR INSPECTOR (new, point 7) ============== -->
       <div class="color-inspector" id="color-inspector">
         <!-- <span class="ci-label">Color picker:</span> -->
-        <span class="ci-swatch" id="ci-swatch"></span>
+        <div class="ci-swatch-container">
+          <span class="ci-swatch" id="ci-swatch"></span>
+          <button class="rbtn cell tool-btn" data-tool="eyedropper" title="Color picker (K)">
+            <svg class="icon size5" viewBox="0 0 20 20">
+              <path d="M13 2l5 5-3 3-5-5z" />
+              <path d="M12 7L4 15l-1 4 4-1 8-8z" />
+            </svg>
+          </button>
+        </div>
+
         <span class="ci-field">
           <!-- RGB  -->
           <code id="ci-rgb">—</code>
@@ -273,6 +282,7 @@
       </div>
 
       <div class="separator"></div>
+
     </header>
 
 
@@ -303,15 +313,15 @@
       <div>omerpaint</div>
 
       <div>
-         <span class="status-item zoom-controls">
-        <button id="zoom-out" title="Zoom out">−</button>
-        <input type="range" id="zoom-slider" min="10" max="800" step="10" value="100" />
-        <input type="number" id="zoom-input" min="10" max="800" value="100" />
-        <span>%</span>
-        <button id="zoom-in" title="Zoom in">+</button>
-      </span>
+        <span class="status-item zoom-controls">
+          <button id="zoom-out" title="Zoom out">−</button>
+          <input type="range" id="zoom-slider" min="10" max="800" step="10" value="100" />
+          <input type="number" id="zoom-input" min="10" max="800" value="100" />
+          <span>%</span>
+          <button id="zoom-in" title="Zoom in">+</button>
+        </span>
       </div>
-     
+
     </footer>
 
   </div>
