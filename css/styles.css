@@ -98,7 +98,7 @@ body {
   color: var(--w10-text);
   font-family: var(--font-ui);
   font-size: 11px;
-  min-width: 40px;
+  min-width: 36px;
 }
 .rbtn.horizontal {
   flex-direction: row;
