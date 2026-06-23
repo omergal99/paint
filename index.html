@@ -255,19 +255,25 @@
 
       <div class="separator"></div>
 
+      <!-- ============== COLOR INSPECTOR (new, point 7) ============== -->
+      <div class="color-inspector" id="color-inspector">
+        <!-- <span class="ci-label">Color picker:</span> -->
+        <span class="ci-swatch" id="ci-swatch"></span>
+        <span class="ci-field">
+          <!-- RGB  -->
+          <code id="ci-rgb">—</code>
+          <button class="ci-copy" data-copy-target="ci-rgb" title="Copy RGB">⧉</button></span>
+        <span class="ci-field">
+          <!-- HEX  -->
+          <code id="ci-hex">—</code>
+          <button class="ci-copy" data-copy-target="ci-hex" title="Copy HEX">⧉</button></span>
+        <!-- <span class="ci-hint">Pick the eyedropper tool, then click anywhere on the canvas to sample a color.</span> -->
+      </div>
+
       <div class="separator"></div>
     </header>
 
-    <!-- ============== COLOR INSPECTOR (new, point 7) ============== -->
-    <div class="color-inspector" id="color-inspector">
-      <span class="ci-label">Color picker:</span>
-      <span class="ci-swatch" id="ci-swatch"></span>
-      <span class="ci-field">RGB <code id="ci-rgb">—</code><button class="ci-copy" data-copy-target="ci-rgb"
-          title="Copy RGB">⧉</button></span>
-      <span class="ci-field">HEX <code id="ci-hex">—</code><button class="ci-copy" data-copy-target="ci-hex"
-          title="Copy HEX">⧉</button></span>
-      <span class="ci-hint">Pick the eyedropper tool, then click anywhere on the canvas to sample a color.</span>
-    </div>
+
 
     <!-- ===================== CANVAS AREA ===================== -->
     <main class="canvas-viewport" id="canvas-viewport">

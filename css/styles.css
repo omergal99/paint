@@ -287,11 +287,9 @@ body {
 
 .color-inspector {
   display: flex;
-  align-items: center;
-  gap: 14px;
-  background: #fafcfe;
-  border-bottom: 1px solid var(--w10-border);
-  padding: 5px 12px;
+  flex-direction: column;
+  gap: 2px;
+  padding: 2px 4px;
   font-size: 12px;
   color: var(--w10-text);
 }
@@ -314,7 +312,7 @@ body {
 .ci-field code {
   font-family: "Cascadia Code", Consolas, monospace;
   background: #eef3f8;
-  padding: 1px 6px;
+  padding: 1px 2px;
   border-radius: 3px;
 }
 .ci-copy {
@@ -324,6 +322,7 @@ body {
   border-radius: 3px;
   padding: 1px 4px;
   font-size: 12px;
+  width: 20px;
 }
 .ci-copy:hover {
   background: var(--w10-hover);
