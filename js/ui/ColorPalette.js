@@ -9,7 +9,7 @@ export class ColorPalette {
     this.colorPickerInput = colorPickerInput;
     this.onPrimaryChange = onPrimaryChange;
     this.onSecondaryChange = onSecondaryChange;
-    this.primary = '#000000';
+    this.primary = '#a349a4';
     this.secondary = '#ffffff';
 
     this._renderGrid();
