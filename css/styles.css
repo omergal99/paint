@@ -165,9 +165,14 @@ body {
   min-width: 26px;
   padding: 2px;
 }
+
 .rbtn.cell .icon {
   width: 18px;
   height: 18px;
+}
+.rbtn.cell .icon.size7 {
+  width: 30px;
+  height: 30px;
 }
 
 .rbtn.micro {
