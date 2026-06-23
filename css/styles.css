@@ -425,6 +425,7 @@ body {
 .status-bar {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 16px;
   background: var(--w10-ribbon-bg);
   border-top: 1px solid var(--w10-border);
@@ -437,6 +438,12 @@ body {
 .status-item {
   white-space: nowrap;
 }
+
+.status-item.location {
+  width: 130px;
+  display: inline-block;
+}
+
 #status-flash {
   color: var(--w10-accent);
   font-style: italic;

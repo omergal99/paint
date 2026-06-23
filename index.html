@@ -291,18 +291,27 @@
 
     <!-- ===================== STATUS BAR ===================== -->
     <footer class="status-bar">
-      <span class="status-item" id="status-pointer">Pointer: —</span>
-      <span class="status-item" id="status-selection"></span>
-      <span class="status-item" id="status-canvas-size">800 × 600px</span>
-      <span class="status-item" id="status-flash"></span>
-      <span class="status-spacer"></span>
-      <span class="status-item zoom-controls">
+      <div>
+        <span class="status-item location" id="status-pointer">Pointer: —</span>
+        <span class="status-item" id="status-selection"></span>
+        <span>|</span>
+        <span class="status-item" id="status-canvas-size">800 × 600px</span>
+        <span class="status-item" id="status-flash"></span>
+        <span class="status-spacer"></span>
+      </div>
+
+      <div>omerpaint</div>
+
+      <div>
+         <span class="status-item zoom-controls">
         <button id="zoom-out" title="Zoom out">−</button>
         <input type="range" id="zoom-slider" min="10" max="800" step="10" value="100" />
         <input type="number" id="zoom-input" min="10" max="800" value="100" />
         <span>%</span>
         <button id="zoom-in" title="Zoom in">+</button>
       </span>
+      </div>
+     
     </footer>
 
   </div>
