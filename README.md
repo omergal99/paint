@@ -1,4 +1,4 @@
-# omerpaint
+# omerpaint paint online paint like windows but online
 
 A browser-based paint app styled after classic **Windows 10 Paint** (Fluent ribbon, light theme, Segoe UI) — built with plain JavaScript (ES modules), no framework, no build step. Targets **Chrome/Edge** (uses the Async Clipboard API and the File System Access API).
 
