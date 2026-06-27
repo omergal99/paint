@@ -543,3 +543,13 @@ dialog input[type="number"] {
   color: #fff;
   border-color: var(--w10-accent);
 }
+
+.status-item.app-name {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.app-icon {
+  width: 26px;
+  height: 26px;
+}
