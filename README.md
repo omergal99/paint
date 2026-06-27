@@ -16,16 +16,6 @@ python3 -m http.server 8000
 
 Then open the printed `localhost` URL in Chrome or Edge.
 
-## Deploying to GitHub Pages
-
-This app is a static site, so GitHub Pages can host it directly with no build step.
-
-1. Push the project to a GitHub repository.
-2. Open the repository on GitHub and go to Settings → Pages.
-3. Under Source, choose GitHub Actions.
-4. The included workflow in [.github/workflows/deploy-pages.yml](.github/workflows/deploy-pages.yml) will build and publish the site automatically on each push to the main branch.
-
-If you want to test it locally before pushing, run the same server command above and visit the local URL.
 
 ## Feature checklist (against the original brief)
 
