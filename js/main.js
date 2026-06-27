@@ -343,6 +343,17 @@ window.addEventListener('beforeunload', () => persistSession());
 // Default tool, per the brief: Select (not Pencil, unlike real Windows Paint).
 toolManager.setActive('select');
 
+// Click outside the paint area to commit and clear selection
+const viewportEl = document.getElementById('canvas-viewport');
+if (viewportEl) {
+  viewportEl.addEventListener('pointerdown', (e) => {
+    if (e.target === viewportEl || e.target === stage) {
+      commitFloatingSelection();
+      setSelection(null);
+    }
+  });
+}
+
 // ---------- Keyboard shortcuts ----------
 const TOOL_KEYS = {
   s: 'select', p: 'pencil', b: 'brush', f: 'fill', e: 'eraser', t: 'text', k: 'eyedropper', z: 'zoom',

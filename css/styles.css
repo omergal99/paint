@@ -396,8 +396,8 @@ body {
   background: transparent;
 }
 .handle-corner {
-  right: -5px;
-  bottom: -5px;
+  right: clamp(-0.75vw, -10px, -1vw);
+  bottom: clamp(-0.75vw, -10px, -1vw);
   width: clamp(10px, 1vw, 1vw);
   height: clamp(10px, 1vw, 1vw);
   cursor: nwse-resize;
