@@ -23,6 +23,7 @@ export class CanvasManager {
     this.lineWidth = 3;
 
     this.selection = null; // {x,y,w,h} in image pixels, or null
+    this.floatingCanvas = null; // offscreen canvas for active floating selection
 
     this._setSize(width, height);
     this.clear(backgroundColor);

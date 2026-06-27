@@ -9,12 +9,15 @@ export class SelectTool {
     this.cursor = 'crosshair';
     this._start = null;
     this._moving = false;
-    this._liftedCanvas = null;
     this._liftedOrigin = null;
   }
 
   onActivate(ctx) {
-    ctx.setSelection(null);
+    // Keep selection if it's already floating (e.g. on paste), otherwise do nothing.
+  }
+
+  onDeactivate(ctx) {
+    ctx.commitFloatingSelection();
   }
 
   onDown(pt, ctx) {
@@ -24,11 +27,20 @@ export class SelectTool {
       this._moving = true;
       this._start = pt;
       this._liftedOrigin = { x: sel.x, y: sel.y };
-      this._liftedCanvas = ctx.canvasManager.extractRegion(sel);
-      ctx.historyManager.snapshot();
-      ctx.canvasManager.fillRegion(sel, ctx.canvasManager.backgroundColor);
+
+      // If it's not floating yet, lift the pixels now!
+      if (!ctx.canvasManager.floatingCanvas) {
+        ctx.historyManager.snapshot();
+        ctx.canvasManager.floatingCanvas = ctx.canvasManager.extractRegion(sel);
+        ctx.canvasManager.fillRegion(sel, ctx.canvasManager.backgroundColor);
+      }
       return;
     }
+
+    // Clicked outside: commit the existing floating selection first!
+    ctx.commitFloatingSelection();
+
+    // Start drawing a new marquee box.
     this._moving = false;
     this._start = pt;
     ctx.setSelection({ x: Math.round(pt.x), y: Math.round(pt.y), w: 0, h: 0 });
@@ -41,9 +53,9 @@ export class SelectTool {
       const dy = Math.round(pt.y - this._start.y);
       const x = this._liftedOrigin.x + dx;
       const y = this._liftedOrigin.y + dy;
-      ctx.canvasManager.clearOverlay();
-      ctx.canvasManager.octx.drawImage(this._liftedCanvas, x, y);
-      ctx.setSelection({ x, y, w: this._liftedCanvas.width, h: this._liftedCanvas.height }, { preview: true });
+      
+      // Update coordinates of the selection. Since setSelection draws floatingCanvas at new coordinates on the overlay, this is all we need!
+      ctx.setSelection({ x, y, w: ctx.canvasManager.floatingCanvas.width, h: ctx.canvasManager.floatingCanvas.height });
       return;
     }
     const x = Math.min(this._start.x, pt.x);
@@ -55,12 +67,13 @@ export class SelectTool {
 
   onUp(pt, ctx) {
     if (this._moving) {
-      const sel = ctx.getSelection();
-      ctx.canvasManager.clearOverlay();
-      ctx.canvasManager.ctx.drawImage(this._liftedCanvas, sel.x, sel.y);
-      ctx.drawSelectionOutline(sel);
       this._moving = false;
-      this._liftedCanvas = null;
+    } else {
+      // If we were drawing a marquee, check if it has 0 area.
+      const sel = ctx.getSelection();
+      if (sel && (sel.w === 0 || sel.h === 0)) {
+        ctx.setSelection(null);
+      }
     }
     this._start = null;
   }

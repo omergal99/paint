@@ -5,17 +5,25 @@
 //          -> drawn at its NATIVE resolution (never downscaled to fit the view).
 
 export class ClipboardManager {
-  constructor({ canvasManager, historyManager, getSelection, setSelection, statusBar }) {
+  constructor({ canvasManager, historyManager, getSelection, setSelection, statusBar, setActiveTool, commitFloatingSelection }) {
     this.canvasManager = canvasManager;
     this.historyManager = historyManager;
     this.getSelection = getSelection; // () => {x,y,w,h} | null
     this.setSelection = setSelection; // (region) => void
     this.statusBar = statusBar;
+    this.setActiveTool = setActiveTool;
+    this.commitFloatingSelection = commitFloatingSelection;
   }
 
   async copy() {
     const region = this.getSelection();
-    const regionCanvas = this.canvasManager.extractRegion(region);
+    if (!region) return;
+    let regionCanvas;
+    if (this.canvasManager.floatingCanvas) {
+      regionCanvas = this.canvasManager.floatingCanvas;
+    } else {
+      regionCanvas = this.canvasManager.extractRegion(region);
+    }
     const blob = await new Promise((resolve) => regionCanvas.toBlob(resolve, 'image/png'));
     if (!blob) return;
     try {
@@ -31,9 +39,14 @@ export class ClipboardManager {
     const region = this.getSelection();
     if (!region) return;
     await this.copy();
-    this.historyManager.snapshot();
-    this.canvasManager.fillRegion(region, this.canvasManager.backgroundColor);
-    this.setSelection(null);
+    if (this.canvasManager.floatingCanvas) {
+      this.canvasManager.floatingCanvas = null;
+      this.setSelection(null);
+    } else {
+      this.historyManager.snapshot();
+      this.canvasManager.fillRegion(region, this.canvasManager.backgroundColor);
+      this.setSelection(null);
+    }
     this.canvasManager.persistToStorage();
   }
 
@@ -46,13 +59,38 @@ export class ClipboardManager {
         const blob = await item.getType(type);
         const bitmap = await createImageBitmap(blob);
 
+        // Commit any active floating selection first!
+        this.commitFloatingSelection?.();
+
         this.historyManager.snapshot();
+        
         // Anchor paste at the current selection's top-left if one exists, else 0,0.
         const sel = this.getSelection();
-        const region = this.canvasManager.drawImageAtFullSize(bitmap, sel ? sel.x : 0, sel ? sel.y : 0);
-        this.setSelection(region);
+        const x = sel ? sel.x : 0;
+        const y = sel ? sel.y : 0;
+        const w = bitmap.width;
+        const h = bitmap.height;
+
+        // Resize canvas if the pasted image exceeds current canvas dimensions
+        const neededWidth = Math.max(this.canvasManager.width, x + w);
+        const neededHeight = Math.max(this.canvasManager.height, y + h);
+        if (neededWidth !== this.canvasManager.width || neededHeight !== this.canvasManager.height) {
+          this.canvasManager.resize(neededWidth, neededHeight);
+        }
+
+        // Draw onto the offscreen floatingCanvas instead of the main canvas
+        const fCanvas = document.createElement('canvas');
+        fCanvas.width = w;
+        fCanvas.height = h;
+        fCanvas.getContext('2d').drawImage(bitmap, 0, 0);
+        this.canvasManager.floatingCanvas = fCanvas;
+
+        // Switch tool to select so user can move it
+        this.setActiveTool?.('select');
+
+        this.setSelection({ x, y, w, h });
         this.canvasManager.persistToStorage();
-        this.statusBar?.flash(`Pasted ${bitmap.width}\u00d7${bitmap.height}px image at full size`);
+        this.statusBar?.flash(`Pasted ${w}\u00d7${h}px image as floating selection`);
         return;
       }
       this.statusBar?.flash('Clipboard has no image to paste');

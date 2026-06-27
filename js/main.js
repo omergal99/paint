@@ -94,7 +94,28 @@ function setSelection(region, opts = {}) {
   canvasManager.selection = region;
   statusBar.setSelection(region);
   if (!opts.preview) canvasManager.clearOverlay();
-  if (region && region.w && region.h) drawSelectionOutline(region);
+  if (region && region.w && region.h) {
+    if (canvasManager.floatingCanvas) {
+      canvasManager.octx.drawImage(canvasManager.floatingCanvas, region.x, region.y);
+    }
+    drawSelectionOutline(region);
+  }
+}
+
+function commitFloatingSelection() {
+  if (canvasManager.floatingCanvas && canvasManager.selection) {
+    canvasManager.ctx.drawImage(canvasManager.floatingCanvas, canvasManager.selection.x, canvasManager.selection.y);
+    canvasManager.floatingCanvas = null;
+    setSelection(null);
+    canvasManager.persistToStorage();
+  }
+}
+
+function discardFloatingSelection() {
+  if (canvasManager.floatingCanvas) {
+    canvasManager.floatingCanvas = null;
+    setSelection(null);
+  }
 }
 
 // ---------- Shared tool context ----------
@@ -106,6 +127,8 @@ const toolContext = {
   colorInspector,
   getSelection,
   setSelection,
+  commitFloatingSelection,
+  discardFloatingSelection,
   drawSelectionOutline,
   setPrimaryColor: (hex) => colorPalette.setPrimary(hex),
   setSecondaryColor: (hex) => colorPalette.setSecondary(hex),
@@ -135,6 +158,8 @@ const clipboardManager = new ClipboardManager({
   getSelection,
   setSelection,
   statusBar,
+  setActiveTool: (name) => toolManager.setActive(name),
+  commitFloatingSelection,
 });
 
 // ---------- File operations ----------
@@ -151,9 +176,14 @@ function selectAll() {
 function deleteSelection() {
   const sel = getSelection();
   if (!sel || !sel.w || !sel.h) return false;
-  historyManager.snapshot();
-  canvasManager.fillRegion(sel, canvasManager.backgroundColor);
-  setSelection(null);
+  if (canvasManager.floatingCanvas) {
+    canvasManager.floatingCanvas = null;
+    setSelection(null);
+  } else {
+    historyManager.snapshot();
+    canvasManager.fillRegion(sel, canvasManager.backgroundColor);
+    setSelection(null);
+  }
   persistSession();
   statusBar.flash('Deleted selection');
   return true;
@@ -161,6 +191,7 @@ function deleteSelection() {
 
 function newFile() {
   if (!window.confirm('Start a new image? Unsaved changes will be lost.')) return;
+  discardFloatingSelection();
   historyManager.clear();
   fileHandle = null;
   canvasManager.loadFromSource(makeBlankSource(800, 600));
@@ -187,6 +218,7 @@ document.getElementById('file-input').addEventListener('change', async (e) => {
   e.target.value = '';
   if (!file) return;
   const bitmap = await createImageBitmap(file);
+  discardFloatingSelection();
   historyManager.snapshot();
   canvasManager.loadFromSource(bitmap);
   fileHandle = null;
@@ -196,6 +228,7 @@ document.getElementById('file-input').addEventListener('change', async (e) => {
 });
 
 async function save() {
+  commitFloatingSelection();
   if (window.showSaveFilePicker) {
     try {
       if (!fileHandle) {
@@ -233,6 +266,10 @@ function crop() {
     statusBar.flash('Select an area first');
     return;
   }
+  if (canvasManager.floatingCanvas) {
+    canvasManager.ctx.drawImage(canvasManager.floatingCanvas, sel.x, sel.y);
+    canvasManager.floatingCanvas = null;
+  }
   historyManager.snapshot();
   const region = canvasManager.extractRegion(sel);
   canvasManager.loadFromSource(region);
@@ -266,6 +303,7 @@ document.getElementById('resize-form').addEventListener('submit', () => {
   const w = parseInt(resizeWidthInput.value, 10);
   const h = parseInt(resizeHeightInput.value, 10);
   if (w > 0 && h > 0) {
+    commitFloatingSelection();
     historyManager.snapshot();
     canvasManager.resize(w, h);
     persistSession();
@@ -286,8 +324,8 @@ const toolbar = new Toolbar({
     copy: () => clipboardManager.copy(),
     crop,
     openResizeDialog,
-    undo: () => historyManager.undo(),
-    redo: () => historyManager.redo(),
+    undo: () => { discardFloatingSelection(); historyManager.undo(); },
+    redo: () => { discardFloatingSelection(); historyManager.redo(); },
   },
 });
 
@@ -323,10 +361,12 @@ window.addEventListener('keydown', (e) => {
         return;
       case 'z':
         e.preventDefault();
+        discardFloatingSelection();
         e.shiftKey ? historyManager.redo() : historyManager.undo();
         return;
       case 'y':
         e.preventDefault();
+        discardFloatingSelection();
         historyManager.redo();
         return;
       case 'c':
