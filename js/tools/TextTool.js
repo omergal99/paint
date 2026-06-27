@@ -80,6 +80,7 @@ export class TextTool {
         c.fillText(line, x, y + i * fontSize * 1.2);
       });
       c.restore();
+      ctx.canvasManager.persistToStorage();
     }
   }
 

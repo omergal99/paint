@@ -5,6 +5,8 @@
 // Zoom is applied as a CSS transform by ViewportManager; CanvasManager always works
 // in true image-pixel coordinates so drawing stays crisp at any zoom level.
 
+const STORAGE_KEY = 'omerpaint:last-canvas';
+
 export class CanvasManager {
   constructor({ canvas, overlay, width = 800, height = 600, backgroundColor = '#ffffff' }) {
     this.canvas = canvas;
@@ -35,6 +37,40 @@ export class CanvasManager {
     this.overlay.height = h;
     this.width = w;
     this.height = h;
+  }
+
+  persistToStorage() {
+    if (typeof window === 'undefined' || !window.localStorage) return;
+    try {
+      const dataUrl = this.canvas.toDataURL('image/png');
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ dataUrl, width: this.width, height: this.height }));
+    } catch (err) {
+      console.warn('Unable to persist canvas state:', err);
+    }
+  }
+
+  clearStoredState() {
+    if (typeof window === 'undefined' || !window.localStorage) return;
+    try {
+      window.localStorage.removeItem(STORAGE_KEY);
+    } catch (err) {
+      console.warn('Unable to clear persisted canvas state:', err);
+    }
+  }
+
+  async restoreFromStorage() {
+    if (typeof window === 'undefined' || !window.localStorage) return false;
+    try {
+      const raw = window.localStorage.getItem(STORAGE_KEY);
+      if (!raw) return false;
+      const { dataUrl, width, height } = JSON.parse(raw);
+      if (!dataUrl) return false;
+      await this.loadImageDataUrl(dataUrl, width, height);
+      return true;
+    } catch (err) {
+      console.warn('Unable to restore canvas state:', err);
+      return false;
+    }
   }
 
   clear(color = this.backgroundColor) {

@@ -60,6 +60,7 @@ export class ToolManager {
     if (method === 'onDown') this._dragging = true;
     const pt = this._point(e);
     this.active[method](pt, this.toolContext, e);
+    if (method === 'onUp') this.toolContext?.canvasManager?.persistToStorage?.();
   }
 
   _reportPosition(e) {

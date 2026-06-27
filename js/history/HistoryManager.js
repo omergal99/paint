@@ -54,6 +54,7 @@ export class HistoryManager {
   async _restore(entry) {
     this._suppressed = true;
     await this.canvasManager.loadImageDataUrl(entry.dataUrl, entry.width, entry.height);
+    this.canvasManager.persistToStorage();
     this._suppressed = false;
   }
 

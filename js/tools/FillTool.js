@@ -49,6 +49,7 @@ export class FillTool {
     }
 
     cm.ctx.putImageData(imageData, 0, 0);
+    cm.persistToStorage();
   }
 
   onMove() {}

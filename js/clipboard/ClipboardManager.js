@@ -34,6 +34,7 @@ export class ClipboardManager {
     this.historyManager.snapshot();
     this.canvasManager.fillRegion(region, this.canvasManager.backgroundColor);
     this.setSelection(null);
+    this.canvasManager.persistToStorage();
   }
 
   async paste() {
@@ -50,6 +51,7 @@ export class ClipboardManager {
         const sel = this.getSelection();
         const region = this.canvasManager.drawImageAtFullSize(bitmap, sel ? sel.x : 0, sel ? sel.y : 0);
         this.setSelection(region);
+        this.canvasManager.persistToStorage();
         this.statusBar?.flash(`Pasted ${bitmap.width}\u00d7${bitmap.height}px image at full size`);
         return;
       }

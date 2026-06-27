@@ -140,12 +140,32 @@ const clipboardManager = new ClipboardManager({
 // ---------- File operations ----------
 let fileHandle = null;
 
+function persistSession() {
+  canvasManager.persistToStorage();
+}
+
+function selectAll() {
+  setSelection({ x: 0, y: 0, w: canvasManager.width, h: canvasManager.height });
+}
+
+function deleteSelection() {
+  const sel = getSelection();
+  if (!sel || !sel.w || !sel.h) return false;
+  historyManager.snapshot();
+  canvasManager.fillRegion(sel, canvasManager.backgroundColor);
+  setSelection(null);
+  persistSession();
+  statusBar.flash('Deleted selection');
+  return true;
+}
+
 function newFile() {
   if (!window.confirm('Start a new image? Unsaved changes will be lost.')) return;
   historyManager.clear();
   fileHandle = null;
   canvasManager.loadFromSource(makeBlankSource(800, 600));
   setSelection(null);
+  persistSession();
 }
 
 function makeBlankSource(w, h) {
@@ -171,6 +191,7 @@ document.getElementById('file-input').addEventListener('change', async (e) => {
   canvasManager.loadFromSource(bitmap);
   fileHandle = null;
   setSelection(null);
+  persistSession();
   statusBar.flash(`Opened ${file.name}`);
 });
 
@@ -187,6 +208,7 @@ async function save() {
       const blob = await canvasManager.toBlob('image/png');
       await writable.write(blob);
       await writable.close();
+      persistSession();
       statusBar.flash('Saved');
       return;
     } catch (err) {
@@ -215,6 +237,7 @@ function crop() {
   const region = canvasManager.extractRegion(sel);
   canvasManager.loadFromSource(region);
   setSelection(null);
+  persistSession();
 }
 
 // ---------- Resize-canvas dialog ----------
@@ -245,6 +268,7 @@ document.getElementById('resize-form').addEventListener('submit', () => {
   if (w > 0 && h > 0) {
     historyManager.snapshot();
     canvasManager.resize(w, h);
+    persistSession();
   }
 });
 
@@ -269,6 +293,15 @@ const toolbar = new Toolbar({
 
 historyManager.onChange = (canUndo, canRedo) => toolbar.setUndoRedoEnabled(canUndo, canRedo);
 
+(async () => {
+  const restored = await canvasManager.restoreFromStorage();
+  if (restored) {
+    setSelection(null);
+    statusBar.flash('Restored your last canvas');
+  }
+})();
+window.addEventListener('beforeunload', () => persistSession());
+
 // Default tool, per the brief: Select (not Pencil, unlike real Windows Paint).
 toolManager.setActive('select');
 
@@ -283,6 +316,11 @@ window.addEventListener('keydown', (e) => {
 
   if (e.ctrlKey || e.metaKey) {
     switch (e.key.toLowerCase()) {
+      case 'a':
+        if (typing) return;
+        e.preventDefault();
+        selectAll();
+        return;
       case 'z':
         e.preventDefault();
         e.shiftKey ? historyManager.redo() : historyManager.undo();
@@ -323,6 +361,11 @@ window.addEventListener('keydown', (e) => {
   }
 
   if (typing) return;
+  if (e.key === 'Delete' || e.key === 'Backspace') {
+    if (deleteSelection()) e.preventDefault();
+    return;
+  }
+
   const tool = TOOL_KEYS[e.key.toLowerCase()];
   if (tool) toolManager.setActive(tool);
 });
