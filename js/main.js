@@ -16,6 +16,7 @@ import { ColorPalette } from './ui/ColorPalette.js';
 import { ColorInspector } from './ui/ColorInspector.js';
 import { StatusBar } from './ui/StatusBar.js';
 import { Toolbar } from './ui/Toolbar.js';
+import { hexToRgb } from './utils/color.js';
 
 // ---------- DOM refs ----------
 const stage = document.getElementById('canvas-stage');
@@ -74,6 +75,10 @@ const colorPalette = new ColorPalette({
   onPrimaryChange: (hex) => (canvasManager.primaryColor = hex),
   onSecondaryChange: (hex) => (canvasManager.secondaryColor = hex),
 });
+const primaryRgb = hexToRgb(colorPalette.primary);
+if (primaryRgb) {
+  colorInspector.show({ ...primaryRgb, hex: colorPalette.primary });
+}
 
 // ---------- Selection state + overlay drawing ----------
 function drawSelectionOutline(region) {
