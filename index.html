@@ -161,18 +161,19 @@
       <section class="ribbon-group">
         <div class="rbtn-row">
           <button class="rbtn cell shape-btn big" data-shape="rectangle" data-tag="shape-rectangle" title="Rectangle">
-              <svg class="icon size7" viewBox="0 0 20 20">
-                <rect x="3" y="5" width="14" height="10" />
-              </svg>
-            </button>
+            <svg class="icon size7" viewBox="0 0 20 20">
+              <rect x="3" y="5" width="14" height="10" />
+            </svg>
+          </button>
           <div class="shape-grid">
             <button class="rbtn cell shape-btn" data-shape="line" data-tag="shape-line" title="Line">
               <svg class="icon size5" viewBox="0 0 20 20">
                 <path d="M3 17L17 3" stroke-linecap="round" />
               </svg>
             </button>
-            
-            <button class="rbtn cell shape-btn" data-shape="rounded-rectangle" data-tag="shape-rounded-rectangle" title="Rounded rectangle">
+
+            <button class="rbtn cell shape-btn" data-shape="rounded-rectangle" data-tag="shape-rounded-rectangle"
+              title="Rounded rectangle">
               <svg class="icon size5" viewBox="0 0 20 20">
                 <rect x="3" y="5" width="14" height="10" rx="3" />
               </svg>
@@ -189,17 +190,20 @@
             </button>
           </div>
           <div class="fillmode-col">
-            <button class="rbtn micro fillmode-btn active" data-fillmode="outline" data-tag="fillmode-outline" title="Outline only">
+            <button class="rbtn micro fillmode-btn active" data-fillmode="outline" data-tag="fillmode-outline"
+              title="Outline only">
               <svg class="icon size5" viewBox="0 0 20 20">
                 <rect x="3" y="3" width="14" height="14" />
               </svg>
             </button>
-            <button class="rbtn micro fillmode-btn" data-fillmode="outline-fill" data-tag="fillmode-outline-fill" title="Outline + fill">
+            <button class="rbtn micro fillmode-btn" data-fillmode="outline-fill" data-tag="fillmode-outline-fill"
+              title="Outline + fill">
               <svg class="icon size5" viewBox="0 0 20 20">
                 <rect x="3" y="3" width="14" height="14" class="op-half-fill" />
               </svg>
             </button>
-            <button class="rbtn micro fillmode-btn" data-fillmode="fill" data-tag="fillmode-fill" title="Fill, no outline">
+            <button class="rbtn micro fillmode-btn" data-fillmode="fill" data-tag="fillmode-fill"
+              title="Fill, no outline">
               <svg class="icon size5" viewBox="0 0 20 20">
                 <rect x="3" y="3" width="14" height="14" class="op-full-fill" />
               </svg>
@@ -226,7 +230,7 @@
       <!-- Color group -->
       <section class="ribbon-group">
         <div class="rbtn-row">
-            <div class="swatch-stack" title="Click to edit colors" data-tag="swatch-stack">
+          <div class="swatch-stack" title="Click to edit colors" data-tag="swatch-stack">
             <button id="primary-swatch" class="swatch primary" data-tag="primary-swatch"></button>
             <button id="secondary-swatch" class="swatch secondary" data-tag="secondary-swatch"></button>
             <input type="color" id="color-picker" class="hidden-color-input" data-tag="color-picker" />
@@ -262,9 +266,10 @@
       <!-- ============== COLOR INSPECTOR (new, point 7) ============== -->
       <div class="color-inspector" id="color-inspector">
         <!-- <span class="ci-label">Color picker:</span> -->
-          <div class="ci-swatch-container" data-tag="ci-swatch-container">
-            <span class="ci-swatch" id="ci-swatch" data-tag="ci-swatch"></span>
-            <button class="rbtn cell tool-btn" data-tool="eyedropper" data-tag="tool-eyedropper-2" title="Color picker (K)">
+        <div class="ci-swatch-container" data-tag="ci-swatch-container">
+          <span class="ci-swatch" id="ci-swatch" data-tag="ci-swatch"></span>
+          <button class="rbtn cell tool-btn" data-tool="eyedropper" data-tag="tool-eyedropper-2"
+            title="Color picker (K)">
             <svg class="icon size5" viewBox="0 0 20 20">
               <path d="M13 2l5 5-3 3-5-5z" />
               <path d="M12 7L4 15l-1 4 4-1 8-8z" />
@@ -306,18 +311,18 @@
       <div>
         <span class="status-item location" id="status-pointer" data-tag="status-pointer">Pointer: —</span>
         <span class="status-item" id="status-selection" data-tag="status-selection"></span>
-        <span>|</span>
-        <span class="status-item" id="status-canvas-size" data-tag="status-canvas-size">800 × 600px</span>
         <span class="status-item" id="status-flash" data-tag="status-flash"></span>
         <span class="status-spacer"></span>
       </div>
 
       <div class="status-item app-name">
-        <img class="app-icon" src="css/icon.svg" alt="Paint icon" />
+        <img class="app-icon" src="css/assets/icon.svg" alt="Paint icon" />
         <span class="status-item">paint</span>
       </div>
 
-      <div>
+      <div class="zoom-controls-container">
+        <span class="status-item" id="status-canvas-size" data-tag="status-canvas-size">800 × 600px</span>
+
         <span class="status-item zoom-controls">
           <button id="zoom-out" data-tag="zoom-out" title="Zoom out">−</button>
           <input type="range" id="zoom-slider" data-tag="zoom-slider" min="10" max="800" step="10" value="100" />
@@ -337,7 +342,8 @@
       <h3>Resize canvas</h3>
       <label>Width (px) <input type="number" id="resize-width" data-tag="resize-width" min="1" max="10000" /></label>
       <label>Height (px) <input type="number" id="resize-height" data-tag="resize-height" min="1" max="10000" /></label>
-      <label class="checkbox-row"><input type="checkbox" id="resize-keep-aspect" data-tag="resize-keep-aspect" /> Maintain aspect ratio</label>
+      <label class="checkbox-row"><input type="checkbox" id="resize-keep-aspect" data-tag="resize-keep-aspect" />
+        Maintain aspect ratio</label>
       <div class="dialog-actions">
         <button type="button" id="resize-cancel" data-tag="resize-cancel">Cancel</button>
         <button type="submit" id="resize-ok" data-tag="resize-ok">OK</button>
