@@ -92,3 +92,36 @@ it can be button and it can be menu-button opened.
 we need also to add underscore above the letter which the shortcut.
 like New the "N" char will have underscore above here - text-decoration: underline; or something like that. thanks!
 
+## 14. status - some of them done, some not.
+the dark mode don't keep some text be black. text should be white and black should be like #1c1c1c and not #000
+we must fix this.
+the side bar should be resizeable.
+the size input and be just with the custom mode all the time.. no need in option, and when user click the option the side in the custom input will change.
+the rem BG it's for all the image and not for selection.. it should support for selection if there is selection or image pasted.
+also it can open side bar to edit the remove background and like in microsoft word - it can give the option to remove area and keep area because the remove background automatically may not work as user will want all the time.
+about the flip and rotate - the flip should be on selection if there is selection and also option to flip horizontal and not just vertical.
+the rotate should be like in microsoft word the above the selection or image pasted there icon and user can cotrol for the rotation.
+about the add text option we may want to allow text to be with outline color to text will looks good. find good place to add and defined this option - we can like click on "tools" and side bar will open to us with more option to defind? or just menu or dialog to set the text definition settings.
+about what i wrote about Accecability - the Accecability not work when i click N.. and also you did it only to option i told you - you needed to apply this for all relevant options.
+the image ribbon take too much height space, also the history, can be less width to make the history button to be instead of class="ribbon-group-title" history there. and the icon can be on the left to save place like the open and save buttons.
+maybe we should do for all class="ribbon-group-title" to be clickable which we can define each one section settings like the colors - user can change the default palate colors .
+like the tools, he can select what he want to show or hide.
+like in image - also can select what to show or hide.
+and also all the options can be click by the side bar opened for the selected class="ribbon-group-title" so like if user select to hide rem BG from page header he can click on it from the side bar.
+think like a product manager to improve the view.
+the "class="ribbon-group-title"" is good but not hide the class="separator" related to it. when i uncheck the checkbox.
+in the class="size-select" - we don't need the text "Size" there because it's obviouse.
+about the AI Chat - make it looks like real AI chat with textarea, and also options to connect to other LLM like gimini so gimini will get the image and the text user requested.
+maybe for the mock AI we can give option commands to chat to do like cli commands like if user write dark or dark mode - we can apply dark mode because it's what we defined.
+and if any not recognize we can just paste the action we support, and also we can add help icon to give user help to see what actually possible. also we can add autocomplete suggection by the exist comamnds we will have.
+lets do it and add a simple commands we can add like save, new open copy, flip, undo, redo, 
+color inspector toggle..
+and for the connection with other LLM we may need to give instruction for user what to do or just to save the image and send it to LLM with his description.
+maybe like we can give him links to good LLM's like gimini nano banna pro 2 to create images quickly - now it's really cheap.
+
+you didn't do all i askded - please go over the omerpaint/docs/future_ideas.md again and continure with what you didn't done yet.
+like i asked you for the selection area to add points in the selection wrapper to able to resize the selection.
+and also for the resize-handle handle-corner .
+do all the remaning please and also add omerpaint/docs/future_ideas2.md - to give me next ideas for next step to do with this app.
+like to make it PWA app with automatic updates with worker.
+
