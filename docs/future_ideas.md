@@ -82,8 +82,13 @@ there should be also option to fullscreen if we in mobile or tablet - so the can
 
 - adding options in menu like import another image, or select free (not just rectengle), and like selection/image pasted actions like flip mirror vertical and horizontal, and blur option like to blur sensitive info from image the pointer should show the area by the size selected.
 also with brush or eraser we can add circle dot around pointer so user will be able so see where the click will going to be apply - because or this options the size affected.
+the "adding options in menu" - can be in the regular view by the class="ribbon-group-title" to be button and also can have shortcut with     text-decoration: underline; for the letter it action the button.
+it can be button and it can be menu-button opened.
 
 - also i want option to lock size so the paint canvas area will have disabled option to resize the paint area.
 
-
+## 13. Accecability
+- for options "new" "open" "save".. we have shortcut like click N or O or S to apply them and they alos wrote in the title of the element.
+we need also to add underscore above the letter which the shortcut.
+like New the "N" char will have underscore above here - text-decoration: underline; or something like that. thanks!
 
