@@ -125,3 +125,8 @@ and also for the resize-handle handle-corner .
 do all the remaning please and also add omerpaint/docs/future_ideas2.md - to give me next ideas for next step to do with this app.
 like to make it PWA app with automatic updates with worker.
 
+click on the class="app-icon" should be click able to copy the SVG.
+first click as svg, second and image 26*26 then 100*100 then 300*300 then 500*500
+and then return to svg again like in loop.
+with indicate for the copy success with what format.
+
