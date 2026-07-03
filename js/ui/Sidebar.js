@@ -20,6 +20,9 @@ export class Sidebar {
     this.aiInput = document.getElementById('ai-chat-input');
     this.aiSend = document.getElementById('ai-chat-send');
     
+    this.groupSettingsContent = document.getElementById('sidebar-group-settings');
+    this.groupSettingsContainer = document.getElementById('group-settings-container');
+    
     this.globalHistory = new GlobalHistory();
     this.activeTab = null;
     
@@ -51,6 +54,8 @@ export class Sidebar {
     this.aiInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') this.handleAiSubmit();
     });
+    
+    this._bindResizer();
   }
 
   async saveCurrentToHistory() {
@@ -87,6 +92,7 @@ export class Sidebar {
     this.title.textContent = 'History';
     this.historyContent.style.display = 'block';
     this.aiContent.style.display = 'none';
+    if(this.groupSettingsContent) this.groupSettingsContent.style.display = 'none';
     this.sidebar.style.display = 'flex';
     this.refreshHistory();
   }
@@ -96,11 +102,88 @@ export class Sidebar {
     this.title.textContent = 'AI Chat';
     this.historyContent.style.display = 'none';
     this.aiContent.style.display = 'block';
+    if(this.groupSettingsContent) this.groupSettingsContent.style.display = 'none';
     this.sidebar.style.display = 'flex';
+  }
+
+  showGroupSettings(titleText, groupSection) {
+    if (!this.groupSettingsContent) return;
+    this.activeTab = 'group-' + titleText;
+    this.title.textContent = titleText + ' Settings';
+    this.historyContent.style.display = 'none';
+    this.aiContent.style.display = 'none';
+    this.groupSettingsContent.style.display = 'block';
+    this.sidebar.style.display = 'flex';
+    
+    this.groupSettingsContainer.innerHTML = '';
+    
+    const toggleGroup = document.createElement('label');
+    toggleGroup.className = 'checkbox-row';
+    const cbGroup = document.createElement('input');
+    cbGroup.type = 'checkbox';
+    cbGroup.checked = groupSection.style.display !== 'none';
+    toggleGroup.appendChild(cbGroup);
+    toggleGroup.appendChild(document.createTextNode(' Show Entire Group'));
+    cbGroup.addEventListener('change', (e) => {
+      groupSection.style.display = e.target.checked ? 'flex' : 'none';
+      const nextSibling = groupSection.nextElementSibling;
+      if (nextSibling && nextSibling.classList.contains('separator')) {
+        nextSibling.style.display = e.target.checked ? 'block' : 'none';
+      }
+    });
+    this.groupSettingsContainer.appendChild(toggleGroup);
+    
+    const hr = document.createElement('hr');
+    this.groupSettingsContainer.appendChild(hr);
+
+    const buttons = groupSection.querySelectorAll('.rbtn');
+    buttons.forEach(btn => {
+      let btnLabel = btn.title || btn.dataset.tool || btn.dataset.shape || btn.textContent.trim();
+      const toggleBtn = document.createElement('label');
+      toggleBtn.className = 'checkbox-row';
+      const cbBtn = document.createElement('input');
+      cbBtn.type = 'checkbox';
+      cbBtn.checked = btn.style.display !== 'none';
+      toggleBtn.appendChild(cbBtn);
+      toggleBtn.appendChild(document.createTextNode(' Show ' + btnLabel));
+      cbBtn.addEventListener('change', (e) => {
+        btn.style.display = e.target.checked ? '' : 'none';
+      });
+      this.groupSettingsContainer.appendChild(toggleBtn);
+    });
   }
 
   hide() {
     this.sidebar.style.display = 'none';
+  }
+
+  _bindResizer() {
+    const resizer = document.getElementById('sidebar-resizer');
+    if (!resizer) return;
+    
+    let isResizing = false;
+    let startX = 0;
+    let startWidth = 0;
+    
+    resizer.addEventListener('mousedown', (e) => {
+      isResizing = true;
+      startX = e.clientX;
+      startWidth = parseInt(document.defaultView.getComputedStyle(this.sidebar).width, 10);
+      document.body.style.cursor = 'ew-resize';
+      e.preventDefault();
+    });
+    
+    window.addEventListener('mousemove', (e) => {
+      if (!isResizing) return;
+      const dx = startX - e.clientX;
+      const newWidth = Math.max(200, Math.min(startWidth + dx, window.innerWidth * 0.8));
+      this.sidebar.style.width = newWidth + 'px';
+    });
+    
+    window.addEventListener('mouseup', () => {
+      isResizing = false;
+      document.body.style.cursor = '';
+    });
   }
 
   async refreshHistory() {

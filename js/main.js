@@ -424,9 +424,20 @@ const toolbar = new Toolbar({
   },
 });
 
+// ---------- Sidebar Init ----------
 document.getElementById('btn-history-panel').addEventListener('click', () => sidebar.toggleHistory());
 document.getElementById('btn-ai-chat').addEventListener('click', () => sidebar.toggleAi());
 
+document.querySelectorAll('.ribbon-group-title').forEach(titleEl => {
+  titleEl.addEventListener('click', () => {
+    const groupSection = titleEl.closest('.ribbon-group');
+    if (groupSection) {
+      sidebar.showGroupSettings(titleEl.textContent, groupSection);
+    }
+  });
+});
+
+// ---------- File / Storage logic ----------
 historyManager.onChange = (canUndo, canRedo) => toolbar.setUndoRedoEnabled(canUndo, canRedo);
 
 (async () => {

@@ -65,21 +65,14 @@ export class Toolbar {
       let size = parseInt(val, 10);
       if (isNaN(size) || size < 1) size = 1;
       setLineWidth(size);
+      customInput.value = size;
+      // Select matching option if exists
+      const opt = Array.from(select.options).find(o => o.value == size);
+      if (opt) select.value = size;
     };
 
-    select.addEventListener('change', () => {
-      if (select.value === 'custom') {
-        customInput.style.display = 'block';
-        applySize(customInput.value);
-      } else {
-        customInput.style.display = 'none';
-        applySize(select.value);
-      }
-    });
-
-    customInput.addEventListener('input', () => {
-      if (select.value === 'custom') applySize(customInput.value);
-    });
+    select.addEventListener('change', () => applySize(select.value));
+    customInput.addEventListener('input', () => applySize(customInput.value));
   }
 
   _bindFileButtons() {

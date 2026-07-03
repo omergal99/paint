@@ -78,6 +78,13 @@ body {
   color: var(--w10-text-dim);
   margin-top: 2px;
   white-space: nowrap;
+  cursor: pointer;
+  padding: 0 4px;
+  border-radius: 2px;
+}
+.ribbon-group-title:hover {
+  background: var(--w10-hover);
+  color: var(--w10-accent);
 }
 
 .rbtn-row {
@@ -121,8 +128,8 @@ body {
 }
 
 .rbtn .icon {
-  fill: #2b2b2b;
-  stroke: #2b2b2b;
+  fill: var(--w10-text);
+  stroke: var(--w10-text);
   stroke-width: 1.2;
 }
 
@@ -240,9 +247,10 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  font-size: 11px;
+  gap: 3px;
+  font-size: 12px;
   color: var(--w10-text-dim);
-  margin-left: 6px;
+  margin-left: 2px;
 }
 .size-select select {
   margin-top: 2px;

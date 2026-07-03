@@ -104,7 +104,8 @@
           <div class="rbtn-stack">
             <button class="rbtn small" id="btn-rotate" data-tag="btn-rotate" title="Rotate 90°">
               <svg class="icon size4" viewBox="0 0 20 20">
-                <path d="M14.142 5.858A6 6 0 1 0 18 10h-2a4 4 0 1 1-1.172-2.828l-2.828 2.828h6V4l-1.858 1.858z" fill="#000" />
+                <path d="M14.142 5.858A6 6 0 1 0 18 10h-2a4 4 0 1 1-1.172-2.828l-2.828 2.828h6V4l-1.858 1.858z"
+                  fill="#000" />
               </svg>
               <span>Rotate</span></button>
             <button class="rbtn small" id="btn-flip" data-tag="btn-flip" title="Flip Horizontal">
@@ -112,7 +113,8 @@
                 <path d="M10 2v16M4 5l6 5-6 5V5zm12 0l-6 5 6 5V5z" fill="none" stroke="#000" />
               </svg>
               <span>Flip</span></button>
-            <button class="rbtn small" id="btn-remove-bg" data-tag="btn-remove-bg" title="Remove Background (Color Key)">
+            <button class="rbtn small" id="btn-remove-bg" data-tag="btn-remove-bg"
+              title="Remove Background (Color Key)">
               <svg class="icon size4" viewBox="0 0 20 20">
                 <path d="M10 2l2 4 4 2-4 2-2 4-2-4-4-2 4-2z" fill="#000" />
               </svg>
@@ -227,20 +229,19 @@
               </svg>
             </button>
           </div>
-          <label class="size-select">
-            <span>Size</span>
-            <select id="line-size" data-tag="line-size">
-              <option value="1">1px</option>
-              <option value="2">2px</option>
-              <option value="3" selected>3px</option>
-              <option value="5">5px</option>
-              <option value="8">8px</option>
-              <option value="12">12px</option>
-              <option value="20">20px</option>
-              <option value="custom">Custom...</option>
-            </select>
-            <input type="number" id="custom-line-size" style="display:none; width:40px; font-size:11px; margin-top:2px;" min="1" max="100" value="3" />
-          </label>
+          <div class="size-select">
+            <input type="number" id="custom-line-size" style="width:48px; font-size:13px;" min="1" max="100" value="3"
+                title="Custom Line Size" />
+              <select id="line-size" data-tag="line-size" style="width: 50px;">
+                <option value="1">1px</option>
+                <option value="2">2px</option>
+                <option value="3" selected>3px</option>
+                <option value="5">5px</option>
+                <option value="8">8px</option>
+                <option value="12">12px</option>
+                <option value="20">20px</option>
+              </select>
+          </div>
         </div>
         <div class="ribbon-group-title">Shapes</div>
       </section>
@@ -264,31 +265,32 @@
 
       <!-- Undo/Redo/History -->
       <section class="ribbon-group">
-        <div class="rbtn-row">
-          <button class="rbtn" id="btn-undo" data-tag="btn-undo" title="Undo (Ctrl+Z)" disabled>
-            <svg class="icon size4" viewBox="0 0 20 20">
-              <path d="M5 9H14a4 4 0 0 1 0 8H8" fill="none" stroke-linecap="round" />
-              <path d="M8 5L4 9l4 4" fill="none" stroke-linecap="round" stroke-linejoin="round" />
-            </svg>
-            <span>Undo</span></button>
-          <button class="rbtn" id="btn-redo" data-tag="btn-redo" title="Redo (Ctrl+Y)" disabled>
-            <svg class="icon size4" viewBox="0 0 20 20">
-              <path d="M15 9H6a4 4 0 0 0 0 8h6" fill="none" stroke-linecap="round" />
-              <path d="M12 5l4 4-4 4" fill="none" stroke-linecap="round" stroke-linejoin="round" />
-            </svg>
-            <span>Redo</span></button>
-          <button class="rbtn" id="btn-history-panel" data-tag="btn-history-panel" title="Global History">
+        <div class="rbtn-stack">
+          <div style="display:flex;">
+            <button class="rbtn" id="btn-undo" data-tag="btn-undo" title="Undo (Ctrl+Z)" disabled>
+              <svg class="icon size4" viewBox="0 0 20 20">
+                <path d="M5 9H14a4 4 0 0 1 0 8H8" fill="none" stroke-linecap="round" />
+                <path d="M8 5L4 9l4 4" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+              <span>Undo</span></button>
+            <button class="rbtn" id="btn-redo" data-tag="btn-redo" title="Redo (Ctrl+Y)" disabled>
+              <svg class="icon size4" viewBox="0 0 20 20">
+                <path d="M15 9H6a4 4 0 0 0 0 8h6" fill="none" stroke-linecap="round" />
+                <path d="M12 5l4 4-4 4" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+              <span>Redo</span></button>
+          </div>
+          <button class="rbtn small" id="btn-history-panel" data-tag="btn-history-panel" title="Global History">
             <svg class="icon size4" viewBox="0 0 20 20">
               <path d="M10 2a8 8 0 1 0 8 8" fill="none" stroke-linecap="round" />
               <path d="M10 5v5l3 3" fill="none" stroke-linecap="round" />
             </svg>
             <span>History</span></button>
         </div>
-        <div class="ribbon-group-title">History</div>
       </section>
 
       <div class="separator"></div>
-      
+
       <!-- AI & Settings -->
       <section class="ribbon-group">
         <div class="rbtn-row">
@@ -302,7 +304,9 @@
           <button class="rbtn" id="btn-settings" data-tag="btn-settings" title="Settings">
             <svg class="icon size4" viewBox="0 0 20 20">
               <circle cx="10" cy="10" r="3" fill="none" />
-              <path d="M10 2v2m0 12v2m8-8h-2M4 10H2m13.657-5.657l-1.414 1.414M5.757 14.243l-1.414 1.414m11.314 0l-1.414-1.414M5.757 5.757L4.343 4.343" stroke-linecap="round" fill="none" />
+              <path
+                d="M10 2v2m0 12v2m8-8h-2M4 10H2m13.657-5.657l-1.414 1.414M5.757 14.243l-1.414 1.414m11.314 0l-1.414-1.414M5.757 5.757L4.343 4.343"
+                stroke-linecap="round" fill="none" />
             </svg>
             <span>Settings</span></button>
         </div>
@@ -357,14 +361,15 @@
       </main>
 
       <!-- ===================== RIGHT SIDEBAR ===================== -->
-      <aside class="right-sidebar" id="right-sidebar" style="display: none;">
+      <aside class="right-sidebar" id="right-sidebar" style="display: none; width: 250px;">
+        <div class="sidebar-resizer" id="sidebar-resizer"></div>
         <div class="sidebar-header">
           <h3 id="sidebar-title">Sidebar</h3>
           <button class="sidebar-close" id="sidebar-close" title="Close">×</button>
         </div>
         <div class="sidebar-content" id="sidebar-history-content" style="display: none;">
           <div class="history-controls">
-            <label>Save: 
+            <label>Save:
               <select id="history-save-limit">
                 <option value="0">Off</option>
                 <option value="10">10 images</option>
@@ -382,9 +387,13 @@
             <div class="ai-msg bot">Hi! What do you want to change in the image?</div>
           </div>
           <div class="ai-chat-input-area">
-            <input type="text" id="ai-chat-input" placeholder="e.g. Make it grayscale..." />
+            <input type="text" id="ai-chat-input" placeholder="e.g. /dark, /flip, /save" />
             <button id="ai-chat-send">Send</button>
           </div>
+        </div>
+        <div class="sidebar-content" id="sidebar-group-settings"
+          style="display: none; padding: 10px; overflow-y: auto;">
+          <div id="group-settings-container"></div>
         </div>
       </aside>
     </div>
@@ -417,9 +426,12 @@
 
     </footer>
 
-    <div id="magnifier-balloon" style="display:none; position:absolute; pointer-events:none; z-index:100; border:2px solid var(--w10-accent); border-radius:50%; overflow:hidden; width:90px; height:90px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); background:#fff;">
+    <div id="magnifier-balloon"
+      style="display:none; position:absolute; pointer-events:none; z-index:100; border:2px solid var(--w10-accent); border-radius:50%; overflow:hidden; width:90px; height:90px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); background:#fff;">
       <canvas id="magnifier-canvas" width="90" height="90"></canvas>
-      <div style="position:absolute; top:40px; left:40px; width:10px; height:10px; border:1px solid red; pointer-events:none;"></div>
+      <div
+        style="position:absolute; top:40px; left:40px; width:10px; height:10px; border:1px solid red; pointer-events:none;">
+      </div>
     </div>
 
   </div>
@@ -445,8 +457,9 @@
       <h3>Settings</h3>
       <label class="checkbox-row"><input type="checkbox" id="setting-dark-mode" /> Dark Mode</label>
       <label class="checkbox-row"><input type="checkbox" id="setting-show-status-bar" checked /> Show Status Bar</label>
-      <label class="checkbox-row"><input type="checkbox" id="setting-show-color-inspector" checked /> Show Color Inspector</label>
-      <label>Canvas Background 
+      <label class="checkbox-row"><input type="checkbox" id="setting-show-color-inspector" checked /> Show Color
+        Inspector</label>
+      <label>Canvas Background
         <select id="setting-canvas-bg">
           <option value="none">Solid Color</option>
           <option value="checkerboard">Transparent Checkerboard</option>
