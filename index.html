@@ -24,20 +24,20 @@
               <rect x="4" y="2" width="11" height="16" rx="1" />
               <path d="M11 2v4h4" fill="none" />
             </svg>
-            <span>New</span></button>
+            <span><u>N</u>ew</span></button>
           <div class="rbtn-stack">
             <button class="rbtn small" id="btn-open" data-tag="btn-open" title="Open (Ctrl+O)">
               <svg class="icon size4" viewBox="0 0 20 20">
                 <path d="M2 6h4l2 2h10v9a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6z" />
               </svg>
-              <span>Open</span></button>
+              <span><u>O</u>pen</span></button>
             <button class="rbtn small" id="btn-save" data-tag="btn-save" title="Save (Ctrl+S)">
               <svg class="icon size4" viewBox="0 0 20 20">
                 <rect x="3" y="3" width="14" height="14" rx="1" />
                 <rect class="op-cut" x="6" y="3" width="8" height="5" />
                 <rect class="op-cut" x="6" y="12" width="8" height="5" />
               </svg>
-              <span>Save</span></button>
+              <span><u>S</u>ave</span></button>
           </div>
         </div>
         <input type="file" id="file-input" accept="image/*" hidden />
@@ -100,6 +100,23 @@
                 <path d="M14 2l4 4M18 2v4h-4" stroke-linecap="round" />
               </svg>
               <span>Resize</span></button>
+          </div>
+          <div class="rbtn-stack">
+            <button class="rbtn small" id="btn-rotate" data-tag="btn-rotate" title="Rotate 90°">
+              <svg class="icon size4" viewBox="0 0 20 20">
+                <path d="M14.142 5.858A6 6 0 1 0 18 10h-2a4 4 0 1 1-1.172-2.828l-2.828 2.828h6V4l-1.858 1.858z" fill="#000" />
+              </svg>
+              <span>Rotate</span></button>
+            <button class="rbtn small" id="btn-flip" data-tag="btn-flip" title="Flip Horizontal">
+              <svg class="icon size4" viewBox="0 0 20 20">
+                <path d="M10 2v16M4 5l6 5-6 5V5zm12 0l-6 5 6 5V5z" fill="none" stroke="#000" />
+              </svg>
+              <span>Flip</span></button>
+            <button class="rbtn small" id="btn-remove-bg" data-tag="btn-remove-bg" title="Remove Background (Color Key)">
+              <svg class="icon size4" viewBox="0 0 20 20">
+                <path d="M10 2l2 4 4 2-4 2-2 4-2-4-4-2 4-2z" fill="#000" />
+              </svg>
+              <span>Rem BG</span></button>
           </div>
         </div>
         <div class="ribbon-group-title">Image</div>
@@ -220,7 +237,9 @@
               <option value="8">8px</option>
               <option value="12">12px</option>
               <option value="20">20px</option>
+              <option value="custom">Custom...</option>
             </select>
+            <input type="number" id="custom-line-size" style="display:none; width:40px; font-size:11px; margin-top:2px;" min="1" max="100" value="3" />
           </label>
         </div>
         <div class="ribbon-group-title">Shapes</div>
@@ -243,7 +262,7 @@
 
       <div class="separator"></div>
 
-      <!-- Undo/Redo -->
+      <!-- Undo/Redo/History -->
       <section class="ribbon-group">
         <div class="rbtn-row">
           <button class="rbtn" id="btn-undo" data-tag="btn-undo" title="Undo (Ctrl+Z)" disabled>
@@ -258,8 +277,36 @@
               <path d="M12 5l4 4-4 4" fill="none" stroke-linecap="round" stroke-linejoin="round" />
             </svg>
             <span>Redo</span></button>
+          <button class="rbtn" id="btn-history-panel" data-tag="btn-history-panel" title="Global History">
+            <svg class="icon size4" viewBox="0 0 20 20">
+              <path d="M10 2a8 8 0 1 0 8 8" fill="none" stroke-linecap="round" />
+              <path d="M10 5v5l3 3" fill="none" stroke-linecap="round" />
+            </svg>
+            <span>History</span></button>
         </div>
         <div class="ribbon-group-title">History</div>
+      </section>
+
+      <div class="separator"></div>
+      
+      <!-- AI & Settings -->
+      <section class="ribbon-group">
+        <div class="rbtn-row">
+          <button class="rbtn" id="btn-ai-chat" data-tag="btn-ai-chat" title="AI Chat">
+            <svg class="icon size4" viewBox="0 0 20 20">
+              <path d="M2 10a8 8 0 1 1 16 0c0 4.418-4 8-8 8H4l1.5-3A8 8 0 0 1 2 10z" fill="none" />
+              <circle cx="7" cy="9" r="1" fill="#000" />
+              <circle cx="13" cy="9" r="1" fill="#000" />
+            </svg>
+            <span>AI Chat</span></button>
+          <button class="rbtn" id="btn-settings" data-tag="btn-settings" title="Settings">
+            <svg class="icon size4" viewBox="0 0 20 20">
+              <circle cx="10" cy="10" r="3" fill="none" />
+              <path d="M10 2v2m0 12v2m8-8h-2M4 10H2m13.657-5.657l-1.414 1.414M5.757 14.243l-1.414 1.414m11.314 0l-1.414-1.414M5.757 5.757L4.343 4.343" stroke-linecap="round" fill="none" />
+            </svg>
+            <span>Settings</span></button>
+        </div>
+        <div class="ribbon-group-title">Extras</div>
       </section>
 
       <div class="separator"></div>
@@ -276,17 +323,17 @@
               <path d="M12 7L4 15l-1 4 4-1 8-8z" />
             </svg>
           </button>
+          <span class="ci-field">
+            <code id="ci-hex" data-tag="ci-hex" style="user-select: text;">—</code>
+            <button class="ci-copy" data-copy-target="ci-hex" data-tag="ci-copy-hex" title="Copy HEX">⧉</button>
+          </span>
         </div>
 
         <span class="ci-field">
           <!-- RGB  -->
-          <code id="ci-rgb" data-tag="ci-rgb">—</code>
-          <button class="ci-copy" data-copy-target="ci-rgb" data-tag="ci-copy-rgb" title="Copy RGB">⧉</button></span>
-        <span class="ci-field">
-          <!-- HEX  -->
-          <code id="ci-hex" data-tag="ci-hex">—</code>
-          <button class="ci-copy" data-copy-target="ci-hex" data-tag="ci-copy-hex" title="Copy HEX">⧉</button></span>
-        <!-- <span class="ci-hint">Pick the eyedropper tool, then click anywhere on the canvas to sample a color.</span> -->
+          <code id="ci-rgb" data-tag="ci-rgb" style="user-select: text;">—</code>
+          <button class="ci-copy" data-copy-target="ci-rgb" data-tag="ci-copy-rgb" title="Copy RGB">⧉</button>
+        </span>
       </div>
 
       <div class="separator"></div>
@@ -295,17 +342,52 @@
 
 
 
-    <!-- ===================== CANVAS AREA ===================== -->
-    <main class="canvas-viewport" id="canvas-viewport" data-tag="canvas-viewport">
-      <div class="canvas-stage" id="canvas-stage" data-tag="canvas-stage">
-        <canvas id="paint-canvas" data-tag="paint-canvas"></canvas>
-        <canvas id="overlay-canvas" data-tag="overlay-canvas"></canvas>
-        <div class="resize-handle handle-right" id="handle-right" data-tag="handle-right"></div>
-        <div class="resize-handle handle-bottom" id="handle-bottom" data-tag="handle-bottom"></div>
-        <div class="resize-handle handle-corner" id="handle-corner" data-tag="handle-corner"></div>
-        <div class="resize-ghost" id="resize-ghost" data-tag="resize-ghost"></div>
-      </div>
-    </main>
+    <!-- ===================== MAIN AREA ===================== -->
+    <div class="main-area" id="main-area">
+      <!-- ===================== CANVAS AREA ===================== -->
+      <main class="canvas-viewport" id="canvas-viewport" data-tag="canvas-viewport">
+        <div class="canvas-stage" id="canvas-stage" data-tag="canvas-stage">
+          <canvas id="paint-canvas" data-tag="paint-canvas"></canvas>
+          <canvas id="overlay-canvas" data-tag="overlay-canvas"></canvas>
+          <div class="resize-handle handle-right" id="handle-right" data-tag="handle-right"></div>
+          <div class="resize-handle handle-bottom" id="handle-bottom" data-tag="handle-bottom"></div>
+          <div class="resize-handle handle-corner" id="handle-corner" data-tag="handle-corner"></div>
+          <div class="resize-ghost" id="resize-ghost" data-tag="resize-ghost"></div>
+        </div>
+      </main>
+
+      <!-- ===================== RIGHT SIDEBAR ===================== -->
+      <aside class="right-sidebar" id="right-sidebar" style="display: none;">
+        <div class="sidebar-header">
+          <h3 id="sidebar-title">Sidebar</h3>
+          <button class="sidebar-close" id="sidebar-close" title="Close">×</button>
+        </div>
+        <div class="sidebar-content" id="sidebar-history-content" style="display: none;">
+          <div class="history-controls">
+            <label>Save: 
+              <select id="history-save-limit">
+                <option value="0">Off</option>
+                <option value="10">10 images</option>
+                <option value="20">20 images</option>
+                <option value="50">50 images</option>
+                <option value="100">100 images</option>
+              </select>
+            </label>
+            <button id="history-clear-btn">Clear All</button>
+          </div>
+          <div class="history-grid" id="history-grid"></div>
+        </div>
+        <div class="sidebar-content" id="sidebar-ai-content" style="display: none;">
+          <div class="ai-chat-messages" id="ai-chat-messages">
+            <div class="ai-msg bot">Hi! What do you want to change in the image?</div>
+          </div>
+          <div class="ai-chat-input-area">
+            <input type="text" id="ai-chat-input" placeholder="e.g. Make it grayscale..." />
+            <button id="ai-chat-send">Send</button>
+          </div>
+        </div>
+      </aside>
+    </div>
 
     <!-- ===================== STATUS BAR ===================== -->
     <footer class="status-bar">
@@ -335,6 +417,11 @@
 
     </footer>
 
+    <div id="magnifier-balloon" style="display:none; position:absolute; pointer-events:none; z-index:100; border:2px solid var(--w10-accent); border-radius:50%; overflow:hidden; width:90px; height:90px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); background:#fff;">
+      <canvas id="magnifier-canvas" width="90" height="90"></canvas>
+      <div style="position:absolute; top:40px; left:40px; width:10px; height:10px; border:1px solid red; pointer-events:none;"></div>
+    </div>
+
   </div>
 
   <!-- ===================== Resize-canvas dialog ===================== -->
@@ -348,6 +435,38 @@
       <div class="dialog-actions">
         <button type="button" id="resize-cancel" data-tag="resize-cancel">Cancel</button>
         <button type="submit" id="resize-ok" data-tag="resize-ok">OK</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- ===================== Settings dialog ===================== -->
+  <dialog id="settings-dialog" data-tag="settings-dialog">
+    <form method="dialog" id="settings-form">
+      <h3>Settings</h3>
+      <label class="checkbox-row"><input type="checkbox" id="setting-dark-mode" /> Dark Mode</label>
+      <label class="checkbox-row"><input type="checkbox" id="setting-show-status-bar" checked /> Show Status Bar</label>
+      <label class="checkbox-row"><input type="checkbox" id="setting-show-color-inspector" checked /> Show Color Inspector</label>
+      <label>Canvas Background 
+        <select id="setting-canvas-bg">
+          <option value="none">Solid Color</option>
+          <option value="checkerboard">Transparent Checkerboard</option>
+          <option value="grid">Gridlines</option>
+        </select>
+      </label>
+      <div class="dialog-actions">
+        <button type="button" id="settings-cancel">Close</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- ===================== New file dialog ===================== -->
+  <dialog id="new-file-dialog">
+    <form method="dialog">
+      <h3>Start new image?</h3>
+      <p>Unsaved changes will be lost.</p>
+      <div class="dialog-actions">
+        <button type="button" id="new-file-cancel">Cancel</button>
+        <button type="button" id="new-file-ok" class="danger">New Image</button>
       </div>
     </form>
   </dialog>

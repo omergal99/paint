@@ -59,7 +59,27 @@ export class Toolbar {
 
   _bindLineSize(setLineWidth) {
     const select = this.root.querySelector('#line-size');
-    select.addEventListener('change', () => setLineWidth(parseInt(select.value, 10)));
+    const customInput = this.root.querySelector('#custom-line-size');
+    
+    const applySize = (val) => {
+      let size = parseInt(val, 10);
+      if (isNaN(size) || size < 1) size = 1;
+      setLineWidth(size);
+    };
+
+    select.addEventListener('change', () => {
+      if (select.value === 'custom') {
+        customInput.style.display = 'block';
+        applySize(customInput.value);
+      } else {
+        customInput.style.display = 'none';
+        applySize(select.value);
+      }
+    });
+
+    customInput.addEventListener('input', () => {
+      if (select.value === 'custom') applySize(customInput.value);
+    });
   }
 
   _bindFileButtons() {

@@ -16,7 +16,9 @@ import { ColorPalette } from './ui/ColorPalette.js';
 import { ColorInspector } from './ui/ColorInspector.js';
 import { StatusBar } from './ui/StatusBar.js';
 import { Toolbar } from './ui/Toolbar.js';
+import { Sidebar } from './ui/Sidebar.js';
 import { hexToRgb } from './utils/color.js';
+import { rotateCanvas, flipCanvas, removeBackground } from './utils/transform.js';
 
 // ---------- DOM refs ----------
 const stage = document.getElementById('canvas-stage');
@@ -34,6 +36,8 @@ const statusBar = new StatusBar({
   flashEl: document.getElementById('status-flash'),
 });
 statusBar.setCanvasSize(canvasManager.width, canvasManager.height);
+
+const sidebar = new Sidebar({ canvasManager, statusBar });
 
 const viewportManager = new ViewportManager({
   stage,
@@ -195,13 +199,18 @@ function deleteSelection() {
 }
 
 function newFile() {
-  if (!window.confirm('Start a new image? Unsaved changes will be lost.')) return;
+  document.getElementById('new-file-dialog').showModal();
+}
+
+function doNewFile() {
+  sidebar.saveCurrentToHistory();
   discardFloatingSelection();
   historyManager.clear();
   fileHandle = null;
   canvasManager.loadFromSource(makeBlankSource(800, 600));
   setSelection(null);
   persistSession();
+  document.getElementById('new-file-dialog').close();
 }
 
 function makeBlankSource(w, h) {
@@ -234,6 +243,7 @@ document.getElementById('file-input').addEventListener('change', async (e) => {
 
 async function save() {
   commitFloatingSelection();
+  sidebar.saveCurrentToHistory();
   if (window.showSaveFilePicker) {
     try {
       if (!fileHandle) {
@@ -248,6 +258,8 @@ async function save() {
       await writable.close();
       persistSession();
       statusBar.flash('Saved');
+      document.title = 'paint - ' + fileHandle.name;
+      showToast('Successfully saved to ' + fileHandle.name, true);
       return;
     } catch (err) {
       if (err.name === 'AbortError') return;
@@ -263,6 +275,19 @@ function downloadPNG() {
   a.download = 'untitled.png';
   a.click();
   statusBar.flash('Downloaded as PNG');
+  document.title = 'paint - untitled.png';
+  showToast('Successfully downloaded untitled.png', true);
+}
+
+function showToast(msg, success = true) {
+  const toast = document.createElement('div');
+  toast.className = 'toast ' + (success ? 'toast-success' : 'toast-error');
+  toast.textContent = msg;
+  document.body.appendChild(toast);
+  setTimeout(() => {
+    toast.classList.add('hide');
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
 }
 
 function crop() {
@@ -281,6 +306,38 @@ function crop() {
   setSelection(null);
   persistSession();
 }
+
+// ---------- Transformations ----------
+function applyTransformation(transformFn) {
+  historyManager.snapshot();
+  if (canvasManager.floatingCanvas && canvasManager.selection) {
+    const newCanvas = transformFn(canvasManager.floatingCanvas);
+    canvasManager.floatingCanvas = newCanvas;
+    
+    // Update selection region to match new dimensions
+    const sel = canvasManager.selection;
+    const cx = sel.x + sel.w / 2;
+    const cy = sel.y + sel.h / 2;
+    const nw = newCanvas.width;
+    const nh = newCanvas.height;
+    
+    setSelection({
+      x: cx - nw / 2,
+      y: cy - nh / 2,
+      w: nw,
+      h: nh
+    });
+  } else {
+    // Transform entire canvas
+    const newCanvas = transformFn(canvasManager.canvas);
+    canvasManager.loadFromSource(newCanvas);
+  }
+  persistSession();
+}
+
+document.getElementById('btn-rotate').addEventListener('click', () => applyTransformation(c => rotateCanvas(c, 1)));
+document.getElementById('btn-flip').addEventListener('click', () => applyTransformation(c => flipCanvas(c, true)));
+document.getElementById('btn-remove-bg').addEventListener('click', () => applyTransformation(c => removeBackground(c, 30)));
 
 // ---------- Resize-canvas dialog ----------
 const resizeDialog = document.getElementById('resize-dialog');
@@ -315,7 +372,40 @@ document.getElementById('resize-form').addEventListener('submit', () => {
   }
 });
 
-// ---------- Toolbar ----------
+// ---------- Settings dialog ----------
+const settingsDialog = document.getElementById('settings-dialog');
+const dmCheckbox = document.getElementById('setting-dark-mode');
+const sbCheckbox = document.getElementById('setting-show-status-bar');
+const ciCheckbox = document.getElementById('setting-show-color-inspector');
+const bgSelect = document.getElementById('setting-canvas-bg');
+
+document.getElementById('btn-settings').addEventListener('click', () => settingsDialog.showModal());
+document.getElementById('settings-cancel').addEventListener('click', () => settingsDialog.close());
+
+// ---------- New file dialog ----------
+const newFileDialog = document.getElementById('new-file-dialog');
+if (newFileDialog) {
+  document.getElementById('new-file-ok').addEventListener('click', doNewFile);
+  document.getElementById('new-file-cancel').addEventListener('click', () => newFileDialog.close());
+}
+
+dmCheckbox.addEventListener('change', (e) => {
+  document.body.classList.toggle('dark-mode', e.target.checked);
+});
+sbCheckbox.addEventListener('change', (e) => {
+  document.querySelector('.status-bar').style.display = e.target.checked ? 'grid' : 'none';
+});
+ciCheckbox.addEventListener('change', (e) => {
+  document.getElementById('color-inspector').style.display = e.target.checked ? 'flex' : 'none';
+});
+bgSelect.addEventListener('change', (e) => {
+  const viewport = document.getElementById('canvas-viewport');
+  viewport.classList.remove('bg-checkerboard', 'bg-grid');
+  if (e.target.value !== 'none') {
+    viewport.classList.add('bg-' + e.target.value);
+  }
+});
+
 const toolbar = new Toolbar({
   root: document.getElementById('ribbon'),
   toolManager,
@@ -334,6 +424,9 @@ const toolbar = new Toolbar({
   },
 });
 
+document.getElementById('btn-history-panel').addEventListener('click', () => sidebar.toggleHistory());
+document.getElementById('btn-ai-chat').addEventListener('click', () => sidebar.toggleAi());
+
 historyManager.onChange = (canUndo, canRedo) => toolbar.setUndoRedoEnabled(canUndo, canRedo);
 
 (async () => {
@@ -343,7 +436,10 @@ historyManager.onChange = (canUndo, canRedo) => toolbar.setUndoRedoEnabled(canUn
     statusBar.flash('Restored your last canvas');
   }
 })();
-window.addEventListener('beforeunload', () => persistSession());
+window.addEventListener('beforeunload', () => {
+  persistSession();
+  sidebar.saveCurrentToHistory();
+});
 
 // Default tool, per the brief: Select (not Pencil, unlike real Windows Paint).
 toolManager.setActive('select');
@@ -421,7 +517,38 @@ window.addEventListener('keydown', (e) => {
     if (deleteSelection()) e.preventDefault();
     return;
   }
+  
+  if (e.key.startsWith('Arrow')) {
+    if (canvasManager.floatingCanvas && canvasManager.selection) {
+      e.preventDefault();
+      const sel = canvasManager.selection;
+      const step = e.shiftKey ? 10 : 1;
+      if (e.key === 'ArrowUp') sel.y -= step;
+      if (e.key === 'ArrowDown') sel.y += step;
+      if (e.key === 'ArrowLeft') sel.x -= step;
+      if (e.key === 'ArrowRight') sel.x += step;
+      setSelection(sel);
+      return;
+    }
+  }
 
-  const tool = TOOL_KEYS[e.key.toLowerCase()];
+const tool = TOOL_KEYS[e.key.toLowerCase()];
   if (tool) toolManager.setActive(tool);
+});
+
+// ---------- Drag and Drop ----------
+window.addEventListener('dragover', (e) => e.preventDefault());
+window.addEventListener('drop', async (e) => {
+  e.preventDefault();
+  const file = e.dataTransfer?.files?.[0];
+  if (file && file.type.startsWith('image/')) {
+    const bitmap = await createImageBitmap(file);
+    discardFloatingSelection();
+    historyManager.snapshot();
+    canvasManager.loadFromSource(bitmap);
+    fileHandle = null;
+    setSelection(null);
+    persistSession();
+    statusBar.flash(`Dropped ${file.name}`);
+  }
 });

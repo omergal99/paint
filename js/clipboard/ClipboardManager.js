@@ -64,10 +64,10 @@ export class ClipboardManager {
 
         this.historyManager.snapshot();
         
-        // Anchor paste at the current selection's top-left if one exists, else 0,0.
-        const sel = this.getSelection();
-        const x = sel ? sel.x : 0;
-        const y = sel ? sel.y : 0;
+        // Anchor paste at the cursor position if one exists, else 0,0.
+        const pt = this.statusBar?.currentPointer;
+        const x = pt ? Math.floor(pt.x) : 0;
+        const y = pt ? Math.floor(pt.y) : 0;
         const w = bitmap.width;
         const h = bitmap.height;
 

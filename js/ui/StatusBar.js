@@ -9,6 +9,7 @@ export class StatusBar {
   }
 
   setPointer(pt) {
+    this.currentPointer = pt;
     this.pointerEl.textContent = pt ? `Pointer: ${Math.round(pt.x)}, ${Math.round(pt.y)}px` : 'Pointer: —';
   }
 
