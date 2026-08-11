@@ -35,6 +35,28 @@ export function flipCanvas(sourceCanvas, horizontal = true) {
   return out;
 }
 
+export function rotateCanvasByAngle(sourceCanvas, degrees) {
+  const radians = degrees * Math.PI / 180;
+  const sin = Math.abs(Math.sin(radians));
+  const cos = Math.abs(Math.cos(radians));
+  const out = document.createElement('canvas');
+  out.width = Math.max(1, Math.ceil(sourceCanvas.width * cos + sourceCanvas.height * sin));
+  out.height = Math.max(1, Math.ceil(sourceCanvas.width * sin + sourceCanvas.height * cos));
+  const ctx = out.getContext('2d');
+  ctx.translate(out.width / 2, out.height / 2);
+  ctx.rotate(radians);
+  ctx.drawImage(sourceCanvas, -sourceCanvas.width / 2, -sourceCanvas.height / 2);
+  return out;
+}
+
+export function scaleCanvas(sourceCanvas, width, height) {
+  const out = document.createElement('canvas');
+  out.width = Math.max(1, Math.round(width));
+  out.height = Math.max(1, Math.round(height));
+  out.getContext('2d').drawImage(sourceCanvas, 0, 0, out.width, out.height);
+  return out;
+}
+
 export function removeBackground(sourceCanvas, tolerance = 30) {
   const w = sourceCanvas.width;
   const h = sourceCanvas.height;

@@ -30,7 +30,12 @@ export class Sidebar {
   }
 
   async init() {
-    await this.globalHistory.init();
+    try {
+      await this.globalHistory.init();
+    } catch (error) {
+      this.globalHistory.historyEnabled = false;
+      console.warn('Global history unavailable:', error);
+    }
     
     this.saveLimitSelect.value = this.globalHistory.historyEnabled ? this.globalHistory.maxHistory.toString() : "0";
     
@@ -121,11 +126,19 @@ export class Sidebar {
     toggleGroup.className = 'checkbox-row';
     const cbGroup = document.createElement('input');
     cbGroup.type = 'checkbox';
-    cbGroup.checked = groupSection.style.display !== 'none';
+    cbGroup.checked = [...groupSection.children]
+      .filter((child) => !child.classList.contains('ribbon-group-title') && child.id !== 'file-input')
+      .some((child) => !child.hidden && child.style.display !== 'none');
     toggleGroup.appendChild(cbGroup);
     toggleGroup.appendChild(document.createTextNode(' Show Entire Group'));
     cbGroup.addEventListener('change', (e) => {
-      groupSection.style.display = e.target.checked ? 'flex' : 'none';
+      const groupContent = [...groupSection.children]
+        .filter((child) => !child.classList.contains('ribbon-group-title') && child.id !== 'file-input');
+      groupContent.forEach((child) => {
+        child.hidden = !e.target.checked;
+        child.style.display = e.target.checked ? '' : 'none';
+      });
+      groupSection.hidden = !e.target.checked;
       const nextSibling = groupSection.nextElementSibling;
       if (nextSibling && nextSibling.classList.contains('separator')) {
         nextSibling.style.display = e.target.checked ? 'block' : 'none';
@@ -136,18 +149,21 @@ export class Sidebar {
     const hr = document.createElement('hr');
     this.groupSettingsContainer.appendChild(hr);
 
-    const buttons = groupSection.querySelectorAll('.rbtn');
+    const buttons = [...groupSection.querySelectorAll('.rbtn')]
+      .filter((btn) => btn.id !== 'btn-remove-bg' && !btn.closest('.action-menu-items'));
     buttons.forEach(btn => {
       let btnLabel = btn.title || btn.dataset.tool || btn.dataset.shape || btn.textContent.trim();
       const toggleBtn = document.createElement('label');
       toggleBtn.className = 'checkbox-row';
       const cbBtn = document.createElement('input');
       cbBtn.type = 'checkbox';
-      cbBtn.checked = btn.style.display !== 'none';
+      cbBtn.checked = !btn.hidden && btn.style.display !== 'none';
       toggleBtn.appendChild(cbBtn);
       toggleBtn.appendChild(document.createTextNode(' Show ' + btnLabel));
       cbBtn.addEventListener('change', (e) => {
+        btn.hidden = !e.target.checked;
         btn.style.display = e.target.checked ? '' : 'none';
+        window.dispatchEvent(new CustomEvent('paint:ribbon-change'));
       });
       this.groupSettingsContainer.appendChild(toggleBtn);
     });
@@ -198,29 +214,44 @@ export class Sidebar {
       return;
     }
     
-    for (const session of sessions) {
+    sessions.forEach((session, index) => {
       const item = document.createElement('div');
       item.className = 'history-item';
       
       const img = document.createElement('img');
       img.src = session.dataUrl;
-      item.appendChild(img);
-      
-      const info = document.createElement('div');
-      info.className = 'history-info';
-      const d = new Date(session.timestamp);
-      info.textContent = `${d.toLocaleDateString()} ${d.toLocaleTimeString()} - ${session.width}x${session.height}`;
-      item.appendChild(info);
-      
-      item.addEventListener('click', () => {
+      img.alt = `Import history image ${index + 1} of ${sessions.length}`;
+      img.title = 'Click to import this image';
+      img.addEventListener('click', () => {
         if (confirm('Load this image? Unsaved current work will be lost.')) {
           this.canvasManager.loadImageDataUrl(session.dataUrl, session.width, session.height);
           this.statusBar.flash('Loaded from history');
         }
       });
+      item.appendChild(img);
+      
+      const info = document.createElement('div');
+      info.className = 'history-info';
+      const d = new Date(session.timestamp);
+      info.textContent = `${index + 1}/${sessions.length} · ${d.toLocaleDateString()} ${d.toLocaleTimeString()} · ${session.width}x${session.height}`;
+      item.appendChild(info);
+
+      const deleteButton = document.createElement('button');
+      deleteButton.type = 'button';
+      deleteButton.className = 'history-delete';
+      deleteButton.innerHTML = '<span style="position: relative; right: 2px;" aria-hidden="true">🗑</span>';
+      deleteButton.setAttribute('aria-label', `Delete history image ${index + 1} of ${sessions.length}`);
+      deleteButton.title = 'Delete this saved image';
+      deleteButton.addEventListener('click', async (event) => {
+        event.stopPropagation();
+        await this.globalHistory.deleteSession(session.id);
+        await this.refreshHistory();
+        this.statusBar.flash('History item deleted');
+      });
+      item.appendChild(deleteButton);
       
       this.historyGrid.appendChild(item);
-    }
+    });
   }
 
   handleAiSubmit() {

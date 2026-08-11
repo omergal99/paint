@@ -118,6 +118,15 @@ export class GlobalHistory {
     });
   }
 
+  async deleteSession(id) {
+    if (!this.db || id === undefined) return;
+    return new Promise((resolve) => {
+      const tx = this.db.transaction(STORE_NAME, 'readwrite');
+      tx.objectStore(STORE_NAME).delete(id);
+      tx.oncomplete = () => resolve();
+    });
+  }
+
   async _enforceLimit() {
     if (!this.db) return;
     const sessions = await this.getSessions();

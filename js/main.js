@@ -18,7 +18,8 @@ import { StatusBar } from './ui/StatusBar.js';
 import { Toolbar } from './ui/Toolbar.js';
 import { Sidebar } from './ui/Sidebar.js';
 import { hexToRgb } from './utils/color.js';
-import { rotateCanvas, flipCanvas, removeBackground } from './utils/transform.js';
+import { rotateCanvas, rotateCanvasByAngle, flipCanvas, scaleCanvas, removeBackground } from './utils/transform.js';
+import { APP_VERSION } from './version.js';
 
 // ---------- DOM refs ----------
 const stage = document.getElementById('canvas-stage');
@@ -102,13 +103,71 @@ function getSelection() {
 function setSelection(region, opts = {}) {
   canvasManager.selection = region;
   statusBar.setSelection(region);
-  if (!opts.preview) canvasManager.clearOverlay();
+  canvasManager.clearOverlay();
   if (region && region.w && region.h) {
     if (canvasManager.floatingCanvas) {
       canvasManager.octx.drawImage(canvasManager.floatingCanvas, region.x, region.y);
     }
     drawSelectionOutline(region);
   }
+  updateSelectionHandles(region);
+}
+
+const selectionHandles = [...document.querySelectorAll('[data-selection-handle]')];
+
+function updateSelectionHandles(region) {
+  selectionHandles.forEach((handle) => {
+    handle.hidden = !region || !region.w || !region.h;
+  });
+  if (!region || !region.w || !region.h) return;
+  const points = {
+    nw: [region.x, region.y], n: [region.x + region.w / 2, region.y], ne: [region.x + region.w, region.y],
+    e: [region.x + region.w, region.y + region.h / 2], se: [region.x + region.w, region.y + region.h],
+    s: [region.x + region.w / 2, region.y + region.h], sw: [region.x, region.y + region.h], w: [region.x, region.y + region.h / 2],
+  };
+  selectionHandles.forEach((handle) => {
+    const [x, y] = points[handle.dataset.selectionHandle];
+    handle.style.left = `${x - 4}px`;
+    handle.style.top = `${y - 4}px`;
+  });
+}
+
+function bindSelectionHandles() {
+  selectionHandles.forEach((handle) => {
+    handle.addEventListener('pointerdown', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      historyManager.snapshot();
+      const original = { ...canvasManager.selection };
+      const direction = handle.dataset.selectionHandle;
+      const start = viewportManager.clientToImage(event.clientX, event.clientY);
+      const fixed = {
+        x: direction.includes('w') ? original.x + original.w : original.x,
+        y: direction.includes('n') ? original.y + original.h : original.y,
+      };
+      const onMove = (moveEvent) => {
+        const point = viewportManager.clientToImage(moveEvent.clientX, moveEvent.clientY);
+        let x = original.x;
+        let y = original.y;
+        let w = original.w;
+        let h = original.h;
+        if (direction.includes('e')) w = Math.max(1, Math.round(point.x - original.x));
+        if (direction.includes('w')) { w = Math.max(1, Math.round(fixed.x - point.x)); x = fixed.x - w; }
+        if (direction.includes('s')) h = Math.max(1, Math.round(point.y - original.y));
+        if (direction.includes('n')) { h = Math.max(1, Math.round(fixed.y - point.y)); y = fixed.y - h; }
+        if (canvasManager.floatingCanvas) canvasManager.floatingCanvas = scaleCanvas(canvasManager.floatingCanvas, w, h);
+        setSelection({ x, y, w, h }, { preview: true });
+      };
+      const onUp = () => {
+        window.removeEventListener('pointermove', onMove);
+        window.removeEventListener('pointerup', onUp);
+        canvasManager.persistToStorage();
+      };
+      window.addEventListener('pointermove', onMove);
+      window.addEventListener('pointerup', onUp, { once: true });
+      void start;
+    });
+  });
 }
 
 function commitFloatingSelection() {
@@ -310,6 +369,11 @@ function crop() {
 // ---------- Transformations ----------
 function applyTransformation(transformFn) {
   historyManager.snapshot();
+  const selection = canvasManager.selection;
+  if (selection && !canvasManager.floatingCanvas) {
+    canvasManager.floatingCanvas = canvasManager.extractRegion(selection);
+    canvasManager.fillRegion(selection, canvasManager.backgroundColor);
+  }
   if (canvasManager.floatingCanvas && canvasManager.selection) {
     const newCanvas = transformFn(canvasManager.floatingCanvas);
     canvasManager.floatingCanvas = newCanvas;
@@ -335,9 +399,58 @@ function applyTransformation(transformFn) {
   persistSession();
 }
 
-document.getElementById('btn-rotate').addEventListener('click', () => applyTransformation(c => rotateCanvas(c, 1)));
-document.getElementById('btn-flip').addEventListener('click', () => applyTransformation(c => flipCanvas(c, true)));
+function toggleActionMenu(event) {
+  event.stopPropagation();
+  const trigger = event.currentTarget;
+  const menu = trigger.parentElement;
+  const menuItems = menu.querySelector('.action-menu-items');
+  const shouldOpen = !menu.classList.contains('open');
+  document.querySelectorAll('.action-menu.open').forEach((item) => {
+    item.classList.remove('open');
+    const openItems = item.querySelector('.action-menu-items');
+    openItems.style.removeProperty('top');
+    openItems.style.removeProperty('left');
+    delete openItems.dataset.direction;
+  });
+  if (!shouldOpen) return;
+  const bounds = trigger.getBoundingClientRect();
+  menuItems.style.left = `${Math.round(bounds.left)}px`;
+  menuItems.style.visibility = 'hidden';
+  menuItems.style.display = 'grid';
+  const menuHeight = menuItems.getBoundingClientRect().height || 80;
+  menuItems.style.display = '';
+  menuItems.style.visibility = '';
+  const spaceBelow = window.innerHeight - bounds.bottom;
+  const openAbove = spaceBelow < menuHeight + 8 && bounds.top >= menuHeight + 8;
+  menuItems.style.top = `${Math.round(openAbove ? bounds.top - menuHeight - 2 : bounds.bottom + 2)}px`;
+  menuItems.dataset.direction = openAbove ? 'up' : 'down';
+  menu.classList.add('open');
+}
+
+document.getElementById('btn-rotate').addEventListener('click', (event) => {
+  toggleActionMenu(event);
+});
+document.getElementById('btn-rotate-90').addEventListener('click', () => applyTransformation(c => rotateCanvas(c, 1)));
+document.getElementById('btn-rotate-180').addEventListener('click', () => applyTransformation(c => rotateCanvas(c, 2)));
+document.getElementById('btn-rotate-270').addEventListener('click', () => applyTransformation(c => rotateCanvas(c, 3)));
+document.getElementById('btn-rotate-free').addEventListener('click', () => {
+  const degrees = Number.parseFloat(window.prompt('Rotation angle in degrees', '15'));
+  if (Number.isFinite(degrees)) applyTransformation(c => rotateCanvasByAngle(c, degrees));
+});
+document.getElementById('btn-flip').addEventListener('click', (event) => {
+  toggleActionMenu(event);
+});
+document.getElementById('btn-flip-horizontal').addEventListener('click', () => applyTransformation(c => flipCanvas(c, true)));
+document.getElementById('btn-flip-vertical').addEventListener('click', () => applyTransformation(c => flipCanvas(c, false)));
+document.getElementById('btn-crop-menu').addEventListener('click', (event) => {
+  toggleActionMenu(event);
+});
 document.getElementById('btn-remove-bg').addEventListener('click', () => applyTransformation(c => removeBackground(c, 30)));
+bindSelectionHandles();
+
+document.addEventListener('click', () => {
+  document.querySelectorAll('.action-menu.open').forEach((menu) => menu.classList.remove('open'));
+});
 
 // ---------- Resize-canvas dialog ----------
 const resizeDialog = document.getElementById('resize-dialog');
@@ -378,6 +491,156 @@ const dmCheckbox = document.getElementById('setting-dark-mode');
 const sbCheckbox = document.getElementById('setting-show-status-bar');
 const ciCheckbox = document.getElementById('setting-show-color-inspector');
 const bgSelect = document.getElementById('setting-canvas-bg');
+const SETTINGS_KEY = 'omerpaint:settings';
+
+function readSettings() {
+  try { return JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}'); } catch { return {}; }
+}
+
+function saveSettings() {
+  try {
+    const ribbonVisibility = {};
+    const buttonVisibility = {};
+    document.querySelectorAll('.ribbon-group').forEach((groupSection) => {
+      const title = groupSection.querySelector('.ribbon-group-title');
+      if (!title) return;
+      ribbonVisibility[title.textContent.trim()] = [...groupSection.children]
+        .filter((child) => !child.classList.contains('ribbon-group-title') && child.id !== 'file-input')
+        .some((child) => !child.hidden && child.style.display !== 'none');
+      groupSection.querySelectorAll('.rbtn[id]').forEach((button) => {
+        buttonVisibility[button.id] = !button.hidden && button.style.display !== 'none';
+      });
+    });
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify({
+      darkMode: dmCheckbox.checked,
+      showStatusBar: sbCheckbox.checked,
+      showColorInspector: ciCheckbox.checked,
+      canvasBackground: bgSelect.value,
+      ribbonVisibility,
+      buttonVisibility,
+    }));
+  } catch (error) { console.warn('Unable to save settings:', error); }
+}
+
+function applySavedSettings() {
+  const saved = readSettings();
+  dmCheckbox.checked = Boolean(saved.darkMode);
+  sbCheckbox.checked = saved.showStatusBar !== false;
+  ciCheckbox.checked = saved.showColorInspector !== false;
+  bgSelect.value = saved.canvasBackground || 'none';
+  document.body.classList.toggle('dark-mode', dmCheckbox.checked);
+  document.querySelector('.status-bar').style.display = sbCheckbox.checked ? 'grid' : 'none';
+  document.getElementById('color-inspector').style.display = ciCheckbox.checked ? 'flex' : 'none';
+  document.getElementById('canvas-viewport').classList.toggle('bg-checkerboard', bgSelect.value === 'checkerboard');
+  document.getElementById('canvas-viewport').classList.toggle('bg-grid', bgSelect.value === 'grid');
+  const ribbonVisibility = saved.ribbonVisibility || {};
+  document.querySelectorAll('.ribbon-group').forEach((groupSection) => {
+    const title = groupSection.querySelector('.ribbon-group-title');
+    if (!title || ribbonVisibility[title.textContent.trim()] === undefined) return;
+    const visible = ribbonVisibility[title.textContent.trim()];
+    groupSection.hidden = !visible;
+    [...groupSection.children]
+      .filter((child) => !child.classList.contains('ribbon-group-title') && child.id !== 'file-input')
+      .forEach((child) => {
+        child.hidden = !visible;
+        child.style.display = visible ? '' : 'none';
+      });
+    const separator = groupSection.nextElementSibling;
+    if (separator?.classList.contains('separator')) separator.style.display = visible ? '' : 'none';
+  });
+  const buttonVisibility = saved.buttonVisibility || {};
+  document.querySelectorAll('.rbtn[id]').forEach((button) => {
+    if (buttonVisibility[button.id] === undefined) return;
+    button.hidden = !buttonVisibility[button.id];
+    button.style.display = buttonVisibility[button.id] ? '' : 'none';
+  });
+  const fileInput = document.getElementById('file-input');
+  if (fileInput) {
+    fileInput.hidden = true;
+    fileInput.style.display = 'none';
+  }
+}
+
+async function updateAboutStats() {
+  document.getElementById('about-version').textContent = APP_VERSION;
+  document.getElementById('about-activity').textContent = new Date().toLocaleString();
+  try {
+    const estimate = await navigator.storage?.estimate();
+    const megabytes = (estimate?.usage || 0) / (1024 * 1024);
+    document.getElementById('about-storage').textContent = `${megabytes.toFixed(2)} MB`;
+  } catch { document.getElementById('about-storage').textContent = 'Unavailable'; }
+}
+
+document.querySelectorAll('[data-settings-tab]').forEach((tab) => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('[data-settings-tab]').forEach((item) => item.classList.toggle('active', item === tab));
+    document.querySelectorAll('[data-settings-panel]').forEach((panel) => {
+      panel.hidden = panel.dataset.settingsPanel !== tab.dataset.settingsTab;
+    });
+    if (tab.dataset.settingsTab === 'about') updateAboutStats();
+  });
+});
+
+function populateRibbonSettings() {
+  const container = document.getElementById('ribbon-settings-list');
+  if (!container) return;
+  container.innerHTML = '';
+  document.querySelectorAll('.ribbon-group').forEach((groupSection) => {
+    const title = groupSection.querySelector('.ribbon-group-title');
+    if (!title) return;
+    const row = document.createElement('div');
+    row.className = 'ribbon-setting-row';
+    const label = document.createElement('label');
+    label.className = 'checkbox-row';
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.checked = [...groupSection.children]
+      .filter((child) => !child.classList.contains('ribbon-group-title') && child.id !== 'file-input')
+      .some((child) => !child.hidden && child.style.display !== 'none');
+    checkbox.addEventListener('change', () => {
+      [...groupSection.children]
+        .filter((child) => !child.classList.contains('ribbon-group-title') && child.id !== 'file-input')
+        .forEach((child) => {
+          child.hidden = !checkbox.checked;
+          child.style.display = checkbox.checked ? '' : 'none';
+        });
+      const separator = groupSection.nextElementSibling;
+      groupSection.hidden = !checkbox.checked;
+      if (separator?.classList.contains('separator')) separator.style.display = checkbox.checked ? '' : 'none';
+        saveSettings();
+    });
+    label.append(checkbox, document.createTextNode(title.textContent));
+    const details = document.createElement('button');
+    details.type = 'button';
+    details.className = 'ribbon-setting-details';
+    details.textContent = 'Details';
+    details.addEventListener('click', () => sidebar.showGroupSettings(title.textContent, groupSection));
+    row.append(label, details);
+    container.appendChild(row);
+  });
+}
+
+populateRibbonSettings();
+
+document.getElementById('settings-reset').addEventListener('click', () => {
+  localStorage.removeItem(SETTINGS_KEY);
+  applySavedSettings();
+});
+
+document.getElementById('settings-close').addEventListener('click', () => settingsDialog.close());
+
+document.getElementById('settings-clear-data').addEventListener('click', async () => {
+  if (!window.confirm('Clear saved canvas data and history?')) return;
+  localStorage.clear();
+  indexedDB.deleteDatabase('omerpaint_global_history');
+  indexedDB.deleteDatabase('paint-workspace');
+  settingsDialog.close();
+  window.location.reload();
+});
+
+window.addEventListener('paint:ribbon-change', saveSettings);
+
+document.getElementById('settings-about-close').addEventListener('click', () => settingsDialog.close());
 
 document.getElementById('btn-settings').addEventListener('click', () => settingsDialog.showModal());
 document.getElementById('settings-cancel').addEventListener('click', () => settingsDialog.close());
@@ -391,12 +654,15 @@ if (newFileDialog) {
 
 dmCheckbox.addEventListener('change', (e) => {
   document.body.classList.toggle('dark-mode', e.target.checked);
+  saveSettings();
 });
 sbCheckbox.addEventListener('change', (e) => {
   document.querySelector('.status-bar').style.display = e.target.checked ? 'grid' : 'none';
+  saveSettings();
 });
 ciCheckbox.addEventListener('change', (e) => {
   document.getElementById('color-inspector').style.display = e.target.checked ? 'flex' : 'none';
+  saveSettings();
 });
 bgSelect.addEventListener('change', (e) => {
   const viewport = document.getElementById('canvas-viewport');
@@ -404,7 +670,43 @@ bgSelect.addEventListener('change', (e) => {
   if (e.target.value !== 'none') {
     viewport.classList.add('bg-' + e.target.value);
   }
+  saveSettings();
 });
+
+applySavedSettings();
+
+const iconCopyFormats = ['SVG', 'PNG 26x26', 'PNG 100x100', 'PNG 300x300', 'PNG 500x500'];
+let iconCopyIndex = 0;
+const appIcon = document.querySelector('.app-icon');
+
+async function copyAppIcon() {
+  const format = iconCopyFormats[iconCopyIndex];
+  try {
+    const svgText = await fetch(appIcon.src).then((response) => response.text());
+    if (format === 'SVG') {
+      await navigator.clipboard.writeText(svgText);
+    } else {
+      const size = Number(format.match(/\d+/)[0]);
+      const image = await createImageBitmap(new Blob([svgText], { type: 'image/svg+xml' }));
+      const output = document.createElement('canvas');
+      output.width = size;
+      output.height = size;
+      output.getContext('2d').drawImage(image, 0, 0, size, size);
+      const blob = await new Promise((resolve, reject) => output.toBlob((value) => value ? resolve(value) : reject(new Error('PNG encoding failed')), 'image/png'));
+      await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+      image.close?.();
+    }
+    statusBar.flash(`Copied app icon as ${format}`);
+    showToast(`Copied ${format}`, true);
+  } catch (error) {
+    console.warn('Unable to copy app icon:', error);
+    statusBar.flash('Clipboard permission is required');
+  } finally {
+    iconCopyIndex = (iconCopyIndex + 1) % iconCopyFormats.length;
+  }
+}
+
+appIcon?.addEventListener('click', copyAppIcon);
 
 const toolbar = new Toolbar({
   root: document.getElementById('ribbon'),
@@ -563,3 +865,5 @@ window.addEventListener('drop', async (e) => {
     statusBar.flash(`Dropped ${file.name}`);
   }
 });
+
+export { canvasManager };

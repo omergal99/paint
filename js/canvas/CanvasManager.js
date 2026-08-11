@@ -45,6 +45,9 @@ export class CanvasManager {
     try {
       const dataUrl = this.canvas.toDataURL('image/png');
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ dataUrl, width: this.width, height: this.height }));
+      window.dispatchEvent(new CustomEvent('paint:changed', {
+        detail: { width: this.width, height: this.height },
+      }));
     } catch (err) {
       console.warn('Unable to persist canvas state:', err);
     }

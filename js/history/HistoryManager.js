@@ -3,7 +3,7 @@
 // plus the canvas dimensions at that point, so resizing the canvas can also be undone.
 // Snapshots are taken on stroke-end (not every mousemove), so this stays fast.
 
-const MAX_HISTORY = 50;
+const MAX_HISTORY = 20;
 
 export class HistoryManager {
   constructor(canvasManager) {

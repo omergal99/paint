@@ -3,10 +3,16 @@
 
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
   <title>paint</title>
   <link rel="icon" type="image/svg+xml" href="css/assets/icon.svg">
   <link rel="stylesheet" href="css/styles.css" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#0078d4" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="google-site-verification" content="C3SQXzTF9AH3l1Tef3ZFkvGiLtVjIfrsdxK3CybNcAA" />
 </head>
 
@@ -40,7 +46,7 @@
               <span><u>S</u>ave</span></button>
           </div>
         </div>
-        <input type="file" id="file-input" accept="image/*" hidden />
+        <input type="file" id="file-input" accept="image/*" hidden aria-hidden="true" tabindex="-1">
         <div class="ribbon-group-title">File</div>
       </section>
 
@@ -89,11 +95,17 @@
             </svg>
             <span>Select</span></button>
           <div class="rbtn-stack">
-            <button class="rbtn small" id="btn-crop" data-tag="btn-crop" title="Crop to selection">
-              <svg class="icon size5" viewBox="0 0 20 20">
-                <path d="M5 1v14a1 1 0 0 0 1 1h13M1 5h14a1 1 0 0 1 1 1v13" stroke-linecap="round" />
-              </svg>
-              <span>Crop</span></button>
+            <div class="action-menu">
+              <button class="rbtn small action-menu-trigger" id="btn-crop-menu" title="Crop options">
+                <svg class="icon size5" viewBox="0 0 20 20">
+                  <path d="M5 1v14a1 1 0 0 0 1 1h13M1 5h14a1 1 0 0 1 1 1v13" stroke-linecap="round" />
+                </svg>
+                <span>Crop <span class="menu-arrow" aria-hidden="true">▾</span></span></button>
+              <div class="action-menu-items" role="menu" aria-label="Crop options">
+                <button type="button" id="btn-crop" role="menuitem">Crop to selection</button>
+                <button type="button" id="btn-remove-bg" role="menuitem">Remove Background (Color Key)</button>
+              </div>
+            </div>
             <button class="rbtn small" id="btn-canvas-size" data-tag="btn-canvas-size" title="Resize canvas">
               <svg class="icon size5" viewBox="0 0 20 20">
                 <rect x="2" y="6" width="9" height="9" />
@@ -102,23 +114,30 @@
               <span>Resize</span></button>
           </div>
           <div class="rbtn-stack">
-            <button class="rbtn small" id="btn-rotate" data-tag="btn-rotate" title="Rotate 90°">
-              <svg class="icon size4" viewBox="0 0 20 20">
-                <path d="M14.142 5.858A6 6 0 1 0 18 10h-2a4 4 0 1 1-1.172-2.828l-2.828 2.828h6V4l-1.858 1.858z"
-                  fill="#000" />
-              </svg>
-              <span>Rotate</span></button>
-            <button class="rbtn small" id="btn-flip" data-tag="btn-flip" title="Flip Horizontal">
-              <svg class="icon size4" viewBox="0 0 20 20">
-                <path d="M10 2v16M4 5l6 5-6 5V5zm12 0l-6 5 6 5V5z" fill="none" stroke="#000" />
-              </svg>
-              <span>Flip</span></button>
-            <button class="rbtn small" id="btn-remove-bg" data-tag="btn-remove-bg"
-              title="Remove Background (Color Key)">
-              <svg class="icon size4" viewBox="0 0 20 20">
-                <path d="M10 2l2 4 4 2-4 2-2 4-2-4-4-2 4-2z" fill="#000" />
-              </svg>
-              <span>Rem BG</span></button>
+            <div class="action-menu">
+              <button class="rbtn small action-menu-trigger" id="btn-rotate" data-tag="btn-rotate" title="Rotate 90°">
+                <svg class="icon size4" viewBox="0 0 20 20">
+                  <path d="M14.142 5.858A6 6 0 1 0 18 10h-2a4 4 0 1 1-1.172-2.828l-2.828 2.828h6V4l-1.858 1.858z" fill="#000" />
+                </svg>
+                <span>Rotate <span class="menu-arrow" aria-hidden="true">▾</span></span></button>
+              <div class="action-menu-items" role="menu" aria-label="Rotate options">
+                  <button type="button" id="btn-rotate-90" role="menuitem">Rotate 90</button>
+                <button type="button" id="btn-rotate-180" role="menuitem">Rotate 180</button>
+                <button type="button" id="btn-rotate-270" role="menuitem">Rotate 270</button>
+                <button type="button" id="btn-rotate-free" role="menuitem">Free Rotate</button>
+              </div>
+            </div>
+            <div class="action-menu">
+              <button class="rbtn small action-menu-trigger" id="btn-flip" data-tag="btn-flip" title="Flip">
+                <svg class="icon size4" viewBox="0 0 20 20">
+                  <path d="M10 2v16M4 5l6 5-6 5V5zm12 0l-6 5 6 5V5z" fill="none" stroke="#000" />
+                </svg>
+                <span>Flip <span class="menu-arrow" aria-hidden="true">▾</span></span></button>
+              <div class="action-menu-items" role="menu" aria-label="Flip options">
+                <button type="button" id="btn-flip-horizontal" role="menuitem">Flip Horizontal</button>
+                <button type="button" id="btn-flip-vertical" role="menuitem">Flip Vertical</button>
+              </div>
+            </div>
           </div>
         </div>
         <div class="ribbon-group-title">Image</div>
@@ -356,6 +375,14 @@
           <div class="resize-handle handle-right" id="handle-right" data-tag="handle-right"></div>
           <div class="resize-handle handle-bottom" id="handle-bottom" data-tag="handle-bottom"></div>
           <div class="resize-handle handle-corner" id="handle-corner" data-tag="handle-corner"></div>
+          <button class="selection-handle handle-nw" data-selection-handle="nw" aria-label="Resize selection northwest" hidden></button>
+          <button class="selection-handle handle-n" data-selection-handle="n" aria-label="Resize selection north" hidden></button>
+          <button class="selection-handle handle-ne" data-selection-handle="ne" aria-label="Resize selection northeast" hidden></button>
+          <button class="selection-handle handle-e" data-selection-handle="e" aria-label="Resize selection east" hidden></button>
+          <button class="selection-handle handle-se" data-selection-handle="se" aria-label="Resize selection southeast" hidden></button>
+          <button class="selection-handle handle-s" data-selection-handle="s" aria-label="Resize selection south" hidden></button>
+          <button class="selection-handle handle-sw" data-selection-handle="sw" aria-label="Resize selection southwest" hidden></button>
+          <button class="selection-handle handle-w" data-selection-handle="w" aria-label="Resize selection west" hidden></button>
           <div class="resize-ghost" id="resize-ghost" data-tag="resize-ghost"></div>
         </div>
       </main>
@@ -453,23 +480,49 @@
 
   <!-- ===================== Settings dialog ===================== -->
   <dialog id="settings-dialog" data-tag="settings-dialog">
-    <form method="dialog" id="settings-form">
-      <h3>Settings</h3>
-      <label class="checkbox-row"><input type="checkbox" id="setting-dark-mode" /> Dark Mode</label>
-      <label class="checkbox-row"><input type="checkbox" id="setting-show-status-bar" checked /> Show Status Bar</label>
-      <label class="checkbox-row"><input type="checkbox" id="setting-show-color-inspector" checked /> Show Color
-        Inspector</label>
-      <label>Canvas Background
-        <select id="setting-canvas-bg">
-          <option value="none">Solid Color</option>
-          <option value="checkerboard">Transparent Checkerboard</option>
-          <option value="grid">Gridlines</option>
-        </select>
-      </label>
-      <div class="dialog-actions">
-        <button type="button" id="settings-cancel">Close</button>
-      </div>
-    </form>
+    <div class="settings-shell">
+      <button type="button" class="settings-close" id="settings-close" aria-label="Close settings" title="Close settings">×</button>
+      <nav class="settings-tabs" aria-label="Settings sections">
+        <button type="button" class="settings-tab active" data-settings-tab="general">GENERAL</button>
+        <button type="button" class="settings-tab" data-settings-tab="ribbon">RIBBON</button>
+        <button type="button" class="settings-tab" data-settings-tab="about">ABOUT</button>
+      </nav>
+      <form method="dialog" id="settings-form" class="settings-panel" data-settings-panel="general">
+        <h3>General</h3>
+        <label class="checkbox-row"><input type="checkbox" id="setting-dark-mode" /> Dark Mode</label>
+        <label class="checkbox-row"><input type="checkbox" id="setting-show-status-bar" checked /> Show Status Bar</label>
+        <label class="checkbox-row"><input type="checkbox" id="setting-show-color-inspector" checked /> Show Color Inspector</label>
+        <label>Canvas Background
+          <select id="setting-canvas-bg">
+            <option value="none">Solid Color</option>
+            <option value="checkerboard">Transparent Checkerboard</option>
+            <option value="grid">Gridlines</option>
+          </select>
+        </label>
+        <div class="dialog-actions">
+          <button type="button" id="settings-reset">Reset Settings</button>
+          <button type="button" id="settings-cancel">Close</button>
+        </div>
+      </form>
+      <section class="settings-panel" data-settings-panel="ribbon" hidden>
+        <h3>Ribbon</h3>
+        <p>Choose which ribbon groups are visible. Detailed group options open in the sidebar.</p>
+        <div id="ribbon-settings-list" class="ribbon-settings-list"></div>
+      </section>
+      <section class="settings-panel" data-settings-panel="about" hidden>
+        <h3>About paint</h3>
+        <p>paint is a local-first browser drawing workspace built for fast, private image editing.</p>
+        <dl class="about-stats">
+          <div><dt>Version</dt><dd id="about-version">Loading...</dd></div>
+          <div><dt>Activity</dt><dd id="about-activity">Loading...</dd></div>
+          <div><dt>Stored data</dt><dd id="about-storage">Loading...</dd></div>
+        </dl>
+        <div class="dialog-actions">
+          <button type="button" id="settings-clear-data" class="danger">Clear Data</button>
+          <button type="button" id="settings-about-close">Close</button>
+        </div>
+      </section>
+    </div>
   </dialog>
 
   <!-- ===================== New file dialog ===================== -->
@@ -484,7 +537,7 @@
     </form>
   </dialog>
 
-  <script type="module" src="js/main.js"></script>
+  <script type="module" src="js/app.js"></script>
 </body>
 
 </html>

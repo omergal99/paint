@@ -1,0 +1,26 @@
+name: Lighthouse
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Start static server
+        run: npx --yes http-server paint -p 4173 >/tmp/paint-server.log 2>&1 &
+      - name: Run Lighthouse
+        run: npx --yes lighthouse http://localhost:4173/ --output=json --output-path=./lighthouse-report.json --chrome-flags="--headless --no-sandbox"
+      - name: Upload Lighthouse report
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-report
+          path: lighthouse-report.json

@@ -1,0 +1,88 @@
+/* Progressive enhancement layer for the legacy ribbon stylesheet. */
+:root {
+  --paint-safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+html,
+body,
+#app {
+  min-height: 100%;
+}
+
+html,
+body,
+#app {
+  height: 100dvh;
+}
+
+body {
+  padding-bottom: var(--paint-safe-bottom);
+}
+
+.canvas-viewport,
+.canvas-stage,
+#paint-canvas,
+#overlay-canvas {
+  touch-action: none;
+}
+
+#paint-canvas,
+#overlay-canvas {
+  image-rendering: auto;
+}
+
+body.dark-mode .ci-field code {
+  --w10-field-bg: #3b3b3b;
+  color: #f2f2f2;
+}
+
+body.dark-mode .rbtn .icon [fill="#000"],
+body.dark-mode .rbtn .icon [stroke="#000"] {
+  fill: var(--w10-text);
+  stroke: var(--w10-text);
+}
+
+button,
+input,
+select {
+  touch-action: manipulation;
+}
+
+#file-input {
+  display: none !important;
+}
+
+@media (max-width: 700px) {
+  .ribbon {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .status-bar {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-auto-flow: column;
+    grid-auto-columns: max-content;
+    flex-wrap: nowrap;
+    gap: 6px;
+    min-width: 0;
+    white-space: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+
+  .status-item.app-name {
+    display: none;
+  }
+
+  .status-item.location,
+  .status-item#status-selection {
+    display: none;
+  }
+
+  .zoom-controls input[type="range"] {
+    width: 72px;
+  }
+
+  .zoom-controls-container {
+    min-width: max-content;
+  }
+}
