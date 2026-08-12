@@ -261,8 +261,8 @@ function newFile() {
   document.getElementById('new-file-dialog').showModal();
 }
 
-function doNewFile() {
-  sidebar.saveCurrentToHistory();
+async function doNewFile() {
+  await sidebar.saveCurrentToHistory();
   discardFloatingSelection();
   historyManager.clear();
   fileHandle = null;

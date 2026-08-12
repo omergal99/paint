@@ -17,7 +17,8 @@ export class HistoryManager {
   /** Call BEFORE an action mutates the canvas. */
   snapshot() {
     if (this._suppressed) return;
-    const { width, height } = this.canvasManager;
+    const width = Number(this.canvasManager.width) || Number(this.canvasManager.canvas.width);
+    const height = Number(this.canvasManager.height) || Number(this.canvasManager.canvas.height);
     const dataUrl = this.canvasManager.canvas.toDataURL('image/png');
     this.undoStack.push({ dataUrl, width, height });
     if (this.undoStack.length > MAX_HISTORY) this.undoStack.shift();

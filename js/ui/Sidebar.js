@@ -66,14 +66,18 @@ export class Sidebar {
   async saveCurrentToHistory() {
     if (!this.globalHistory.historyEnabled) return;
     const blob = await this.canvasManager.toBlob('image/png');
-    
-    // We need dataUrl for IndexedDB
-    const reader = new FileReader();
-    reader.onload = async () => {
-      await this.globalHistory.addSession(reader.result, this.canvasManager.width, this.canvasManager.height);
-      if (this.activeTab === 'history') this.refreshHistory();
-    };
-    reader.readAsDataURL(blob);
+    const width = Number(this.canvasManager.canvas.width);
+    const height = Number(this.canvasManager.canvas.height);
+
+    const dataUrl = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(blob);
+    });
+
+    await this.globalHistory.addSession(dataUrl, width, height);
+    if (this.activeTab === 'history') this.refreshHistory();
   }
 
   toggleHistory() {
@@ -222,9 +226,9 @@ export class Sidebar {
       img.src = session.dataUrl;
       img.alt = `Import history image ${index + 1} of ${sessions.length}`;
       img.title = 'Click to import this image';
-      img.addEventListener('click', () => {
+      img.addEventListener('click', async () => {
         if (confirm('Load this image? Unsaved current work will be lost.')) {
-          this.canvasManager.loadImageDataUrl(session.dataUrl, session.width, session.height);
+          await this.canvasManager.loadImageDataUrl(session.dataUrl, session.width, session.height);
           this.statusBar.flash('Loaded from history');
         }
       });

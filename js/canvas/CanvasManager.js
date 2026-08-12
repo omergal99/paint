@@ -116,12 +116,14 @@ export class CanvasManager {
     return new Promise((resolve) => {
       const img = new Image();
       img.onload = () => {
-        this._setSize(width, height);
-        this.ctx.clearRect(0, 0, width, height);
+        const targetWidth = Number(width) > 0 ? Number(width) : img.width;
+        const targetHeight = Number(height) > 0 ? Number(height) : img.height;
+        this._setSize(targetWidth, targetHeight);
+        this.ctx.clearRect(0, 0, targetWidth, targetHeight);
         this.ctx.drawImage(img, 0, 0);
         this.clearOverlay();
         this.selection = null;
-        if (this.onSizeChange) this.onSizeChange(width, height);
+        if (this.onSizeChange) this.onSizeChange(targetWidth, targetHeight);
         resolve();
       };
       img.src = dataUrl;
