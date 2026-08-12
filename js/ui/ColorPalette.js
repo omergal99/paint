@@ -9,8 +9,11 @@ export class ColorPalette {
     this.colorPickerInput = colorPickerInput;
     this.onPrimaryChange = onPrimaryChange;
     this.onSecondaryChange = onSecondaryChange;
-    this.primary = '#a349a4';
-    this.secondary = '#ffffff';
+    
+    // Load saved colors from localStorage or use defaults
+    const savedColors = this._loadSavedColors();
+    this.primary = savedColors.primary || '#a349a4';
+    this.secondary = savedColors.secondary || '#ffffff';
 
     this._renderGrid();
     this._bindSwatches();
@@ -51,12 +54,35 @@ export class ColorPalette {
   setPrimary(hex) {
     this.primary = hex;
     this.primarySwatchEl.style.background = hex;
+    this._saveColors();
     this.onPrimaryChange?.(hex);
   }
 
   setSecondary(hex) {
     this.secondary = hex;
     this.secondarySwatchEl.style.background = hex;
+    this._saveColors();
     this.onSecondaryChange?.(hex);
+  }
+
+  _saveColors() {
+    try {
+      localStorage.setItem('paint:colors', JSON.stringify({
+        primary: this.primary,
+        secondary: this.secondary
+      }));
+    } catch (err) {
+      console.warn('Unable to save colors:', err);
+    }
+  }
+
+  _loadSavedColors() {
+    try {
+      const saved = localStorage.getItem('paint:colors');
+      return saved ? JSON.parse(saved) : {};
+    } catch (err) {
+      console.warn('Unable to load colors:', err);
+      return {};
+    }
   }
 }

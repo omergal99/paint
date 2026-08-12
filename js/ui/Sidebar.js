@@ -26,6 +26,12 @@ export class Sidebar {
     this.globalHistory = new GlobalHistory();
     this.activeTab = null;
     
+    // Restore sidebar state IMMEDIATELY before async init
+    this._restoreSidebarState();
+    
+    // Restore ribbon button visibility state IMMEDIATELY
+    this._restoreRibbonButtonState();
+    
     this.init();
   }
 
@@ -61,6 +67,14 @@ export class Sidebar {
     });
     
     this._bindResizer();
+  }
+
+  async finishInit() {
+    // Finish initialization after async operations are complete
+    // If history tab was restored, refresh it now that globalHistory is ready
+    if (this.activeTab === 'history' && this.globalHistory.db) {
+      await this.refreshHistory();
+    }
   }
 
   async saveCurrentToHistory() {
@@ -103,7 +117,11 @@ export class Sidebar {
     this.aiContent.style.display = 'none';
     if(this.groupSettingsContent) this.groupSettingsContent.style.display = 'none';
     this.sidebar.style.display = 'flex';
-    this.refreshHistory();
+    this._saveSidebarState();
+    // Only refresh if globalHistory is ready
+    if (this.globalHistory.db) {
+      this.refreshHistory();
+    }
   }
 
   showAi() {
@@ -113,6 +131,7 @@ export class Sidebar {
     this.aiContent.style.display = 'block';
     if(this.groupSettingsContent) this.groupSettingsContent.style.display = 'none';
     this.sidebar.style.display = 'flex';
+    this._saveSidebarState();
   }
 
   showGroupSettings(titleText, groupSection) {
@@ -147,6 +166,7 @@ export class Sidebar {
       if (nextSibling && nextSibling.classList.contains('separator')) {
         nextSibling.style.display = e.target.checked ? 'block' : 'none';
       }
+      this._saveRibbonButtonState();
     });
     this.groupSettingsContainer.appendChild(toggleGroup);
     
@@ -167,14 +187,17 @@ export class Sidebar {
       cbBtn.addEventListener('change', (e) => {
         btn.hidden = !e.target.checked;
         btn.style.display = e.target.checked ? '' : 'none';
+        this._saveRibbonButtonState();
         window.dispatchEvent(new CustomEvent('paint:ribbon-change'));
       });
       this.groupSettingsContainer.appendChild(toggleBtn);
     });
+    this._saveSidebarState();
   }
 
   hide() {
     this.sidebar.style.display = 'none';
+    this._saveSidebarState();
   }
 
   _bindResizer() {
@@ -204,6 +227,71 @@ export class Sidebar {
       isResizing = false;
       document.body.style.cursor = '';
     });
+  }
+
+  _saveSidebarState() {
+    const state = {
+      isOpen: this.sidebar.style.display !== 'none',
+      activeTab: this.activeTab
+    };
+    try {
+      localStorage.setItem('paint:sidebar-state', JSON.stringify(state));
+    } catch (err) {
+      console.warn('Unable to save sidebar state:', err);
+    }
+  }
+
+  _restoreSidebarState() {
+    try {
+      const stored = localStorage.getItem('paint:sidebar-state');
+      if (!stored) return;
+      const state = JSON.parse(stored);
+      if (!state.isOpen) return;
+      
+      if (state.activeTab === 'history') {
+        this.showHistory();
+      } else if (state.activeTab === 'ai') {
+        this.showAi();
+      }
+    } catch (err) {
+      console.warn('Unable to restore sidebar state:', err);
+    }
+  }
+
+  _saveRibbonButtonState() {
+    try {
+      const buttonState = {};
+      const buttons = document.querySelectorAll('.rbtn');
+      buttons.forEach((btn) => {
+        if (btn.id) {
+          buttonState[btn.id] = {
+            hidden: btn.hidden,
+            display: btn.style.display
+          };
+        }
+      });
+      localStorage.setItem('paint:ribbon-button-state', JSON.stringify(buttonState));
+    } catch (err) {
+      console.warn('Unable to save ribbon button state:', err);
+    }
+  }
+
+  _restoreRibbonButtonState() {
+    try {
+      const stored = localStorage.getItem('paint:ribbon-button-state');
+      if (!stored) return;
+      const buttonState = JSON.parse(stored);
+      
+      Object.keys(buttonState).forEach((btnId) => {
+        const btn = document.getElementById(btnId);
+        if (btn) {
+          btn.hidden = buttonState[btnId].hidden;
+          btn.style.display = buttonState[btnId].display;
+        }
+      });
+    } catch (err) {
+      console.warn('Unable to restore ribbon button state:', err);
+    }
   }
 
   async refreshHistory() {

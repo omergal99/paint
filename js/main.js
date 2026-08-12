@@ -187,6 +187,34 @@ function discardFloatingSelection() {
 }
 
 // ---------- Shared tool context ----------
+function saveToolSelection(toolName) {
+  try {
+    localStorage.setItem('paint:selected-tool', toolName);
+  } catch (err) {
+    console.warn('Unable to save tool selection:', err);
+  }
+}
+
+function restoreToolSelection() {
+  try {
+    const saved = localStorage.getItem('paint:selected-tool');
+    return saved || 'select';
+  } catch (err) {
+    console.warn('Unable to restore tool selection:', err);
+    return 'select';
+  }
+}
+
+// Font size state
+let currentFontSize = (() => {
+  try {
+    const saved = localStorage.getItem('paint:font-size');
+    return saved ? parseInt(saved, 10) : 24;
+  } catch {
+    return 24;
+  }
+})();
+
 const toolContext = {
   canvasManager,
   historyManager,
@@ -202,8 +230,16 @@ const toolContext = {
   setSecondaryColor: (hex) => colorPalette.setSecondary(hex),
   getShapeKind: () => toolbar.getShapeKind(),
   getShapeFillMode: () => toolbar.getFillMode(),
-  getFontSize: () => 24,
+  getFontSize: () => currentFontSize,
   getFontFamily: () => 'Segoe UI, sans-serif',
+  setFontSize: (size) => {
+    currentFontSize = Math.max(1, Math.min(100, parseInt(size, 10)));
+    try {
+      localStorage.setItem('paint:font-size', currentFontSize);
+    } catch (err) {
+      console.warn('Unable to save font size:', err);
+    }
+  },
 };
 
 // ---------- Tools ----------
@@ -219,6 +255,13 @@ const toolManager = new ToolManager({ surface: overlayEl, viewportManager, toolC
   new EyedropperTool(),
   new ZoomTool(),
 ].forEach((t) => toolManager.register(t));
+
+// Wrap toolManager.setActive to automatically save tool selection
+const originalSetActive = toolManager.setActive.bind(toolManager);
+toolManager.setActive = (name) => {
+  originalSetActive(name);
+  saveToolSelection(name);
+};
 
 const clipboardManager = new ClipboardManager({
   canvasManager,
@@ -726,6 +769,22 @@ const toolbar = new Toolbar({
   },
 });
 
+// Restore line width from localStorage
+(function restoreLineWidth() {
+  try {
+    const saved = localStorage.getItem('paint:line-width');
+    if (saved) {
+      const customInput = document.querySelector('#custom-line-size');
+      if (customInput) {
+        customInput.value = saved;
+        customInput.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+    }
+  } catch (err) {
+    console.warn('Unable to restore line width:', err);
+  }
+})();
+
 // ---------- Sidebar Init ----------
 document.getElementById('btn-history-panel').addEventListener('click', () => sidebar.toggleHistory());
 document.getElementById('btn-ai-chat').addEventListener('click', () => sidebar.toggleAi());
@@ -755,7 +814,15 @@ window.addEventListener('beforeunload', () => {
 });
 
 // Default tool, per the brief: Select (not Pencil, unlike real Windows Paint).
-toolManager.setActive('select');
+// But restore the user's last selected tool if available
+const savedTool = restoreToolSelection();
+toolManager.setActive(savedTool);
+saveToolSelection(savedTool);
+
+// Finish sidebar initialization after globalHistory is ready
+(async () => {
+  await sidebar.finishInit();
+})();
 
 // Click outside the paint area to commit and clear selection
 const viewportEl = document.getElementById('canvas-viewport');

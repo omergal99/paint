@@ -69,6 +69,12 @@ export class Toolbar {
       // Select matching option if exists
       const opt = Array.from(select.options).find(o => o.value == size);
       if (opt) select.value = size;
+      // Save to localStorage
+      try {
+        localStorage.setItem('paint:line-width', size);
+      } catch (err) {
+        console.warn('Unable to save line width:', err);
+      }
     };
 
     select.addEventListener('change', () => applySize(select.value));
