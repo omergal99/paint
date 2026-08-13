@@ -16,5 +16,4 @@ jobs:
         with:
           node-version: 20
       - name: Run smoke tests
-        working-directory: paint
         run: npm test

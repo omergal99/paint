@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://omergal99.github.io/paint/sitemap.xml
