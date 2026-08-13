@@ -249,7 +249,13 @@ export class Sidebar {
       if (!state.isOpen) return;
       
       if (state.activeTab === 'history') {
-        this.showHistory();
+        // Just set the active tab, don't refresh yet - wait for finishInit()
+        this.activeTab = 'history';
+        this.title.textContent = 'History';
+        this.historyContent.style.display = 'block';
+        this.aiContent.style.display = 'none';
+        if(this.groupSettingsContent) this.groupSettingsContent.style.display = 'none';
+        this.sidebar.style.display = 'flex';
       } else if (state.activeTab === 'ai') {
         this.showAi();
       }
