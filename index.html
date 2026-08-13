@@ -435,7 +435,10 @@
                 <option value="100">100 images</option>
               </select>
             </label>
-            <button id="history-clear-btn">Clear All</button>
+            <div class="history-actions">
+              <button type="button" id="history-save-current-btn" title="Save current paint to history">Save Current</button>
+              <button type="button" id="history-clear-btn" title="Clear all saved history">Clear All</button>
+            </div>
           </div>
           <div class="history-grid" id="history-grid"></div>
         </div>

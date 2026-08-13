@@ -30,6 +30,14 @@ test('file picker is single, hidden, and not rendered as a native control', () =
   assert.match(read('style.css'), /#file-input\s*\{[^}]*display:\s*none\s*!important/s);
 });
 
+test('History controls expose save and clear actions', () => {
+  const controls = html.match(/<div class="history-controls">([\s\S]*?)<\/div>\s*<div class="history-grid"/);
+  assert.ok(controls, 'History controls markup is missing');
+  assert.match(controls[1], /id="history-save-current-btn"/);
+  assert.match(controls[1], /id="history-clear-btn"/);
+  assert.match(sidebar, /this\.saveToHistoryBtn\.addEventListener\('click'/);
+});
+
 test('Ribbon settings cannot expose menu actions as standalone controls', () => {
   assert.match(sidebar, /filter\(\(btn\) => btn\.id !== 'btn-remove-bg' && !btn\.closest\('\.action-menu-items'\)\)/);
 });

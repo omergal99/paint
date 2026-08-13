@@ -14,6 +14,7 @@ export class Sidebar {
     this.historyGrid = document.getElementById('history-grid');
     this.saveLimitSelect = document.getElementById('history-save-limit');
     this.clearBtn = document.getElementById('history-clear-btn');
+    this.saveToHistoryBtn = document.getElementById('history-save-current-btn');
     
     this.aiContent = document.getElementById('sidebar-ai-content');
     this.aiMessages = document.getElementById('ai-chat-messages');
@@ -26,13 +27,18 @@ export class Sidebar {
     this.globalHistory = new GlobalHistory();
     this.activeTab = null;
     
+    // Initialization state tracking for race condition prevention
+    this._initComplete = false;
+    this._initPromise = null;
+    
     // Restore sidebar state IMMEDIATELY before async init
     this._restoreSidebarState();
     
     // Restore ribbon button visibility state IMMEDIATELY
     this._restoreRibbonButtonState();
     
-    this.init();
+    // Start initialization and track completion
+    this._initPromise = this.init();
   }
 
   async init() {
@@ -45,19 +51,36 @@ export class Sidebar {
     
     this.saveLimitSelect.value = this.globalHistory.historyEnabled ? this.globalHistory.maxHistory.toString() : "0";
     
+    // History save limit dropdown: change setting, don't auto-clear
     this.saveLimitSelect.addEventListener('change', async (e) => {
       const val = parseInt(e.target.value, 10);
       const enabled = val > 0;
       await this.globalHistory.saveSettings(val, enabled);
-      this.refreshHistory();
-    });
-    
-    this.clearBtn.addEventListener('click', async () => {
-      if (confirm('Clear all saved history?')) {
-        await this.globalHistory.clearAll();
-        this.refreshHistory();
+      // Use retry logic to ensure render completes
+      if (this.activeTab === 'history') {
+        await this._loadHistoryWithRetry();
       }
     });
+    
+    // Clear all button with strong confirmation
+    this.clearBtn.addEventListener('click', async () => {
+      if (confirm('Are you sure you want to permanently delete all saved history? This cannot be undone.')) {
+        await this.globalHistory.clearAll();
+        // Use retry logic to ensure render completes
+        if (this.activeTab === 'history') {
+          await this._loadHistoryWithRetry();
+        }
+        this.statusBar?.flash?.('History cleared');
+      }
+    });
+
+    // Save current paint to history button
+    if (this.saveToHistoryBtn) {
+      this.saveToHistoryBtn.addEventListener('click', async () => {
+        await this.saveCurrentToHistory();
+        this.statusBar?.flash?.('Saved to history');
+      });
+    }
 
     this.closeBtn.addEventListener('click', () => this.hide());
     
@@ -67,14 +90,68 @@ export class Sidebar {
     });
     
     this._bindResizer();
+    
+    // Mark initialization as complete
+    this._initComplete = true;
   }
 
   async finishInit() {
-    // Finish initialization after async operations are complete
-    // If history tab was restored, refresh it now that globalHistory is ready
+    await this._waitForInit();
+
     if (this.activeTab === 'history' && this.globalHistory.db) {
-      await this.refreshHistory();
+      await this._loadHistoryWithRetry();
     }
+  }
+
+  async _loadHistoryWithRetry() {
+    const maxRetries = 5;
+
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      const expectedCount = (await this.globalHistory.getSessions()).length;
+      if (attempt === 0 && expectedCount > 0) {
+        this.historyGrid.innerHTML = '<div class="history-loading">Loading history...</div>';
+      }
+
+      const renderedCount = await this.refreshHistory();
+      if (renderedCount === expectedCount) {
+        return;
+      }
+
+      if (attempt < maxRetries - 1) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+    }
+  }
+
+  /**
+   * Wait for async initialization to complete
+   * Prevents race condition where finishInit runs before init completes
+   * @returns {Promise<void>}
+   */
+  async _waitForInit() {
+    if (this._initComplete) {
+      return;
+    }
+
+    if (this._initPromise) {
+      await this._initPromise;
+      return;
+    }
+
+    return new Promise((resolve) => {
+      const checkInit = setInterval(() => {
+        if (this._initComplete) {
+          clearInterval(checkInit);
+          resolve();
+        }
+      }, 10);
+
+      setTimeout(() => {
+        clearInterval(checkInit);
+        console.warn('Sidebar initialization timed out');
+        resolve();
+      }, 5000);
+    });
   }
 
   async saveCurrentToHistory() {
@@ -302,14 +379,11 @@ export class Sidebar {
 
   async refreshHistory() {
     this.historyGrid.innerHTML = '';
-    if (!this.globalHistory.historyEnabled) {
-      this.historyGrid.innerHTML = '<div class="history-empty">History is disabled</div>';
-      return;
-    }
     const sessions = await this.globalHistory.getSessions();
     if (sessions.length === 0) {
-      this.historyGrid.innerHTML = '<div class="history-empty">No history found</div>';
-      return;
+      const message = this.globalHistory.historyEnabled ? 'No history found' : 'History saving is off';
+      this.historyGrid.innerHTML = `<div class="history-empty">${message}</div>`;
+      return 0;
     }
     
     sessions.forEach((session, index) => {
@@ -350,6 +424,7 @@ export class Sidebar {
       
       this.historyGrid.appendChild(item);
     });
+    return sessions.length;
   }
 
   handleAiSubmit() {

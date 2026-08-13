@@ -1,4 +1,4 @@
-const CACHE_NAME = 'paint-shell-v1-1-4';
+const CACHE_NAME = 'paint-shell-v1-1-5';
 const SHELL = [
   './',
   './index.html',
@@ -46,11 +46,14 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
-  event.respondWith(caches.match(event.request).then((cached) => cached || fetch(event.request).then((response) => {
+  event.respondWith(fetch(event.request).then((response) => {
     if (response.ok && new URL(event.request.url).origin === self.location.origin) {
       const copy = response.clone();
       caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
     }
     return response;
-  }).catch(() => event.request.mode === 'navigate' ? caches.match('./index.html') : Response.error())));
+  }).catch(() => caches.match(event.request).then((cached) => {
+    if (cached) return cached;
+    return event.request.mode === 'navigate' ? caches.match('./index.html') : Response.error();
+  })));
 });

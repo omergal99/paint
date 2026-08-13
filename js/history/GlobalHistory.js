@@ -66,9 +66,11 @@ export class GlobalHistory {
       store.put({ key: 'maxHistory', value: maxHistory });
       store.put({ key: 'historyEnabled', value: enabled });
       tx.oncomplete = () => {
-        if (!enabled) this.clearAll();
-        else this._enforceLimit();
-        resolve();
+        if (!enabled) {
+          resolve();
+          return;
+        }
+        this._enforceLimit().then(resolve);
       };
     });
   }
