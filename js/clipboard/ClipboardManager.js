@@ -15,6 +15,43 @@ export class ClipboardManager {
     this.commitFloatingSelection = commitFloatingSelection;
   }
 
+  async insertBitmapAsFloatingSelection(bitmap, { sourceLabel = 'Pasted' } = {}) {
+    // Commit any active floating selection first so the new image does not stack
+    // on top of an uncommitted edit.
+    this.commitFloatingSelection?.();
+
+    this.historyManager.snapshot();
+
+    // Anchor insertion at the cursor if one exists; otherwise use the top-left
+    // corner so the image is immediately visible and draggable.
+    const pt = this.statusBar?.currentPointer;
+    const x = pt ? Math.floor(pt.x) : 0;
+    const y = pt ? Math.floor(pt.y) : 0;
+    const w = bitmap.width;
+    const h = bitmap.height;
+
+    const neededWidth = Math.max(this.canvasManager.width, x + w);
+    const neededHeight = Math.max(this.canvasManager.height, y + h);
+    if (neededWidth !== this.canvasManager.width || neededHeight !== this.canvasManager.height) {
+      this.canvasManager.resize(neededWidth, neededHeight);
+    }
+
+    const fCanvas = document.createElement('canvas');
+    fCanvas.width = w;
+    fCanvas.height = h;
+    fCanvas.getContext('2d').drawImage(bitmap, 0, 0);
+    this.canvasManager.floatingCanvas = fCanvas;
+
+    this.setActiveTool?.('select');
+    this.setSelection({ x, y, w, h });
+    this.canvasManager.persistToStorage();
+
+    if (bitmap.close) bitmap.close();
+
+    this.statusBar?.flash(`${sourceLabel} ${w}×${h}px image as floating selection`);
+    return { x, y, w, h };
+  }
+
   async copy() {
     const region = this.getSelection();
     if (!region) return;
@@ -58,39 +95,7 @@ export class ClipboardManager {
         if (!type) continue;
         const blob = await item.getType(type);
         const bitmap = await createImageBitmap(blob);
-
-        // Commit any active floating selection first!
-        this.commitFloatingSelection?.();
-
-        this.historyManager.snapshot();
-        
-        // Anchor paste at the cursor position if one exists, else 0,0.
-        const pt = this.statusBar?.currentPointer;
-        const x = pt ? Math.floor(pt.x) : 0;
-        const y = pt ? Math.floor(pt.y) : 0;
-        const w = bitmap.width;
-        const h = bitmap.height;
-
-        // Resize canvas if the pasted image exceeds current canvas dimensions
-        const neededWidth = Math.max(this.canvasManager.width, x + w);
-        const neededHeight = Math.max(this.canvasManager.height, y + h);
-        if (neededWidth !== this.canvasManager.width || neededHeight !== this.canvasManager.height) {
-          this.canvasManager.resize(neededWidth, neededHeight);
-        }
-
-        // Draw onto the offscreen floatingCanvas instead of the main canvas
-        const fCanvas = document.createElement('canvas');
-        fCanvas.width = w;
-        fCanvas.height = h;
-        fCanvas.getContext('2d').drawImage(bitmap, 0, 0);
-        this.canvasManager.floatingCanvas = fCanvas;
-
-        // Switch tool to select so user can move it
-        this.setActiveTool?.('select');
-
-        this.setSelection({ x, y, w, h });
-        this.canvasManager.persistToStorage();
-        this.statusBar?.flash(`Pasted ${w}\u00d7${h}px image as floating selection`);
+        await this.insertBitmapAsFloatingSelection(bitmap, { sourceLabel: 'Pasted' });
         return;
       }
       this.statusBar?.flash('Clipboard has no image to paste');

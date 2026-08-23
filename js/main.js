@@ -63,6 +63,9 @@ const canvasResizer = new CanvasResizer({
 canvasManager.onSizeChange = (w, h) => {
   statusBar.setCanvasSize(w, h);
   canvasResizer.reposition();
+  // Redraw any selection that CanvasManager.resize() preserved (clamped to the
+  // new bounds) so resizing the canvas no longer drops an active marquee.
+  setSelection(canvasManager.selection);
 };
 
 const colorInspector = new ColorInspector({
@@ -275,6 +278,7 @@ const clipboardManager = new ClipboardManager({
 
 // ---------- File operations ----------
 let fileHandle = null;
+const fileInput = document.getElementById('file-input');
 
 function persistSession() {
   canvasManager.persistToStorage();
@@ -326,13 +330,16 @@ function makeBlankSource(w, h) {
 }
 
 function openFile() {
-  document.getElementById('file-input').click();
+  fileInput.dataset.mode = 'open';
+  fileInput.click();
 }
 
-document.getElementById('file-input').addEventListener('change', async (e) => {
-  const file = e.target.files[0];
-  e.target.value = '';
-  if (!file) return;
+function importFile() {
+  fileInput.dataset.mode = 'import';
+  fileInput.click();
+}
+
+async function openImageFile(file) {
   const bitmap = await createImageBitmap(file);
   discardFloatingSelection();
   historyManager.snapshot();
@@ -341,6 +348,28 @@ document.getElementById('file-input').addEventListener('change', async (e) => {
   setSelection(null);
   persistSession();
   statusBar.flash(`Opened ${file.name}`);
+  bitmap.close?.();
+}
+
+async function importImageFile(file) {
+  const bitmap = await createImageBitmap(file);
+  await clipboardManager.insertBitmapAsFloatingSelection(bitmap, {
+    sourceLabel: `Imported ${file.name}`,
+  });
+  fileHandle = null;
+}
+
+fileInput.addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  const mode = fileInput.dataset.mode || 'open';
+  e.target.value = '';
+  fileInput.dataset.mode = '';
+  if (!file) return;
+  if (mode === 'import') {
+    await importImageFile(file);
+    return;
+  }
+  await openImageFile(file);
 });
 
 async function save() {
@@ -470,6 +499,9 @@ function toggleActionMenu(event) {
   menu.classList.add('open');
 }
 
+document.getElementById('btn-open-menu').addEventListener('click', (event) => {
+  toggleActionMenu(event);
+});
 document.getElementById('btn-rotate').addEventListener('click', (event) => {
   toggleActionMenu(event);
 });
@@ -727,7 +759,13 @@ async function copyAppIcon() {
   try {
     const svgText = await fetch(appIcon.src).then((response) => response.text());
     if (format === 'SVG') {
-      await navigator.clipboard.writeText(svgText);
+      const svgBlob = new Blob([svgText], { type: 'image/svg+xml' });
+      await navigator.clipboard.write([
+        new ClipboardItem({
+          'image/svg+xml': svgBlob,
+          'text/plain': new Blob([svgText], { type: 'text/plain' }),
+        }),
+      ]);
     } else {
       const size = Number(format.match(/\d+/)[0]);
       const image = await createImageBitmap(new Blob([svgText], { type: 'image/svg+xml' }));
@@ -758,6 +796,7 @@ const toolbar = new Toolbar({
   handlers: {
     newFile,
     openFile,
+    importFile,
     save,
     paste: () => clipboardManager.paste(),
     cut: () => clipboardManager.cut(),
@@ -923,13 +962,10 @@ window.addEventListener('drop', async (e) => {
   const file = e.dataTransfer?.files?.[0];
   if (file && file.type.startsWith('image/')) {
     const bitmap = await createImageBitmap(file);
-    discardFloatingSelection();
-    historyManager.snapshot();
-    canvasManager.loadFromSource(bitmap);
+    await clipboardManager.insertBitmapAsFloatingSelection(bitmap, {
+      sourceLabel: `Dropped ${file.name}`,
+    });
     fileHandle = null;
-    setSelection(null);
-    persistSession();
-    statusBar.flash(`Dropped ${file.name}`);
   }
 });
 

@@ -62,11 +62,28 @@
             </svg>
             <span><u>N</u>ew</span></button>
           <div class="rbtn-stack">
-            <button class="rbtn small" id="btn-open" data-tag="btn-open" title="Open (Ctrl+O)">
-              <svg class="icon size4" viewBox="0 0 20 20">
-                <path d="M2 6h4l2 2h10v9a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6z" />
-              </svg>
-              <span><u>O</u>pen</span></button>
+            <div class="action-menu">
+              <button class="rbtn small action-menu-trigger" id="btn-open-menu" data-tag="btn-open-menu" title="Open or import an image">
+                <svg class="icon size4" viewBox="0 0 20 20">
+                  <path d="M2 6h4l2 2h10v9a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6z" />
+                </svg>
+                <span><u>O</u>pen <span class="menu-arrow" aria-hidden="true">▾</span></span></button>
+              <div class="action-menu-items" role="menu" aria-label="Open options">
+                <button type="button" id="btn-open" data-tag="btn-open" role="menuitem" title="Open (Ctrl+O)">
+                  <svg class="icon" viewBox="0 0 20 20">
+                    <path fill="currentColor" d="M2 6h4l2 2h10v9a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6z" />
+                  </svg>
+                  <span>Open Image</span>
+                  <span class="menu-shortcut" aria-hidden="true">Ctrl+O</span>
+                </button>
+                <button type="button" id="btn-import" data-tag="btn-import" role="menuitem" title="Import image as floating selection">
+                  <svg class="icon" viewBox="0 0 20 20">
+                    <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M10 2v11M6 8l4-4 4 4M3 15h14v2H3z" />
+                  </svg>
+                  <span>Import Image</span>
+                </button>
+              </div>
+            </div>
             <button class="rbtn small" id="btn-save" data-tag="btn-save" title="Save (Ctrl+S)">
               <svg class="icon size4" viewBox="0 0 20 20">
                 <rect x="3" y="3" width="14" height="14" rx="1" />
@@ -132,8 +149,20 @@
                 </svg>
                 <span>Crop <span class="menu-arrow" aria-hidden="true">▾</span></span></button>
               <div class="action-menu-items" role="menu" aria-label="Crop options">
-                <button type="button" id="btn-crop" role="menuitem">Crop to selection</button>
-                <button type="button" id="btn-remove-bg" role="menuitem">Remove Background (Color Key)</button>
+                <button type="button" id="btn-crop" role="menuitem" title="Crop to selection">
+                  <svg class="icon" viewBox="0 0 20 20">
+                    <path fill="none" stroke="currentColor" stroke-linecap="round" d="M5 1v14a1 1 0 0 0 1 1h13M1 5h14a1 1 0 0 1 1 1v13" />
+                  </svg>
+                  <span>Crop to selection</span>
+                </button>
+                <button type="button" id="btn-remove-bg" role="menuitem" title="Remove background by color key">
+                  <svg class="icon" viewBox="0 0 20 20">
+                    <path fill="currentColor" d="M16.4 2.2l.5 1.2 1.2.5-1.2.5-.5 1.2-.5-1.2-1.2-.5 1.2-.5z" />
+                    <path fill="currentColor" d="M12.1 6.3l.5 1.1 1.1.5-1.1.5-.5 1.1-.5-1.1-1.1-.5 1.1-.5z" />
+                    <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M4.5 16.5 11 10M4.5 16.5l1.5-1.2" />
+                  </svg>
+                  <span>Remove Background (Color Key)</span>
+                </button>
               </div>
             </div>
             <button class="rbtn small" id="btn-canvas-size" data-tag="btn-canvas-size" title="Resize canvas">
@@ -151,10 +180,31 @@
                 </svg>
                 <span>Rotate <span class="menu-arrow" aria-hidden="true">▾</span></span></button>
               <div class="action-menu-items" role="menu" aria-label="Rotate options">
-                  <button type="button" id="btn-rotate-90" role="menuitem">Rotate 90</button>
-                <button type="button" id="btn-rotate-180" role="menuitem">Rotate 180</button>
-                <button type="button" id="btn-rotate-270" role="menuitem">Rotate 270</button>
-                <button type="button" id="btn-rotate-free" role="menuitem">Free Rotate</button>
+                <button type="button" id="btn-rotate-90" role="menuitem" title="Rotate 90°">
+                  <svg class="icon" viewBox="0 0 20 20">
+                    <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M14.14 5.86A6 6 0 1 0 18 10h-2a4 4 0 1 1-1.17-2.83L11.8 9.2V3h6l-1.66 1.66z" />
+                  </svg>
+                  <span>Rotate 90</span>
+                </button>
+                <button type="button" id="btn-rotate-180" role="menuitem" title="Rotate 180°">
+                  <svg class="icon" viewBox="0 0 20 20">
+                    <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M6.5 6.5 10 3.5l3.5 3M6.5 13.5 10 16.5l3.5-3M10 3.5v4M10 12.5v4" />
+                  </svg>
+                  <span>Rotate 180</span>
+                </button>
+                <button type="button" id="btn-rotate-270" role="menuitem" title="Rotate 270°">
+                  <svg class="icon" viewBox="0 0 20 20">
+                    <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M5.86 5.86A6 6 0 1 1 2 10h2a4 4 0 1 0 1.17-2.83L8.2 9.2V3h-6l1.66 1.66z" />
+                  </svg>
+                  <span>Rotate 270</span>
+                </button>
+                <button type="button" id="btn-rotate-free" role="menuitem" title="Free rotate by angle">
+                  <svg class="icon" viewBox="0 0 20 20">
+                    <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M14.14 5.86A6 6 0 1 0 18 10h-2a4 4 0 1 1-1.17-2.83L11.8 9.2V3h6l-1.66 1.66z" />
+                    <circle cx="8.2" cy="12.8" r="1.1" fill="currentColor" />
+                  </svg>
+                  <span>Free Rotate</span>
+                </button>
               </div>
             </div>
             <div class="action-menu">
@@ -164,8 +214,18 @@
                 </svg>
                 <span>Flip <span class="menu-arrow" aria-hidden="true">▾</span></span></button>
               <div class="action-menu-items" role="menu" aria-label="Flip options">
-                <button type="button" id="btn-flip-horizontal" role="menuitem">Flip Horizontal</button>
-                <button type="button" id="btn-flip-vertical" role="menuitem">Flip Vertical</button>
+                <button type="button" id="btn-flip-horizontal" role="menuitem" title="Flip horizontal">
+                  <svg class="icon" viewBox="0 0 20 20">
+                    <path fill="none" stroke="currentColor" stroke-linejoin="round" d="M10 2v16M4 5l6 5-6 5V5zm12 0l-6 5 6 5V5z" />
+                  </svg>
+                  <span>Flip Horizontal</span>
+                </button>
+                <button type="button" id="btn-flip-vertical" role="menuitem" title="Flip vertical">
+                  <svg class="icon" viewBox="0 0 20 20">
+                    <path fill="none" stroke="currentColor" stroke-linejoin="round" d="M2 10h16M5 4l5 6-5 6V4zm10 0l-5 6 5 6V4z" />
+                  </svg>
+                  <span>Flip Vertical</span>
+                </button>
               </div>
             </div>
           </div>

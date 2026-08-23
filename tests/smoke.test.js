@@ -23,6 +23,17 @@ test('Crop menu owns Remove Background', () => {
   assert.equal((html.match(/id="btn-remove-bg"/g) || []).length, 1);
   assert.ok(!/<button[^>]*class="[^"]*rbtn[^\"]*"[^>]*id="btn-remove-bg"/.test(html));
 });
+test('Open menu owns Open and Import options', () => {
+  const openMenuStart = html.indexOf('id="btn-open-menu"');
+  const openMenuEnd = html.indexOf('</div>', html.indexOf('aria-label="Open options"'));
+  const openMenu = html.slice(openMenuStart, openMenuEnd);
+
+  assert.ok(openMenu.includes('id="btn-open"'));
+  assert.ok(openMenu.includes('id="btn-import"'));
+  assert.equal((html.match(/id="btn-import"/g) || []).length, 1);
+  assert.ok(!/<button[^>]*class="[^\"]*rbtn[^\\\"]*"[^>]*id="btn-import"/.test(html));
+  assert.match(openMenu, /<svg class="icon"/);
+});
 
 test('file picker is single, hidden, and not rendered as a native control', () => {
   assert.equal((html.match(/id="file-input"/g) || []).length, 1);

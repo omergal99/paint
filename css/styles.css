@@ -637,6 +637,7 @@ body {
   background: #fff;
   transform: translateZ(0);
   display: none;
+  touch-action: none;
 }
 .selection-handle:not([hidden]) { display: block; }
 .app-icon { cursor: pointer; }
@@ -661,6 +662,7 @@ body {
   position: absolute;
   background: var(--w10-accent);
   z-index: 5;
+  touch-action: none;
 }
 .handle-right {
   top: 0;
@@ -887,15 +889,34 @@ dialog h3 {
 }
 .action-menu.open .action-menu-items { display: grid; }
 .action-menu-items button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-width: max-content;
+  padding: 7px 10px;
   border: 0;
   background: transparent;
   color: var(--w10-text);
-  padding: 7px 9px;
+  font-size: 13px;
   text-align: left;
   cursor: pointer;
   white-space: nowrap;
 }
-.action-menu-items button:hover { background: var(--w10-hover); }
+.action-menu-items button .icon {
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  stroke-width: 1.5;
+}
+.action-menu-items button:hover {
+  background: var(--w10-hover);
+}
+.action-menu-items button .menu-shortcut {
+  margin-left: 14px;
+  color: var(--w10-text-dim);
+  font-size: 11px;
+}
 dialog label {
   display: flex;
   justify-content: space-between;
@@ -995,6 +1016,10 @@ dialog input[type="number"] {
   .main-area {
     order: 1;
   }
+  .selection-handle {
+    width: 16px;
+    height: 16px;
+  }
   .right-sidebar {
     position: absolute;
     right: 0;
@@ -1002,5 +1027,19 @@ dialog input[type="number"] {
     bottom: 0;
     z-index: 50;
     box-shadow: -4px 0 10px rgba(0,0,0,0.1);
+  }
+  .handle-right {
+    width: 14px;
+    right: -7px;
+  }
+  .handle-bottom {
+    height: 14px;
+    bottom: -7px;
+  }
+  .handle-corner {
+    width: 18px;
+    height: 18px;
+    right: -12px;
+    bottom: -12px;
   }
 }

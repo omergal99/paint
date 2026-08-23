@@ -3,7 +3,7 @@ export class Toolbar {
   constructor({ root, toolManager, setLineWidth, handlers }) {
     this.root = root;
     this.toolManager = toolManager;
-    this.handlers = handlers; // {newFile, openFile, save, saveAs, copy, cut, paste, crop, openResizeDialog, undo, redo}
+    this.handlers = handlers; // {newFile, openFile, importFile, save, saveAs, copy, cut, paste, crop, openResizeDialog, undo, redo}
 
     this.toolButtons = [...root.querySelectorAll('.tool-btn')];
     this.shapeButtons = [...root.querySelectorAll('.shape-btn')];
@@ -84,6 +84,7 @@ export class Toolbar {
   _bindFileButtons() {
     document.getElementById('btn-new').addEventListener('click', () => this.handlers.newFile());
     document.getElementById('btn-open').addEventListener('click', () => this.handlers.openFile());
+    document.getElementById('btn-import').addEventListener('click', () => this.handlers.importFile());
     document.getElementById('btn-save').addEventListener('click', () => this.handlers.save());
     document.getElementById('btn-paste').addEventListener('click', () => this.handlers.paste());
     document.getElementById('btn-cut').addEventListener('click', () => this.handlers.cut());

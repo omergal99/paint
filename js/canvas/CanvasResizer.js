@@ -27,7 +27,9 @@ export class CanvasResizer {
   }
 
   _bindHandle(handle, axis) {
-    handle.addEventListener('mousedown', (e) => {
+    handle.style.touchAction = 'none';
+    handle.addEventListener('pointerdown', (e) => {
+      if (e.button != null && e.button !== 0) return;
       e.preventDefault();
       e.stopPropagation();
       const startX = e.clientX;
@@ -35,11 +37,13 @@ export class CanvasResizer {
       const startW = this.canvasManager.width;
       const startH = this.canvasManager.height;
       const scale = this.viewportManager.zoom / 100;
+      const pointerId = e.pointerId;
 
       this.ghost.style.display = 'block';
       this._drawGhost(startW, startH);
 
       const onMove = (ev) => {
+        if (ev.pointerId !== pointerId) return;
         const dx = (ev.clientX - startX) / scale;
         const dy = (ev.clientY - startY) / scale;
         let newW = startW;
@@ -49,10 +53,22 @@ export class CanvasResizer {
         this._drawGhost(newW, newH);
       };
 
-      const onUp = (ev) => {
-        document.removeEventListener('mousemove', onMove);
-        document.removeEventListener('mouseup', onUp);
+      const cleanup = () => {
+        handle.removeEventListener('pointermove', onMove);
+        handle.removeEventListener('pointerup', onUp);
+        handle.removeEventListener('pointercancel', onCancel);
+        handle.removeEventListener('lostpointercapture', onCancel);
         this.ghost.style.display = 'none';
+      };
+
+      const onCancel = (ev) => {
+        if (ev?.pointerId != null && ev.pointerId !== pointerId) return;
+        cleanup();
+      };
+
+      const onUp = (ev) => {
+        if (ev.pointerId !== pointerId) return;
+        cleanup();
 
         const dx = (ev.clientX - startX) / scale;
         const dy = (ev.clientY - startY) / scale;
@@ -68,8 +84,11 @@ export class CanvasResizer {
         }
       };
 
-      document.addEventListener('mousemove', onMove);
-      document.addEventListener('mouseup', onUp);
+      handle.addEventListener('pointermove', onMove);
+      handle.addEventListener('pointerup', onUp);
+      handle.addEventListener('pointercancel', onCancel);
+      handle.addEventListener('lostpointercapture', onCancel);
+      handle.setPointerCapture(pointerId);
     });
   }
 

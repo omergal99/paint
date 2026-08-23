@@ -7,6 +7,18 @@
 
 const STORAGE_KEY = 'omerpaint:last-canvas';
 
+/** Clamp a {x,y,w,h} region so it stays fully inside a w×h canvas (min 1×1). */
+function clampRegionToBounds(region, maxW, maxH) {
+  const w = Math.min(Math.max(1, Math.round(region.w)), maxW);
+  const h = Math.min(Math.max(1, Math.round(region.h)), maxH);
+  return {
+    x: Math.min(Math.max(0, Math.round(region.x)), maxW - w),
+    y: Math.min(Math.max(0, Math.round(region.y)), maxH - h),
+    w,
+    h,
+  };
+}
+
 export class CanvasManager {
   constructor({ canvas, overlay, width = 800, height = 600, backgroundColor = '#ffffff' }) {
     this.canvas = canvas;
@@ -99,6 +111,13 @@ export class CanvasManager {
     snapshot.height = this.height;
     snapshot.getContext('2d').drawImage(this.canvas, 0, 0);
 
+    // Preserve an active selection (and any floating image) across the resize,
+    // clamped to the new canvas bounds, so resizing never silently drops it.
+    const prevSelection = this.selection && this.selection.w > 0 && this.selection.h > 0
+      ? { ...this.selection }
+      : null;
+    const prevFloating = this.floatingCanvas;
+
     this._setSize(newWidth, newHeight);
     this.ctx.save();
     this.ctx.fillStyle = fillColor;
@@ -107,7 +126,8 @@ export class CanvasManager {
     this.ctx.restore();
 
     this.clearOverlay();
-    this.selection = null;
+    this.selection = prevSelection ? clampRegionToBounds(prevSelection, newWidth, newHeight) : null;
+    this.floatingCanvas = this.selection ? prevFloating : null;
     if (this.onSizeChange) this.onSizeChange(newWidth, newHeight);
   }
 

@@ -1,44 +1,44 @@
-# paint: Next Steps
+# Future Ideas 2
 
-This document follows the first production-hardening pass and prioritizes work by user value and technical risk.
+This file collects the next wave of improvements after the current paint and sidebar work.
 
-## 1. Real offline update lifecycle
-- Add a generated build version to the Service Worker cache name.
-- Show an "Update available" prompt when a new worker reaches `waiting`.
-- Add an explicit reload action so a user never loses an active drawing.
-- Run the Lighthouse PWA audit against the deployed GitHub Pages URL as well as localhost.
+## 1. PWA + Offline First
+- Turn the app into a real installable PWA with a stronger offline story.
+- Cache the shell, fonts, icons, and the last canvas state with a service worker.
+- Add an update banner so users can reload when a new version is available.
 
-## 2. Non-destructive transform model
-- Store selection transforms as operations until commit instead of repeatedly rasterizing during pointer movement.
-- Add rotation handles with snapping at 0, 45, 90, 180, 270, and 360 degrees.
-- Add keyboard modifiers for aspect-ratio locking and center-based scaling.
-- Add a cancel action that restores the pre-transform snapshot.
+## 2. Automatic Updates
+- Detect when a new service worker is waiting.
+- Show a small toast or banner with a `Reload` action instead of forcing a hard refresh.
+- Keep the current canvas state safe before reloading.
 
-## 3. Better document persistence
-- Replace data URLs in global history with PNG or WebP `Blob` records.
-- Add storage quota warnings before writes and an automatic least-recently-used cleanup policy.
-- Add named documents and an import/export backup file for settings and history metadata.
-- Add recovery of the last autosaved document after an interrupted session.
+## 3. Better Mobile Canvas UX
+- Add a dedicated mobile view with larger touch targets and a simpler bottom toolbar.
+- Make the canvas stage support full-screen drawing on phones and tablets.
+- Add a vertical-only extend mode for quick sketching on narrow screens.
 
-## 4. Selection and editing tools
-- Add freeform and polygon selections with marching-ants rendering.
-- Add a selection mask abstraction so fill, blur, background removal, and filters share boundaries.
-- Add a brush cursor preview that reflects line width, opacity, and eraser mode.
-- Add non-destructive blur and pixelation tools for sensitive content.
+## 4. Image Import Flow
+- Add drag-and-drop from the file system directly into the canvas as a floating image.
+- Add a quick import button near `Open` and keep `Open` as a replace action.
+- Support paste-like behavior for imported images so they can be moved immediately.
 
-## 5. Accessibility and input quality
-- Add keyboard navigation across ribbon groups and settings tabs.
-- Add visible focus states and announce tool changes through an ARIA live region.
-- Add pointer pressure support for compatible styluses and a configurable palm-rejection mode.
-- Add reduced-motion styling and high-contrast theme checks to CI.
+## 5. Selection Improvements
+- Add rotate and resize handles around floating selections.
+- Support corner dragging, edge dragging, and keyboard nudging with better touch parity.
+- Add a visible selection toolbar for commit, cancel, duplicate, flip, and crop.
 
-## 6. Performance measurement
-- Record Web Vitals only after consent and sample production telemetry.
-- Add canvas-size stress tests for large images and low-memory devices.
-- Track dropped frames during active strokes separately from idle FPS.
-- Add Playwright smoke tests for drawing, undo/redo, selection resize, transform, autosave, and offline reload.
+## 6. Sidebar Expansion
+- Split the sidebar into tabs for history, settings, and AI actions.
+- Add search and filter controls for history entries.
+- Make the sidebar resizable on desktop and slide-over on mobile.
 
-## 7. Collaboration and integrations
-- Add a local command palette for tools and actions.
-- Keep AI integrations opt-in, provider-configurable, and explicit about whether image data leaves the browser.
-- Add a safe adapter interface for image generation and filtering providers without coupling the editor to one vendor.
+## 7. Safer Saving
+- Add an explicit save status area so users can see when the file was written.
+- Support `Save As` with friendly filenames and a recent-files list.
+- Keep a lightweight local backup trail so work is recoverable after crashes.
+
+## 8. Accessibility Pass
+- Improve keyboard navigation across the ribbon and sidebar.
+- Add more visible focus states and shortcut hints.
+- Make selection and resize handles easier to reach with assistive input.
+
