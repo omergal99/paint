@@ -1,10 +1,13 @@
 // js/canvas/ViewportManager.js
 // Handles zoom. Unlike real Windows Paint, the percentage field is directly
 // editable (per the brief) in addition to +/- buttons and Ctrl+Scroll.
+// The last zoom is persisted so a page refresh returns to the same size
+// (instead of resetting to 100%).
 
 const MIN_ZOOM = 10;
 const MAX_ZOOM = 800;
 const STEP = 10;
+const ZOOM_STORAGE_KEY = 'paint:zoom';
 
 export class ViewportManager {
   constructor({ stage, canvasManager, zoomInBtn, zoomOutBtn, zoomInput, zoomSlider }) {
@@ -14,7 +17,7 @@ export class ViewportManager {
     this.zoomOutBtn = zoomOutBtn;
     this.zoomInput = zoomInput;
     this.zoomSlider = zoomSlider;
-    this.zoom = 100; // percent
+    this.zoom = this._restoreZoom(); // percent
 
     this.onZoomChange = null; // callback(zoomPercent)
 
@@ -49,7 +52,27 @@ export class ViewportManager {
     percent = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, Math.round(percent)));
     this.zoom = percent;
     this._applyZoom();
+    this._persistZoom();
     if (this.onZoomChange) this.onZoomChange(this.zoom);
+  }
+
+  _restoreZoom() {
+    try {
+      const saved = localStorage.getItem(ZOOM_STORAGE_KEY);
+      const parsed = parseInt(saved, 10);
+      if (Number.isNaN(parsed)) return 100;
+      return Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, parsed));
+    } catch {
+      return 100;
+    }
+  }
+
+  _persistZoom() {
+    try {
+      localStorage.setItem(ZOOM_STORAGE_KEY, String(this.zoom));
+    } catch (err) {
+      console.warn('Unable to save zoom:', err);
+    }
   }
 
   _applyZoom() {

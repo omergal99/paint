@@ -80,6 +80,14 @@ test('Keyboard paste defers to the native paste event for macOS support', () => 
     'Copy must encode the PNG synchronously to keep the Safari user gesture alive');
 });
 
+test('Zoom is persisted so a refresh keeps the last zoom level', () => {
+  const vpm = read('js/canvas/ViewportManager.js');
+  assert.match(vpm, /ZOOM_STORAGE_KEY/);
+  assert.match(vpm, /this\.zoom\s*=\s*this\._restoreZoom\(\)/);
+  assert.match(vpm, /_persistZoom\(\)/);
+  assert.match(vpm, /localStorage\.setItem\(ZOOM_STORAGE_KEY/);
+});
+
 test('Service Worker precache entries exist', () => {
   const shellBlock = serviceWorker.match(/const SHELL = \[(.*?)\];/s)?.[1] || '';
   const assets = [...shellBlock.matchAll(/['"](.*?)['"]/g)].map((match) => match[1]);
