@@ -58,6 +58,28 @@ test('telemetry does not log every dropped frame', () => {
   assert.match(read('js/telemetry.js'), /frame-drop-summary/);
 });
 
+test('Text font size is driven by the shared Shapes size-select (no separate dropdown)', () => {
+  // The dedicated font dropdown was removed — the Shapes size-select is the
+  // single size control for both brush/line width and the text tool.
+  assert.equal((html.match(/id="font-size"/g) || []).length, 0);
+  assert.equal((html.match(/id="custom-font-size"/g) || []).length, 0);
+  assert.equal((html.match(/id="line-size"/g) || []).length, 1);
+  assert.equal((html.match(/id="custom-line-size"/g) || []).length, 1);
+  // The shared control feeds BOTH the line width and the font size.
+  assert.match(read('js/ui/Toolbar.js'), /_bindLineSize\(setLineWidth, setFontSize\)/);
+  assert.match(read('js/ui/Toolbar.js'), /setLineWidth\(size\);\s*setFontSize\(size\)/s);
+  assert.match(main, /getFontSize:\s*\(\)\s*=>\s*currentFontSize/);
+});
+
+test('Keyboard paste defers to the native paste event for macOS support', () => {
+  assert.match(read('js/main.js'), /document\.addEventListener\('paste'/);
+  const shortcutBlock = main.match(/window\.addEventListener\('keydown'[\s\S]*?\n\}\);\n/)?.[0] || '';
+  assert.ok(!/case 'v':[\s\S]*clipboardManager\.paste\(\)/.test(shortcutBlock),
+    'Cmd+V must not route through navigator.clipboard.read()');
+  assert.match(read('js/clipboard/ClipboardManager.js'), /_pngBlobFromCanvas/,
+    'Copy must encode the PNG synchronously to keep the Safari user gesture alive');
+});
+
 test('Service Worker precache entries exist', () => {
   const shellBlock = serviceWorker.match(/const SHELL = \[(.*?)\];/s)?.[1] || '';
   const assets = [...shellBlock.matchAll(/['"](.*?)['"]/g)].map((match) => match[1]);

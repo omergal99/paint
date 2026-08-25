@@ -1,6 +1,6 @@
 // js/ui/Toolbar.js
 export class Toolbar {
-  constructor({ root, toolManager, setLineWidth, handlers }) {
+  constructor({ root, toolManager, setLineWidth, setFontSize, handlers }) {
     this.root = root;
     this.toolManager = toolManager;
     this.handlers = handlers; // {newFile, openFile, importFile, save, saveAs, copy, cut, paste, crop, openResizeDialog, undo, redo}
@@ -17,7 +17,7 @@ export class Toolbar {
     this._bindTools();
     this._bindShapes();
     this._bindFillModes();
-    this._bindLineSize(setLineWidth);
+    this._bindLineSize(setLineWidth, setFontSize);
     this._bindFileButtons();
     this._bindUndoRedo();
 
@@ -57,14 +57,19 @@ export class Toolbar {
     });
   }
 
-  _bindLineSize(setLineWidth) {
+  // One shared size control (the size-select in the Shapes group) drives both
+  // the drawing line width AND the text-tool font size, so the dropdown works
+  // for text exactly as it works for the brush.
+  _bindLineSize(setLineWidth, setFontSize) {
     const select = this.root.querySelector('#line-size');
     const customInput = this.root.querySelector('#custom-line-size');
-    
+
     const applySize = (val) => {
       let size = parseInt(val, 10);
       if (isNaN(size) || size < 1) size = 1;
+      if (size > 300) size = 300;
       setLineWidth(size);
+      setFontSize(size);
       customInput.value = size;
       // Select matching option if exists
       const opt = Array.from(select.options).find(o => o.value == size);

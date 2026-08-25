@@ -208,10 +208,13 @@ function restoreToolSelection() {
   }
 }
 
-// Font size state
+// Font size state — driven by the SAME shared size control as the brush
+// (the size-select in the Shapes group), so it stays consistent with the
+// value shown in that dropdown.
 let currentFontSize = (() => {
   try {
-    const saved = localStorage.getItem('paint:font-size');
+    // Prefer the shared size control's persisted value, then the legacy key.
+    const saved = localStorage.getItem('paint:line-width') || localStorage.getItem('paint:font-size');
     return saved ? parseInt(saved, 10) : 24;
   } catch {
     return 24;
@@ -234,9 +237,9 @@ const toolContext = {
   getShapeKind: () => toolbar.getShapeKind(),
   getShapeFillMode: () => toolbar.getFillMode(),
   getFontSize: () => currentFontSize,
-  getFontFamily: () => 'Segoe UI, sans-serif',
+  getFontFamily: () => "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
   setFontSize: (size) => {
-    currentFontSize = Math.max(1, Math.min(100, parseInt(size, 10)));
+    currentFontSize = Math.max(1, Math.min(300, parseInt(size, 10)));
     try {
       localStorage.setItem('paint:font-size', currentFontSize);
     } catch (err) {
@@ -793,6 +796,7 @@ const toolbar = new Toolbar({
   root: document.getElementById('ribbon'),
   toolManager,
   setLineWidth: (w) => (canvasManager.lineWidth = w),
+  setFontSize: (size) => toolContext.setFontSize(size),
   handlers: {
     newFile,
     openFile,
@@ -901,19 +905,27 @@ window.addEventListener('keydown', (e) => {
         historyManager.redo();
         return;
       case 'c':
-        if (typing) return;
+      case 'x': {
+        // Defer to the browser only when the focused field has selected text
+        // worth copying natively. Otherwise treat Cmd/Ctrl+C/X as an image
+        // clipboard action even when a ribbon control (e.g. a size input)
+        // still holds focus — previously the shortcut silently did nothing.
+        const el = document.activeElement;
+        const editable = el instanceof HTMLTextAreaElement || el?.isContentEditable ||
+          (el instanceof HTMLInputElement &&
+            !['checkbox', 'radio', 'range', 'color', 'button', 'submit'].includes(el.type));
+        const hasTextSelection = editable &&
+          typeof el.selectionStart === 'number' && el.selectionStart !== el.selectionEnd;
+        if (editable && hasTextSelection) return;
         e.preventDefault();
-        clipboardManager.copy();
+        if (e.key.toLowerCase() === 'c') clipboardManager.copy();
+        else clipboardManager.cut();
         return;
-      case 'x':
-        if (typing) return;
-        e.preventDefault();
-        clipboardManager.cut();
-        return;
+      }
       case 'v':
-        if (typing) return;
-        e.preventDefault();
-        clipboardManager.paste();
+        // Handled by the native 'paste' event listener below: it carries the
+        // clipboard image without any read permission, so Cmd+V works on Mac
+        // (Safari blocks navigator.clipboard.read() outside real gestures).
         return;
       case 's':
         e.preventDefault();
@@ -953,6 +965,35 @@ window.addEventListener('keydown', (e) => {
 
 const tool = TOOL_KEYS[e.key.toLowerCase()];
   if (tool) toolManager.setActive(tool);
+});
+
+// ---------- Native paste events (Cmd/Ctrl+V on any OS, incl. macOS) ----------
+// The browser dispatches a real 'paste' event for Cmd+V with clipboard contents
+// attached — no async clipboard-read permission needed (Safari on Mac blocks
+// navigator.clipboard.read() most of the time).
+document.addEventListener('paste', async (e) => {
+  const target = e.target;
+  const editingText = target instanceof HTMLElement &&
+    (target.tagName === 'TEXTAREA' || target.tagName === 'INPUT' || target.isContentEditable);
+  if (editingText) return; // let form fields receive normal text paste
+
+  const items = e.clipboardData?.items;
+  if (items) {
+    for (const item of items) {
+      if (!item.type.startsWith('image/')) continue;
+      const file = item.getAsFile();
+      if (!file) continue;
+      e.preventDefault();
+      try {
+        await clipboardManager.insertImageBlob(file, { sourceLabel: 'Pasted' });
+      } catch (err) {
+        console.error('Paste failed:', err);
+        statusBar.flash('Paste failed — unsupported image data');
+      }
+      return;
+    }
+  }
+  statusBar.flash('Clipboard has no image to paste');
 });
 
 // ---------- Drag and Drop ----------

@@ -1,8 +1,14 @@
 // js/clipboard/ClipboardManager.js
-// Real OS-clipboard image copy/cut/paste, targeting Chrome/Edge.
-//   Copy:  canvas region -> blob -> ClipboardItem -> navigator.clipboard.write()
-//   Paste: navigator.clipboard.read() -> find image/png -> createImageBitmap()
-//          -> drawn at its NATIVE resolution (never downscaled to fit the view).
+// Real OS-clipboard image copy/cut/paste, targeting Chrome/Edge/Safari/Firefox.
+//   Copy:  canvas region -> PNG blob -> ClipboardItem -> navigator.clipboard.write()
+//          The PNG is encoded SYNCHRONOUSLY (toDataURL) so the clipboard write
+//          starts in the same task as the Cmd+C keystroke. Safari/macOS expires
+//          its user-gesture window across awaits, which silently broke Cmd+C.
+//   Paste: keyboard Cmd/Ctrl+V is served by the native 'paste' event (see
+//          main.js), which carries the image with no permission prompt on any
+//          platform; navigator.clipboard.read() remains the toolbar-button
+//          fallback. A last-copied in-app blob keeps paste working even when
+//          the OS clipboard API is denied.
 
 export class ClipboardManager {
   constructor({ canvasManager, historyManager, getSelection, setSelection, statusBar, setActiveTool, commitFloatingSelection }) {
@@ -13,6 +19,18 @@ export class ClipboardManager {
     this.statusBar = statusBar;
     this.setActiveTool = setActiveTool;
     this.commitFloatingSelection = commitFloatingSelection;
+    // Last PNG we produced ourselves — fallback when the OS clipboard is blocked.
+    this.lastCopiedBlob = null;
+  }
+
+  // Synchronous canvas -> PNG Blob (no awaits, keeps user activation alive).
+  _pngBlobFromCanvas(canvas) {
+    const dataUrl = canvas.toDataURL('image/png');
+    const base64 = dataUrl.slice(dataUrl.indexOf(',') + 1);
+    const binary = atob(base64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+    return new Blob([bytes], { type: 'image/png' });
   }
 
   async insertBitmapAsFloatingSelection(bitmap, { sourceLabel = 'Pasted' } = {}) {
@@ -54,27 +72,42 @@ export class ClipboardManager {
 
   async copy() {
     const region = this.getSelection();
-    if (!region) return;
-    let regionCanvas;
-    if (this.canvasManager.floatingCanvas) {
-      regionCanvas = this.canvasManager.floatingCanvas;
-    } else {
-      regionCanvas = this.canvasManager.extractRegion(region);
+    if (!region) {
+      this.statusBar?.flash('Select an area to copy');
+      return false;
     }
-    const blob = await new Promise((resolve) => regionCanvas.toBlob(resolve, 'image/png'));
-    if (!blob) return;
+    const regionCanvas = this.canvasManager.floatingCanvas || this.canvasManager.extractRegion(region);
+
+    // Encode synchronously BEFORE any await so navigator.clipboard.write()
+    // runs inside the user gesture (required on macOS/Safari).
+    let blob;
     try {
-      await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })]);
-      this.statusBar?.flash('Copied to clipboard');
+      blob = this._pngBlobFromCanvas(regionCanvas);
     } catch (err) {
       console.error('Copy failed:', err);
-      this.statusBar?.flash('Copy failed — clipboard permission denied');
+      this.statusBar?.flash('Copy failed — could not encode image');
+      return false;
     }
+    this.lastCopiedBlob = blob;
+
+    try {
+      if (typeof ClipboardItem !== 'function') throw new Error('ClipboardItem unsupported');
+      await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+      this.statusBar?.flash('Copied to clipboard');
+    } catch (err) {
+      console.error('OS clipboard write failed:', err);
+      // The image is kept in-app, so paste within this tab still works.
+      this.statusBar?.flash('Copied internally — OS clipboard unavailable');
+    }
+    return true;
   }
 
   async cut() {
     const region = this.getSelection();
-    if (!region) return;
+    if (!region) {
+      this.statusBar?.flash('Select an area to cut');
+      return;
+    }
     await this.copy();
     if (this.canvasManager.floatingCanvas) {
       this.canvasManager.floatingCanvas = null;
@@ -87,6 +120,11 @@ export class ClipboardManager {
     this.canvasManager.persistToStorage();
   }
 
+  async insertImageBlob(blob, { sourceLabel = 'Pasted' } = {}) {
+    const bitmap = await createImageBitmap(blob);
+    return this.insertBitmapAsFloatingSelection(bitmap, { sourceLabel });
+  }
+
   async paste() {
     try {
       const items = await navigator.clipboard.read();
@@ -94,13 +132,21 @@ export class ClipboardManager {
         const type = item.types.find((t) => t.startsWith('image/'));
         if (!type) continue;
         const blob = await item.getType(type);
-        const bitmap = await createImageBitmap(blob);
-        await this.insertBitmapAsFloatingSelection(bitmap, { sourceLabel: 'Pasted' });
+        await this.insertImageBlob(blob, { sourceLabel: 'Pasted' });
         return;
       }
       this.statusBar?.flash('Clipboard has no image to paste');
     } catch (err) {
       console.error('Paste failed:', err);
+      // OS clipboard read denied — fall back to the last image copied here.
+      if (this.lastCopiedBlob) {
+        try {
+          await this.insertImageBlob(this.lastCopiedBlob, { sourceLabel: 'Pasted (in-app)' });
+          return;
+        } catch (fallbackErr) {
+          console.error('In-app paste fallback failed:', fallbackErr);
+        }
+      }
       this.statusBar?.flash('Paste failed — clipboard permission denied');
     }
   }

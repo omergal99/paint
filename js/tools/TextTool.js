@@ -40,7 +40,11 @@ export class TextTool {
     box.style.left = `${pt.x}px`;
     box.style.top = `${pt.y}px`;
     box.style.color = ctx.canvasManager.primaryColor;
+    // NOTE: assigning the `font` shorthand resets sub-properties, so the shared
+    // line-height must be re-applied afterwards or the live preview drifts out
+    // of alignment with the text committed to the canvas.
     box.style.font = `${ctx.getFontSize()}px ${ctx.getFontFamily()}`;
+    box.style.lineHeight = '1.2';
     ctx.stage.appendChild(box);
     box.focus();
 
@@ -76,8 +80,11 @@ export class TextTool {
       c.fillStyle = ctx.canvasManager.primaryColor;
       c.font = `${fontSize}px ${ctx.getFontFamily()}`;
       c.textBaseline = 'top';
+      // Compensate for the 1px dashed border of the live .op-text-box preview
+      // so committed text lands exactly where the user saw it while typing.
+      const borderOffset = 1;
       text.split('\n').forEach((line, i) => {
-        c.fillText(line, x, y + i * fontSize * 1.2);
+        c.fillText(line, x + borderOffset, y + borderOffset + i * fontSize * 1.2);
       });
       c.restore();
       ctx.canvasManager.persistToStorage();
