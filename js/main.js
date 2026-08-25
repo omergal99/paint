@@ -312,7 +312,7 @@ function newFile() {
 }
 
 async function doNewFile() {
-  await sidebar.saveCurrentToHistory();
+  if (shouldAutoSaveHistory()) await sidebar.saveCurrentToHistory();
   discardFloatingSelection();
   historyManager.clear();
   fileHandle = null;
@@ -377,7 +377,7 @@ fileInput.addEventListener('change', async (e) => {
 
 async function save() {
   commitFloatingSelection();
-  sidebar.saveCurrentToHistory();
+  if (shouldAutoSaveHistory()) sidebar.saveCurrentToHistory();
   if (window.showSaveFilePicker) {
     try {
       if (!fileHandle) {
@@ -589,23 +589,131 @@ function saveSettings() {
         buttonVisibility[button.id] = !button.hidden && button.style.display !== 'none';
       });
     });
+    const historyAutoSave = (document.getElementById('history-auto-save-toggle')?.checked
+      ?? document.getElementById('setting-history-auto-save')?.checked) ?? true;
+    const historyAutoSaveMode = document.getElementById('setting-history-auto-save-mode')?.value || 'all';
     localStorage.setItem(SETTINGS_KEY, JSON.stringify({
       darkMode: dmCheckbox.checked,
       showStatusBar: sbCheckbox.checked,
       showColorInspector: ciCheckbox.checked,
       canvasBackground: bgSelect.value,
+      historyAutoSave,
+      historyAutoSaveMode,
       ribbonVisibility,
       buttonVisibility,
     }));
   } catch (error) { console.warn('Unable to save settings:', error); }
 }
 
+// ---------- History preferences + export helpers ----------
+function getHistoryPrefs() {
+  const s = readSettings();
+  return {
+    autoSave: s.historyAutoSave !== false, // default: automatic
+    mode: s.historyAutoSaveMode || 'all',
+  };
+}
+
+// Auto-save on "regular" events (Ctrl+S, new file). Manual Save Current always
+// works on its own.
+function shouldAutoSaveHistory() {
+  const { autoSave, mode } = getHistoryPrefs();
+  return autoSave && mode === 'all';
+}
+
+// Auto-save when the page is about to close (beforeunload).
+function shouldAutoSaveOnClose() {
+  const { autoSave, mode } = getHistoryPrefs();
+  return autoSave && (mode === 'all' || mode === 'close');
+}
+
+function syncHistoryControls(saved) {
+  const prefs = saved
+    ? { autoSave: saved.historyAutoSave !== false, mode: saved.historyAutoSaveMode || 'all' }
+    : getHistoryPrefs();
+  const t1 = document.getElementById('history-auto-save-toggle');
+  const t2 = document.getElementById('setting-history-auto-save');
+  const m = document.getElementById('setting-history-auto-save-mode');
+  if (t1) t1.checked = prefs.autoSave;
+  if (t2) t2.checked = prefs.autoSave;
+  if (m) m.value = prefs.mode;
+}
+
+function syncHistoryLimitSelect(value) {
+  const sidebarSel = document.getElementById('history-save-limit');
+  const settingsSel = document.getElementById('setting-history-save-limit');
+  if (sidebarSel) sidebarSel.value = String(value);
+  if (settingsSel) settingsSel.value = String(value);
+}
+
+async function exportHistoryItem(session, index) {
+  const stamp = new Date(session.timestamp).toISOString().replace(/[:.]/g, '-').slice(0, 19);
+  const name = `history-${index + 1}-${stamp}.png`;
+  const a = document.createElement('a');
+  a.href = session.dataUrl;
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
+async function exportAllHistory() {
+  const sessions = await sidebar.globalHistory.getSessions();
+  if (!sessions.length) {
+    statusBar.flash('No history to export');
+    return;
+  }
+  // Preferred: let the user pick a folder and write every image into it.
+  if (window.showDirectoryPicker) {
+    try {
+      const dir = await window.showDirectoryPicker({ mode: 'readwrite' });
+      for (let i = 0; i < sessions.length; i += 1) {
+        const stamp = new Date(sessions[i].timestamp).toISOString().replace(/[:.]/g, '-').slice(0, 19);
+        const name = `history-${sessions.length - i}-${stamp}.png`;
+        const blob = await (await fetch(sessions[i].dataUrl)).blob();
+        const handle = await dir.getFileHandle(name, { create: true });
+        const writable = await handle.createWritable();
+        await writable.write(blob);
+        await writable.close();
+      }
+      statusBar.flash(`Exported ${sessions.length} images to folder`);
+      return;
+    } catch (err) {
+      if (err && err.name === 'AbortError') return;
+      console.warn('Directory export failed, falling back to downloads:', err);
+    }
+  }
+  // Fallback: sequential downloads (newest first, matching grid order).
+  for (let i = 0; i < sessions.length; i += 1) {
+    await exportHistoryItem(sessions[i], sessions.length - 1 - i);
+    await new Promise((resolve) => setTimeout(resolve, 250));
+  }
+  statusBar.flash(`Exported ${sessions.length} images`);
+}
+
+function applyHistoryLimit(val) {
+  const parsed = parseInt(val, 10);
+  const safe = Number.isNaN(parsed) ? 20 : parsed;
+  syncHistoryLimitSelect(safe);
+  if (sidebar?.globalHistory?.db) {
+    sidebar.globalHistory.saveSettings(safe, safe > 0);
+  }
+}
+
+function applyHistoryState() {
+  const { autoSave } = getHistoryPrefs();
+  statusBar?.flash?.(autoSave ? 'History auto-save on' : 'History auto-save off');
+  syncHistoryControls();
+}
+
+// ---------- Settings dialog ----------
 function applySavedSettings() {
   const saved = readSettings();
   dmCheckbox.checked = Boolean(saved.darkMode);
   sbCheckbox.checked = saved.showStatusBar !== false;
   ciCheckbox.checked = saved.showColorInspector !== false;
   bgSelect.value = saved.canvasBackground || 'none';
+  syncHistoryControls(saved);
   document.body.classList.toggle('dark-mode', dmCheckbox.checked);
   document.querySelector('.status-bar').style.display = sbCheckbox.checked ? 'grid' : 'none';
   document.getElementById('color-inspector').style.display = ciCheckbox.checked ? 'flex' : 'none';
@@ -717,6 +825,55 @@ document.getElementById('settings-clear-data').addEventListener('click', async (
 });
 
 window.addEventListener('paint:ribbon-change', saveSettings);
+
+// ---------- History controls wiring (sidebar + settings tab) ----------
+const autoSaveToggle = document.getElementById('history-auto-save-toggle');
+const settingAutoSave = document.getElementById('setting-history-auto-save');
+const settingAutoMode = document.getElementById('setting-history-auto-save-mode');
+const historyLimitSel = document.getElementById('history-save-limit');
+const settingLimit = document.getElementById('setting-history-save-limit');
+
+function persistHistoryPrefs() {
+  const state = {
+    historyAutoSave: autoSaveToggle ? autoSaveToggle.checked : (settingAutoSave ? settingAutoSave.checked : true),
+    historyAutoSaveMode: settingAutoMode ? settingAutoMode.value : 'all',
+  };
+  try {
+    const s = readSettings();
+    Object.assign(s, state);
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(s));
+  } catch (err) {
+    console.warn('Unable to save history prefs:', err);
+  }
+}
+
+const onAutoSaveChange = () => {
+  if (settingAutoSave && autoSaveToggle) settingAutoSave.checked = autoSaveToggle.checked;
+  if (autoSaveToggle && settingAutoSave) autoSaveToggle.checked = settingAutoSave.checked;
+  persistHistoryPrefs();
+  applyHistoryState();
+};
+autoSaveToggle?.addEventListener('change', onAutoSaveChange);
+settingAutoSave?.addEventListener('change', onAutoSaveChange);
+settingAutoMode?.addEventListener('change', () => {
+  persistHistoryPrefs();
+  syncHistoryControls();
+});
+historyLimitSel?.addEventListener('change', (e) => applyHistoryLimit(e.target.value));
+settingLimit?.addEventListener('change', (e) => applyHistoryLimit(e.target.value));
+
+document.getElementById('history-export-all-btn')?.addEventListener('click', () => exportAllHistory());
+window.addEventListener('paint:history-export-item', (e) => {
+  exportHistoryItem(e.detail.session, e.detail.index);
+  statusBar.flash('History image saved');
+});
+document.getElementById('settings-history-export-all')?.addEventListener('click', () => exportAllHistory());
+document.getElementById('settings-history-clear')?.addEventListener('click', async () => {
+  if (!window.confirm('Are you sure you want to permanently delete all saved history? This cannot be undone.')) return;
+  await sidebar.globalHistory.clearAll();
+  if (sidebar.activeTab === 'history') await sidebar.refreshHistory();
+  statusBar.flash('History cleared');
+});
 
 document.getElementById('settings-about-close').addEventListener('click', () => settingsDialog.close());
 
@@ -853,7 +1010,7 @@ historyManager.onChange = (canUndo, canRedo) => toolbar.setUndoRedoEnabled(canUn
 })();
 window.addEventListener('beforeunload', () => {
   persistSession();
-  sidebar.saveCurrentToHistory();
+  if (shouldAutoSaveOnClose()) sidebar.saveCurrentToHistory();
 });
 
 // Default tool, per the brief: Select (not Pencil, unlike real Windows Paint).
@@ -865,6 +1022,7 @@ saveToolSelection(savedTool);
 // Finish sidebar initialization after globalHistory is ready
 (async () => {
   await sidebar.finishInit();
+  syncHistoryLimitSelect(sidebar.globalHistory.maxHistory);
 })();
 
 // Click outside the paint area to commit and clear selection
@@ -889,11 +1047,18 @@ window.addEventListener('keydown', (e) => {
 
   if (e.ctrlKey || e.metaKey) {
     switch (e.key.toLowerCase()) {
-      case 'a':
-        if (typing) return;
+      case 'a': {
+        // Select all on the canvas. Only let the browser take over when an
+        // actual multi-line text entry is focused (the text tool's textarea),
+        // where native select-all-text is expected. Number/select/other form
+        // controls keep Ctrl+A as "select the whole picture".
+        const el = document.activeElement;
+        const inTextEntry = tag === 'TEXTAREA' || (el && el.isContentEditable === true);
+        if (inTextEntry) return;
         e.preventDefault();
         selectAll();
         return;
+      }
       case 'z':
         e.preventDefault();
         discardFloatingSelection();

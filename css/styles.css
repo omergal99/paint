@@ -475,6 +475,7 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-wrap: wrap;
 }
 .history-controls button {
   padding: 6px 12px;
@@ -554,6 +555,35 @@ body {
 .history-delete:focus-visible {
   background: #b3261e;
   color: #fff;
+}
+.history-save {
+  position: absolute;
+  top: 6px;
+  right: 40px;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border: 1px solid transparent;
+  border-radius: 50%;
+  background: #3c3c3c;
+  font-size: 15px;
+  line-height: 1;
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.history-save:hover,
+.history-save:focus-visible {
+  background: #0a7a33;
+  color: #fff;
+}
+.history-auto-row {
+  justify-content: flex-start !important;
+  gap: 6px;
+}
+.history-auto-row span {
+  white-space: nowrap;
 }
 .history-item img {
   display: block;
@@ -858,6 +888,16 @@ dialog h3 {
 .about-stats dt { color: var(--w10-text-dim); }
 .about-stats dd { margin: 0; font-variant-numeric: tabular-nums; }
 .ribbon-settings-list { display: flex; flex-direction: column; gap: 8px; }
+.settings-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+.settings-field select { max-width: 100%; }
+.settings-panel .dialog-actions { margin-top: 14px; }
+.settings-panel .dialog-actions button.danger,
+.settings-panel button.danger { background: #fde7e7; border-color: #e7a5a5; color: #9f1d1d; }
 .ribbon-setting-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .ribbon-setting-details { border: 1px solid var(--w10-border); background: var(--w10-ribbon-bg); color: var(--w10-text); padding: 4px 8px; cursor: pointer; }
 .ribbon-setting-details:hover { border-color: var(--w10-accent); background: var(--w10-hover); }

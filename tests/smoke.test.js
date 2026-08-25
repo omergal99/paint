@@ -88,6 +88,42 @@ test('Zoom is persisted so a refresh keeps the last zoom level', () => {
   assert.match(vpm, /localStorage\.setItem\(ZOOM_STORAGE_KEY/);
 });
 
+test('Settings dialog has a HISTORY tab with history controls', () => {
+  assert.match(html, /data-settings-tab="history"\s*>\s*HISTORY/);
+  assert.match(html, /data-settings-panel="history"/);
+  assert.match(html, /id="setting-history-auto-save"/);
+  assert.match(html, /id="setting-history-auto-save-mode"/);
+  assert.match(html, /id="setting-history-save-limit"/);
+  assert.match(html, /id="settings-history-export-all"/);
+  assert.match(html, /id="settings-history-clear"/);
+});
+
+test('History auto-save toggle + export-all are wired and guarded', () => {
+  assert.match(html, /id="history-auto-save-toggle"/);
+  assert.match(html, /id="history-export-all-btn"/);
+  assert.match(main, /shouldAutoSaveHistory\(\)/);
+  assert.match(main, /shouldAutoSaveOnClose\(\)/);
+  assert.match(main, /if \(shouldAutoSaveHistory\(\)\) await sidebar\.saveCurrentToHistory/);
+  assert.match(main, /if \(shouldAutoSaveHistory\(\)\) sidebar\.saveCurrentToHistory/);
+  assert.match(main, /if \(shouldAutoSaveOnClose\(\)\) sidebar\.saveCurrentToHistory/);
+  assert.match(main, /exportAllHistory\(\)/);
+});
+
+test('Per-item history save button and export event are in place', () => {
+  assert.match(sidebar, /history-save/);
+  assert.match(sidebar, /paint:history-export-item/);
+  assert.match(main, /paint:history-export-item/);
+});
+
+test('Zoom wheel works both directions and resize drag consumes the wheel', () => {
+  const vpm = read('js/canvas/ViewportManager.js');
+  const resizer = read('js/canvas/CanvasResizer.js');
+  assert.match(vpm, /this\.zoom \+ \(e\.deltaY < 0 \? STEP : -STEP\)/);
+  assert.match(vpm, /dataset\.resizing === 'true'/);
+  assert.match(resizer, /wheelAdjust/);
+  assert.match(resizer, /dataset\.resizing = 'true'/);
+});
+
 test('Service Worker precache entries exist', () => {
   const shellBlock = serviceWorker.match(/const SHELL = \[(.*?)\];/s)?.[1] || '';
   const assets = [...shellBlock.matchAll(/['"](.*?)['"]/g)].map((match) => match[1]);

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'paint-shell-v1-3-0';
+const CACHE_NAME = 'paint-shell-v1-4-0';
 const SHELL = [
   './',
   './index.html',
@@ -32,6 +32,7 @@ const SHELL = [
   './js/utils/color.js',
   './js/utils/transform.js',
   './css/assets/icon.svg',
+  './css/assets/preview.png',
 ];
 
 self.addEventListener('install', (event) => {

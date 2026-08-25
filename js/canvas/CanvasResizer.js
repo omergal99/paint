@@ -38,19 +38,37 @@ export class CanvasResizer {
       const startH = this.canvasManager.height;
       const scale = this.viewportManager.zoom / 100;
       const pointerId = e.pointerId;
+      // Extra pixels accumulated from the scroll wheel while dragging, so the
+      // drag can keep going even when the cursor runs out of screen room.
+      let wheelAdjust = 0;
+      let dx = 0;
+      let dy = 0;
 
       this.ghost.style.display = 'block';
       this._drawGhost(startW, startH);
+      document.body.dataset.resizing = 'true';
+
+      const recompute = () => {
+        let newW = startW;
+        let newH = startH;
+        if (axis === 'x' || axis === 'xy') newW = Math.max(1, Math.round(startW + dx + wheelAdjust));
+        if (axis === 'y' || axis === 'xy') newH = Math.max(1, Math.round(startH + dy + wheelAdjust));
+        this._drawGhost(newW, newH);
+      };
 
       const onMove = (ev) => {
         if (ev.pointerId !== pointerId) return;
-        const dx = (ev.clientX - startX) / scale;
-        const dy = (ev.clientY - startY) / scale;
-        let newW = startW;
-        let newH = startH;
-        if (axis === 'x' || axis === 'xy') newW = Math.max(1, Math.round(startW + dx));
-        if (axis === 'y' || axis === 'xy') newH = Math.max(1, Math.round(startH + dy));
-        this._drawGhost(newW, newH);
+        dx = (ev.clientX - startX) / scale;
+        dy = (ev.clientY - startY) / scale;
+        recompute();
+      };
+
+      // Scroll up while dragging shrinks, scroll down grows — so you can keep
+      // resizing even after the pointer reaches the edge of the screen.
+      const onWheel = (ev) => {
+        ev.preventDefault();
+        wheelAdjust += ev.deltaY < 0 ? -8 : 8;
+        recompute();
       };
 
       const cleanup = () => {
@@ -58,6 +76,8 @@ export class CanvasResizer {
         handle.removeEventListener('pointerup', onUp);
         handle.removeEventListener('pointercancel', onCancel);
         handle.removeEventListener('lostpointercapture', onCancel);
+        document.removeEventListener('wheel', onWheel);
+        delete document.body.dataset.resizing;
         this.ghost.style.display = 'none';
       };
 
@@ -70,12 +90,12 @@ export class CanvasResizer {
         if (ev.pointerId !== pointerId) return;
         cleanup();
 
-        const dx = (ev.clientX - startX) / scale;
-        const dy = (ev.clientY - startY) / scale;
+        const ddx = (ev.clientX - startX) / scale;
+        const ddy = (ev.clientY - startY) / scale;
         let newW = startW;
         let newH = startH;
-        if (axis === 'x' || axis === 'xy') newW = Math.max(1, Math.round(startW + dx));
-        if (axis === 'y' || axis === 'xy') newH = Math.max(1, Math.round(startH + dy));
+        if (axis === 'x' || axis === 'xy') newW = Math.max(1, Math.round(startW + ddx + wheelAdjust));
+        if (axis === 'y' || axis === 'xy') newH = Math.max(1, Math.round(startH + ddy + wheelAdjust));
 
         if (newW !== startW || newH !== startH) {
           this.historyManager.snapshot();
@@ -88,6 +108,7 @@ export class CanvasResizer {
       handle.addEventListener('pointerup', onUp);
       handle.addEventListener('pointercancel', onCancel);
       handle.addEventListener('lostpointercapture', onCancel);
+      document.addEventListener('wheel', onWheel, { passive: false });
       handle.setPointerCapture(pointerId);
     });
   }

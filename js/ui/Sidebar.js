@@ -421,6 +421,20 @@ export class Sidebar {
         this.statusBar.flash('History item deleted');
       });
       item.appendChild(deleteButton);
+
+      const saveButton = document.createElement('button');
+      saveButton.type = 'button';
+      saveButton.className = 'history-save';
+      saveButton.innerHTML = '<span aria-hidden="true">⬇</span>';
+      saveButton.setAttribute('aria-label', `Save history image ${index + 1} of ${sessions.length} to computer`);
+      saveButton.title = 'Save this image to your computer';
+      saveButton.addEventListener('click', (event) => {
+        event.stopPropagation();
+        window.dispatchEvent(new CustomEvent('paint:history-export-item', {
+          detail: { session, index },
+        }));
+      });
+      item.append(saveButton);
       
       this.historyGrid.appendChild(item);
     });

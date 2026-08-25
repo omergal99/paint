@@ -12,7 +12,21 @@
   <meta property="og:description" content="Draw, edit, crop, resize, and save images in a lightweight browser paint app. Works offline with PWA-inspired features and simple canvas tools." />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://omergal99.github.io/paint/" />
-  <meta property="og:image" content="https://omergal99.github.io/paint/css/assets/screenshot.png" />
+  <meta property="og:site_name" content="Paint Online" />
+  <meta property="og:locale" content="en_US" />
+  <meta property="og:image" content="https://omergal99.github.io/paint/css/assets/preview.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:type" content="image/png" />
+  <meta property="og:image:alt" content="Paint - Online Drawing & Canvas Tool" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:url" content="https://omergal99.github.io/paint/" />
+  <meta name="twitter:title" content="Paint - Online Drawing & Canvas Tool" />
+  <meta name="twitter:description" content="Draw, edit, crop, resize, and save images in a lightweight browser paint app. Works offline with PWA-inspired features and simple canvas tools." />
+  <meta name="twitter:image" content="https://omergal99.github.io/paint/css/assets/preview.png" />
+  <meta name="twitter:image:alt" content="Paint - Online Drawing & Canvas Tool" />
   <link rel="icon" type="image/svg+xml" href="css/assets/icon.svg">
   <link rel="stylesheet" href="css/styles.css" />
   <link rel="stylesheet" href="style.css" />
@@ -36,7 +50,7 @@
       "price": "0",
       "priceCurrency": "USD"
     },
-    "image": "https://omergal99.github.io/paint/css/assets/screenshot.png",
+    "image": "https://omergal99.github.io/paint/css/assets/preview.png",
     "author": {
       "@type": "Person",
       "name": "Omer Gal",
@@ -486,6 +500,10 @@
         </div>
         <div class="sidebar-content" id="sidebar-history-content" style="display: none;">
           <div class="history-controls">
+            <label class="checkbox-row history-auto-row" title="Save to history automatically">
+              <input type="checkbox" id="history-auto-save-toggle" checked />
+              <span>Auto-save to history</span>
+            </label>
             <label>Save:
               <select id="history-save-limit">
                 <option value="0">Off</option>
@@ -497,6 +515,7 @@
             </label>
             <div class="history-actions">
               <button type="button" id="history-save-current-btn" title="Save current paint to history">Save Current</button>
+              <button type="button" id="history-export-all-btn" title="Export the whole history to your computer">Export All</button>
               <button type="button" id="history-clear-btn" title="Clear all saved history">Clear All</button>
             </div>
           </div>
@@ -577,6 +596,7 @@
       <button type="button" class="settings-close" id="settings-close" aria-label="Close settings" title="Close settings">×</button>
       <nav class="settings-tabs" aria-label="Settings sections">
         <button type="button" class="settings-tab active" data-settings-tab="general">GENERAL</button>
+        <button type="button" class="settings-tab" data-settings-tab="history">HISTORY</button>
         <button type="button" class="settings-tab" data-settings-tab="ribbon">RIBBON</button>
         <button type="button" class="settings-tab" data-settings-tab="about">ABOUT</button>
       </nav>
@@ -597,6 +617,30 @@
           <button type="button" id="settings-cancel">Close</button>
         </div>
       </form>
+      <section class="settings-panel" data-settings-panel="history" hidden>
+        <h3>History</h3>
+        <label class="checkbox-row"><input type="checkbox" id="setting-history-auto-save" checked /> Auto-save to history</label>
+        <label class="settings-field">Auto-save when
+          <select id="setting-history-auto-save-mode">
+            <option value="all">All automatic events</option>
+            <option value="close">Only when closing the page</option>
+            <option value="manual">Only manually (Save Current button)</option>
+          </select>
+        </label>
+        <label class="settings-field">Save limit
+          <select id="setting-history-save-limit">
+            <option value="0">Off</option>
+            <option value="10">10 images</option>
+            <option value="20">20 images</option>
+            <option value="50">50 images</option>
+            <option value="100">100 images</option>
+          </select>
+        </label>
+        <div class="dialog-actions">
+          <button type="button" id="settings-history-export-all">Export All History</button>
+          <button type="button" id="settings-history-clear" class="danger">Clear All</button>
+        </div>
+      </section>
       <section class="settings-panel" data-settings-panel="ribbon" hidden>
         <h3>Ribbon</h3>
         <p>Choose which ribbon groups are visible. Detailed group options open in the sidebar.</p>

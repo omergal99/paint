@@ -35,10 +35,14 @@ export class ViewportManager {
 
     this.zoomSlider.addEventListener('input', () => this.setZoom(parseInt(this.zoomSlider.value, 10)));
 
+    // Scroll over the canvas zooms in/out in both directions. (Plain wheel is
+    // used on many paint apps; Ctrl+wheel also still works.) While a canvas
+    // resize drag is active the resize handles own the wheel instead, so we
+    // skip zoom then to avoid fighting with the drag.
     this.stage.parentElement.addEventListener(
       'wheel',
       (e) => {
-        if (!e.ctrlKey) return;
+        if (document.body.dataset.resizing === 'true') return;
         e.preventDefault();
         this.setZoom(this.zoom + (e.deltaY < 0 ? STEP : -STEP));
       },
