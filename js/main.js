@@ -507,6 +507,9 @@ function toggleActionMenu(event) {
 document.getElementById('btn-open-menu').addEventListener('click', (event) => {
   toggleActionMenu(event);
 });
+document.getElementById('btn-shapes-menu').addEventListener('click', (event) => {
+  toggleActionMenu(event);
+});
 document.getElementById('btn-rotate').addEventListener('click', (event) => {
   toggleActionMenu(event);
 });

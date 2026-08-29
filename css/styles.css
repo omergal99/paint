@@ -973,6 +973,69 @@ dialog h3 {
   color: var(--w10-text-dim);
   font-size: 11px;
 }
+
+/* Shapes gallery (Word/Office style) */
+.shapes-menu-trigger {
+  min-width: 48px;
+}
+.shapes-menu-trigger .shape-menu-icon {
+  width: 34px;
+  height: 34px;
+}
+.shapes-menu-trigger .menu-arrow {
+  margin: 0;
+}
+.shape-gallery {
+  min-width: 258px;
+  max-height: 360px;
+  overflow-y: auto;
+  padding: 8px;
+  gap: 4px;
+}
+.shape-gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+}
+.shape-gallery .shape-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 4px;
+  width: 100%;
+  min-width: 0;
+  padding: 8px 4px 5px;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  text-align: center;
+  white-space: normal;
+}
+.shape-gallery .shape-btn:hover {
+  background: var(--w10-hover);
+  border-color: var(--w10-hover-border);
+}
+.shape-gallery .shape-btn.active {
+  background: var(--w10-active);
+  border-color: var(--w10-active-border);
+}
+.shape-gallery .shape-btn svg {
+  flex: 0 0 auto;
+  width: 26px;
+  height: 26px;
+  fill: var(--w10-text);
+  stroke: var(--w10-text);
+  stroke-width: 1.2;
+}
+.shape-gallery .shape-btn.active svg {
+  fill: var(--w10-accent);
+  stroke: var(--w10-accent);
+}
+.shape-gallery .shape-btn span {
+  font-size: 11px;
+  line-height: 1.15;
+  color: var(--w10-text);
+}
 dialog label {
   display: flex;
   justify-content: space-between;
