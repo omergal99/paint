@@ -11,7 +11,7 @@ const main = read('js/main.js');
 const sidebar = read('js/ui/Sidebar.js');
 const app = read('js/app.js');
 const serviceWorker = read('sw.js');
-const responsiveStyle = read('style.css');
+const responsiveStyle = read('css/progressive.css');
 
 test('Crop menu owns Remove Background', () => {
   const cropMenuStart = html.indexOf('id="btn-crop-menu"');
@@ -38,7 +38,7 @@ test('Open menu owns Open and Import options', () => {
 test('file picker is single, hidden, and not rendered as a native control', () => {
   assert.equal((html.match(/id="file-input"/g) || []).length, 1);
   assert.match(html, /<input[^>]*id="file-input"[^>]*\shidden(?:\s|>)/);
-  assert.match(read('style.css'), /#file-input\s*\{[^}]*display:\s*none\s*!important/s);
+  assert.match(read('css/progressive.css'), /#file-input\s*\{[^}]*display:\s*none\s*!important/s);
 });
 
 test('History controls expose save and clear actions', () => {
@@ -115,13 +115,43 @@ test('Per-item history save button and export event are in place', () => {
   assert.match(main, /paint:history-export-item/);
 });
 
-test('Zoom wheel works both directions and resize drag consumes the wheel', () => {
+test('Plain wheel scrolls natively; only Ctrl/Cmd+wheel zooms', () => {
   const vpm = read('js/canvas/ViewportManager.js');
   const resizer = read('js/canvas/CanvasResizer.js');
+  // Plain wheel must NOT zoom (it stays native so the user can scroll/pan
+  // without moving the view percentage).
+  assert.match(vpm, /if \(!e\.ctrlKey && !e\.metaKey\) return/);
+  // Zoom still works both directions for Ctrl+wheel…
   assert.match(vpm, /this\.zoom \+ \(e\.deltaY < 0 \? STEP : -STEP\)/);
+  // …and stays disabled while a canvas resize drag owns the wheel.
   assert.match(vpm, /dataset\.resizing === 'true'/);
   assert.match(resizer, /wheelAdjust/);
   assert.match(resizer, /dataset\.resizing = 'true'/);
+});
+
+test('Stage uses inner pixel box + outer scaled box for scrollbars', () => {
+  const vpm = read('js/canvas/ViewportManager.js');
+  const resizer = read('js/canvas/CanvasResizer.js');
+  const css = read('css/styles.css');
+  // The outer stage is sized to the scaled canvas so scrollbars match the view.
+  assert.match(vpm, /syncStageSize\(\)/);
+  assert.match(vpm, /stage\.style\.width = \`\$\{w\}px\`/);
+  // The inner box keeps image-pixel sizing and carries the transform.
+  assert.match(resizer, /scaleEl\.style\.width/);
+  assert.match(vpm, /scaleEl\.style\.transform/);
+  assert.match(html, /id="canvas-scale"/);
+  assert.match(css, /\.canvas-scale\s*\{[^}]*transform-origin:\s*top\s*left/s);
+  // The viewport is actually locked while a resize drag is active.
+  assert.match(css, /\.prevent-scroll\s*\{[^}]*overflow:\s*hidden/s);
+});
+
+test('Arrow shape is available in the ribbon and renders in ShapeTool', () => {
+  const shapeTool = read('js/tools/ShapeTool.js');
+  assert.match(html, /data-shape="arrow"/);
+  assert.match(html, /data-tag="shape-arrow"/);
+  assert.match(shapeTool, /kind === 'arrow'/);
+  assert.match(shapeTool, /drawArrowPath\(g, ctx, start, end, outlineColor\)/);
+  assert.match(shapeTool, /Math\.hypot\(dx, dy\)/);
 });
 
 test('Service Worker precache entries exist', () => {

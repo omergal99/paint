@@ -30,7 +30,7 @@ graph TD
     index --> main
     
     main --> CanvasManager[js/canvas/CanvasManager.js <br> stacked canvases, real & overlay layers, floating canvas]
-    main --> ViewportManager[js/canvas/ViewportManager.js <br> zoom % slider, numeric input, scrolling]
+    main --> ViewportManager[js/canvas/ViewportManager.js <br> zoom % slider, numeric input, scroll-synced scaling]
     main --> CanvasResizer[js/canvas/CanvasResizer.js <br> drag-to-extend handles]
     main --> ClipboardManager[js/clipboard/ClipboardManager.js <br> OS Clipboard copy/cut/paste]
     main --> HistoryManager[js/history/HistoryManager.js <br> snapshot-based undo/redo stack]
@@ -40,11 +40,13 @@ graph TD
     Tools --> CanvasManager
 ```
 
+**Project structure.** See [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) for the full layout. Highlights: all logic lives under `js/` grouped by concern (`canvas/`, `tools/`, `ui/`, `utils/`, `clipboard/`, `history/`), styles live under `css/` (`styles.css` + `css/progressive.css`), and the docs folder tracks the roadmap (`docs/future_ideas*.md`, `docs/NEXT_STEPS_PLAN.md`).
+
 ### Module Breakdown
-- **index.html**: Defines the Fluent ribbon layout, the Color Inspector bar, the pointer status bars, and the main canvas stage viewport.
+- **index.html**: Defines the Fluent ribbon layout, the Color Inspector bar, the pointer status bars, and the main canvas stage viewport (`.canvas-stage` outer scroll box → `.canvas-scale` inner zoom box).
 - **js/main.js**: Wires all the managers and tools together. Coordinates selection outline rendering, global keyboard shortcuts, and file actions (New, Open, Save, Crop, Resize).
 - **js/canvas/CanvasManager.js**: Handles the two canvas layers: `paint-canvas` (real image pixels) and `overlay-canvas` (selection marquees, shapes previews, caret). Manages the `floatingCanvas` for uncommitted selections.
-- **js/canvas/ViewportManager.js**: Handles zoom logic, scale multipliers, mouse-wheel zoom, and updates the zoom percentage input fields.
+- **js/canvas/ViewportManager.js**: Handles zoom logic (buttons, slider, editable %, `Ctrl/Cmd+wheel`). Sizes the outer stage to the *scaled* canvas so scrollbars always match the visible canvas — plain wheel scrolls/panels natively and never changes the zoom.
 - **js/canvas/CanvasResizer.js**: Tracks drag events on the bottom-right handles to expand the canvas workspace while preserving existing image contents.
 - **js/clipboard/ClipboardManager.js**: Bridges the browser to the OS Clipboard. Supports pasting image blobs directly, copying active selection pixels, and cutting pixels.
 - **js/history/HistoryManager.js**: Retains up to 50 snapshots of the canvas for instant undo/redo functionality (`Ctrl+Z` / `Ctrl+Y`).
@@ -55,6 +57,8 @@ graph TD
 ## Core Features
 
 - **Fluent Win10 Ribbon & Layout**: Responsive toolbar controls, shape dropdowns, custom palettes, line size pickers, and status footer.
+- **Rich Shape Kit**: Line, **Arrow**, Rectangle, Rounded Rectangle, Ellipse, and Triangle with three fill modes (outline, outline+fill, fill) and a shared size control that also drives the text tool's font size.
+- **Professional Icon Set**: Pencil, Brush, Eraser and Color-picker (eyedropper) use Microsoft **Fluent System Icons** that recolor automatically with the active theme / active state.
 - **Paint-Style Floating Selection**: 
   - Paste images or drag selected areas to move them.
   - Selections float on the **overlay canvas** without overwriting the background until deselected, committed, or tool switched.
@@ -76,7 +80,7 @@ graph TD
 | `Ctrl+C` / `Ctrl+X` / `Ctrl+V` | Copy / Cut / Paste (real OS clipboard, full resolution) |
 | `Ctrl+S` / `Ctrl+O` / `Ctrl+N` | Save / Open / New |
 | `S P B F E T K Z` | Select / Pencil / Brush / Fill / Eraser / Text / Eyedropper / Zoom |
-| `Ctrl+Scroll` over canvas | Zoom in/out |
+| `Ctrl+Scroll` / `Cmd+Scroll` over canvas | Zoom in/out (plain scroll just pans/scrolls the viewport) |
 | `Esc` (while typing text) | Cancel the text box without committing |
 | `Delete` / `Backspace` | Discard active floating selection or clear marquee selection |
 

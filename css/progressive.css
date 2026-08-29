@@ -21,6 +21,7 @@ body {
 
 .canvas-viewport,
 .canvas-stage,
+.canvas-scale,
 #paint-canvas,
 #overlay-canvas {
   touch-action: none;

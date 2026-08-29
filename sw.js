@@ -1,16 +1,14 @@
-const CACHE_NAME = 'paint-shell-v1-4-0';
+const CACHE_NAME = 'paint-shell-v1-5-0';
 const SHELL = [
   './',
   './index.html',
-  './style.css',
+  './css/progressive.css',
   './css/styles.css',
   './js/app.js',
   './js/version.js',
   './js/main.js',
-  './js/canvas.js',
   './js/storage.js',
   './js/telemetry.js',
-  './js/tools.js',
   './js/canvas/CanvasManager.js',
   './js/canvas/CanvasResizer.js',
   './js/canvas/ViewportManager.js',

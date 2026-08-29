@@ -42,6 +42,7 @@ const sidebar = new Sidebar({ canvasManager, statusBar });
 
 const viewportManager = new ViewportManager({
   stage,
+  scaleEl: document.getElementById('canvas-scale'),
   canvasManager,
   zoomInBtn: document.getElementById('zoom-in'),
   zoomOutBtn: document.getElementById('zoom-out'),
@@ -51,6 +52,7 @@ const viewportManager = new ViewportManager({
 
 const canvasResizer = new CanvasResizer({
   stage,
+  scaleEl: document.getElementById('canvas-scale'),
   canvasManager,
   viewportManager,
   historyManager,

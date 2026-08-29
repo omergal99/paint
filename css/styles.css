@@ -650,11 +650,27 @@ body {
 }
 
 .canvas-stage {
+  /* Outer scroll box. Its width/height are set from JS (ViewportManager) to
+     the *scaled* canvas size so the viewport's scrollbars always match the
+     visible canvas — no dead gray space when zoomed out. */
   position: relative;
-  transform-origin: top left;
   box-shadow:
     0 0 0 1px #555,
     4px 4px 14px rgba(0, 0, 0, 0.4);
+}
+
+/* Inner pixel-space box carrying the zoom transform. Its width/height are set
+   from JS (CanvasResizer) to the image-pixel canvas size, so all handles,
+   ghost and selection rectangles stay in true image coordinates. */
+.canvas-scale {
+  position: relative;
+  transform-origin: top left;
+}
+
+/* While a canvas resize drag is active, lock the viewport so native wheel
+   scrolling doesn't fight the resize (see CanvasResizer). */
+.prevent-scroll {
+  overflow: hidden !important;
 }
 
 .selection-handle {

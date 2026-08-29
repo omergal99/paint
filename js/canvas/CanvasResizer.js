@@ -4,8 +4,9 @@
 // the resize via CanvasManager.resize(), which preserves existing pixels.
 
 export class CanvasResizer {
-  constructor({ stage, canvasManager, viewportManager, historyManager, handleRight, handleBottom, handleCorner, ghost }) {
-    this.stage = stage;
+  constructor({ stage, scaleEl, canvasManager, viewportManager, historyManager, handleRight, handleBottom, handleCorner, ghost }) {
+    this.stage = stage; // outer scroll box (sized by ViewportManager.syncStageSize)
+    this.scaleEl = scaleEl; // inner image-pixel box (carries the zoom transform)
     this.canvasManager = canvasManager;
     this.viewportManager = viewportManager;
     this.historyManager = historyManager;
@@ -22,8 +23,12 @@ export class CanvasResizer {
   reposition() {
     const w = this.canvasManager.width;
     const h = this.canvasManager.height;
-    this.stage.style.width = `${w}px`;
-    this.stage.style.height = `${h}px`;
+    // The inner box keeps image-pixel dimensions so all absolute-positioned
+    // handles/ghosts remain in true image coordinates before the zoom scale.
+    this.scaleEl.style.width = `${w}px`;
+    this.scaleEl.style.height = `${h}px`;
+    // The outer stage (scroll extent) follows the scaled canvas size.
+    this.viewportManager?.syncStageSize?.();
   }
 
   _bindHandle(handle, axis) {
@@ -47,6 +52,10 @@ export class CanvasResizer {
       this.ghost.style.display = 'block';
       this._drawGhost(startW, startH);
       document.body.dataset.resizing = 'true';
+      // Prevent the viewport's native scroll from stealing wheel events
+      // while dragging — especially at zoom levels below 100% where the
+      // scaled canvas overflows its container.
+      this.viewportManager?.viewportEl?.classList.add('prevent-scroll');
 
       const recompute = () => {
         let newW = startW;
@@ -78,6 +87,10 @@ export class CanvasResizer {
         handle.removeEventListener('lostpointercapture', onCancel);
         document.removeEventListener('wheel', onWheel);
         delete document.body.dataset.resizing;
+        // Restore native scroll capability on the viewport now that the
+        // resize drag is finished.  Without this the viewport would stay
+        // un-scrollable if the drag was cancelled (e.g. by pressing Esc).
+        this.viewportManager?.viewportEl?.classList.remove('prevent-scroll');
         this.ghost.style.display = 'none';
       };
 

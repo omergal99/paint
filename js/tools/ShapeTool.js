@@ -44,6 +44,15 @@ export class ShapeTool {
     g.strokeStyle = outlineColor;
     g.fillStyle = fillColor;
 
+    // Arrow is a line + arrowhead and renders itself (shaft stroked in the
+    // outline color, solid head filled with the same color). It intentionally
+    // ignores the fill-mode buttons, exactly like the plain line.
+    if (kind === 'arrow') {
+      drawArrowPath(g, ctx, start, end, outlineColor);
+      g.restore();
+      return;
+    }
+
     const x = Math.min(start.x, end.x);
     const y = Math.min(start.y, end.y);
     const w = Math.abs(end.x - start.x);
@@ -94,4 +103,38 @@ function roundRectPath(g, x, y, w, h, r) {
   g.arcTo(x, y + h, x, y, r);
   g.arcTo(x, y, x + w, y, r);
   g.closePath();
+}
+
+/**
+ * Draw an arrow: a stroked shaft plus a solid arrowhead at the end point.
+ * The head size grows with the line width so thick arrows stay readable,
+ * but is capped so a short drag still produces a proportional arrow.
+ */
+function drawArrowPath(g, ctx, start, end, color) {
+  const dx = end.x - start.x;
+  const dy = end.y - start.y;
+  const len = Math.hypot(dx, dy);
+  if (len < 1) return;
+
+  const angle = Math.atan2(dy, dx);
+  const spread = Math.PI / 7; // ~25.7° half-angle of the head
+  const headLen = Math.min(Math.max(12, ctx.canvasManager.lineWidth * 3), len / 2.5);
+
+  g.strokeStyle = color;
+  g.fillStyle = color;
+
+  // Shaft (stroked only)
+  g.beginPath();
+  g.moveTo(start.x, start.y);
+  g.lineTo(end.x, end.y);
+  g.stroke();
+
+  // Solid arrowhead (closed triangle, filled + stroked with the shaft color)
+  g.beginPath();
+  g.moveTo(end.x, end.y);
+  g.lineTo(end.x - headLen * Math.cos(angle - spread), end.y - headLen * Math.sin(angle - spread));
+  g.lineTo(end.x - headLen * Math.cos(angle + spread), end.y - headLen * Math.sin(angle + spread));
+  g.closePath();
+  g.fill();
+  g.stroke();
 }
