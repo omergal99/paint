@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- Modern Fluent-style tile: blue rounded square (matches w10-accent #0078d4) -->
+  <rect x="1" y="1" width="30" height="30" rx="7" fill="#0078d4"/>
+
+  <!-- Painter's palette (clean white blob, bite on the right) -->
+  <path fill="#ffffff" d="M16 4.2C9.6 4.2 4.7 9.4 4.7 16c0 6.3 4.7 10.9 10.8 10.9 1.1 0 2-.9 2-2 0-.5-.2-1-.6-1.4-.3-.4-.5-.9-.5-1.4 0-1.1.9-2 2-2h2.4c4.1 0 7.4-3.6 7.4-7.8C28.3 8.5 23.2 4.2 16 4.2z"/>
+
+  <!-- Thumb hole (shows tile background) -->
+  <circle cx="12.3" cy="21.6" r="2.2" fill="#0078d4"/>
+
+  <!-- Color dots: red / yellow / blue / green -->
+  <circle cx="10.4" cy="11.3" r="2.1" fill="#ff5f5f"/>
+  <circle cx="16.4" cy="8"    r="2.1" fill="#ffc83d"/>
+  <circle cx="21.7" cy="11.3" r="2.1" fill="#4cc2ff"/>
+  <circle cx="7.6"  cy="17.4" r="2.1" fill="#5cb85c"/>
+</svg>
