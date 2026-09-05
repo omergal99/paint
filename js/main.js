@@ -18,7 +18,7 @@ import { StatusBar } from './ui/StatusBar.js';
 import { Toolbar } from './ui/Toolbar.js';
 import { Sidebar } from './ui/Sidebar.js';
 import { hexToRgb } from './utils/color.js';
-import { rotateCanvas, rotateCanvasByAngle, rotateCanvasToFit, flipCanvas, scaleCanvas, removeBackground } from './utils/transform.js';
+import { rotateCanvas, rotateCanvasByAngle, flipCanvas, scaleCanvas, removeBackground } from './utils/transform.js';
 import { APP_VERSION } from './version.js';
 
 // ---------- DOM refs ----------
@@ -130,9 +130,18 @@ let selectionRotation = null;
 function sameRegion(a, b) {
   return a && b && ['x', 'y', 'w', 'h'].every((key) => a[key] === b[key]);
 }
+function sameRotationCenter(a, b) {
+  if (!a || !b) return false;
+  return Math.abs((a.x + a.w / 2) - (b.x + b.w / 2)) < 0.5
+    && Math.abs((a.y + a.h / 2) - (b.y + b.h / 2)) < 0.5;
+}
 
 function setSelection(region, opts = {}) {
-  if (selectionRotation && !sameRegion(selectionRotation.selection, region)) selectionRotation = null;
+  // Quarter-turn rotations legitimately swap the selection dimensions. Keep
+  // the original pixel snapshot while the center remains anchored, otherwise
+  // the next rotation would use an already fitted/shrunk result as its base.
+  if (selectionRotation && !sameRegion(selectionRotation.selection, region)
+    && !sameRotationCenter(selectionRotation.selection, region)) selectionRotation = null;
   canvasManager.selection = region;
   statusBar.setSelection(region);
   canvasManager.clearOverlay();
@@ -263,6 +272,44 @@ let currentFontSize = (() => {
   }
 })();
 
+const TEXT_STYLES_KEY = 'paint:text-styles';
+const TEXT_STYLE_NAMES = ['outline', 'black-outline', 'shadow', 'neon', 'bold', 'italic', 'underline'];
+let selectedTextStyles = (() => {
+  try {
+    const saved = JSON.parse(localStorage.getItem(TEXT_STYLES_KEY) || 'null');
+    if (Array.isArray(saved)) return saved.filter((style) => TEXT_STYLE_NAMES.includes(style));
+    const legacy = localStorage.getItem('paint:text-style');
+    return legacy && legacy !== 'plain' && TEXT_STYLE_NAMES.includes(legacy) ? [legacy] : [];
+  } catch {
+    return [];
+  }
+})();
+
+function getTextStyles() {
+  return [...selectedTextStyles];
+}
+
+function renderTextStyleControls() {
+  const color = colorPalette.primary;
+  document.querySelectorAll('.text-style-option').forEach((button) => {
+    const active = selectedTextStyles.includes(button.dataset.textStyle);
+    button.classList.toggle('active', active);
+    button.setAttribute('aria-pressed', String(active));
+    const sample = button.querySelector('.style-sample');
+    if (sample) sample.style.color = color;
+  });
+  const preview = document.getElementById('text-style-preview');
+  if (preview) {
+    preview.dataset.style = selectedTextStyles.join(' ') || 'plain';
+    preview.style.color = color;
+  }
+}
+
+function saveTextStyles() {
+  try { localStorage.setItem(TEXT_STYLES_KEY, JSON.stringify(selectedTextStyles)); } catch {}
+  renderTextStyleControls();
+}
+
 const toolContext = {
   canvasManager,
   historyManager,
@@ -283,7 +330,7 @@ const toolContext = {
   getShapeFillMode: () => toolbar.getFillMode(),
   getFontSize: () => currentFontSize,
   getFontFamily: () => "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-  getTextStyle: () => document.getElementById('text-style')?.value || 'plain',
+  getTextStyle: getTextStyles,
   setFontSize: (size) => {
     currentFontSize = Math.max(1, Math.min(300, parseInt(size, 10)));
     try {
@@ -615,7 +662,6 @@ rotateSelectionHandle?.addEventListener('pointerdown', (event) => {
     setSelection(originalSelection);
   }
   const rotationState = beginSelectionRotation(originalSelection);
-  const originalCanvas = rotationState.baseCanvas;
   const startDegrees = rotationState.degrees;
   rotateSelectionHandle._rotationPrepared = true;
   const center = { x: originalSelection.x + originalSelection.w / 2, y: originalSelection.y + originalSelection.h / 2 };
@@ -625,17 +671,12 @@ rotateSelectionHandle?.addEventListener('pointerdown', (event) => {
   const onMove = (moveEvent) => {
     const point = viewportManager.clientToImage(moveEvent.clientX, moveEvent.clientY);
     const angle = Math.atan2(point.y - center.y, point.x - center.x);
-    const degrees = startDegrees + (angle - startAngle) * 180 / Math.PI;
+    const degrees = snapRotation(startDegrees + (angle - startAngle) * 180 / Math.PI);
     if (Math.abs(degrees - startDegrees) > 1) moved = true;
     rotationState.degrees = degrees;
-    const rotated = rotateCanvasToFit(originalCanvas, degrees, originalSelection.w, originalSelection.h);
-    canvasManager.floatingCanvas = rotated;
-    setSelection({
-      x: center.x - rotated.width / 2,
-      y: center.y - rotated.height / 2,
-      w: rotated.width,
-      h: rotated.height,
-    });
+    const rendered = renderSelectionRotation(rotationState);
+    canvasManager.floatingCanvas = rendered.canvas;
+    setSelection(rendered.region);
   };
   const onUp = () => {
     window.removeEventListener('pointermove', onMove);
@@ -660,21 +701,48 @@ function rotateSelectionByAngle(degrees, { prepared = false } = {}) {
   }
   const rotationState = beginSelectionRotation(selection);
   rotationState.degrees += degrees;
-  canvasManager.floatingCanvas = rotateCanvasToFit(rotationState.baseCanvas, rotationState.degrees, selection.w, selection.h);
-  setSelection({ ...selection });
+  rotationState.degrees = snapRotation(rotationState.degrees);
+  const rendered = renderSelectionRotation(rotationState);
+  canvasManager.floatingCanvas = rendered.canvas;
+  setSelection(rendered.region);
   persistSession();
 }
 
 function beginSelectionRotation(selection) {
   if (!canvasManager.floatingCanvas) return null;
-  if (!selectionRotation || !sameRegion(selectionRotation.selection, selection)) {
+  if (!selectionRotation || !sameRotationCenter(selectionRotation.selection, selection)) {
     selectionRotation = {
       baseCanvas: scaleCanvas(canvasManager.floatingCanvas, canvasManager.floatingCanvas.width, canvasManager.floatingCanvas.height),
       selection: { ...selection },
+      center: { x: selection.x + selection.w / 2, y: selection.y + selection.h / 2 },
       degrees: 0,
     };
   }
   return selectionRotation;
+}
+
+function snapRotation(degrees) {
+  const quarterTurn = Math.round(degrees / 90) * 90;
+  return Math.abs(degrees - quarterTurn) < 0.75 ? quarterTurn : degrees;
+}
+
+function renderSelectionRotation(rotationState) {
+  const { center, degrees, baseCanvas } = rotationState;
+  const quarterTurn = Math.round(degrees / 90) * 90;
+  // Always rotate the untouched source at its natural size. Fitting an
+  // already-rotated canvas into the old rectangle changes the shape's scale
+  // and can clip its corners. The resulting canvas is the true rotated
+  // bounding box, so the selection travels with the pixels.
+  const canvas = rotateCanvasByAngle(baseCanvas, degrees);
+  return {
+    canvas,
+    region: {
+      x: center.x - canvas.width / 2,
+      y: center.y - canvas.height / 2,
+      w: canvas.width,
+      h: canvas.height,
+    },
+  };
 }
 bindSelectionHandles();
 
@@ -1167,18 +1235,29 @@ toolManager.onToolChange = (name) => {
   updateSelectionHandles(canvasManager.selection);
 };
 
-const textStyleSelect = document.getElementById('text-style');
-try { textStyleSelect.value = localStorage.getItem('paint:text-style') || 'plain'; } catch {}
-const updateTextStylePreview = () => {
-  const preview = document.getElementById('text-style-preview');
-  if (preview) preview.dataset.style = textStyleSelect?.value || 'plain';
-};
-updateTextStylePreview();
-textStyleSelect?.addEventListener('click', (event) => event.stopPropagation());
-textStyleSelect?.addEventListener('change', () => {
-  try { localStorage.setItem('paint:text-style', textStyleSelect.value); } catch {}
-  updateTextStylePreview();
+document.querySelectorAll('.text-style-option').forEach((button) => {
+  button.addEventListener('click', (event) => {
+    // Keep More Tools open while styles are previewed and combined.
+    event.stopPropagation();
+    const style = button.dataset.textStyle;
+    if (!TEXT_STYLE_NAMES.includes(style)) return;
+    if (selectedTextStyles.includes(style)) {
+      selectedTextStyles = selectedTextStyles.filter((value) => value !== style);
+    } else {
+      // Outline colors are alternatives, while effects such as shadow/bold can
+      // be composed with one of them.
+      const outlineStyles = ['outline', 'black-outline'];
+      if (outlineStyles.includes(style)) {
+        selectedTextStyles = selectedTextStyles.filter((value) => !outlineStyles.includes(value));
+      }
+      selectedTextStyles = [...selectedTextStyles, style];
+    }
+    saveTextStyles();
+  });
 });
+document.querySelector('.text-style-picker')?.addEventListener('click', (event) => event.stopPropagation());
+window.addEventListener('paint:primary-color-change', renderTextStyleControls);
+renderTextStyleControls();
 
 // ---------- Sidebar Init ----------
 document.getElementById('btn-history-panel').addEventListener('click', () => sidebar.toggleHistory());

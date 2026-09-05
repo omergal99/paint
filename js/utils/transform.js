@@ -3,13 +3,14 @@
 export function rotateCanvas(sourceCanvas, direction = 1) {
   const w = sourceCanvas.width;
   const h = sourceCanvas.height;
+  const turns = ((Math.round(direction) % 4) + 4) % 4;
   const out = document.createElement('canvas');
-  out.width = h;
-  out.height = w;
+  out.width = turns % 2 ? h : w;
+  out.height = turns % 2 ? w : h;
   const ctx = out.getContext('2d');
   
   ctx.translate(out.width / 2, out.height / 2);
-  ctx.rotate(direction * (Math.PI / 2));
+  ctx.rotate(turns * (Math.PI / 2));
   ctx.drawImage(sourceCanvas, -w / 2, -h / 2);
   
   return out;
@@ -36,6 +37,11 @@ export function flipCanvas(sourceCanvas, horizontal = true) {
 }
 
 export function rotateCanvasByAngle(sourceCanvas, degrees) {
+  // Avoid floating-point sine/cosine padding at exact quarter turns. This
+  // keeps 90° rotations pixel-perfect and prevents a selection from gaining
+  // a one-pixel border on every subsequent turn.
+  const quarterTurn = Math.round(degrees / 90);
+  if (Math.abs(degrees - quarterTurn * 90) < 1e-8) return rotateCanvas(sourceCanvas, quarterTurn);
   const radians = degrees * Math.PI / 180;
   const sin = Math.abs(Math.sin(radians));
   const cos = Math.abs(Math.cos(radians));

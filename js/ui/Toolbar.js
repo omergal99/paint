@@ -72,8 +72,12 @@ export class Toolbar {
     const statusButton = this.root.querySelector('#tool-status');
     const statusIcon = this.root.querySelector('#tool-status-icon');
     const currentShapeButton = this.root.querySelector('#btn-shapes-current');
-    const source = this.root.querySelector(`.tool-grid .tool-btn[data-tool="${name}"]`);
-    const showStatus = name !== 'select' && Boolean(source);
+    // Select lives in the Image group, while the other tools have a source
+    // button in the compact quick-tool grid. The split status button should
+    // represent either kind of active tool.
+    const source = this.root.querySelector(`.tool-grid .tool-btn[data-tool="${name}"]`)
+      || this.root.querySelector(`.tool-btn[data-tool="${name}"]:not(#tool-status)`);
+    const showStatus = Boolean(source);
     // Keep More as a stable menu label. The adjacent status button is a
     // compact, purple current-tool indicator for both quick tools and tools
     // selected from More, without changing the More button's label.

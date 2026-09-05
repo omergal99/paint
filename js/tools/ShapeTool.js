@@ -111,13 +111,10 @@ export class ShapeTool {
         plusPath(g, x + w / 2, y + h / 2, w / 2, h / 2);
         break;
       case 'x':
-        g.moveTo(x, y); g.lineTo(x + w, y + h);
-        g.moveTo(x + w, y); g.lineTo(x, y + h);
+        drawNormalizedX(g, x, y, w, h);
         break;
       case 'v':
-        g.moveTo(x + w * 0.08, y + h * 0.5);
-        g.lineTo(x + w * 0.38, y + h * 0.8);
-        g.lineTo(x + w * 0.92, y + h * 0.14);
+        drawNormalizedV(g, x, y, w, h);
         break;
       default:
         g.moveTo(start.x, start.y);
@@ -132,6 +129,28 @@ export class ShapeTool {
     }
     g.restore();
   }
+}
+
+function squareBounds(x, y, w, h, padding = 0.12) {
+  const size = Math.max(1, Math.min(w, h));
+  const left = x + (w - size) / 2;
+  const top = y + (h - size) / 2;
+  return { left: left + size * padding, top: top + size * padding, size: size * (1 - padding * 2) };
+}
+
+function drawNormalizedX(g, x, y, w, h) {
+  const box = squareBounds(x, y, w, h);
+  g.moveTo(box.left, box.top);
+  g.lineTo(box.left + box.size, box.top + box.size);
+  g.moveTo(box.left + box.size, box.top);
+  g.lineTo(box.left, box.top + box.size);
+}
+
+function drawNormalizedV(g, x, y, w, h) {
+  const box = squareBounds(x, y, w, h);
+  g.moveTo(box.left, box.top + box.size * 0.45);
+  g.lineTo(box.left + box.size * 0.34, box.top + box.size * 0.78);
+  g.lineTo(box.left + box.size, box.top);
 }
 
 function roundRectPath(g, x, y, w, h, r) {

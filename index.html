@@ -317,13 +317,13 @@
 							</svg>
 						</button>
 						</div>
-						<button class="rbtn cell tool-status-btn tool-btn" id="tool-status" data-tool="select" title="Current tool"
-							aria-label="Current tool" hidden>
-							<svg class="icon size5" id="tool-status-icon" viewBox="0 0 20 20"></svg>
-						</button>
 					</div>
 					<div class="action-menu tools-menu">
-						<button class="rbtn small action-menu-trigger" id="btn-tools-menu" title="More tools"><span>More</span>
+						<button class="rbtn cell tools-menu-current tool-status-btn tool-btn" id="tool-status" data-tool="select"
+							title="Current tool" aria-label="Current tool" hidden>
+							<svg class="icon size5" id="tool-status-icon" viewBox="0 0 20 20"></svg>
+						</button>
+						<button class="rbtn small action-menu-trigger tools-menu-arrow" id="btn-tools-menu" title="More tools"><span>More</span>
 							<span class="menu-arrow">▾</span></button>
 						<div class="action-menu-items" role="menu" aria-label="More tools">
 							<button type="button" class="rbtn small tool-menu-item tool-btn" data-tool="pencil"
@@ -336,18 +336,21 @@
 								role="menuitem">Color picker</button>
 							<button type="button" class="rbtn small tool-menu-item tool-btn" data-tool="zoom"
 								role="menuitem">Magnifier</button>
-							<label class="menu-checkbox">Text style
-								<select id="text-style" aria-label="Text style">
-									<option value="plain">Aa · Plain</option>
-									<option value="outline">Aa · Outline</option>
-									<option value="shadow">Aa · Shadow</option>
-									<option value="neon">Aa · Neon</option>
-									<option value="bold">B · Bold</option>
-									<option value="italic">I · Italic</option>
-									<option value="underline">U · Underline</option>
-								</select>
-								<span class="text-style-preview" id="text-style-preview">Aa</span>
-							</label>
+								<div class="text-style-picker" aria-label="Text styles">
+									<div class="text-style-picker-heading">
+										<span>Text style</span>
+										<span class="text-style-preview" id="text-style-preview">Aa</span>
+									</div>
+									<div class="text-style-options" id="text-style-options" role="group" aria-label="Toggle text styles">
+										<button type="button" class="text-style-option" data-text-style="outline"><span class="style-sample">Aa</span><span>Outline</span></button>
+										<button type="button" class="text-style-option" data-text-style="black-outline"><span class="style-sample">Aa</span><span>Black outline</span></button>
+										<button type="button" class="text-style-option" data-text-style="shadow"><span class="style-sample">Aa</span><span>Shadow</span></button>
+										<button type="button" class="text-style-option" data-text-style="neon"><span class="style-sample">Aa</span><span>Neon</span></button>
+										<button type="button" class="text-style-option" data-text-style="bold"><span class="style-sample">B</span><span>Bold</span></button>
+										<button type="button" class="text-style-option" data-text-style="italic"><span class="style-sample">I</span><span>Italic</span></button>
+										<button type="button" class="text-style-option" data-text-style="underline"><span class="style-sample">U</span><span>Underline</span></button>
+									</div>
+								</div>
 							<div class="style-history-block">
 								<span class="style-history-title">Recent styles</span>
 								<div id="style-history-list" class="style-history-list"></div>

@@ -247,13 +247,23 @@ body {
 	grid-template-columns: repeat(2, 1fr);
 }
 .ribbon-group-tools .tools-menu {
-	display: block;
+	display: flex;
+	align-items: stretch;
 	width: 100%;
 }
-.ribbon-group-tools .tools-menu > .action-menu-trigger {
-	width: 100%;
+.ribbon-group-tools .tools-menu-current {
+	min-width: 28px;
+	border-radius: 2px 0 0 2px;
+	flex: 0 0 auto;
+}
+.ribbon-group-tools .tools-menu-arrow {
+	flex: 1 1 auto;
 	min-height: 16px;
 	justify-content: center;
+	border-radius: 0 2px 2px 0;
+}
+.ribbon-group-tools .tools-menu-current[hidden] + .tools-menu-arrow {
+	border-radius: 2px;
 }
 .tool-status-btn[hidden] { display: none; }
 .tool-status-btn.active-status {
@@ -1290,25 +1300,37 @@ dialog h3 {
 .menu-checkbox input {
 	margin: 0;
 }
-.text-style-preview {
-	font-size: 18px;
-	font-weight: 700;
-	min-width: 24px;
-	color: var(--w10-accent);
+.text-style-picker { padding: 7px 10px; }
+.text-style-picker-heading { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 6px; font-size: 12px; }
+.text-style-options { display: grid; grid-template-columns: repeat(2, minmax(112px, 1fr)); gap: 3px; }
+.text-style-option {
+	display: flex !important;
+	align-items: center;
+	gap: 6px !important;
+	min-width: 0 !important;
+	padding: 5px 6px !important;
+	border: 1px solid transparent !important;
+	border-radius: 3px;
+	font-size: 11px !important;
+	white-space: nowrap !important;
 }
-.text-style-preview[data-style="outline"] {
-	-webkit-text-stroke: 1px var(--w10-accent);
-	color: transparent;
-}
-.text-style-preview[data-style="shadow"] {
-	text-shadow: 2px 2px 2px #777;
-}
-.text-style-preview[data-style="neon"] {
-	text-shadow: 0 0 5px var(--w10-accent);
-}
-.text-style-preview[data-style="bold"] { font-weight: 800; }
-.text-style-preview[data-style="italic"] { font-style: italic; }
-.text-style-preview[data-style="underline"] { text-decoration: underline; text-underline-offset: 2px; }
+.text-style-option.active { background: var(--w10-active) !important; border-color: var(--w10-active-border) !important; }
+.style-sample { min-width: 24px; font-size: 16px; font-weight: 700; color: var(--w10-accent); }
+.text-style-option[data-text-style="black-outline"] .style-sample,
+.text-style-preview[data-style~="black-outline"] { -webkit-text-stroke: 1px #000; }
+.text-style-option[data-text-style="outline"] .style-sample,
+.text-style-preview[data-style~="outline"] { -webkit-text-stroke: 1px currentColor; color: transparent; }
+.text-style-option[data-text-style="shadow"] .style-sample,
+.text-style-preview[data-style~="shadow"] { text-shadow: 2px 2px 2px #777; }
+.text-style-option[data-text-style="neon"] .style-sample,
+.text-style-preview[data-style~="neon"] { text-shadow: 0 0 5px currentColor; }
+.text-style-option[data-text-style="bold"] .style-sample,
+.text-style-preview[data-style~="bold"] { font-weight: 800; }
+.text-style-option[data-text-style="italic"] .style-sample,
+.text-style-preview[data-style~="italic"] { font-style: italic; }
+.text-style-option[data-text-style="underline"] .style-sample,
+.text-style-preview[data-style~="underline"] { text-decoration: underline; text-underline-offset: 2px; }
+.text-style-preview { font-size: 18px; font-weight: 700; min-width: 24px; color: var(--w10-accent); }
 dialog label {
 	display: flex;
 	justify-content: space-between;
