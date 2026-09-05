@@ -32,6 +32,7 @@ export class EyedropperTool {
     if (pt.button === 2) ctx.setSecondaryColor(hex);
     else ctx.setPrimaryColor(hex);
     ctx.colorInspector.show({ r, g, b, hex });
+    ctx.setActiveTool?.(ctx.getPreviousTool?.() || 'select');
   }
 
   onMove(pt, ctx, e) {

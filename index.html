@@ -67,7 +67,7 @@
     <header class="ribbon" id="ribbon">
 
       <!-- File group -->
-      <section class="ribbon-group">
+      <section class="ribbon-group ribbon-group-file">
         <div class="rbtn-row">
           <button class="rbtn" id="btn-new" data-tag="btn-new" title="New (Ctrl+N)">
             <svg class="icon size5" viewBox="0 0 20 20">
@@ -111,10 +111,10 @@
         <div class="ribbon-group-title">File</div>
       </section>
 
-      <div class="separator"></div>
+      <div class="separator separator-after-file"></div>
 
       <!-- Clipboard group -->
-      <section class="ribbon-group">
+      <section class="ribbon-group ribbon-group-clipboard">
         <div class="rbtn-row">
           <button class="rbtn big" id="btn-paste" data-tag="btn-paste" title="Paste (Ctrl+V)">
             <svg class="icon size5" viewBox="0 0 20 20">
@@ -145,10 +145,10 @@
         <div class="ribbon-group-title">Clipboard</div>
       </section>
 
-      <div class="separator"></div>
+      <div class="separator separator-after-clipboard"></div>
 
       <!-- Image group -->
-      <section class="ribbon-group">
+      <section class="ribbon-group ribbon-group-image">
         <div class="rbtn-row">
           <button class="rbtn tool-btn" data-tool="select" data-tag="tool-select" title="Select (S)">
             <svg class="icon size5" viewBox="0 0 20 20">
@@ -219,6 +219,7 @@
                   </svg>
                   <span>Free Rotate</span>
                 </button>
+                <label class="menu-checkbox"><input type="checkbox" id="rotate-selection-toggle"> Show Rotate in selection</label>
               </div>
             </div>
             <div class="action-menu">
@@ -247,10 +248,11 @@
         <div class="ribbon-group-title">Image</div>
       </section>
 
-      <div class="separator"></div>
+      <div class="separator separator-after-image"></div>
 
       <!-- Tools group -->
-      <section class="ribbon-group">
+      <section class="ribbon-group ribbon-group-tools">
+        <div class="tool-access-row">
         <div class="tool-grid">
           <button class="rbtn cell tool-btn" data-tool="pencil" data-tag="tool-pencil" title="Pencil (P)">
             <svg class="icon size5" viewBox="0 0 20 20">
@@ -295,21 +297,54 @@
             </svg>
           </button>
         </div>
+        <button class="rbtn cell tool-status-btn tool-btn" id="tool-status" data-tool="select" title="Current tool" aria-label="Current tool" hidden>
+          <svg class="icon size5" id="tool-status-icon" viewBox="0 0 20 20"></svg>
+        </button>
+        <div class="action-menu tools-menu">
+          <button class="rbtn small action-menu-trigger" id="btn-tools-menu" title="More tools"><span>More</span> <span class="menu-arrow">▾</span></button>
+          <div class="action-menu-items" role="menu" aria-label="More tools">
+            <button type="button" class="rbtn small tool-menu-item tool-btn" data-tool="pencil" role="menuitem">Pencil</button>
+            <button type="button" class="rbtn small tool-menu-item tool-btn" data-tool="fill" role="menuitem">Fill</button>
+            <button type="button" class="rbtn small tool-menu-item tool-btn" data-tool="eraser" role="menuitem">Eraser</button>
+            <button type="button" class="rbtn small tool-menu-item tool-btn" data-tool="eyedropper" role="menuitem">Color picker</button>
+            <button type="button" class="rbtn small tool-menu-item tool-btn" data-tool="zoom" role="menuitem">Magnifier</button>
+            <label class="menu-checkbox">Text style
+              <select id="text-style" aria-label="Text style">
+                <option value="plain">Aa · Plain</option>
+                <option value="outline">Aa · Outline</option>
+                <option value="shadow">Aa · Shadow</option>
+                <option value="neon">Aa · Neon</option>
+              </select>
+              <span class="text-style-preview" id="text-style-preview">Aa</span>
+            </label>
+            <div class="style-history-block">
+              <span class="style-history-title">Recent styles</span>
+              <div id="style-history-list" class="style-history-list"></div>
+            </div>
+          </div>
+        </div>
+        </div>
         <div class="ribbon-group-title">Tools</div>
       </section>
 
-      <div class="separator"></div>
+      <div class="separator separator-after-tools"></div>
 
       <!-- Shapes group -->
-      <section class="ribbon-group">
+      <section class="ribbon-group ribbon-group-shapes">
         <div class="rbtn-row">
+          <button type="button" class="rbtn cell shape-btn quick-shape" data-shape="rectangle" title="Rectangle">
+            <svg class="icon" viewBox="0 0 20 20"><rect x="3" y="5" width="14" height="10" /></svg>
+          </button>
+          <button type="button" class="rbtn cell shape-btn quick-shape" data-shape="arrow" title="Arrow">
+            <svg class="icon" viewBox="0 0 20 20"><path d="M3 17L16 4M10 4h6v6" fill="none" /></svg>
+          </button>
           <div class="action-menu shapes-menu">
-            <button class="rbtn cell action-menu-trigger shapes-menu-trigger" id="btn-shapes-menu" data-tag="btn-shapes-menu" title="Shapes — pick a shape to draw">
+            <button class="rbtn cell shapes-menu-trigger shapes-menu-current" id="btn-shapes-current" data-tag="btn-shapes-current" title="Use current shape">
               <svg class="icon size7 shape-menu-icon" id="shape-menu-icon" viewBox="0 0 20 20">
                 <rect x="3" y="5" width="14" height="10" />
               </svg>
-              <span class="menu-arrow" aria-hidden="true">▾</span>
             </button>
+            <button class="rbtn cell action-menu-trigger shapes-menu-arrow" id="btn-shapes-menu" data-tag="btn-shapes-menu" title="Choose another shape"><span class="menu-arrow" aria-hidden="true">▾</span></button>
             <div class="action-menu-items shape-gallery" role="menu" aria-label="Shapes gallery">
               <div class="shape-gallery-grid">
                 <button type="button" class="rbtn cell shape-btn" data-shape="line" data-tag="shape-line" title="Line">
@@ -321,7 +356,7 @@
                 <button type="button" class="rbtn cell shape-btn" data-shape="arrow" data-tag="shape-arrow" title="Arrow">
                   <svg class="icon" viewBox="0 0 20 20">
 										<path d="M4 16 L15 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
-										<path d="M15 5 L11 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="rou stroke-linejoin="round" />
+											<path d="M15 5 L11 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
 										<path d="M15 5 L15 9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
 									</svg>
                   <span>Arrow</span>
@@ -382,6 +417,12 @@
                   </svg>
                   <span>Plus</span>
                 </button>
+                <button type="button" class="rbtn cell shape-btn" data-shape="x" data-tag="shape-x" title="X">
+                  <svg class="icon" viewBox="0 0 20 20"><path d="M4 4l12 12M16 4L4 16" fill="none" stroke-linecap="round" /></svg><span>X</span>
+                </button>
+                <button type="button" class="rbtn cell shape-btn" data-shape="v" data-tag="shape-v" title="V mark">
+                  <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6" /></svg><span>V</span>
+                </button>
                 <button type="button" class="rbtn cell shape-btn" data-shape="double-arrow" data-tag="shape-double-arrow" title="Double arrow">
                   <svg class="icon" viewBox="0 0 20 20">
                     <path fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M4 16L16 4M16 4l-4 1M16 4l1 4M4 16l4-1M4 16l-1-4" />
@@ -424,6 +465,8 @@
             </button>
           </div>
           <div class="size-select">
+            <span class="size-label">Size</span>
+            <div class="size-controls">
             <input type="number" id="custom-line-size" style="width:48px; font-size:13px;" min="1" max="300" value="3"
                 title="Custom Size (brush stroke / text font)" />
               <select id="line-size" data-tag="line-size" style="width: 50px;">
@@ -434,16 +477,19 @@
                 <option value="8">8px</option>
                 <option value="12">12px</option>
                 <option value="20">20px</option>
+                <option value="40">40px</option>
+                <option value="60">60px</option>
               </select>
+            </div>
           </div>
         </div>
         <div class="ribbon-group-title">Shapes</div>
       </section>
 
-      <div class="separator"></div>
+      <div class="separator separator-after-shapes"></div>
 
       <!-- Color group -->
-      <section class="ribbon-group">
+      <section class="ribbon-group ribbon-group-colors">
         <div class="rbtn-row">
           <div class="swatch-stack" title="Click to edit colors" data-tag="swatch-stack">
             <button id="primary-swatch" class="swatch primary" data-tag="primary-swatch"></button>
@@ -455,10 +501,10 @@
         <div class="ribbon-group-title">Colors</div>
       </section>
 
-      <div class="separator"></div>
+      <div class="separator separator-after-colors"></div>
 
       <!-- Undo/Redo/History -->
-      <section class="ribbon-group">
+      <section class="ribbon-group ribbon-group-history">
         <div class="rbtn-stack">
           <div style="display:flex;">
             <button class="rbtn" id="btn-undo" data-tag="btn-undo" title="Undo (Ctrl+Z)" disabled>
@@ -483,10 +529,10 @@
         </div>
       </section>
 
-      <div class="separator"></div>
+      <div class="separator separator-after-history"></div>
 
       <!-- AI & Settings -->
-      <section class="ribbon-group">
+      <section class="ribbon-group ribbon-group-extras">
         <div class="rbtn-row">
           <button class="rbtn" id="btn-ai-chat" data-tag="btn-ai-chat" title="AI Chat">
             <svg class="icon size4" viewBox="0 0 20 20">
@@ -507,7 +553,7 @@
         <div class="ribbon-group-title">Extras</div>
       </section>
 
-      <div class="separator"></div>
+      <div class="separator separator-after-extras"></div>
 
       <!-- ============== COLOR INSPECTOR (new, point 7) ============== -->
       <div class="color-inspector" id="color-inspector">
@@ -525,6 +571,7 @@
             <code id="ci-hex" data-tag="ci-hex" style="user-select: text;">—</code>
             <button class="ci-copy" data-copy-target="ci-hex" data-tag="ci-copy-hex" title="Copy HEX">⧉</button>
           </span>
+          <button type="button" class="ci-toggle" id="ci-toggle" aria-label="Collapse color inspector" title="Collapse color inspector" aria-expanded="true"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M6 4l8 6-8 6" /></svg></button>
         </div>
 
         <span class="ci-field">
@@ -534,7 +581,7 @@
         </span>
       </div>
 
-      <div class="separator"></div>
+      <div class="separator separator-after-color-inspector"></div>
 
     </header>
 
@@ -563,7 +610,8 @@
           <button class="selection-handle handle-se" data-selection-handle="se" aria-label="Resize selection southeast" hidden></button>
           <button class="selection-handle handle-s" data-selection-handle="s" aria-label="Resize selection south" hidden></button>
           <button class="selection-handle handle-sw" data-selection-handle="sw" aria-label="Resize selection southwest" hidden></button>
-          <button class="selection-handle handle-w" data-selection-handle="w" aria-label="Resize selection west" hidden></button>
+            <button class="selection-handle handle-w" data-selection-handle="w" aria-label="Resize selection west" hidden></button>
+            <button class="selection-rotate" id="selection-rotate" aria-label="Rotate selection 90 degrees" title="Rotate selection" hidden>↻</button>
           <div class="resize-ghost" id="resize-ghost" data-tag="resize-ghost"></div>
           </div><!-- /canvas-scale -->
         </div><!-- /canvas-stage -->
@@ -671,14 +719,14 @@
   <!-- ===================== Settings dialog ===================== -->
   <dialog id="settings-dialog" data-tag="settings-dialog">
     <div class="settings-shell">
-      <button type="button" class="settings-close" id="settings-close" aria-label="Close settings" title="Close settings">×</button>
+      <header class="settings-header"><span>Settings</span><button type="button" class="settings-close" id="settings-close" aria-label="Close settings" title="Close settings">×</button></header>
       <nav class="settings-tabs" aria-label="Settings sections">
         <button type="button" class="settings-tab active" data-settings-tab="general">GENERAL</button>
         <button type="button" class="settings-tab" data-settings-tab="history">HISTORY</button>
         <button type="button" class="settings-tab" data-settings-tab="ribbon">RIBBON</button>
         <button type="button" class="settings-tab" data-settings-tab="about">ABOUT</button>
       </nav>
-      <form method="dialog" id="settings-form" class="settings-panel" data-settings-panel="general">
+      <form method="dialog" id="settings-form" class="settings-panel settings-body" data-settings-panel="general">
         <h3>General</h3>
         <label class="checkbox-row"><input type="checkbox" id="setting-dark-mode" /> Dark Mode</label>
         <label class="checkbox-row"><input type="checkbox" id="setting-show-status-bar" checked /> Show Status Bar</label>
@@ -695,7 +743,7 @@
           <button type="button" id="settings-cancel">Close</button>
         </div>
       </form>
-      <section class="settings-panel" data-settings-panel="history" hidden>
+      <section class="settings-panel settings-body" data-settings-panel="history" hidden>
         <h3>History</h3>
         <label class="checkbox-row"><input type="checkbox" id="setting-history-auto-save" checked /> Auto-save to history</label>
         <label class="settings-field">Auto-save when
@@ -719,12 +767,12 @@
           <button type="button" id="settings-history-clear" class="danger">Clear All</button>
         </div>
       </section>
-      <section class="settings-panel" data-settings-panel="ribbon" hidden>
+      <section class="settings-panel settings-body" data-settings-panel="ribbon" hidden>
         <h3>Ribbon</h3>
         <p>Choose which ribbon groups are visible. Detailed group options open in the sidebar.</p>
         <div id="ribbon-settings-list" class="ribbon-settings-list"></div>
       </section>
-      <section class="settings-panel" data-settings-panel="about" hidden>
+      <section class="settings-panel settings-body" data-settings-panel="about" hidden>
         <h3>About paint</h3>
         <p>paint is a local-first browser drawing workspace built for fast, private image editing.</p>
         <dl class="about-stats">
@@ -737,6 +785,7 @@
           <button type="button" id="settings-about-close">Close</button>
         </div>
       </section>
+      <footer class="settings-footer"><button type="button" id="settings-footer-close">Close</button></footer>
     </div>
   </dialog>
 

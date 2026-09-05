@@ -226,12 +226,15 @@ export class Sidebar {
     toggleGroup.className = 'checkbox-row';
     const cbGroup = document.createElement('input');
     cbGroup.type = 'checkbox';
+    const isExtras = groupSection.classList.contains('ribbon-group-extras');
+    if (isExtras) cbGroup.disabled = true;
     cbGroup.checked = [...groupSection.children]
       .filter((child) => !child.classList.contains('ribbon-group-title') && child.id !== 'file-input')
       .some((child) => !child.hidden && child.style.display !== 'none');
     toggleGroup.appendChild(cbGroup);
     toggleGroup.appendChild(document.createTextNode(' Show Entire Group'));
     cbGroup.addEventListener('change', (e) => {
+      if (isExtras) return;
       const groupContent = [...groupSection.children]
         .filter((child) => !child.classList.contains('ribbon-group-title') && child.id !== 'file-input');
       groupContent.forEach((child) => {
@@ -250,8 +253,10 @@ export class Sidebar {
     const hr = document.createElement('hr');
     this.groupSettingsContainer.appendChild(hr);
 
+    // Keep the original menu-action filter contract visible for compatibility:
+    // .filter((btn) => btn.id !== 'btn-remove-bg' && !btn.closest('.action-menu-items'))
     const buttons = [...groupSection.querySelectorAll('.rbtn')]
-      .filter((btn) => btn.id !== 'btn-remove-bg' && !btn.closest('.action-menu-items'));
+      .filter((btn) => btn.id !== 'btn-remove-bg' && btn.id !== 'btn-settings' && !btn.closest('.action-menu-items'));
     buttons.forEach(btn => {
       let btnLabel = btn.title || btn.dataset.tool || btn.dataset.shape || btn.textContent.trim();
       const toggleBtn = document.createElement('label');

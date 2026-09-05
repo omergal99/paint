@@ -110,12 +110,21 @@ export class ShapeTool {
       case 'plus':
         plusPath(g, x + w / 2, y + h / 2, w / 2, h / 2);
         break;
+      case 'x':
+        g.moveTo(x, y); g.lineTo(x + w, y + h);
+        g.moveTo(x + w, y); g.lineTo(x, y + h);
+        break;
+      case 'v':
+        g.moveTo(x + w * 0.08, y + h * 0.5);
+        g.lineTo(x + w * 0.38, y + h * 0.8);
+        g.lineTo(x + w * 0.92, y + h * 0.14);
+        break;
       default:
         g.moveTo(start.x, start.y);
         g.lineTo(end.x, end.y);
     }
 
-    if (kind !== 'line') {
+    if (kind !== 'line' && kind !== 'x' && kind !== 'v') {
       if (fillMode === 'fill' || fillMode === 'outline-fill') g.fill();
       if (fillMode === 'outline' || fillMode === 'outline-fill') g.stroke();
     } else {

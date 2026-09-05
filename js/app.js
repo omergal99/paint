@@ -1,16 +1,8 @@
 import { canvasManager } from './main.js';
-import { installCanvasAutosave, loadCanvasState } from './storage.js';
+import { installCanvasAutosave } from './storage.js';
 import { installTelemetry } from './telemetry.js';
 
 const canvas = document.getElementById('paint-canvas');
-
-function hasLegacySession() {
-  try {
-    return Boolean(window.localStorage?.getItem('omerpaint:last-canvas'));
-  } catch {
-    return false;
-  }
-}
 
 if (canvas) {
   installCanvasAutosave({ canvas });
@@ -21,16 +13,8 @@ if (canvas) {
       }
     },
   });
-  loadCanvasState().then(async (state) => {
-    if (!state?.blob || hasLegacySession()) return;
-    const url = URL.createObjectURL(state.blob);
-    try {
-      await canvasManager.loadImageDataUrl(url, state.width, state.height);
-      window.dispatchEvent(new CustomEvent('paint:restored', { detail: state }));
-    } finally {
-      URL.revokeObjectURL(url);
-    }
-  });
+  // Navigation intentionally starts a clean document. Autosaved data remains
+  // available to history/export flows instead of silently reopening in place.
   window.dispatchEvent(new CustomEvent('paint:ready'));
 }
 

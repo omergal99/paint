@@ -18,13 +18,14 @@ import { StatusBar } from './ui/StatusBar.js';
 import { Toolbar } from './ui/Toolbar.js';
 import { Sidebar } from './ui/Sidebar.js';
 import { hexToRgb } from './utils/color.js';
-import { rotateCanvas, rotateCanvasByAngle, flipCanvas, scaleCanvas, removeBackground } from './utils/transform.js';
+import { rotateCanvas, rotateCanvasByAngle, rotateCanvasToFit, flipCanvas, scaleCanvas, removeBackground } from './utils/transform.js';
 import { APP_VERSION } from './version.js';
 
 // ---------- DOM refs ----------
 const stage = document.getElementById('canvas-stage');
 const canvasEl = document.getElementById('paint-canvas');
 const overlayEl = document.getElementById('overlay-canvas');
+const scaleEl = document.getElementById('canvas-scale');
 
 // ---------- Core managers ----------
 const canvasManager = new CanvasManager({ canvas: canvasEl, overlay: overlayEl, width: 800, height: 600 });
@@ -42,7 +43,7 @@ const sidebar = new Sidebar({ canvasManager, statusBar });
 
 const viewportManager = new ViewportManager({
   stage,
-  scaleEl: document.getElementById('canvas-scale'),
+  scaleEl,
   canvasManager,
   zoomInBtn: document.getElementById('zoom-in'),
   zoomOutBtn: document.getElementById('zoom-out'),
@@ -76,13 +77,25 @@ const colorInspector = new ColorInspector({
   hexEl: document.getElementById('ci-hex'),
   copyButtons: [...document.querySelectorAll('.ci-copy')],
 });
+document.getElementById('ci-toggle')?.addEventListener('click', () => {
+  const inspector = document.getElementById('color-inspector');
+  inspector.classList.toggle('collapsed');
+  const button = document.getElementById('ci-toggle');
+  const collapsed = inspector.classList.contains('collapsed');
+  button.innerHTML = `<svg viewBox="0 0 20 20" aria-hidden="true"><path d="${collapsed ? 'M14 4l-8 6 8 6' : 'M6 4l8 6-8 6'}" /></svg>`;
+  button.setAttribute('aria-expanded', String(!collapsed));
+  button.title = collapsed ? 'Expand color inspector' : 'Collapse color inspector';
+});
 
 const colorPalette = new ColorPalette({
   gridEl: document.getElementById('palette-grid'),
   primarySwatchEl: document.getElementById('primary-swatch'),
   secondarySwatchEl: document.getElementById('secondary-swatch'),
   colorPickerInput: document.getElementById('color-picker'),
-  onPrimaryChange: (hex) => (canvasManager.primaryColor = hex),
+  onPrimaryChange: (hex) => {
+    canvasManager.primaryColor = hex;
+    window.dispatchEvent(new CustomEvent('paint:primary-color-change', { detail: hex }));
+  },
   onSecondaryChange: (hex) => (canvasManager.secondaryColor = hex),
 });
 const primaryRgb = hexToRgb(colorPalette.primary);
@@ -119,11 +132,22 @@ function setSelection(region, opts = {}) {
 }
 
 const selectionHandles = [...document.querySelectorAll('[data-selection-handle]')];
+const rotateSelectionHandle = document.getElementById('selection-rotate');
+let activeToolName = 'select';
 
 function updateSelectionHandles(region) {
+  const selectionToolActive = activeToolName === 'select';
   selectionHandles.forEach((handle) => {
-    handle.hidden = !region || !region.w || !region.h;
+    handle.hidden = !selectionToolActive || !region || !region.w || !region.h;
   });
+  if (rotateSelectionHandle) {
+    const enabled = document.getElementById('rotate-selection-toggle')?.checked === true;
+    rotateSelectionHandle.hidden = !selectionToolActive || !enabled || !region || !region.w || !region.h;
+    if (region?.w && region?.h) {
+      rotateSelectionHandle.style.left = `${region.x + region.w / 2 - 12}px`;
+      rotateSelectionHandle.style.top = `${Math.max(0, region.y - 28)}px`;
+    }
+  }
   if (!region || !region.w || !region.h) return;
   const points = {
     nw: [region.x, region.y], n: [region.x + region.w / 2, region.y], ne: [region.x + region.w, region.y],
@@ -210,16 +234,16 @@ function restoreToolSelection() {
   }
 }
 
-// Font size state — driven by the SAME shared size control as the brush
-// (the size-select in the Shapes group), so it stays consistent with the
-// value shown in that dropdown.
+// Text keeps its own remembered size even though it shares the visible size
+// control with drawing tools. Never fall back to the legacy line-width key:
+// that would make a 3px brush unexpectedly become the text default.
 let currentFontSize = (() => {
   try {
-    // Prefer the shared size control's persisted value, then the legacy key.
-    const saved = localStorage.getItem('paint:line-width') || localStorage.getItem('paint:font-size');
-    return saved ? parseInt(saved, 10) : 24;
+    const saved = localStorage.getItem('paint:font-size');
+    const parsed = saved ? parseInt(saved, 10) : 40;
+    return Number.isFinite(parsed) ? Math.max(1, Math.min(300, parsed)) : 40;
   } catch {
-    return 24;
+    return 40;
   }
 })();
 
@@ -228,6 +252,7 @@ const toolContext = {
   historyManager,
   viewportManager,
   stage,
+  scaleEl,
   colorInspector,
   getSelection,
   setSelection,
@@ -236,10 +261,13 @@ const toolContext = {
   drawSelectionOutline,
   setPrimaryColor: (hex) => colorPalette.setPrimary(hex),
   setSecondaryColor: (hex) => colorPalette.setSecondary(hex),
+  setActiveTool: (name) => toolManager.setActive(name),
+  getPreviousTool: () => toolbar.getPreviousTool(),
   getShapeKind: () => toolbar.getShapeKind(),
   getShapeFillMode: () => toolbar.getFillMode(),
   getFontSize: () => currentFontSize,
   getFontFamily: () => "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+  getTextStyle: () => document.getElementById('text-style')?.value || 'plain',
   setFontSize: (size) => {
     currentFontSize = Math.max(1, Math.min(300, parseInt(size, 10)));
     try {
@@ -263,6 +291,10 @@ const toolManager = new ToolManager({ surface: overlayEl, viewportManager, toolC
   new EyedropperTool(),
   new ZoomTool(),
 ].forEach((t) => toolManager.register(t));
+
+viewportManager.onZoomChange = () => {
+  toolManager.tools.get('text')?.onZoomChange?.(toolContext);
+};
 
 // Wrap toolManager.setActive to automatically save tool selection
 const originalSetActive = toolManager.setActive.bind(toolManager);
@@ -310,11 +342,21 @@ function deleteSelection() {
 }
 
 function newFile() {
-  document.getElementById('new-file-dialog').showModal();
+  if (getHistoryPrefs().autoSave) {
+    void doNewFile();
+    return;
+  }
+  const dialog = document.getElementById('new-file-dialog');
+  const button = document.getElementById('btn-new').getBoundingClientRect();
+  dialog.style.left = `${Math.max(12, Math.round(button.left))}px`;
+  dialog.style.top = `${Math.round(button.bottom + 8)}px`;
+  dialog.showModal();
+  document.getElementById('new-file-ok')?.focus();
 }
 
 async function doNewFile() {
   if (shouldAutoSaveHistory()) await sidebar.saveCurrentToHistory();
+  else if (getHistoryPrefs().autoSave) await sidebar.saveCurrentToHistory();
   discardFloatingSelection();
   historyManager.clear();
   fileHandle = null;
@@ -528,12 +570,87 @@ document.getElementById('btn-flip-vertical').addEventListener('click', () => app
 document.getElementById('btn-crop-menu').addEventListener('click', (event) => {
   toggleActionMenu(event);
 });
+document.getElementById('btn-tools-menu')?.addEventListener('click', toggleActionMenu);
 document.getElementById('btn-remove-bg').addEventListener('click', () => applyTransformation(c => removeBackground(c, 30)));
+rotateSelectionHandle?.addEventListener('click', (event) => {
+  event.preventDefault();
+  event.stopPropagation();
+  if (rotateSelectionHandle._dragged) {
+    rotateSelectionHandle._dragged = false;
+    return;
+  }
+  if (document.getElementById('rotate-selection-toggle')?.checked) {
+    rotateSelectionByAngle(90, { prepared: rotateSelectionHandle._rotationPrepared === true });
+    rotateSelectionHandle._rotationPrepared = false;
+  }
+});
+rotateSelectionHandle?.addEventListener('pointerdown', (event) => {
+  if (activeToolName !== 'select' || !document.getElementById('rotate-selection-toggle')?.checked || !canvasManager.selection) return;
+  event.preventDefault();
+  event.stopPropagation();
+  const originalSelection = { ...canvasManager.selection };
+  historyManager.snapshot();
+  if (!canvasManager.floatingCanvas) {
+    canvasManager.floatingCanvas = canvasManager.extractRegion(originalSelection);
+    canvasManager.fillRegion(originalSelection, canvasManager.backgroundColor);
+    setSelection(originalSelection);
+  }
+  const originalCanvas = canvasManager.floatingCanvas;
+  rotateSelectionHandle._rotationPrepared = true;
+  const center = { x: originalSelection.x + originalSelection.w / 2, y: originalSelection.y + originalSelection.h / 2 };
+  const startPoint = viewportManager.clientToImage(event.clientX, event.clientY);
+  const startAngle = Math.atan2(startPoint.y - center.y, startPoint.x - center.x);
+  let moved = false;
+  const onMove = (moveEvent) => {
+    const point = viewportManager.clientToImage(moveEvent.clientX, moveEvent.clientY);
+    const angle = Math.atan2(point.y - center.y, point.x - center.x);
+    const degrees = (angle - startAngle) * 180 / Math.PI;
+    if (Math.abs(degrees) > 1) moved = true;
+    const rotated = rotateCanvasToFit(originalCanvas, degrees, originalSelection.w, originalSelection.h);
+    canvasManager.floatingCanvas = rotated;
+    setSelection({
+      x: center.x - rotated.width / 2,
+      y: center.y - rotated.height / 2,
+      w: rotated.width,
+      h: rotated.height,
+    });
+  };
+  const onUp = () => {
+    window.removeEventListener('pointermove', onMove);
+    window.removeEventListener('pointerup', onUp);
+    if (moved) {
+      rotateSelectionHandle._dragged = true;
+      rotateSelectionHandle._rotationPrepared = false;
+      canvasManager.persistToStorage();
+    }
+  };
+  window.addEventListener('pointermove', onMove);
+  window.addEventListener('pointerup', onUp, { once: true });
+});
+
+function rotateSelectionByAngle(degrees, { prepared = false } = {}) {
+  const selection = canvasManager.selection;
+  if (!selection?.w || !selection?.h) return;
+  if (!prepared) historyManager.snapshot();
+  if (!prepared && !canvasManager.floatingCanvas) {
+    canvasManager.floatingCanvas = canvasManager.extractRegion(selection);
+    canvasManager.fillRegion(selection, canvasManager.backgroundColor);
+  }
+  canvasManager.floatingCanvas = rotateCanvasToFit(canvasManager.floatingCanvas, degrees, selection.w, selection.h);
+  setSelection({ ...selection });
+  persistSession();
+}
 bindSelectionHandles();
 
 document.addEventListener('click', () => {
   document.querySelectorAll('.action-menu.open').forEach((menu) => menu.classList.remove('open'));
 });
+
+// Native dialogs do not close on backdrop clicks by default. Keep the modal
+// interactions lightweight and predictable, like the ribbon menus.
+document.querySelectorAll('dialog').forEach((dialog) => dialog.addEventListener('click', (event) => {
+  if (event.target === dialog) dialog.close();
+}));
 
 // ---------- Resize-canvas dialog ----------
 const resizeDialog = document.getElementById('resize-dialog');
@@ -606,6 +723,7 @@ function saveSettings() {
       historyAutoSaveMode,
       ribbonVisibility,
       buttonVisibility,
+      showRotateInSelection: document.getElementById('rotate-selection-toggle')?.checked === true,
     }));
   } catch (error) { console.warn('Unable to save settings:', error); }
 }
@@ -750,6 +868,25 @@ function applySavedSettings() {
     fileInput.hidden = true;
     fileInput.style.display = 'none';
   }
+  const rotateToggle = document.getElementById('rotate-selection-toggle');
+  if (rotateToggle) {
+    rotateToggle.checked = saved.showRotateInSelection === true;
+  }
+  // Settings is the stable escape hatch for ribbon configuration.
+  const settingsButton = document.getElementById('btn-settings');
+  if (settingsButton) { settingsButton.hidden = false; settingsButton.style.display = ''; }
+  const extrasGroup = document.querySelector('.ribbon-group-extras');
+  if (extrasGroup) {
+    extrasGroup.hidden = false;
+    extrasGroup.style.display = '';
+    [...extrasGroup.children]
+      .filter((child) => !child.classList.contains('ribbon-group-title'))
+      .forEach((child) => { child.hidden = false; child.style.display = child.classList.contains('rbtn-row') ? 'flex' : ''; });
+  }
+  const inspectorSeparator = document.querySelector('.color-inspector')?.nextElementSibling;
+  if (inspectorSeparator?.classList.contains('separator')) {
+    inspectorSeparator.style.display = ciCheckbox.checked ? '' : 'none';
+  }
 }
 
 async function updateAboutStats() {
@@ -788,7 +925,10 @@ function populateRibbonSettings() {
     checkbox.checked = [...groupSection.children]
       .filter((child) => !child.classList.contains('ribbon-group-title') && child.id !== 'file-input')
       .some((child) => !child.hidden && child.style.display !== 'none');
+    const isExtras = groupSection.classList.contains('ribbon-group-extras');
+    if (isExtras) checkbox.disabled = true;
     checkbox.addEventListener('change', () => {
+      if (isExtras) return;
       [...groupSection.children]
         .filter((child) => !child.classList.contains('ribbon-group-title') && child.id !== 'file-input')
         .forEach((child) => {
@@ -800,7 +940,7 @@ function populateRibbonSettings() {
       if (separator?.classList.contains('separator')) separator.style.display = checkbox.checked ? '' : 'none';
         saveSettings();
     });
-    label.append(checkbox, document.createTextNode(title.textContent));
+    label.append(checkbox, document.createTextNode(isExtras ? `${title.textContent} (Settings always visible)` : title.textContent));
     const details = document.createElement('button');
     details.type = 'button';
     details.className = 'ribbon-setting-details';
@@ -884,6 +1024,11 @@ document.getElementById('settings-about-close').addEventListener('click', () => 
 
 document.getElementById('btn-settings').addEventListener('click', () => settingsDialog.showModal());
 document.getElementById('settings-cancel').addEventListener('click', () => settingsDialog.close());
+document.getElementById('settings-footer-close')?.addEventListener('click', () => settingsDialog.close());
+document.getElementById('rotate-selection-toggle')?.addEventListener('change', (event) => {
+  updateSelectionHandles(canvasManager.selection);
+  saveSettings();
+});
 
 // ---------- New file dialog ----------
 const newFileDialog = document.getElementById('new-file-dialog');
@@ -902,6 +1047,8 @@ sbCheckbox.addEventListener('change', (e) => {
 });
 ciCheckbox.addEventListener('change', (e) => {
   document.getElementById('color-inspector').style.display = e.target.checked ? 'flex' : 'none';
+  const separator = document.querySelector('.color-inspector')?.nextElementSibling;
+  if (separator?.classList.contains('separator')) separator.style.display = e.target.checked ? '' : 'none';
   saveSettings();
 });
 bgSelect.addEventListener('change', (e) => {
@@ -971,24 +1118,30 @@ const toolbar = new Toolbar({
     openResizeDialog,
     undo: () => { discardFloatingSelection(); historyManager.undo(); },
     redo: () => { discardFloatingSelection(); historyManager.redo(); },
+    setPrimaryColor: (hex) => colorPalette.setPrimary(hex),
   },
 });
 
-// Restore line width from localStorage
-(function restoreLineWidth() {
-  try {
-    const saved = localStorage.getItem('paint:line-width');
-    if (saved) {
-      const customInput = document.querySelector('#custom-line-size');
-      if (customInput) {
-        customInput.value = saved;
-        customInput.dispatchEvent(new Event('input', { bubbles: true }));
-      }
-    }
-  } catch (err) {
-    console.warn('Unable to restore line width:', err);
-  }
-})();
+// Toolbar owns the visual tool state; keep selection handles in sync with it
+// so rotate/resize affordances only appear while Select is the active tool.
+const toolbarToolChange = toolManager.onToolChange;
+toolManager.onToolChange = (name) => {
+  activeToolName = name;
+  toolbarToolChange?.(name);
+  updateSelectionHandles(canvasManager.selection);
+};
+
+const textStyleSelect = document.getElementById('text-style');
+try { textStyleSelect.value = localStorage.getItem('paint:text-style') || 'plain'; } catch {}
+const updateTextStylePreview = () => {
+  const preview = document.getElementById('text-style-preview');
+  if (preview) preview.dataset.style = textStyleSelect?.value || 'plain';
+};
+updateTextStylePreview();
+textStyleSelect?.addEventListener('change', () => {
+  try { localStorage.setItem('paint:text-style', textStyleSelect.value); } catch {}
+  updateTextStylePreview();
+});
 
 // ---------- Sidebar Init ----------
 document.getElementById('btn-history-panel').addEventListener('click', () => sidebar.toggleHistory());
@@ -1006,16 +1159,18 @@ document.querySelectorAll('.ribbon-group-title').forEach(titleEl => {
 // ---------- File / Storage logic ----------
 historyManager.onChange = (canUndo, canRedo) => toolbar.setUndoRedoEnabled(canUndo, canRedo);
 
-(async () => {
-  const restored = await canvasManager.restoreFromStorage();
-  if (restored) {
-    setSelection(null);
-    statusBar.flash('Restored your last canvas');
-  }
-})();
+// A fresh navigation starts on a clean canvas. The previous image is kept in
+// global history by beforeunload/autosave, so reopening does not unexpectedly
+// continue editing the last document.
 window.addEventListener('beforeunload', () => {
   persistSession();
   if (shouldAutoSaveOnClose()) sidebar.saveCurrentToHistory();
+});
+let historySaveTimer = 0;
+window.addEventListener('paint:changed', () => {
+  if (!shouldAutoSaveHistory()) return;
+  window.clearTimeout(historySaveTimer);
+  historySaveTimer = window.setTimeout(() => sidebar.saveCurrentToHistory(), 700);
 });
 
 // Default tool, per the brief: Select (not Pencil, unlike real Windows Paint).

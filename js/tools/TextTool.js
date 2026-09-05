@@ -30,6 +30,11 @@ export class TextTool {
   onMove() {}
   onUp() {}
 
+  onZoomChange(ctx) {
+    if (!this._box || this._ctxRef !== ctx) return;
+    this._applyEditorStyle(ctx);
+  }
+
   onDeactivate() {
     this._commit();
   }
@@ -43,9 +48,10 @@ export class TextTool {
     // NOTE: assigning the `font` shorthand resets sub-properties, so the shared
     // line-height must be re-applied afterwards or the live preview drifts out
     // of alignment with the text committed to the canvas.
-    box.style.font = `${ctx.getFontSize()}px ${ctx.getFontFamily()}`;
-    box.style.lineHeight = '1.2';
-    ctx.stage.appendChild(box);
+    this._box = box;
+    this._ctxRef = ctx;
+    this._applyEditorStyle(ctx);
+    (ctx.scaleEl || ctx.stage).appendChild(box);
     box.focus();
 
     box.addEventListener('keydown', (e) => {
@@ -57,9 +63,7 @@ export class TextTool {
     });
     box.addEventListener('blur', () => this._commit());
 
-    this._box = box;
     this._origin = pt;
-    this._ctxRef = ctx;
   }
 
   _commit() {
@@ -75,16 +79,22 @@ export class TextTool {
     if (text.trim().length > 0) {
       ctx.historyManager.snapshot();
       const c = ctx.canvasManager.ctx;
-      const fontSize = ctx.getFontSize();
+      const fontSize = this._renderSize(ctx);
       c.save();
       c.fillStyle = ctx.canvasManager.primaryColor;
       c.font = `${fontSize}px ${ctx.getFontFamily()}`;
       c.textBaseline = 'top';
+      const style = ctx.getTextStyle?.() || 'plain';
+      if (style === 'shadow') { c.shadowColor = 'rgba(0,0,0,.45)'; c.shadowBlur = Math.max(2, fontSize * .12); c.shadowOffsetX = fontSize * .08; c.shadowOffsetY = fontSize * .08; }
+      if (style === 'neon') { c.shadowColor = ctx.canvasManager.primaryColor; c.shadowBlur = Math.max(6, fontSize * .25); }
       // Compensate for the 1px dashed border of the live .op-text-box preview
       // so committed text lands exactly where the user saw it while typing.
       const borderOffset = 1;
       text.split('\n').forEach((line, i) => {
-        c.fillText(line, x + borderOffset, y + borderOffset + i * fontSize * 1.2);
+        const lineX = x + borderOffset;
+        const lineY = y + borderOffset + i * fontSize * 1.2;
+        if (style === 'outline') { c.strokeStyle = ctx.canvasManager.primaryColor; c.lineWidth = Math.max(1, fontSize * .06); c.strokeText(line, lineX, lineY); }
+        else c.fillText(line, lineX, lineY);
       });
       c.restore();
       ctx.canvasManager.persistToStorage();
@@ -97,5 +107,18 @@ export class TextTool {
     this._box = null;
     this._ctxRef = null;
     box.remove();
+  }
+
+  // Keep text visually legible at every zoom: the stored size is the user's
+  // screen-facing preference, while the canvas needs inverse zoom scaling.
+  _renderSize(ctx) {
+    return Math.max(1, Math.round(ctx.getFontSize() * 100 / ctx.viewportManager.zoom));
+  }
+
+  _applyEditorStyle(ctx) {
+    if (!this._box) return;
+    const fontSize = this._renderSize(ctx);
+    this._box.style.font = `${fontSize}px ${ctx.getFontFamily()}`;
+    this._box.style.lineHeight = '1.2';
   }
 }

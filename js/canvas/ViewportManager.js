@@ -110,6 +110,7 @@ export class ViewportManager {
   _applyZoom() {
     const scale = this.zoom / 100;
     this.scaleEl.style.transform = `scale(${scale})`;
+    this.scaleEl.style.setProperty('--zoom-inverse', String(1 / scale));
     this.zoomInput.value = this.zoom;
     this.zoomSlider.value = this.zoom;
     this.syncStageSize();

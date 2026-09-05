@@ -49,6 +49,27 @@ export function rotateCanvasByAngle(sourceCanvas, degrees) {
   return out;
 }
 
+// Rotate a floating selection without changing its selection rectangle. The
+// rotated pixels are fitted inside the original bounds, so selection handles
+// stay stable instead of growing to the rotated bounding box.
+export function rotateCanvasToFit(sourceCanvas, degrees, width, height) {
+  const radians = degrees * Math.PI / 180;
+  const absSin = Math.abs(Math.sin(radians));
+  const absCos = Math.abs(Math.cos(radians));
+  const rotatedWidth = sourceCanvas.width * absCos + sourceCanvas.height * absSin;
+  const rotatedHeight = sourceCanvas.width * absSin + sourceCanvas.height * absCos;
+  const fit = Math.min(1, width / rotatedWidth, height / rotatedHeight);
+  const out = document.createElement('canvas');
+  out.width = Math.max(1, Math.round(width));
+  out.height = Math.max(1, Math.round(height));
+  const ctx = out.getContext('2d');
+  ctx.translate(out.width / 2, out.height / 2);
+  ctx.rotate(radians);
+  ctx.scale(fit, fit);
+  ctx.drawImage(sourceCanvas, -sourceCanvas.width / 2, -sourceCanvas.height / 2);
+  return out;
+}
+
 export function scaleCanvas(sourceCanvas, width, height) {
   const out = document.createElement('canvas');
   out.width = Math.max(1, Math.round(width));
