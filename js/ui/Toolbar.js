@@ -15,6 +15,7 @@ export class Toolbar {
 
     this._shapeKind = 'rectangle';
     this._fillMode = 'outline';
+    this._showCurrentTool = this._loadShowCurrentTool();
     this.getShapeKind = () => this._shapeKind;
     this.getFillMode = () => this._fillMode;
 
@@ -37,6 +38,11 @@ export class Toolbar {
       this._styles[key].color = event.detail;
       this._saveStyles();
       this._recordStyle(key);
+    });
+    window.addEventListener('paint:show-current-tool-change', (event) => {
+      this._showCurrentTool = event.detail !== false;
+      try { localStorage.setItem('paint:show-current-tool', String(this._showCurrentTool)); } catch {}
+      this._highlightTool(this._activeTool);
     });
 
     this._restoreShape();
@@ -65,6 +71,7 @@ export class Toolbar {
     this.root.querySelectorAll('.tool-menu-item').forEach((b) => b.classList.toggle('active', b.dataset.tool === name));
     const statusButton = this.root.querySelector('#tool-status');
     const statusIcon = this.root.querySelector('#tool-status-icon');
+    const currentShapeButton = this.root.querySelector('#btn-shapes-current');
     const source = this.root.querySelector(`.tool-grid .tool-btn[data-tool="${name}"]`);
     const showStatus = name !== 'select' && Boolean(source);
     // Keep More as a stable menu label. The adjacent status button is a
@@ -72,11 +79,13 @@ export class Toolbar {
     // selected from More, without changing the More button's label.
     if (statusButton) {
       statusButton.dataset.tool = name;
-      statusButton.hidden = !showStatus;
+      statusButton.hidden = !this._showCurrentTool || !showStatus;
       statusButton.title = source ? `Current tool: ${source.title.replace(/ \(.+\)$/, '')}` : 'Current tool';
       statusButton.classList.toggle('active-status', showStatus);
       if (statusIcon && source) statusIcon.innerHTML = source.querySelector('svg')?.innerHTML || '';
     }
+    currentShapeButton?.classList.toggle('active-shape-status', name === 'shape');
+    currentShapeButton?.classList.toggle('inactive-shape-status', name !== 'shape');
     this._applyRememberedStyle();
     if (name !== 'eyedropper') this._recordStyle(this._styleKey());
     // Selecting any of the shape-drawing tools is implicit: the "shape" tool
@@ -104,7 +113,7 @@ export class Toolbar {
     const menuIcon = document.getElementById('shape-menu-icon');
     if (menuIcon) {
       const tileSvg = btnEl ? btnEl.querySelector('svg') : this.shapeButtons.find((b) => b.dataset.shape === kind)?.querySelector('svg');
-      if (tileSvg) menuIcon.innerHTML = tileSvg.innerHTML;
+      if (tileSvg) this._setShapeMenuIcon(menuIcon, tileSvg);
     }
     this.toolManager.setActive('shape');
     this._applyRememberedStyle();
@@ -132,7 +141,7 @@ export class Toolbar {
     this.shapeButtons.forEach((shapeButton) => shapeButton.classList.toggle('active', shapeButton.dataset.shape === kind));
     document.getElementById('btn-shapes-current')?.classList.add('active-shape-status');
     const menuIcon = document.getElementById('shape-menu-icon');
-    if (menuIcon) menuIcon.innerHTML = btn.querySelector('svg').innerHTML;
+    if (menuIcon) this._setShapeMenuIcon(menuIcon, btn.querySelector('svg'));
   }
 
   _bindFillModes() {
@@ -142,6 +151,11 @@ export class Toolbar {
         this.fillModeButtons.forEach((b) => b.classList.toggle('active', b === btn));
       });
     });
+  }
+
+  _setShapeMenuIcon(menuIcon, tileSvg) {
+    menuIcon.innerHTML = tileSvg.innerHTML;
+    menuIcon.setAttribute('viewBox', tileSvg.getAttribute('viewBox') || '0 0 20 20');
   }
 
   // One shared size control (the size-select in the Shapes group) drives both
@@ -164,7 +178,6 @@ export class Toolbar {
       // Select matching option if exists
       const opt = Array.from(select.options).find(o => o.value == size);
       select.value = opt ? String(size) : '';
-      this.root.querySelector('.size-label').textContent = `Size · ${size}px`;
       // Save to localStorage
       try {
         const key = this._styleKey();
@@ -196,6 +209,9 @@ export class Toolbar {
         return obj[key] || (obj[key] = { size: key === 'text' ? 40 : 3, color: null });
       },
     });
+  }
+  _loadShowCurrentTool() {
+    try { return localStorage.getItem('paint:show-current-tool') !== 'false'; } catch { return true; }
   }
   _saveStyles() { try { localStorage.setItem(STYLE_STORAGE_KEY, JSON.stringify(this._styles)); } catch {} }
   _loadStyleHistory() { try { const value = JSON.parse(localStorage.getItem(STYLE_HISTORY_KEY) || '[]'); return Array.isArray(value) ? value : []; } catch { return []; } }
@@ -249,7 +265,6 @@ export class Toolbar {
     const custom = this.root.querySelector('#custom-line-size');
     if (custom) custom.value = size;
     if (select) select.value = [...select.options].some((o) => Number(o.value) === size) ? String(size) : '';
-    this.root.querySelector('.size-label').textContent = `Size · ${size}px`;
     if (style.color) this.handlers.setPrimaryColor?.(style.color);
   }
   getPreviousTool() { return this._previousTool || 'select'; }

@@ -80,11 +80,11 @@ export class TextTool {
       ctx.historyManager.snapshot();
       const c = ctx.canvasManager.ctx;
       const fontSize = this._renderSize(ctx);
+      const style = ctx.getTextStyle?.() || 'plain';
       c.save();
       c.fillStyle = ctx.canvasManager.primaryColor;
-      c.font = `${fontSize}px ${ctx.getFontFamily()}`;
+      c.font = this._fontDeclaration(ctx, fontSize, style);
       c.textBaseline = 'top';
-      const style = ctx.getTextStyle?.() || 'plain';
       if (style === 'shadow') { c.shadowColor = 'rgba(0,0,0,.45)'; c.shadowBlur = Math.max(2, fontSize * .12); c.shadowOffsetX = fontSize * .08; c.shadowOffsetY = fontSize * .08; }
       if (style === 'neon') { c.shadowColor = ctx.canvasManager.primaryColor; c.shadowBlur = Math.max(6, fontSize * .25); }
       // Compensate for the 1px dashed border of the live .op-text-box preview
@@ -95,6 +95,9 @@ export class TextTool {
         const lineY = y + borderOffset + i * fontSize * 1.2;
         if (style === 'outline') { c.strokeStyle = ctx.canvasManager.primaryColor; c.lineWidth = Math.max(1, fontSize * .06); c.strokeText(line, lineX, lineY); }
         else c.fillText(line, lineX, lineY);
+        if (style === 'underline') {
+          c.fillRect(lineX, lineY + fontSize * 1.08, c.measureText(line).width, Math.max(1, fontSize * .06));
+        }
       });
       c.restore();
       ctx.canvasManager.persistToStorage();
@@ -118,7 +121,20 @@ export class TextTool {
   _applyEditorStyle(ctx) {
     if (!this._box) return;
     const fontSize = this._renderSize(ctx);
-    this._box.style.font = `${fontSize}px ${ctx.getFontFamily()}`;
+    const style = ctx.getTextStyle?.() || 'plain';
+    this._box.style.font = this._fontDeclaration(ctx, fontSize, style);
     this._box.style.lineHeight = '1.2';
+    this._box.style.textDecoration = style === 'underline' ? 'underline' : 'none';
+    this._box.style.textShadow = style === 'shadow'
+      ? '2px 2px 3px rgba(0,0,0,.45)'
+      : style === 'neon' ? `0 0 8px ${ctx.canvasManager.primaryColor}` : 'none';
+    this._box.style.webkitTextStroke = style === 'outline' ? `${Math.max(1, fontSize * .06)}px ${ctx.canvasManager.primaryColor}` : 'unset';
+    this._box.style.color = style === 'outline' ? 'transparent' : ctx.canvasManager.primaryColor;
+  }
+
+  _fontDeclaration(ctx, fontSize, style) {
+    const fontStyle = style === 'italic' ? 'italic' : 'normal';
+    const fontWeight = style === 'bold' ? '700' : '400';
+    return `${fontStyle} ${fontWeight} ${fontSize}px ${ctx.getFontFamily()}`;
   }
 }

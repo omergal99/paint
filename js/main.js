@@ -77,14 +77,22 @@ const colorInspector = new ColorInspector({
   hexEl: document.getElementById('ci-hex'),
   copyButtons: [...document.querySelectorAll('.ci-copy')],
 });
-document.getElementById('ci-toggle')?.addEventListener('click', () => {
-  const inspector = document.getElementById('color-inspector');
-  inspector.classList.toggle('collapsed');
-  const button = document.getElementById('ci-toggle');
-  const collapsed = inspector.classList.contains('collapsed');
+const colorInspectorEl = document.getElementById('color-inspector');
+const colorInspectorToggle = document.getElementById('ci-toggle');
+function setColorInspectorCollapsed(collapsed) {
+  if (!colorInspectorEl || !colorInspectorToggle) return;
+  colorInspectorEl.classList.toggle('collapsed', collapsed);
+  const button = colorInspectorToggle;
   button.innerHTML = `<svg viewBox="0 0 20 20" aria-hidden="true"><path d="${collapsed ? 'M14 4l-8 6 8 6' : 'M6 4l8 6-8 6'}" /></svg>`;
   button.setAttribute('aria-expanded', String(!collapsed));
   button.title = collapsed ? 'Expand color inspector' : 'Collapse color inspector';
+  try { localStorage.setItem('paint:color-inspector-collapsed', String(collapsed)); } catch {}
+}
+let colorInspectorCollapsed = false;
+try { colorInspectorCollapsed = localStorage.getItem('paint:color-inspector-collapsed') === 'true'; } catch {}
+setColorInspectorCollapsed(colorInspectorCollapsed);
+colorInspectorToggle?.addEventListener('click', () => {
+  setColorInspectorCollapsed(!colorInspectorEl.classList.contains('collapsed'));
 });
 
 const colorPalette = new ColorPalette({
@@ -118,7 +126,13 @@ function getSelection() {
   return canvasManager.selection;
 }
 
+let selectionRotation = null;
+function sameRegion(a, b) {
+  return a && b && ['x', 'y', 'w', 'h'].every((key) => a[key] === b[key]);
+}
+
 function setSelection(region, opts = {}) {
+  if (selectionRotation && !sameRegion(selectionRotation.selection, region)) selectionRotation = null;
   canvasManager.selection = region;
   statusBar.setSelection(region);
   canvasManager.clearOverlay();
@@ -203,6 +217,7 @@ function commitFloatingSelection() {
   if (canvasManager.floatingCanvas && canvasManager.selection) {
     canvasManager.ctx.drawImage(canvasManager.floatingCanvas, canvasManager.selection.x, canvasManager.selection.y);
     canvasManager.floatingCanvas = null;
+    selectionRotation = null;
     setSelection(null);
     canvasManager.persistToStorage();
   }
@@ -211,6 +226,7 @@ function commitFloatingSelection() {
 function discardFloatingSelection() {
   if (canvasManager.floatingCanvas) {
     canvasManager.floatingCanvas = null;
+    selectionRotation = null;
     setSelection(null);
   }
 }
@@ -487,6 +503,9 @@ function crop() {
 
 // ---------- Transformations ----------
 function applyTransformation(transformFn) {
+  // A menu transform starts a new operation; do not use a previous rotate
+  // handle's base canvas for it.
+  selectionRotation = null;
   historyManager.snapshot();
   const selection = canvasManager.selection;
   if (selection && !canvasManager.floatingCanvas) {
@@ -595,7 +614,9 @@ rotateSelectionHandle?.addEventListener('pointerdown', (event) => {
     canvasManager.fillRegion(originalSelection, canvasManager.backgroundColor);
     setSelection(originalSelection);
   }
-  const originalCanvas = canvasManager.floatingCanvas;
+  const rotationState = beginSelectionRotation(originalSelection);
+  const originalCanvas = rotationState.baseCanvas;
+  const startDegrees = rotationState.degrees;
   rotateSelectionHandle._rotationPrepared = true;
   const center = { x: originalSelection.x + originalSelection.w / 2, y: originalSelection.y + originalSelection.h / 2 };
   const startPoint = viewportManager.clientToImage(event.clientX, event.clientY);
@@ -604,8 +625,9 @@ rotateSelectionHandle?.addEventListener('pointerdown', (event) => {
   const onMove = (moveEvent) => {
     const point = viewportManager.clientToImage(moveEvent.clientX, moveEvent.clientY);
     const angle = Math.atan2(point.y - center.y, point.x - center.x);
-    const degrees = (angle - startAngle) * 180 / Math.PI;
-    if (Math.abs(degrees) > 1) moved = true;
+    const degrees = startDegrees + (angle - startAngle) * 180 / Math.PI;
+    if (Math.abs(degrees - startDegrees) > 1) moved = true;
+    rotationState.degrees = degrees;
     const rotated = rotateCanvasToFit(originalCanvas, degrees, originalSelection.w, originalSelection.h);
     canvasManager.floatingCanvas = rotated;
     setSelection({
@@ -636,9 +658,23 @@ function rotateSelectionByAngle(degrees, { prepared = false } = {}) {
     canvasManager.floatingCanvas = canvasManager.extractRegion(selection);
     canvasManager.fillRegion(selection, canvasManager.backgroundColor);
   }
-  canvasManager.floatingCanvas = rotateCanvasToFit(canvasManager.floatingCanvas, degrees, selection.w, selection.h);
+  const rotationState = beginSelectionRotation(selection);
+  rotationState.degrees += degrees;
+  canvasManager.floatingCanvas = rotateCanvasToFit(rotationState.baseCanvas, rotationState.degrees, selection.w, selection.h);
   setSelection({ ...selection });
   persistSession();
+}
+
+function beginSelectionRotation(selection) {
+  if (!canvasManager.floatingCanvas) return null;
+  if (!selectionRotation || !sameRegion(selectionRotation.selection, selection)) {
+    selectionRotation = {
+      baseCanvas: scaleCanvas(canvasManager.floatingCanvas, canvasManager.floatingCanvas.width, canvasManager.floatingCanvas.height),
+      selection: { ...selection },
+      degrees: 0,
+    };
+  }
+  return selectionRotation;
 }
 bindSelectionHandles();
 
@@ -1138,6 +1174,7 @@ const updateTextStylePreview = () => {
   if (preview) preview.dataset.style = textStyleSelect?.value || 'plain';
 };
 updateTextStylePreview();
+textStyleSelect?.addEventListener('click', (event) => event.stopPropagation());
 textStyleSelect?.addEventListener('change', () => {
   try { localStorage.setItem('paint:text-style', textStyleSelect.value); } catch {}
   updateTextStylePreview();

@@ -249,6 +249,21 @@ export class Sidebar {
       this._saveRibbonButtonState();
     });
     this.groupSettingsContainer.appendChild(toggleGroup);
+
+    if (groupSection.classList.contains('ribbon-group-tools')) {
+      const currentToolToggle = document.createElement('label');
+      currentToolToggle.className = 'checkbox-row';
+      const currentToolCheckbox = document.createElement('input');
+      currentToolCheckbox.type = 'checkbox';
+      currentToolCheckbox.id = 'show-current-tool-toggle';
+      try { currentToolCheckbox.checked = localStorage.getItem('paint:show-current-tool') !== 'false'; } catch { currentToolCheckbox.checked = true; }
+      currentToolCheckbox.addEventListener('change', (event) => {
+        window.dispatchEvent(new CustomEvent('paint:show-current-tool-change', { detail: event.target.checked }));
+        this._saveRibbonButtonState();
+      });
+      currentToolToggle.append(currentToolCheckbox, document.createTextNode(' Show Current tool'));
+      this.groupSettingsContainer.appendChild(currentToolToggle);
+    }
     
     const hr = document.createElement('hr');
     this.groupSettingsContainer.appendChild(hr);
@@ -256,7 +271,7 @@ export class Sidebar {
     // Keep the original menu-action filter contract visible for compatibility:
     // .filter((btn) => btn.id !== 'btn-remove-bg' && !btn.closest('.action-menu-items'))
     const buttons = [...groupSection.querySelectorAll('.rbtn')]
-      .filter((btn) => btn.id !== 'btn-remove-bg' && btn.id !== 'btn-settings' && !btn.closest('.action-menu-items'));
+      .filter((btn) => btn.id !== 'btn-remove-bg' && btn.id !== 'btn-settings' && btn.id !== 'tool-status' && !btn.closest('.action-menu-items'));
     buttons.forEach(btn => {
       let btnLabel = btn.title || btn.dataset.tool || btn.dataset.shape || btn.textContent.trim();
       const toggleBtn = document.createElement('label');

@@ -271,7 +271,8 @@
 			<!-- Tools group -->
 			<section class="ribbon-group ribbon-group-tools">
 				<div class="tool-access-row">
-					<div class="tool-grid">
+					<div class="quick-tools-row" data-tag="wrap-quick-tools">
+						<div class="tool-grid">
 						<button class="rbtn cell tool-btn" data-tool="pencil" data-tag="tool-pencil" title="Pencil (P)">
 							<svg class="icon size5" viewBox="0 0 20 20">
 								<path fill="currentColor"
@@ -315,11 +316,12 @@
 								<path d="M13 13l5 5" stroke-linecap="round" />
 							</svg>
 						</button>
+						</div>
+						<button class="rbtn cell tool-status-btn tool-btn" id="tool-status" data-tool="select" title="Current tool"
+							aria-label="Current tool" hidden>
+							<svg class="icon size5" id="tool-status-icon" viewBox="0 0 20 20"></svg>
+						</button>
 					</div>
-					<button class="rbtn cell tool-status-btn tool-btn" id="tool-status" data-tool="select" title="Current tool"
-						aria-label="Current tool" hidden>
-						<svg class="icon size5" id="tool-status-icon" viewBox="0 0 20 20"></svg>
-					</button>
 					<div class="action-menu tools-menu">
 						<button class="rbtn small action-menu-trigger" id="btn-tools-menu" title="More tools"><span>More</span>
 							<span class="menu-arrow">▾</span></button>
@@ -340,6 +342,9 @@
 									<option value="outline">Aa · Outline</option>
 									<option value="shadow">Aa · Shadow</option>
 									<option value="neon">Aa · Neon</option>
+									<option value="bold">B · Bold</option>
+									<option value="italic">I · Italic</option>
+									<option value="underline">U · Underline</option>
 								</select>
 								<span class="text-style-preview" id="text-style-preview">Aa</span>
 							</label>
@@ -368,7 +373,7 @@
 						<button class="rbtn cell action-menu-trigger shapes-menu-arrow" id="btn-shapes-menu"
 							data-tag="btn-shapes-menu" title="Choose another shape"><span class="menu-arrow"
 								aria-hidden="true">▾</span></button>
-						<div class="action-menu-items shape-gallery" role="menu" aria-label="Shapes gallery">
+					<div class="action-menu-items shape-gallery" role="menu" aria-label="Shapes gallery">
 							<div class="shape-gallery-grid">
 								<button type="button" class="rbtn cell shape-btn" data-shape="line" data-tag="shape-line" title="Line">
 									<svg class="icon" viewBox="0 0 20 20">
@@ -485,9 +490,32 @@
 									<span>Triangle</span>
 								</button>
 							</div>
+							<div class="shape-menu-settings" aria-label="Fill mode settings">
+								<span class="shape-menu-setting-label">Fill</span>
+								<div class="fillmode-col">
+									<button class="rbtn micro fillmode-btn active" data-fillmode="outline" data-tag="fillmode-outline"
+										title="Outline only">
+										<svg class="icon size5" viewBox="0 0 20 20">
+											<rect x="3" y="3" width="14" height="14" />
+										</svg>
+									</button>
+									<button class="rbtn micro fillmode-btn" data-fillmode="outline-fill" data-tag="fillmode-outline-fill"
+										title="Outline + fill">
+										<svg class="icon size5" viewBox="0 0 20 20">
+											<rect x="3" y="3" width="14" height="14" class="op-half-fill" />
+										</svg>
+									</button>
+									<button class="rbtn micro fillmode-btn" data-fillmode="fill" data-tag="fillmode-fill"
+										title="Fill, no outline">
+										<svg class="icon size5" viewBox="0 0 20 20">
+											<rect x="3" y="3" width="14" height="14" class="op-full-fill" />
+										</svg>
+									</button>
+								</div>
+							</div>
 						</div>
 					</div>
-					<div data-tag="wrap-quick-shapes" flex-col>
+					<div class="quick-shapes-stack" data-tag="wrap-quick-shapes">
 						<button type="button" class="rbtn cell shape-btn quick-shape" data-shape="rectangle" title="Rectangle">
 							<svg class="icon" viewBox="0 0 20 20">
 								<rect x="3" y="5" width="14" height="10" />
@@ -499,29 +527,7 @@
 							</svg>
 						</button>
 					</div>
-
-					<div class="fillmode-col">
-						<button class="rbtn micro fillmode-btn active" data-fillmode="outline" data-tag="fillmode-outline"
-							title="Outline only">
-							<svg class="icon size5" viewBox="0 0 20 20">
-								<rect x="3" y="3" width="14" height="14" />
-							</svg>
-						</button>
-						<button class="rbtn micro fillmode-btn" data-fillmode="outline-fill" data-tag="fillmode-outline-fill"
-							title="Outline + fill">
-							<svg class="icon size5" viewBox="0 0 20 20">
-								<rect x="3" y="3" width="14" height="14" class="op-half-fill" />
-							</svg>
-						</button>
-						<button class="rbtn micro fillmode-btn" data-fillmode="fill" data-tag="fillmode-fill"
-							title="Fill, no outline">
-							<svg class="icon size5" viewBox="0 0 20 20">
-								<rect x="3" y="3" width="14" height="14" class="op-full-fill" />
-							</svg>
-						</button>
-					</div>
-					<div class="size-select">
-						<span class="size-label">Size</span>
+						<div class="size-select" title="Current drawing or text size">
 						<div class="size-controls">
 							<input type="number" id="custom-line-size" style="width:48px; font-size:13px;" min="1" max="300" value="3"
 								title="Custom Size (brush stroke / text font)" />
