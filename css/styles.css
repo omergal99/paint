@@ -288,6 +288,15 @@ body {
 	fill: #8d3e91;
 	stroke: #8d3e91;
 }
+.tool-status-btn.inactive-status {
+	background: transparent;
+	border-color: transparent;
+	color: var(--w10-text-dim);
+}
+.tool-status-btn.inactive-status .icon {
+	fill: var(--w10-text-dim);
+	stroke: var(--w10-text-dim);
+}
 .style-history-block {
 	grid-column: 1 / -1;
 	border-top: 1px solid var(--w10-border);

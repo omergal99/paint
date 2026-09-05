@@ -56,7 +56,7 @@ export class CanvasManager {
     if (typeof window === 'undefined' || !window.localStorage) return;
     try {
       const dataUrl = this.canvas.toDataURL('image/png');
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ dataUrl, width: this.width, height: this.height }));
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ dataUrl, width: this.width, height: this.height, updatedAt: Date.now() }));
       window.dispatchEvent(new CustomEvent('paint:changed', {
         detail: { width: this.width, height: this.height },
       }));
@@ -74,14 +74,18 @@ export class CanvasManager {
     }
   }
 
-  async restoreFromStorage() {
+  async restoreFromStorage({ maxAgeMs = Infinity } = {}) {
     if (typeof window === 'undefined' || !window.localStorage) return false;
     try {
       const raw = window.localStorage.getItem(STORAGE_KEY);
       if (!raw) return false;
-      const { dataUrl, width, height } = JSON.parse(raw);
+      const { dataUrl, width, height, updatedAt } = JSON.parse(raw);
       if (!dataUrl) return false;
+      if (!Number.isFinite(updatedAt) || Date.now() - updatedAt > maxAgeMs) return false;
       await this.loadImageDataUrl(dataUrl, width, height);
+      // Seeing a recent document refreshes its session TTL without creating a
+      // change event or a duplicate history entry.
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ dataUrl, width, height, updatedAt: Date.now() }));
       return true;
     } catch (err) {
       console.warn('Unable to restore canvas state:', err);

@@ -77,17 +77,27 @@ export class Toolbar {
     // represent either kind of active tool.
     const source = this.root.querySelector(`.tool-grid .tool-btn[data-tool="${name}"]`)
       || this.root.querySelector(`.tool-btn[data-tool="${name}"]:not(#tool-status)`);
-    const showStatus = Boolean(source);
-    // Keep More as a stable menu label. The adjacent status button is a
-    // compact, purple current-tool indicator for both quick tools and tools
-    // selected from More, without changing the More button's label.
+    const shapeSource = name === 'shape'
+      ? this.shapeButtons.find((button) => button.dataset.shape === this._shapeKind)
+      : null;
+    // Keep More as a stable menu label. The status button is always present:
+    // regular tools use the purple state, while Shape uses a neutral state
+    // because the adjacent current-shape button is the specific indicator.
     if (statusButton) {
       statusButton.dataset.tool = name;
-      statusButton.hidden = !this._showCurrentTool || !showStatus;
-      statusButton.style.display = this._showCurrentTool && showStatus ? '' : 'none';
-      statusButton.title = source ? `Current tool: ${source.title.replace(/ \(.+\)$/, '')}` : 'Current tool';
-      statusButton.classList.toggle('active-status', showStatus);
-      if (statusIcon && source) statusIcon.innerHTML = source.querySelector('svg')?.innerHTML || '';
+      statusButton.hidden = false;
+      statusButton.style.display = '';
+      statusButton.title = source
+        ? `Current tool: ${source.title.replace(/ \(.+\)$/, '')}`
+        : name === 'shape' ? `Current tool: Shape (${this._shapeKind})` : 'Current tool';
+      statusButton.classList.toggle('active-status', Boolean(source) && this._showCurrentTool);
+      statusButton.classList.toggle('inactive-status', !source || !this._showCurrentTool);
+      const iconSource = source || shapeSource;
+      if (statusIcon && iconSource) {
+        const icon = iconSource.querySelector('svg');
+        statusIcon.innerHTML = icon?.innerHTML || '';
+        statusIcon.setAttribute('viewBox', icon?.getAttribute('viewBox') || '0 0 20 20');
+      }
     }
     currentShapeButton?.classList.toggle('active-shape-status', name === 'shape');
     currentShapeButton?.classList.toggle('inactive-shape-status', name !== 'shape');

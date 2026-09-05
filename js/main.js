@@ -1276,9 +1276,17 @@ document.querySelectorAll('.ribbon-group-title').forEach(titleEl => {
 // ---------- File / Storage logic ----------
 historyManager.onChange = (canUndo, canRedo) => toolbar.setUndoRedoEnabled(canUndo, canRedo);
 
-// A fresh navigation starts on a clean canvas. The previous image is kept in
-// global history by beforeunload/autosave, so reopening does not unexpectedly
-// continue editing the last document.
+// Restore the current working image for one short session window. Older work
+// remains available through global history instead of unexpectedly reopening
+// as the active document.
+const RECENT_CANVAS_TTL_MS = 24 * 60 * 60 * 1000;
+void canvasManager.restoreFromStorage({ maxAgeMs: RECENT_CANVAS_TTL_MS }).then((restored) => {
+  if (restored) {
+    setSelection(null);
+    statusBar.flash('Restored recent image');
+  }
+}).catch((error) => console.warn('Unable to restore recent image:', error));
+
 window.addEventListener('beforeunload', () => {
   persistSession();
   if (shouldAutoSaveOnClose()) sidebar.saveCurrentToHistory();
