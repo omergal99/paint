@@ -637,6 +637,7 @@ document.getElementById('btn-crop-menu').addEventListener('click', (event) => {
   toggleActionMenu(event);
 });
 document.getElementById('btn-tools-menu')?.addEventListener('click', toggleActionMenu);
+document.getElementById('line-size')?.addEventListener('click', toggleActionMenu);
 document.getElementById('btn-remove-bg').addEventListener('click', () => applyTransformation(c => removeBackground(c, 30)));
 rotateSelectionHandle?.addEventListener('click', (event) => {
   event.preventDefault();

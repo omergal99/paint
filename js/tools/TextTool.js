@@ -87,12 +87,14 @@ export class TextTool {
       c.textBaseline = 'top';
       if (styles.has('shadow')) { c.shadowColor = 'rgba(0,0,0,.45)'; c.shadowBlur = Math.max(2, fontSize * .12); c.shadowOffsetX = fontSize * .08; c.shadowOffsetY = fontSize * .08; }
       if (styles.has('neon')) { c.shadowColor = ctx.canvasManager.primaryColor; c.shadowBlur = Math.max(6, fontSize * .25); }
-      // Compensate for the 1px dashed border of the live .op-text-box preview
-      // so committed text lands exactly where the user saw it while typing.
+      // The textarea's font renderer places ink slightly lower than canvas
+      // `textBaseline: top`. Include the border and a small font-proportional
+      // correction so committed text does not jump upward on blur.
       const borderOffset = 1;
+      const topOffset = Math.max(2, Math.round(fontSize * 0.08));
       text.split('\n').forEach((line, i) => {
         const lineX = x + borderOffset;
-        const lineY = y + borderOffset + i * fontSize * 1.2;
+        const lineY = y + topOffset + i * fontSize * 1.2;
         if (styles.has('outline') || styles.has('black-outline')) {
           c.strokeStyle = styles.has('black-outline') ? '#000' : ctx.canvasManager.primaryColor;
           c.lineWidth = Math.max(1, fontSize * .06);
@@ -127,7 +129,7 @@ export class TextTool {
     const fontSize = this._renderSize(ctx);
     const styles = this._styleSet(ctx);
     this._box.style.font = this._fontDeclaration(ctx, fontSize, styles);
-    this._box.style.lineHeight = '1.2';
+    this._box.style.lineHeight = '0.95';
     this._box.style.textDecoration = styles.has('underline') ? 'underline' : 'none';
     this._box.style.textShadow = styles.has('shadow')
       ? '2px 2px 3px rgba(0,0,0,.45)'

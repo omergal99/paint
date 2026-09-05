@@ -530,21 +530,26 @@
 							</svg>
 						</button>
 					</div>
-						<div class="size-select" title="Current drawing or text size">
+					<div class="size-select" title="Current drawing or text size">
 						<div class="size-controls">
 							<input type="number" id="custom-line-size" style="width:48px; font-size:13px;" min="1" max="300" value="3"
 								title="Custom Size (brush stroke / text font)" />
-							<select id="line-size" data-tag="line-size" style="width: 50px;">
-								<option value="1">1px</option>
-								<option value="2">2px</option>
-								<option value="3" selected>3px</option>
-								<option value="5">5px</option>
-								<option value="8">8px</option>
-								<option value="12">12px</option>
-								<option value="20">20px</option>
-								<option value="40">40px</option>
-								<option value="60">60px</option>
-							</select>
+							<div class="action-menu size-menu">
+								<button type="button" id="line-size" class="rbtn small action-menu-trigger size-menu-trigger" data-tag="line-size"
+									title="Choose drawing or text size"><span class="size-value">3px</span><span class="menu-arrow"
+									aria-hidden="true">▾</span></button>
+								<div class="action-menu-items size-menu-items" role="menu" aria-label="Drawing and text sizes">
+									<button type="button" data-size-option="1" role="menuitem">1px</button>
+									<button type="button" data-size-option="2" role="menuitem">2px</button>
+									<button type="button" data-size-option="3" role="menuitem">3px</button>
+									<button type="button" data-size-option="5" role="menuitem">5px</button>
+									<button type="button" data-size-option="8" role="menuitem">8px</button>
+									<button type="button" data-size-option="12" role="menuitem">12px</button>
+									<button type="button" data-size-option="20" role="menuitem">20px</button>
+									<button type="button" data-size-option="40" role="menuitem">40px</button>
+									<button type="button" data-size-option="60" role="menuitem">60px</button>
+								</div>
+							</div>
 						</div>
 					</div>
 				</div>

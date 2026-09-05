@@ -84,6 +84,7 @@ export class Toolbar {
     if (statusButton) {
       statusButton.dataset.tool = name;
       statusButton.hidden = !this._showCurrentTool || !showStatus;
+      statusButton.style.display = this._showCurrentTool && showStatus ? '' : 'none';
       statusButton.title = source ? `Current tool: ${source.title.replace(/ \(.+\)$/, '')}` : 'Current tool';
       statusButton.classList.toggle('active-status', showStatus);
       if (statusIcon && source) statusIcon.innerHTML = source.querySelector('svg')?.innerHTML || '';
@@ -166,7 +167,8 @@ export class Toolbar {
   // the drawing line width AND the text-tool font size, so the dropdown works
   // for text exactly as it works for the brush.
   _bindLineSize(setLineWidth, setFontSize) {
-    const select = this.root.querySelector('#line-size');
+    const sizeButton = this.root.querySelector('#line-size');
+    const sizeOptions = [...this.root.querySelectorAll('[data-size-option]')];
     const customInput = this.root.querySelector('#custom-line-size');
 
     const applySize = (val) => {
@@ -179,9 +181,9 @@ export class Toolbar {
       else setLineWidth(size);
       // setLineWidth(size); setFontSize(size); (legacy shared-control contract)
       customInput.value = size;
-      // Select matching option if exists
-      const opt = Array.from(select.options).find(o => o.value == size);
-      select.value = opt ? String(size) : '';
+      const sizeLabel = sizeButton?.querySelector('.size-value');
+      if (sizeLabel) sizeLabel.textContent = `${size}px`;
+      sizeOptions.forEach((option) => option.classList.toggle('active', Number(option.dataset.sizeOption) === size));
       // Save to localStorage
       try {
         const key = this._styleKey();
@@ -193,7 +195,7 @@ export class Toolbar {
       }
     };
 
-    select.addEventListener('change', () => applySize(select.value));
+    sizeOptions.forEach((option) => option.addEventListener('click', () => applySize(option.dataset.sizeOption)));
     customInput.addEventListener('input', () => applySize(customInput.value));
     this._setLineWidth = setLineWidth;
     this._setFontSize = setFontSize;
@@ -265,10 +267,14 @@ export class Toolbar {
     const style = this._styles[this._styleKey()];
     const size = Number(style.size) || (this._activeTool === 'text' ? 40 : 3);
     if (this._activeTool === 'text') this._setFontSize(size); else this._setLineWidth(size);
-    const select = this.root.querySelector('#line-size');
+    const sizeButton = this.root.querySelector('#line-size');
     const custom = this.root.querySelector('#custom-line-size');
     if (custom) custom.value = size;
-    if (select) select.value = [...select.options].some((o) => Number(o.value) === size) ? String(size) : '';
+    const sizeLabel = sizeButton?.querySelector('.size-value');
+    if (sizeLabel) sizeLabel.textContent = `${size}px`;
+    this.root.querySelectorAll('[data-size-option]').forEach((option) => {
+      option.classList.toggle('active', Number(option.dataset.sizeOption) === size);
+    });
     if (style.color) this.handlers.setPrimaryColor?.(style.color);
   }
   getPreviousTool() { return this._previousTool || 'select'; }
