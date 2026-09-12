@@ -205,11 +205,16 @@ test('AI chat exposes safe deterministic actions through one command service', (
   assert.match(sidebar, /setAiCommandService/);
 });
 
-test('AI provider choice is visible but does not fake external authentication', () => {
+test('AI provider launcher never collects API keys', () => {
   assert.match(html, /id="ai-provider-select"/);
   assert.match(html, /id="ai-connect-button"/);
+  assert.match(html, /id="ai-connection-dialog"/);
+  assert.match(html, /id="ai-provider-link"/);
+  assert.doesNotMatch(html, /id="ai-api-key"/);
   assert.match(read('js/ai/AiConnectionStore.js'), /createAiConnectionStore/);
-  assert.match(sidebar, /Provider login is planned/);
+  assert.match(sidebar, /_openAiConnectionDialog/);
+  assert.match(sidebar, /_copyCurrentImageForAi/);
+  assert.doesNotMatch(read('js/ai/AiConnectionStore.js'), /setApiKey|clearApiKey/);
   assert.match(read('js/settings/SettingsRegistry.js'), /paint:ai-connection/);
 });
 

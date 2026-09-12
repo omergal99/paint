@@ -29,6 +29,10 @@ export class Sidebar {
     this.aiProviderSelect = document.getElementById('ai-provider-select');
     this.aiConnectButton = document.getElementById('ai-connect-button');
     this.aiConnectionStatus = document.getElementById('ai-connection-status');
+    this.aiConnectionDialog = document.getElementById('ai-connection-dialog');
+    this.aiConnectionDescription = document.getElementById('ai-connection-description');
+    this.aiProviderLink = document.getElementById('ai-provider-link');
+    this.aiCopyImageButton = document.getElementById('ai-copy-current-image');
     
     this.groupSettingsContent = document.getElementById('sidebar-group-settings');
     this.groupSettingsContainer = document.getElementById('group-settings-container');
@@ -148,8 +152,8 @@ export class Sidebar {
         this.aiConnectButton.textContent = 'Connected';
         this.aiConnectButton.disabled = true;
       } else {
-        this.aiConnectionStatus.textContent = 'Provider login is planned; no credentials are requested yet.';
-        this.aiConnectButton.textContent = 'Connection details';
+        this.aiConnectionStatus.textContent = 'Use the provider website; no credentials are stored here';
+        this.aiConnectButton.textContent = 'Open provider';
         this.aiConnectButton.disabled = false;
       }
     };
@@ -158,10 +162,37 @@ export class Sidebar {
       render();
     });
     this.aiConnectButton?.addEventListener('click', () => {
-      render();
-      this.aiConnectionStatus.textContent = 'This provider adapter is not connected yet. Your canvas was not uploaded.';
+      this._openAiConnectionDialog();
     });
+    this.aiCopyImageButton?.addEventListener('click', () => this._copyCurrentImageForAi());
     render();
+  }
+
+  _openAiConnectionDialog() {
+    if (!this.aiConnectionDialog || this.aiProviderSelect.value === 'local') return;
+    const provider = AI_PROVIDERS.find(({ id }) => id === this.aiProviderSelect.value);
+    this.aiConnectionDialog.querySelector('[data-ai-provider-name]')?.replaceChildren(provider?.label || 'AI provider');
+    this.aiConnectionDescription.textContent = `Open ${provider?.label || 'the AI provider'} in its official website, sign in there, and upload the image yourself. Paint does not receive or store your login details.`;
+    this.aiProviderLink.href = provider?.url || '#';
+    this.aiProviderLink.textContent = `Open ${provider?.label || 'provider'} website`;
+    this.aiCopyImageButton.disabled = false;
+    this.aiConnectionDialog.showModal();
+    this.aiProviderLink.focus();
+  }
+
+  async _copyCurrentImageForAi() {
+    try {
+      const blob = await this.canvasManager.toBlob('image/png');
+      if (!navigator.clipboard?.write || typeof ClipboardItem === 'undefined') {
+        this.aiConnectionDescription.textContent = 'Image clipboard is unavailable in this browser. Export the image and upload it on the provider website.';
+        return;
+      }
+      await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+      this.aiConnectionDescription.textContent = 'Current image copied. Open the provider website and paste it into the chat.';
+    } catch (error) {
+      console.warn('Unable to copy current image for AI:', error);
+      this.aiConnectionDescription.textContent = 'The image could not be copied. Export it and upload it on the provider website.';
+    }
   }
 
   _renderAiActions() {

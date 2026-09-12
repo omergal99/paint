@@ -91,7 +91,7 @@
 | M5 | Sidebar tabs/search/resizable | ideas2 #6 | M | M | Navigation of many history entries |
 | M6 | Safer saving: backup trail + status | ideas2 #7 | M | M | Trust for long sessions |
 | L1 | Mobile bottom-toolbar canvas view | #11 | **L** | **H** | Opens tablets/phones as first-class |
-| L2 | Real AI editing (Gemini/WebLLM) in sidebar | #4 | **L** | **H** | Differentiator; needs API keys & docs |
+| L2 | Real AI editing (Gemini/WebLLM) in sidebar | #4 | **L** | **H** | Differentiator; needs provider-hosted flow or an explicitly configured secure backend |
 | L3 | Accessibility pass | ideas2 #8 | L | M | Compliance + quality |
 | L4 | AI background removal (MediaPipe) vs refine | #3 | L | H | SOTA result, larger scope |
 

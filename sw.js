@@ -7,6 +7,7 @@ const SHELL = [
   './js/app.js',
   './js/version.js',
   './js/ai/DeterministicCommandService.js',
+  './js/ai/AiConnectionStore.js',
   './js/main.js',
   './js/storage.js',
   './js/telemetry.js',

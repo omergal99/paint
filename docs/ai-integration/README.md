@@ -1,10 +1,11 @@
 # AI integration plan
 
 The current AI Chat panel is intentionally a local deterministic feature and is
-closed for new users. It now exposes a provider selector for Local, OpenAI,
-Anthropic, and Google so the future connection state has a visible home. The
-external provider entries are intentionally marked as not connected: OAuth,
-API-key handling, provider requests, and image upload are not implemented yet.
+closed for new users. It now exposes a provider selector for Local, ChatGPT,
+Claude, and Gemini. External provider entries open a themed launcher dialog
+with an official link and a user-initiated current-image copy action. Paint
+never asks for provider passwords or API keys; the external site owns login,
+privacy, billing, and image upload.
 
 The first local slice is implemented in
 `js/ai/DeterministicCommandService.js`. It powers the AI panel's **Quick
@@ -25,8 +26,7 @@ js/ai/
     OpenAiProvider.js
     AnthropicProvider.js
     GoogleProvider.js
-  storage/
-    AiConnectionStore.js   # provider, model and token metadata
+  AiConnectionStore.js     # selected external service metadata only
 ```
 
 `Sidebar` should talk only to `AiAgentService`. Providers implement one small
@@ -37,14 +37,12 @@ the active selection—not hidden application state.
 
 ## Connection and safety rules
 
-- Offer a provider picker for OpenAI, Anthropic and Google, followed by a
-  provider-hosted login/OAuth flow where supported.
-- Never put provider secrets in the repository or send them through a shared
-  backend without an explicit server configuration. For direct browser API-key
-  mode, warn that the key is stored locally and provide a delete button.
-- Keep connection state in an `AiConnectionStore`, separate from canvas data;
-  store only the minimum token/refresh-token material supported by the chosen
-  auth flow.
+- Offer a provider picker for ChatGPT, Claude, and Gemini, then open the
+  provider-hosted login flow in a new tab. Paint must not collect credentials.
+- Never put provider secrets in the repository, local storage, or a shared
+  backend without an explicit server configuration.
+- Keep only the selected provider in `AiConnectionStore`; external account
+  state remains on the provider's own website.
 - AI edits must render into a temporary preview/floating selection. `Apply`
   takes a normal history snapshot first; `Discard` must leave the canvas
   untouched.

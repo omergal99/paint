@@ -5,7 +5,8 @@
 	--w10-ribbon-bg: #f0f0f0;
 	--w10-border: #d4d4d4;
 	--w10-border-strong: #bcbcbc;
-	--w10-hover: #e5f3fb;
+	--w10-hover: #c9dbe6;
+	--w10-hover2: #e8f7ff;
 	--w10-hover-border: #b8dffa;
 	--w10-active: #cce4f7;
 	--w10-active-border: #99ccee;
@@ -22,6 +23,7 @@ body.dark-mode {
 	--w10-border: #444;
 	--w10-border-strong: #555;
 	--w10-hover: #3a3a3a;
+	--w10-hover2: #3a3a3a;
 	--w10-hover-border: #555;
 	--w10-active: #4a4a4a;
 	--w10-active-border: #666;
@@ -515,7 +517,6 @@ body {
 	padding: 2px 4px;
 	font-size: 12px;
 	color: var(--w10-text);
-	min-width: 0;
 	flex-wrap: nowrap;
 }
 .ci-swatch-container {
@@ -533,7 +534,7 @@ body {
 	align-items: center;
 	justify-content: center;
 	border: 1px solid var(--w10-border-strong);
-	background: var(--w10-hover);
+	background: var(--w10-hover2);
 	color: var(--w10-accent);
 	width: 20px;
 	height: 20px;
@@ -655,6 +656,7 @@ body {
 #app.ribbon-right .ribbon-group-colors .rbtn-row {
 	flex-direction: column;
 	align-items: stretch;
+	width: 100%;
 }
 #app.ribbon-left .ribbon-group-colors .swatch-stack,
 #app.ribbon-right .ribbon-group-colors .swatch-stack {
@@ -680,11 +682,6 @@ body {
 #app.ribbon-left .ci-field,
 #app.ribbon-right .ci-field {
 	justify-content: center;
-}
-#app.ribbon-top .color-inspector,
-#app.ribbon-bottom .color-inspector,
-#app.ribbon-float .color-inspector {
-	min-width: 120px;
 }
 #app.ribbon-left .main-area,
 #app.ribbon-right .main-area,
@@ -753,7 +750,7 @@ body {
 .ribbon-restore-bar {
 	position: fixed;
 	top: 8px;
-	right: 10px;
+	right: 40px;
 	display: flex;
 	gap: 4px;
 	z-index: 100;
@@ -1441,6 +1438,36 @@ dialog h3 {
 	color: var(--w10-text);
 	font: inherit;
 }
+.ai-connection-dialog {
+	width: min(470px, calc(100vw - 32px));
+	max-width: calc(100vw - 32px);
+}
+.ai-connection-dialog form {
+	display: grid;
+	gap: 10px;
+}
+.ai-connection-dialog p {
+	margin: 0;
+	color: var(--w10-text-dim);
+	font-size: 12px;
+	line-height: 1.45;
+}
+.ai-connection-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+.ai-connection-warning {
+	color: #8a5a00 !important;
+}
+.ai-connection-actions button {
+	min-height: 30px;
+	padding: 5px 9px;
+	border: 1px solid var(--w10-border-strong);
+	background: var(--w10-ribbon-bg);
+	color: var(--w10-text);
+	cursor: pointer;
+}
 
 .settings-shell {
 	display: grid;
@@ -1711,6 +1738,7 @@ dialog h3 {
 	display: none;
 	min-width: 64px;
 	padding: 4px;
+	gap: 2px;
 	border: 1px solid var(--w10-border-strong);
 	background: var(--w10-ribbon-bg);
 	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
@@ -1731,7 +1759,9 @@ dialog h3 {
 	gap: 8px;
 	width: 100%;
 	border: 0;
+	padding: 1px;
 	background: transparent;
+	border: 2px solid transparent;
 	color: var(--w10-text);
 	font-size: 13px;
 	text-align: left;
@@ -1746,6 +1776,7 @@ dialog h3 {
 }
 .action-menu-items button:hover {
 	background: var(--w10-hover);
+	border-color: var(--w10-hover-border);
 }
 .action-menu-items button .menu-shortcut {
 	margin-left: 14px;

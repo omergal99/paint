@@ -930,7 +930,7 @@
 				<label class="settings-field">Ribbon position
 					<select id="setting-ribbon-position">
 						<option value="top">Top</option><option value="left">Left</option>
-						<option value="right">Right</option><option value="bottom">Bottom</option>
+						<option value="bottom">Bottom</option>
 						<option value="float">Floating</option>
 					</select>
 				</label>
@@ -992,6 +992,21 @@
 			<div class="dialog-actions">
 				<button type="button" id="app-dialog-cancel">Cancel</button>
 				<button type="submit" id="app-dialog-confirm">Continue</button>
+			</div>
+		</form>
+	</dialog>
+
+	<dialog id="ai-connection-dialog" class="ai-connection-dialog" aria-labelledby="ai-connection-dialog-title">
+		<form method="dialog" id="ai-connection-form">
+			<h3 id="ai-connection-dialog-title">Use <span data-ai-provider-name>AI provider</span></h3>
+			<p id="ai-connection-description"></p>
+			<p class="ai-connection-warning">Paint never asks for, stores, or receives your provider password or API key.</p>
+			<div class="ai-connection-actions">
+				<a id="ai-provider-link" class="settings-link-button" href="#" target="_blank" rel="noopener noreferrer">Open provider website</a>
+				<button type="button" id="ai-copy-current-image">Copy current image</button>
+			</div>
+			<div class="dialog-actions">
+				<button type="submit" id="ai-connection-cancel">Close</button>
 			</div>
 		</form>
 	</dialog>
