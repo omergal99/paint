@@ -174,3 +174,55 @@ test('Action menus choose their direction from available viewport space', () => 
   assert.match(main, /menuItems\.dataset\.direction\s*=\s*openAbove\s*\?\s*'up'\s*:\s*'down'/);
 });
 
+test('New defaults are safe and configurable', () => {
+  assert.match(read('js/history/GlobalHistory.js'), /DEFAULT_HISTORY_LIMIT = 50/);
+  assert.match(html, /id="setting-show-ai-chat"\s*\/>/);
+  assert.match(main, /saved\.showAiChat === true/);
+  assert.match(html, /id="rotate-selection-toggle" checked/);
+  assert.match(main, /mode: s\.historyAutoSaveMode.*lifecycle/);
+  assert.match(html, /id="setting-default-canvas-size"/);
+  assert.match(html, /id="setting-default-zoom"/);
+});
+
+test('Ribbon layout and reusable segmented choices are wired', () => {
+  assert.match(main, /new PanelLayoutManager/);
+  assert.match(main, /new SegmentedChoice/);
+  assert.match(read('js/ui/PanelLayoutManager.js'), /ribbon-(top|left|right|bottom|float)/);
+  assert.match(html, /id="ribbon-restore-toggle"/);
+  assert.match(main, /paint:pending-history-save/);
+  assert.match(read('js/ui/Sidebar.js'), /pointerdown/);
+});
+
+test('Text editor alignment scales from one layout object', () => {
+  const textTool = read('js/tools/TextTool.js');
+  assert.match(textTool, /TEXT_EDITOR_LAYOUT/);
+  assert.match(textTool, /topOffsetPercent/);
+  assert.match(textTool, /canvasTextOffsetPercent/);
+  assert.match(textTool, /lineHeightPercent/);
+  assert.match(textTool, /fontSize \* TEXT_EDITOR_LAYOUT\.topOffsetPercent/);
+  assert.match(textTool, /export function createTextTool/);
+  assert.doesNotMatch(textTool, /class\s+TextTool/);
+});
+
+test('Dialogs and palette settings have persistent UX hooks', () => {
+  assert.match(main, /setDialogUrl\('settings'/);
+  assert.match(main, /restoreDialogFromUrl/);
+  assert.match(main, /history-settings-link/);
+  assert.match(sidebar, /palette-settings-editor/);
+  assert.match(read('js/ui/ColorPalette.js'), /defaultPrimary/);
+});
+
+test('Settings reset is centralized and lives with destructive About actions', () => {
+  const registry = read('js/settings/SettingsRegistry.js');
+  assert.match(html, /data-settings-panel="about"[\s\S]*id="settings-reset"[\s\S]*id="settings-clear-data"/);
+  assert.doesNotMatch(html.match(/data-settings-panel="general"[\s\S]*?<\/form>/)?.[0] || '', /id="settings-reset"/);
+  assert.match(main, /createSettingsRegistry/);
+  assert.match(main, /settingsRegistry\.registerResetHandler/);
+  assert.match(main, /Reset all settings to their defaults/);
+  assert.match(registry, /paint:colors/);
+  assert.match(registry, /paint:panel-layout/);
+  assert.match(registry, /registerStorageKey/);
+  assert.match(registry, /registerResetHandler/);
+  assert.match(read('js/ui/ColorPalette.js'), /resetToDefaults/);
+  assert.match(read('js/history/GlobalHistory.js'), /resetSettings/);
+});

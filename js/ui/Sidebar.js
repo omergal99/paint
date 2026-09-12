@@ -2,9 +2,10 @@
 import { GlobalHistory } from '../history/GlobalHistory.js';
 
 export class Sidebar {
-  constructor({ canvasManager, statusBar }) {
+  constructor({ canvasManager, statusBar, palette }) {
     this.canvasManager = canvasManager;
     this.statusBar = statusBar;
+    this.palette = palette;
     
     this.sidebar = document.getElementById('right-sidebar');
     this.title = document.getElementById('sidebar-title');
@@ -33,6 +34,7 @@ export class Sidebar {
     
     // Restore sidebar state IMMEDIATELY before async init
     this._restoreSidebarState();
+    this._restoreSidebarWidth();
     
     // Restore ribbon button visibility state IMMEDIATELY
     this._restoreRibbonButtonState();
@@ -103,6 +105,11 @@ export class Sidebar {
     }
   }
 
+  async resetSettings() {
+    await this._waitForInit();
+    return this.globalHistory.resetSettings();
+  }
+
   async _loadHistoryWithRetry() {
     const maxRetries = 5;
 
@@ -167,8 +174,33 @@ export class Sidebar {
       reader.readAsDataURL(blob);
     });
 
+    await this.saveDataUrlToHistory(dataUrl, width, height);
+    // beforeunload also places a synchronous fallback in localStorage. If the
+    // IndexedDB write won the race, consume that fallback to avoid a duplicate
+    // history image on the next refresh.
+    try {
+      const pending = JSON.parse(localStorage.getItem('paint:pending-history-save') || 'null');
+      if (pending?.dataUrl === dataUrl) localStorage.removeItem('paint:pending-history-save');
+    } catch {}
+  }
+
+  async saveDataUrlToHistory(dataUrl, width, height) {
+    if (!this.globalHistory.historyEnabled) return;
     await this.globalHistory.addSession(dataUrl, width, height);
     if (this.activeTab === 'history') this.refreshHistory();
+  }
+
+  async flushPendingAutoSave() {
+    try {
+      const raw = localStorage.getItem('paint:pending-history-save');
+      if (!raw) return;
+      const pending = JSON.parse(raw);
+      if (!pending?.dataUrl) return;
+      await this.saveDataUrlToHistory(pending.dataUrl, pending.width, pending.height);
+      localStorage.removeItem('paint:pending-history-save');
+    } catch (error) {
+      console.warn('Unable to flush pending history snapshot:', error);
+    }
   }
 
   toggleHistory() {
@@ -247,6 +279,7 @@ export class Sidebar {
         nextSibling.style.display = e.target.checked ? 'block' : 'none';
       }
       this._saveRibbonButtonState();
+      window.dispatchEvent(new CustomEvent('paint:ribbon-change'));
     });
     this.groupSettingsContainer.appendChild(toggleGroup);
 
@@ -263,6 +296,10 @@ export class Sidebar {
       });
       currentToolToggle.append(currentToolCheckbox, document.createTextNode(' Show Current tool'));
       this.groupSettingsContainer.appendChild(currentToolToggle);
+    }
+
+    if (groupSection.classList.contains('ribbon-group-colors') && this.palette) {
+      this._appendPaletteSettings();
     }
     
     const hr = document.createElement('hr');
@@ -292,6 +329,50 @@ export class Sidebar {
     this._saveSidebarState();
   }
 
+  _appendPaletteSettings() {
+    const section = document.createElement('section');
+    section.className = 'palette-settings-editor';
+    const heading = document.createElement('h4');
+    heading.textContent = 'Custom palette';
+    section.appendChild(heading);
+
+    const defaultRow = document.createElement('div');
+    defaultRow.className = 'palette-default-row';
+    const defaultInput = document.createElement('input');
+    defaultInput.type = 'color';
+    defaultInput.value = this.palette.defaultPrimary;
+    const defaultLabel = document.createElement('span');
+    defaultLabel.textContent = 'Default selected color';
+    const useCurrent = document.createElement('button');
+    useCurrent.type = 'button';
+    useCurrent.textContent = 'Use current';
+    useCurrent.addEventListener('click', () => {
+      this.palette.setDefaultPrimary(this.palette.primary);
+      defaultInput.value = this.palette.defaultPrimary;
+    });
+    defaultInput.addEventListener('input', () => this.palette.setDefaultPrimary(defaultInput.value));
+    defaultRow.append(defaultLabel, defaultInput, useCurrent);
+    section.appendChild(defaultRow);
+
+    const grid = document.createElement('div');
+    grid.className = 'palette-settings-grid';
+    const colors = this.palette.getPalette();
+    colors.forEach((color, index) => {
+      const input = document.createElement('input');
+      input.type = 'color';
+      input.value = color;
+      input.title = `Palette color ${index + 1}`;
+      input.addEventListener('input', () => {
+        const next = this.palette.getPalette();
+        next[index] = input.value;
+        this.palette.setPalette(next);
+      });
+      grid.appendChild(input);
+    });
+    section.appendChild(grid);
+    this.groupSettingsContainer.appendChild(section);
+  }
+
   hide() {
     this.sidebar.style.display = 'none';
     this._saveSidebarState();
@@ -304,26 +385,33 @@ export class Sidebar {
     let isResizing = false;
     let startX = 0;
     let startWidth = 0;
-    
-    resizer.addEventListener('mousedown', (e) => {
+    let pointerId = null;
+
+    const stop = () => {
+      if (!isResizing) return;
+      isResizing = false;
+      pointerId = null;
+      document.body.style.cursor = '';
+      this._saveSidebarWidth();
+    };
+    resizer.addEventListener('pointerdown', (e) => {
+      if (e.button != null && e.button !== 0) return;
       isResizing = true;
+      pointerId = e.pointerId;
       startX = e.clientX;
-      startWidth = parseInt(document.defaultView.getComputedStyle(this.sidebar).width, 10);
+      startWidth = parseInt(document.defaultView.getComputedStyle(this.sidebar).width, 10) || 250;
+      resizer.setPointerCapture?.(pointerId);
       document.body.style.cursor = 'ew-resize';
       e.preventDefault();
     });
-    
-    window.addEventListener('mousemove', (e) => {
-      if (!isResizing) return;
+    resizer.addEventListener('pointermove', (e) => {
+      if (!isResizing || e.pointerId !== pointerId) return;
       const dx = startX - e.clientX;
-      const newWidth = Math.max(200, Math.min(startWidth + dx, window.innerWidth * 0.8));
-      this.sidebar.style.width = newWidth + 'px';
+      const newWidth = Math.max(220, Math.min(startWidth + dx, window.innerWidth * 0.8));
+      this.sidebar.style.width = `${newWidth}px`;
     });
-    
-    window.addEventListener('mouseup', () => {
-      isResizing = false;
-      document.body.style.cursor = '';
-    });
+    resizer.addEventListener('pointerup', stop);
+    resizer.addEventListener('pointercancel', stop);
   }
 
   _saveSidebarState() {
@@ -336,6 +424,17 @@ export class Sidebar {
     } catch (err) {
       console.warn('Unable to save sidebar state:', err);
     }
+  }
+
+  _saveSidebarWidth() {
+    try { localStorage.setItem('paint:sidebar-width', this.sidebar.style.width || '250px'); } catch {}
+  }
+
+  _restoreSidebarWidth() {
+    try {
+      const width = parseInt(localStorage.getItem('paint:sidebar-width'), 10);
+      if (Number.isFinite(width)) this.sidebar.style.width = `${Math.max(220, Math.min(width, window.innerWidth * 0.8))}px`;
+    } catch {}
   }
 
   _restoreSidebarState() {

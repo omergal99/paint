@@ -1,4 +1,4 @@
-const CACHE_NAME = 'paint-shell-v1-5-0';
+const CACHE_NAME = 'paint-shell-v1-6-0';
 const SHELL = [
   './',
   './index.html',
@@ -27,6 +27,9 @@ const SHELL = [
   './js/ui/StatusBar.js',
   './js/ui/Toolbar.js',
   './js/ui/Sidebar.js',
+  './js/settings/SettingsRegistry.js',
+  './js/ui/PanelLayoutManager.js',
+  './js/ui/SegmentedChoice.js',
   './js/utils/color.js',
   './js/utils/transform.js',
   './css/assets/icon.svg',

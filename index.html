@@ -68,6 +68,7 @@
 
 		<!-- ===================== RIBBON ===================== -->
 		<header class="ribbon" id="ribbon">
+			<button type="button" class="ribbon-drag-handle" id="ribbon-drag-handle" title="Drag floating ribbon">⠿</button>
 
 			<!-- File group -->
 			<section class="ribbon-group ribbon-group-file">
@@ -233,7 +234,7 @@
 									</svg>
 									<span>Free Rotate</span>
 								</button>
-								<label class="menu-checkbox"><input type="checkbox" id="rotate-selection-toggle"> Show Rotate in
+								<label class="menu-checkbox"><input type="checkbox" id="rotate-selection-toggle" checked> Show Rotate in
 									selection</label>
 							</div>
 						</div>
@@ -659,6 +660,12 @@
 
 		</header>
 
+		<!-- This remains available when the ribbon is hidden, so the user can
+		     always restore the toolbar or open Settings. -->
+		<div class="ribbon-restore-bar" id="ribbon-restore-bar" hidden>
+			<button type="button" id="ribbon-restore-toggle" title="Show ribbon">Show ribbon</button>
+			<button type="button" id="ribbon-restore-settings" title="Open ribbon settings">⚙</button>
+		</div>
 
 
 		<!-- ===================== MAIN AREA ===================== -->
@@ -707,21 +714,23 @@
 					<h3 id="sidebar-title">Sidebar</h3>
 					<button class="sidebar-close" id="sidebar-close" title="Close">×</button>
 				</div>
-				<div class="sidebar-content" id="sidebar-history-content" style="display: none;">
-					<div class="history-controls">
-						<label class="checkbox-row history-auto-row" title="Save to history automatically">
-							<input type="checkbox" id="history-auto-save-toggle" checked />
-							<span>Auto-save to history</span>
-						</label>
-						<label>Save:
-							<select id="history-save-limit">
+					<div class="sidebar-content" id="sidebar-history-content" style="display: none;">
+						<div class="history-controls">
+						<div class="history-preferences" aria-live="polite">
+							<div>Auto-save: <strong id="history-auto-status">Exit, refresh or new image</strong></div>
+							<div>Save limit: <strong id="history-limit-status">50 images</strong></div>
+							<button type="button" id="history-settings-link">Open History Settings</button>
+						</div>
+						<!-- Hidden mirrors keep the existing settings/state contract while the
+						     sidebar presents a read-only summary. -->
+						<input type="checkbox" id="history-auto-save-toggle" checked class="visually-hidden-control" tabindex="-1" aria-hidden="true" />
+						<select id="history-save-limit" class="visually-hidden-control" tabindex="-1" aria-hidden="true">
 								<option value="0">Off</option>
 								<option value="10">10 images</option>
 								<option value="20">20 images</option>
 								<option value="50">50 images</option>
 								<option value="100">100 images</option>
-							</select>
-						</label>
+						</select>
 						<div class="history-actions">
 							<button type="button" id="history-save-current-btn" title="Save current paint to history">Save
 								Current</button>
@@ -790,6 +799,18 @@
 	<dialog id="resize-dialog" data-tag="resize-dialog">
 		<form method="dialog" id="resize-form">
 			<h3>Resize canvas</h3>
+			<div class="resize-presets" id="resize-presets">
+				<span class="resize-presets-title">Quick sizes</span>
+				<button type="button" data-resize-preset="800x600">800 × 600</button>
+				<button type="button" data-resize-preset="1024x768">1024 × 768</button>
+					<button type="button" data-resize-preset="1000x1000">Square</button>
+				<button type="button" data-resize-preset="1123x794">A4 landscape</button>
+				<button type="button" data-resize-preset="794x1123">A4 portrait</button>
+				<button type="button" data-resize-preset="1600x1200">1600 × 1200</button>
+				<button type="button" data-resize-preset="1920x1080">Full HD</button>
+				<button type="button" data-resize-preset="2560x1440">2K</button>
+				<button type="button" data-resize-preset="3840x2160">4K</button>
+			</div>
 			<label>Width (px) <input type="number" id="resize-width" data-tag="resize-width" min="1" max="10000" /></label>
 			<label>Height (px) <input type="number" id="resize-height" data-tag="resize-height" min="1" max="10000" /></label>
 			<label class="checkbox-row"><input type="checkbox" id="resize-keep-aspect" data-tag="resize-keep-aspect" />
@@ -819,6 +840,7 @@
 					Bar</label>
 				<label class="checkbox-row"><input type="checkbox" id="setting-show-color-inspector" checked /> Show Color
 					Inspector</label>
+				<label class="checkbox-row"><input type="checkbox" id="setting-show-ai-chat" /> Show AI Chat</label>
 				<label>Canvas Background
 					<select id="setting-canvas-bg">
 						<option value="none">Solid Color</option>
@@ -826,8 +848,23 @@
 						<option value="grid">Gridlines</option>
 					</select>
 				</label>
+				<label>Default new image
+					<select id="setting-default-canvas-size">
+						<option value="800x600">800 × 600</option>
+						<option value="1024x768">1024 × 768</option>
+						<option value="1000x1000">1000 × 1000 (square)</option>
+						<option value="1123x794">A4 landscape</option>
+						<option value="794x1123">A4 portrait</option>
+					</select>
+				</label>
+				<label>Initial zoom
+					<select id="setting-default-zoom">
+						<option value="50">50%</option><option value="75">75%</option>
+						<option value="100">100%</option><option value="125">125%</option>
+						<option value="150">150%</option><option value="200">200%</option>
+					</select>
+				</label>
 				<div class="dialog-actions">
-					<button type="button" id="settings-reset">Reset Settings</button>
 					<button type="button" id="settings-cancel">Close</button>
 				</div>
 			</form>
@@ -835,14 +872,17 @@
 				<h3>History</h3>
 				<label class="checkbox-row"><input type="checkbox" id="setting-history-auto-save" checked /> Auto-save to
 					history</label>
-				<label class="settings-field">Auto-save when
+				<div class="settings-field choice-field"><span>Auto-save when</span>
 					<select id="setting-history-auto-save-mode">
+						<option value="lifecycle">Exit, refresh or new image</option>
 						<option value="all">All automatic events</option>
-						<option value="close">Only when closing the page</option>
 						<option value="manual">Only manually (Save Current button)</option>
 					</select>
-				</label>
-				<label class="settings-field">Save limit
+					<div class="choice-summary" id="setting-history-auto-save-mode-choice" data-select-id="setting-history-auto-save-mode">
+						<span class="choice-summary-label">Selected: <strong data-selected-label></strong></span>
+					</div>
+				</div>
+				<div class="settings-field choice-field"><span>Save limit</span>
 					<select id="setting-history-save-limit">
 						<option value="0">Off</option>
 						<option value="10">10 images</option>
@@ -850,7 +890,10 @@
 						<option value="50">50 images</option>
 						<option value="100">100 images</option>
 					</select>
-				</label>
+					<div class="choice-summary" id="setting-history-save-limit-choice" data-select-id="setting-history-save-limit">
+						<span class="choice-summary-label">Selected: <strong data-selected-label></strong></span>
+					</div>
+				</div>
 				<div class="dialog-actions">
 					<button type="button" id="settings-history-export-all">Export All History</button>
 					<button type="button" id="settings-history-clear" class="danger">Clear All</button>
@@ -859,6 +902,14 @@
 			<section class="settings-panel settings-body" data-settings-panel="ribbon" hidden>
 				<h3>Ribbon</h3>
 				<p>Choose which ribbon groups are visible. Detailed group options open in the sidebar.</p>
+				<label class="checkbox-row"><input type="checkbox" id="setting-show-ribbon" checked /> Show ribbon</label>
+				<label class="settings-field">Ribbon position
+					<select id="setting-ribbon-position">
+						<option value="top">Top</option><option value="left">Left</option>
+						<option value="right">Right</option><option value="bottom">Bottom</option>
+						<option value="float">Floating</option>
+					</select>
+				</label>
 				<div id="ribbon-settings-list" class="ribbon-settings-list"></div>
 			</section>
 			<section class="settings-panel settings-body" data-settings-panel="about" hidden>
@@ -879,6 +930,7 @@
 					</div>
 				</dl>
 				<div class="dialog-actions">
+					<button type="button" id="settings-reset" class="danger">Reset Settings</button>
 					<button type="button" id="settings-clear-data" class="danger">Clear Data</button>
 					<button type="button" id="settings-about-close">Close</button>
 				</div>

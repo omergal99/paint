@@ -17,6 +17,7 @@ const MIN_ZOOM = 10;
 const MAX_ZOOM = 800;
 const STEP = 10;
 const ZOOM_STORAGE_KEY = 'paint:zoom';
+const INITIAL_ZOOM_STORAGE_KEY = 'paint:initial-zoom';
 
 export class ViewportManager {
   constructor({ stage, scaleEl, canvasManager, zoomInBtn, zoomOutBtn, zoomInput, zoomSlider }) {
@@ -92,11 +93,19 @@ export class ViewportManager {
     try {
       const saved = localStorage.getItem(ZOOM_STORAGE_KEY);
       const parsed = parseInt(saved, 10);
-      if (Number.isNaN(parsed)) return 100;
+      if (Number.isNaN(parsed)) {
+        const initial = parseInt(localStorage.getItem(INITIAL_ZOOM_STORAGE_KEY), 10);
+        return Number.isNaN(initial) ? 100 : Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, initial));
+      }
       return Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, parsed));
     } catch {
       return 100;
     }
+  }
+
+  setInitialZoom(percent) {
+    const value = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, Math.round(Number(percent) || 100)));
+    try { localStorage.setItem(INITIAL_ZOOM_STORAGE_KEY, String(value)); } catch {}
   }
 
   _persistZoom() {

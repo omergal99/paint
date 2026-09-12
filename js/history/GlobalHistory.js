@@ -4,12 +4,14 @@
 const DB_NAME = 'omerpaint_global_history';
 const STORE_NAME = 'sessions';
 const SETTINGS_STORE = 'settings';
+export const DEFAULT_HISTORY_LIMIT = 50;
+export const DEFAULT_HISTORY_ENABLED = true;
 
 export class GlobalHistory {
   constructor() {
     this.db = null;
-    this.maxHistory = 20; // Default
-    this.historyEnabled = true;
+    this.maxHistory = DEFAULT_HISTORY_LIMIT;
+    this.historyEnabled = DEFAULT_HISTORY_ENABLED;
   }
 
   async init() {
@@ -73,6 +75,11 @@ export class GlobalHistory {
         this._enforceLimit().then(resolve);
       };
     });
+  }
+
+  async resetSettings() {
+    if (!this.db) return;
+    return this.saveSettings(DEFAULT_HISTORY_LIMIT, DEFAULT_HISTORY_ENABLED);
   }
 
   async addSession(dataUrl, width, height) {

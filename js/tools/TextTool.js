@@ -1,154 +1,181 @@
 // js/tools/TextTool.js
-// Click on the canvas to drop a live <textarea> (a child of the zoomed `stage`,
-// so it scales for free). Typing is real DOM text editing; on blur/Escape the
-// text is rendered onto the canvas with ctx.fillText and the textarea is removed.
-//
-// Note on ordering: calling box.remove() while it's focused fires a *synchronous*
-// blur, which would otherwise re-enter _commit/_cancel mid-execution (causing
-// double-drawn text and double undo snapshots, or Escape's cancel being
-// silently overwritten by a commit). Both methods null out `this._box` as their
-// very first step so any reentrant call sees "nothing to do" and exits early.
+// Functional text tool: the live editor is a DOM textarea and the committed
+// result is drawn with the canvas context. Layout values are kept together so
+// the editor and the committed text can be tuned without changing font-size
+// dependent magic numbers in several different places.
 
-export class TextTool {
-  constructor() {
-    this.name = 'text';
-    this.cursor = 'text';
-    this._box = null;
-    this._ctxRef = null;
-    this._origin = null;
-  }
+export const TEXT_EDITOR_LAYOUT = Object.freeze({
+  // Position of the editor top edge relative to the click/caret anchor.
+  // Negative values place the editor above the pointer.
+  topOffsetPercent: -70,
+  // Position of the canvas ink relative to the same click/caret anchor.
+  canvasTextOffsetPercent: -50,
+  // One means 100% of the current font size. Keep this normalized value
+  // stable so changing font-size does not change the editor's proportions.
+  lineHeightPercent: 1.2,
+});
 
-  onDown(pt, ctx) {
-    if (this._box) {
-      this._commit();
-      this._open(pt, ctx);
-      return;
-    }
-    this._open(pt, ctx);
-  }
+function getStyleSet(ctx) {
+  const value = ctx.getTextStyle?.() || [];
+  if (Array.isArray(value)) return new Set(value);
+  return value === 'plain' ? new Set() : new Set([value]);
+}
 
-  onMove() {}
-  onUp() {}
+function getFontDeclaration(ctx, fontSize, styles) {
+  const fontStyle = styles.has('italic') ? 'italic' : 'normal';
+  const fontWeight = styles.has('bold') ? '700' : '400';
+  return `${fontStyle} ${fontWeight} ${fontSize}px ${ctx.getFontFamily()}`;
+}
 
-  onZoomChange(ctx) {
-    if (!this._box || this._ctxRef !== ctx) return;
-    this._applyEditorStyle(ctx);
-  }
+function getRenderSize(ctx) {
+  // The stored font size is screen-facing. Canvas coordinates need the
+  // inverse viewport scale, while the textarea lives inside the scaled stage.
+  return Math.max(1, Math.round(ctx.getFontSize() * 100 / ctx.viewportManager.zoom));
+}
 
-  onDeactivate() {
-    this._commit();
-  }
+function getLineHeight(fontSize) {
+  return fontSize * TEXT_EDITOR_LAYOUT.lineHeightPercent;
+}
 
-  _open(pt, ctx) {
-    const box = document.createElement('textarea');
-    box.className = 'op-text-box';
-    box.style.left = `${pt.x}px`;
-    box.style.top = `${pt.y}px`;
-    box.style.color = ctx.canvasManager.primaryColor;
-    // NOTE: assigning the `font` shorthand resets sub-properties, so the shared
-    // line-height must be re-applied afterwards or the live preview drifts out
-    // of alignment with the text committed to the canvas.
-    this._box = box;
-    this._ctxRef = ctx;
-    this._applyEditorStyle(ctx);
-    (ctx.scaleEl || ctx.stage).appendChild(box);
-    box.focus();
+function getCanvasTextOffset(fontSize) {
+  return fontSize * TEXT_EDITOR_LAYOUT.canvasTextOffsetPercent / 100;
+}
 
-    box.addEventListener('keydown', (e) => {
-      e.stopPropagation();
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        this._cancel();
-      }
-    });
-    box.addEventListener('blur', () => this._commit());
+export function createTextTool() {
+  let editor = null;
+  let context = null;
+  let origin = null;
 
-    this._origin = pt;
-  }
+  const getEditorParent = (ctx) => ctx.scaleEl || ctx.stage;
 
-  _commit() {
-    if (!this._box) return;
-    const box = this._box;
-    const ctx = this._ctxRef;
-    const { x, y } = this._origin;
-    this._box = null;
-    this._ctxRef = null;
-    box.remove();
+  const applyEditorStyle = (ctx) => {
+    if (!editor) return;
 
-    const text = box.value;
-    if (text.trim().length > 0) {
-      ctx.historyManager.snapshot();
-      const c = ctx.canvasManager.ctx;
-      const fontSize = this._renderSize(ctx);
-      const styles = this._styleSet(ctx);
-      c.save();
-      c.fillStyle = ctx.canvasManager.primaryColor;
-      c.font = this._fontDeclaration(ctx, fontSize, styles);
-      c.textBaseline = 'top';
-      if (styles.has('shadow')) { c.shadowColor = 'rgba(0,0,0,.45)'; c.shadowBlur = Math.max(2, fontSize * .12); c.shadowOffsetX = fontSize * .08; c.shadowOffsetY = fontSize * .08; }
-      if (styles.has('neon')) { c.shadowColor = ctx.canvasManager.primaryColor; c.shadowBlur = Math.max(6, fontSize * .25); }
-      // The textarea's font renderer places ink slightly lower than canvas
-      // `textBaseline: top`. Include the border and a small font-proportional
-      // correction so committed text does not jump upward on blur.
-      const borderOffset = 1;
-      const topOffset = Math.max(2, Math.round(fontSize * 0.08));
-      text.split('\n').forEach((line, i) => {
-        const lineX = x + borderOffset;
-        const lineY = y + topOffset + i * fontSize * 1.2;
-        if (styles.has('outline') || styles.has('black-outline')) {
-          c.strokeStyle = styles.has('black-outline') ? '#000' : ctx.canvasManager.primaryColor;
-          c.lineWidth = Math.max(1, fontSize * .06);
-          c.strokeText(line, lineX, lineY);
-        }
-        c.fillText(line, lineX, lineY);
-        if (styles.has('underline')) {
-          c.fillRect(lineX, lineY + fontSize * 1.08, c.measureText(line).width, Math.max(1, fontSize * .06));
-        }
-      });
-      c.restore();
-      ctx.canvasManager.persistToStorage();
-    }
-  }
-
-  _cancel() {
-    if (!this._box) return;
-    const box = this._box;
-    this._box = null;
-    this._ctxRef = null;
-    box.remove();
-  }
-
-  // Keep text visually legible at every zoom: the stored size is the user's
-  // screen-facing preference, while the canvas needs inverse zoom scaling.
-  _renderSize(ctx) {
-    return Math.max(1, Math.round(ctx.getFontSize() * 100 / ctx.viewportManager.zoom));
-  }
-
-  _applyEditorStyle(ctx) {
-    if (!this._box) return;
-    const fontSize = this._renderSize(ctx);
-    const styles = this._styleSet(ctx);
-    this._box.style.font = this._fontDeclaration(ctx, fontSize, styles);
-    this._box.style.lineHeight = '0.95';
-    this._box.style.textDecoration = styles.has('underline') ? 'underline' : 'none';
-    this._box.style.textShadow = styles.has('shadow')
+    const fontSize = getRenderSize(ctx);
+    const styles = getStyleSet(ctx);
+    editor.style.font = getFontDeclaration(ctx, fontSize, styles);
+    editor.style.lineHeight = `${getLineHeight(fontSize)}px`;
+    editor.style.padding = '0';
+    editor.style.margin = '0';
+    editor.style.textIndent = '0';
+    editor.style.textDecoration = styles.has('underline') ? 'underline' : 'none';
+    editor.style.textShadow = styles.has('shadow')
       ? '2px 2px 3px rgba(0,0,0,.45)'
       : styles.has('neon') ? `0 0 8px ${ctx.canvasManager.primaryColor}` : 'none';
-    this._box.style.webkitTextStroke = styles.has('black-outline')
+    editor.style.webkitTextStroke = styles.has('black-outline')
       ? `${Math.max(1, fontSize * .06)}px #000`
       : styles.has('outline') ? `${Math.max(1, fontSize * .06)}px ${ctx.canvasManager.primaryColor}` : 'unset';
-    this._box.style.color = ctx.canvasManager.primaryColor;
-  }
+    editor.style.color = ctx.canvasManager.primaryColor;
 
-  _styleSet(ctx) {
-    const value = ctx.getTextStyle?.() || [];
-    if (Array.isArray(value)) return new Set(value);
-    return value === 'plain' ? new Set() : new Set([value]);
-  }
+    if (origin) {
+      editor.style.top = `${origin.y + fontSize * TEXT_EDITOR_LAYOUT.topOffsetPercent / 100}px`;
+    }
+  };
 
-  _fontDeclaration(ctx, fontSize, styles) {
-    const fontStyle = styles.has('italic') ? 'italic' : 'normal';
-    const fontWeight = styles.has('bold') ? '700' : '400';
-    return `${fontStyle} ${fontWeight} ${fontSize}px ${ctx.getFontFamily()}`;
-  }
+  const cancel = () => {
+    if (!editor) return;
+    const activeEditor = editor;
+    editor = null;
+    context = null;
+    origin = null;
+    activeEditor.remove();
+  };
+
+  const commit = () => {
+    if (!editor) return;
+
+    const activeEditor = editor;
+    const ctx = context;
+    const anchor = origin;
+    // Clear references before remove(): remove() can synchronously emit blur.
+    editor = null;
+    context = null;
+    origin = null;
+    activeEditor.remove();
+
+    const text = activeEditor.value;
+    if (text.trim().length === 0) return;
+
+    ctx.historyManager.snapshot();
+    const canvasContext = ctx.canvasManager.ctx;
+    const fontSize = getRenderSize(ctx);
+    const styles = getStyleSet(ctx);
+    const lineHeight = getLineHeight(fontSize);
+    const canvasTextOffset = getCanvasTextOffset(fontSize);
+
+    canvasContext.save();
+    canvasContext.fillStyle = ctx.canvasManager.primaryColor;
+    canvasContext.font = getFontDeclaration(ctx, fontSize, styles);
+    canvasContext.textBaseline = 'top';
+    if (styles.has('shadow')) {
+      canvasContext.shadowColor = 'rgba(0,0,0,.45)';
+      canvasContext.shadowBlur = Math.max(2, fontSize * .12);
+      canvasContext.shadowOffsetX = fontSize * .08;
+      canvasContext.shadowOffsetY = fontSize * .08;
+    }
+    if (styles.has('neon')) {
+      canvasContext.shadowColor = ctx.canvasManager.primaryColor;
+      canvasContext.shadowBlur = Math.max(6, fontSize * .25);
+    }
+
+    text.split('\n').forEach((line, index) => {
+      const lineX = anchor.x + 1;
+      const lineY = anchor.y + canvasTextOffset + index * lineHeight;
+      if (styles.has('outline') || styles.has('black-outline')) {
+        canvasContext.strokeStyle = styles.has('black-outline') ? '#000' : ctx.canvasManager.primaryColor;
+        canvasContext.lineWidth = Math.max(1, fontSize * .06);
+        canvasContext.strokeText(line, lineX, lineY);
+      }
+      canvasContext.fillText(line, lineX, lineY);
+      if (styles.has('underline')) {
+        canvasContext.fillRect(
+          lineX,
+          lineY + fontSize * 1.08,
+          canvasContext.measureText(line).width,
+          Math.max(1, fontSize * .06),
+        );
+      }
+    });
+    canvasContext.restore();
+    ctx.canvasManager.persistToStorage();
+  };
+
+  const open = (point, ctx) => {
+    const nextEditor = document.createElement('textarea');
+    nextEditor.className = 'op-text-box';
+    nextEditor.style.left = `${point.x}px`;
+    nextEditor.style.color = ctx.canvasManager.primaryColor;
+
+    editor = nextEditor;
+    context = ctx;
+    origin = point;
+    applyEditorStyle(ctx);
+
+    getEditorParent(ctx).appendChild(nextEditor);
+    nextEditor.focus();
+    nextEditor.addEventListener('keydown', (event) => {
+      event.stopPropagation();
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        cancel();
+      }
+    });
+    nextEditor.addEventListener('blur', commit);
+  };
+
+  return {
+    name: 'text',
+    cursor: 'text',
+    onDown(point, ctx) {
+      if (editor) commit();
+      open(point, ctx);
+    },
+    onMove() {},
+    onUp() {},
+    onZoomChange(ctx) {
+      if (!editor || context !== ctx) return;
+      applyEditorStyle(ctx);
+    },
+    onDeactivate: commit,
+  };
 }

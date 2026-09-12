@@ -9,7 +9,7 @@ import { SelectTool } from './tools/SelectTool.js';
 import { createPencilTool, createBrushTool, createEraserTool } from './tools/FreehandTools.js';
 import { FillTool } from './tools/FillTool.js';
 import { ShapeTool } from './tools/ShapeTool.js';
-import { TextTool } from './tools/TextTool.js';
+import { createTextTool } from './tools/TextTool.js';
 import { EyedropperTool } from './tools/EyedropperTool.js';
 import { ZoomTool } from './tools/ZoomTool.js';
 import { ColorPalette } from './ui/ColorPalette.js';
@@ -17,6 +17,9 @@ import { ColorInspector } from './ui/ColorInspector.js';
 import { StatusBar } from './ui/StatusBar.js';
 import { Toolbar } from './ui/Toolbar.js';
 import { Sidebar } from './ui/Sidebar.js';
+import { PanelLayoutManager } from './ui/PanelLayoutManager.js';
+import { SegmentedChoice } from './ui/SegmentedChoice.js';
+import { createSettingsRegistry } from './settings/SettingsRegistry.js';
 import { hexToRgb } from './utils/color.js';
 import { rotateCanvas, rotateCanvasByAngle, flipCanvas, scaleCanvas, removeBackground } from './utils/transform.js';
 import { APP_VERSION } from './version.js';
@@ -38,8 +41,6 @@ const statusBar = new StatusBar({
   flashEl: document.getElementById('status-flash'),
 });
 statusBar.setCanvasSize(canvasManager.width, canvasManager.height);
-
-const sidebar = new Sidebar({ canvasManager, statusBar });
 
 const viewportManager = new ViewportManager({
   stage,
@@ -110,6 +111,8 @@ const primaryRgb = hexToRgb(colorPalette.primary);
 if (primaryRgb) {
   colorInspector.show({ ...primaryRgb, hex: colorPalette.primary });
 }
+
+const sidebar = new Sidebar({ canvasManager, statusBar, palette: colorPalette });
 
 // ---------- Selection state + overlay drawing ----------
 function drawSelectionOutline(region) {
@@ -350,7 +353,7 @@ const toolManager = new ToolManager({ surface: overlayEl, viewportManager, toolC
   createEraserTool(),
   new FillTool(),
   new ShapeTool(),
-  new TextTool(),
+  createTextTool(),
   new EyedropperTool(),
   new ZoomTool(),
 ].forEach((t) => toolManager.register(t));
@@ -405,7 +408,7 @@ function deleteSelection() {
 }
 
 function newFile() {
-  if (getHistoryPrefs().autoSave) {
+  if (shouldAutoSaveOnNew()) {
     void doNewFile();
     return;
   }
@@ -414,19 +417,22 @@ function newFile() {
   dialog.style.left = `${Math.max(12, Math.round(button.left))}px`;
   dialog.style.top = `${Math.round(button.bottom + 8)}px`;
   dialog.showModal();
+  setDialogUrl('new');
   document.getElementById('new-file-ok')?.focus();
 }
 
 async function doNewFile() {
-  if (shouldAutoSaveHistory()) await sidebar.saveCurrentToHistory();
-  else if (getHistoryPrefs().autoSave) await sidebar.saveCurrentToHistory();
+  if (shouldAutoSaveOnNew()) await sidebar.saveCurrentToHistory();
+  else if (shouldAutoSaveHistory()) await sidebar.saveCurrentToHistory();
   discardFloatingSelection();
   historyManager.clear();
   fileHandle = null;
-  canvasManager.loadFromSource(makeBlankSource(800, 600));
+  const { width, height } = getDefaultCanvasSize();
+  canvasManager.loadFromSource(makeBlankSource(width, height));
   setSelection(null);
   persistSession();
   document.getElementById('new-file-dialog').close();
+  if (new URLSearchParams(window.location.search).get('dialog') === 'new') setDialogUrl(null);
 }
 
 function makeBlankSource(w, h) {
@@ -437,6 +443,14 @@ function makeBlankSource(w, h) {
   ctx.fillStyle = '#ffffff';
   ctx.fillRect(0, 0, w, h);
   return c;
+}
+
+function getDefaultCanvasSize() {
+  const value = document.getElementById('setting-default-canvas-size')?.value || '800x600';
+  const [width, height] = value.split('x').map(Number);
+  return Number.isFinite(width) && Number.isFinite(height) && width > 0 && height > 0
+    ? { width, height }
+    : { width: 800, height: 600 };
 }
 
 function openFile() {
@@ -769,7 +783,17 @@ function openResizeDialog() {
   resizeHeightInput.value = canvasManager.height;
   aspectRatio = canvasManager.width / canvasManager.height;
   resizeDialog.showModal();
+  setDialogUrl('resize');
 }
+
+document.querySelectorAll('[data-resize-preset]').forEach((button) => {
+  button.addEventListener('click', () => {
+    const [width, height] = button.dataset.resizePreset.split('x').map(Number);
+    resizeWidthInput.value = width;
+    resizeHeightInput.value = height;
+    document.querySelectorAll('[data-resize-preset]').forEach((item) => item.classList.toggle('selected', item === button));
+  });
+});
 
 resizeWidthInput.addEventListener('input', () => {
   if (keepAspectInput.checked) resizeHeightInput.value = Math.round(resizeWidthInput.value / aspectRatio);
@@ -779,6 +803,9 @@ resizeHeightInput.addEventListener('input', () => {
 });
 
 document.getElementById('resize-cancel').addEventListener('click', () => resizeDialog.close());
+resizeDialog.addEventListener('close', () => {
+  if (new URLSearchParams(window.location.search).get('dialog') === 'resize') setDialogUrl(null);
+});
 document.getElementById('resize-form').addEventListener('submit', () => {
   const w = parseInt(resizeWidthInput.value, 10);
   const h = parseInt(resizeHeightInput.value, 10);
@@ -795,8 +822,69 @@ const settingsDialog = document.getElementById('settings-dialog');
 const dmCheckbox = document.getElementById('setting-dark-mode');
 const sbCheckbox = document.getElementById('setting-show-status-bar');
 const ciCheckbox = document.getElementById('setting-show-color-inspector');
+const aiCheckbox = document.getElementById('setting-show-ai-chat');
 const bgSelect = document.getElementById('setting-canvas-bg');
+const defaultCanvasSizeSelect = document.getElementById('setting-default-canvas-size');
+const defaultZoomSelect = document.getElementById('setting-default-zoom');
 const SETTINGS_KEY = 'omerpaint:settings';
+const settingsRegistry = createSettingsRegistry();
+settingsRegistry.registerResetHandler(() => colorPalette.resetToDefaults());
+settingsRegistry.registerResetHandler(() => sidebar.resetSettings());
+
+function setDialogUrl(dialog, extra = {}) {
+  const params = new URLSearchParams(window.location.search);
+  if (dialog) params.set('dialog', dialog);
+  else params.delete('dialog');
+  Object.entries(extra).forEach(([key, value]) => {
+    if (value) params.set(key, value);
+    else params.delete(key);
+  });
+  const query = params.toString();
+  window.history.replaceState(null, '', `${window.location.pathname}${query ? `?${query}` : ''}${window.location.hash}`);
+}
+
+function openSettingsDialog(tab = 'general') {
+  if (!settingsDialog.open) settingsDialog.showModal();
+  document.querySelector(`[data-settings-tab="${tab}"]`)?.click();
+  setDialogUrl('settings', { tab });
+}
+
+function syncRibbonLayoutControls(state) {
+  const show = document.getElementById('setting-show-ribbon');
+  const position = document.getElementById('setting-ribbon-position');
+  if (show) show.checked = state.visible;
+  if (position) position.value = state.position;
+}
+
+const ribbonLayoutManager = new PanelLayoutManager({
+  app: document.getElementById('app'),
+  panel: document.getElementById('ribbon'),
+  restoreBar: document.getElementById('ribbon-restore-bar'),
+  restoreButton: document.getElementById('ribbon-restore-toggle'),
+  settingsButton: document.getElementById('ribbon-restore-settings'),
+  onChange: (state) => {
+    syncRibbonLayoutControls(state);
+    if (state.action !== 'settings') return;
+    openSettingsDialog('ribbon');
+  },
+});
+const settingsShowRibbon = document.getElementById('setting-show-ribbon');
+const settingsRibbonPosition = document.getElementById('setting-ribbon-position');
+document.getElementById('ribbon-restore-toggle')?.addEventListener('click', () => saveSettings());
+settingsShowRibbon?.addEventListener('change', () => {
+  ribbonLayoutManager.setVisible(settingsShowRibbon.checked);
+  saveSettings();
+});
+settingsRibbonPosition?.addEventListener('change', () => {
+  ribbonLayoutManager.setPosition(settingsRibbonPosition.value);
+  saveSettings();
+});
+
+const segmentedChoices = [...document.querySelectorAll('.choice-summary')].map((root) => new SegmentedChoice({
+  root,
+  select: document.getElementById(root.dataset.selectId),
+}));
+function renderSegmentedChoices() { segmentedChoices.forEach((choice) => choice.render()); }
 
 function readSettings() {
   try { return JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}'); } catch { return {}; }
@@ -823,9 +911,13 @@ function saveSettings() {
       darkMode: dmCheckbox.checked,
       showStatusBar: sbCheckbox.checked,
       showColorInspector: ciCheckbox.checked,
+      showAiChat: aiCheckbox?.checked === true,
       canvasBackground: bgSelect.value,
+      defaultCanvasSize: defaultCanvasSizeSelect?.value || '800x600',
+      defaultZoom: Number(defaultZoomSelect?.value || 100),
       historyAutoSave,
       historyAutoSaveMode,
+      ribbonLayout: { ...ribbonLayoutManager.state },
       ribbonVisibility,
       buttonVisibility,
       showRotateInSelection: document.getElementById('rotate-selection-toggle')?.checked === true,
@@ -838,7 +930,7 @@ function getHistoryPrefs() {
   const s = readSettings();
   return {
     autoSave: s.historyAutoSave !== false, // default: automatic
-    mode: s.historyAutoSaveMode || 'all',
+    mode: s.historyAutoSaveMode === 'close' ? 'lifecycle' : (s.historyAutoSaveMode || 'lifecycle'),
   };
 }
 
@@ -852,12 +944,17 @@ function shouldAutoSaveHistory() {
 // Auto-save when the page is about to close (beforeunload).
 function shouldAutoSaveOnClose() {
   const { autoSave, mode } = getHistoryPrefs();
-  return autoSave && (mode === 'all' || mode === 'close');
+  return autoSave && (mode === 'all' || mode === 'lifecycle');
+}
+
+function shouldAutoSaveOnNew() {
+  const { autoSave, mode } = getHistoryPrefs();
+  return autoSave && (mode === 'all' || mode === 'lifecycle');
 }
 
 function syncHistoryControls(saved) {
   const prefs = saved
-    ? { autoSave: saved.historyAutoSave !== false, mode: saved.historyAutoSaveMode || 'all' }
+    ? { autoSave: saved.historyAutoSave !== false, mode: saved.historyAutoSaveMode === 'close' ? 'lifecycle' : (saved.historyAutoSaveMode || 'lifecycle') }
     : getHistoryPrefs();
   const t1 = document.getElementById('history-auto-save-toggle');
   const t2 = document.getElementById('setting-history-auto-save');
@@ -865,6 +962,10 @@ function syncHistoryControls(saved) {
   if (t1) t1.checked = prefs.autoSave;
   if (t2) t2.checked = prefs.autoSave;
   if (m) m.value = prefs.mode;
+  const status = document.getElementById('history-auto-status');
+  const labels = { lifecycle: 'Exit, refresh or new image', all: 'All automatic events', manual: 'Only manually' };
+  if (status) status.textContent = prefs.autoSave ? (labels[prefs.mode] || prefs.mode) : 'Off';
+  renderSegmentedChoices();
 }
 
 function syncHistoryLimitSelect(value) {
@@ -872,6 +973,9 @@ function syncHistoryLimitSelect(value) {
   const settingsSel = document.getElementById('setting-history-save-limit');
   if (sidebarSel) sidebarSel.value = String(value);
   if (settingsSel) settingsSel.value = String(value);
+  const limitStatus = document.getElementById('history-limit-status');
+  if (limitStatus) limitStatus.textContent = value > 0 ? `${value} images` : 'Off';
+  renderSegmentedChoices();
 }
 
 async function exportHistoryItem(session, index) {
@@ -921,7 +1025,7 @@ async function exportAllHistory() {
 
 function applyHistoryLimit(val) {
   const parsed = parseInt(val, 10);
-  const safe = Number.isNaN(parsed) ? 20 : parsed;
+  const safe = Number.isNaN(parsed) ? 50 : parsed;
   syncHistoryLimitSelect(safe);
   if (sidebar?.globalHistory?.db) {
     sidebar.globalHistory.saveSettings(safe, safe > 0);
@@ -940,7 +1044,16 @@ function applySavedSettings() {
   dmCheckbox.checked = Boolean(saved.darkMode);
   sbCheckbox.checked = saved.showStatusBar !== false;
   ciCheckbox.checked = saved.showColorInspector !== false;
+  if (aiCheckbox) aiCheckbox.checked = saved.showAiChat === true;
   bgSelect.value = saved.canvasBackground || 'none';
+  defaultCanvasSizeSelect.value = saved.defaultCanvasSize || '800x600';
+  defaultZoomSelect.value = String(saved.defaultZoom || 100);
+  viewportManager.setInitialZoom(defaultZoomSelect.value);
+  if (!localStorage.getItem('paint:zoom')) viewportManager.setZoom(defaultZoomSelect.value);
+  if (!localStorage.getItem('omerpaint:last-canvas')) {
+    const { width, height } = getDefaultCanvasSize();
+    if (width !== canvasManager.width || height !== canvasManager.height) canvasManager.resize(width, height);
+  }
   syncHistoryControls(saved);
   document.body.classList.toggle('dark-mode', dmCheckbox.checked);
   document.querySelector('.status-bar').style.display = sbCheckbox.checked ? 'grid' : 'none';
@@ -975,7 +1088,7 @@ function applySavedSettings() {
   }
   const rotateToggle = document.getElementById('rotate-selection-toggle');
   if (rotateToggle) {
-    rotateToggle.checked = saved.showRotateInSelection === true;
+    rotateToggle.checked = saved.showRotateInSelection !== false;
   }
   // Settings is the stable escape hatch for ribbon configuration.
   const settingsButton = document.getElementById('btn-settings');
@@ -988,10 +1101,33 @@ function applySavedSettings() {
       .filter((child) => !child.classList.contains('ribbon-group-title'))
       .forEach((child) => { child.hidden = false; child.style.display = child.classList.contains('rbtn-row') ? 'flex' : ''; });
   }
+  const aiButton = document.getElementById('btn-ai-chat');
+  if (aiButton) {
+    aiButton.hidden = aiCheckbox?.checked !== true;
+    aiButton.style.display = aiCheckbox?.checked === true ? '' : 'none';
+  }
+  if (aiCheckbox?.checked !== true && sidebar.activeTab === 'ai') sidebar.hide();
   const inspectorSeparator = document.querySelector('.color-inspector')?.nextElementSibling;
   if (inspectorSeparator?.classList.contains('separator')) {
     inspectorSeparator.style.display = ciCheckbox.checked ? '' : 'none';
   }
+  const layout = saved.ribbonLayout || ribbonLayoutManager.state;
+  ribbonLayoutManager.setPosition(layout.position || 'top');
+  ribbonLayoutManager.setVisible(layout.visible !== false);
+  if (settingsShowRibbon) settingsShowRibbon.checked = ribbonLayoutManager.state.visible;
+  if (settingsRibbonPosition) settingsRibbonPosition.value = ribbonLayoutManager.state.position;
+  renderSegmentedChoices();
+  syncRibbonSettingsControls();
+}
+
+function syncRibbonSettingsControls() {
+  document.querySelectorAll('[data-ribbon-group-setting]').forEach((checkbox) => {
+    const group = document.querySelector(`.${checkbox.dataset.ribbonGroupSetting}`);
+    if (!group) return;
+    checkbox.checked = [...group.children]
+      .filter((child) => !child.classList.contains('ribbon-group-title') && child.id !== 'file-input')
+      .some((child) => !child.hidden && child.style.display !== 'none');
+  });
 }
 
 async function updateAboutStats() {
@@ -1011,6 +1147,7 @@ document.querySelectorAll('[data-settings-tab]').forEach((tab) => {
       panel.hidden = panel.dataset.settingsPanel !== tab.dataset.settingsTab;
     });
     if (tab.dataset.settingsTab === 'about') updateAboutStats();
+    if (settingsDialog.open) setDialogUrl('settings', { tab: tab.dataset.settingsTab });
   });
 });
 
@@ -1027,6 +1164,7 @@ function populateRibbonSettings() {
     label.className = 'checkbox-row';
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
+    checkbox.dataset.ribbonGroupSetting = [...groupSection.classList].find((name) => name.startsWith('ribbon-group-')) || '';
     checkbox.checked = [...groupSection.children]
       .filter((child) => !child.classList.contains('ribbon-group-title') && child.id !== 'file-input')
       .some((child) => !child.hidden && child.style.display !== 'none');
@@ -1059,10 +1197,18 @@ function populateRibbonSettings() {
 populateRibbonSettings();
 
 document.getElementById('settings-reset').addEventListener('click', () => {
-  localStorage.removeItem(SETTINGS_KEY);
-  applySavedSettings();
+  if (!window.confirm('Reset all settings to their defaults? Colors, layout, tools, zoom, history preferences and other preferences will be reset. Saved images and history entries will not be deleted.')) return;
+  const resetButton = document.getElementById('settings-reset');
+  if (resetButton) resetButton.disabled = true;
+  settingsRegistry.resetAll().finally(() => {
+    settingsDialog.close();
+    window.location.reload();
+  });
 });
 
+settingsDialog.addEventListener('close', () => {
+  if (new URLSearchParams(window.location.search).get('dialog') === 'settings') setDialogUrl(null);
+});
 document.getElementById('settings-close').addEventListener('click', () => settingsDialog.close());
 
 document.getElementById('settings-clear-data').addEventListener('click', async () => {
@@ -1075,6 +1221,7 @@ document.getElementById('settings-clear-data').addEventListener('click', async (
 });
 
 window.addEventListener('paint:ribbon-change', saveSettings);
+window.addEventListener('paint:ribbon-change', syncRibbonSettingsControls);
 
 // ---------- History controls wiring (sidebar + settings tab) ----------
 const autoSaveToggle = document.getElementById('history-auto-save-toggle');
@@ -1108,9 +1255,17 @@ settingAutoSave?.addEventListener('change', onAutoSaveChange);
 settingAutoMode?.addEventListener('change', () => {
   persistHistoryPrefs();
   syncHistoryControls();
+  renderSegmentedChoices();
 });
 historyLimitSel?.addEventListener('change', (e) => applyHistoryLimit(e.target.value));
 settingLimit?.addEventListener('change', (e) => applyHistoryLimit(e.target.value));
+
+defaultZoomSelect?.addEventListener('change', () => {
+  viewportManager.setInitialZoom(defaultZoomSelect.value);
+  viewportManager.setZoom(defaultZoomSelect.value);
+  saveSettings();
+});
+defaultCanvasSizeSelect?.addEventListener('change', saveSettings);
 
 document.getElementById('history-export-all-btn')?.addEventListener('click', () => exportAllHistory());
 window.addEventListener('paint:history-export-item', (e) => {
@@ -1127,7 +1282,7 @@ document.getElementById('settings-history-clear')?.addEventListener('click', asy
 
 document.getElementById('settings-about-close').addEventListener('click', () => settingsDialog.close());
 
-document.getElementById('btn-settings').addEventListener('click', () => settingsDialog.showModal());
+document.getElementById('btn-settings').addEventListener('click', () => openSettingsDialog());
 document.getElementById('settings-cancel').addEventListener('click', () => settingsDialog.close());
 document.getElementById('settings-footer-close')?.addEventListener('click', () => settingsDialog.close());
 document.getElementById('rotate-selection-toggle')?.addEventListener('change', (event) => {
@@ -1140,6 +1295,9 @@ const newFileDialog = document.getElementById('new-file-dialog');
 if (newFileDialog) {
   document.getElementById('new-file-ok').addEventListener('click', doNewFile);
   document.getElementById('new-file-cancel').addEventListener('click', () => newFileDialog.close());
+  newFileDialog.addEventListener('close', () => {
+    if (new URLSearchParams(window.location.search).get('dialog') === 'new') setDialogUrl(null);
+  });
 }
 
 dmCheckbox.addEventListener('change', (e) => {
@@ -1156,6 +1314,15 @@ ciCheckbox.addEventListener('change', (e) => {
   if (separator?.classList.contains('separator')) separator.style.display = e.target.checked ? '' : 'none';
   saveSettings();
 });
+aiCheckbox?.addEventListener('change', (e) => {
+  const aiButton = document.getElementById('btn-ai-chat');
+  if (aiButton) {
+    aiButton.hidden = !e.target.checked;
+    aiButton.style.display = e.target.checked ? '' : 'none';
+  }
+  if (!e.target.checked && sidebar.activeTab === 'ai') sidebar.hide();
+  saveSettings();
+});
 bgSelect.addEventListener('change', (e) => {
   const viewport = document.getElementById('canvas-viewport');
   viewport.classList.remove('bg-checkerboard', 'bg-grid');
@@ -1166,6 +1333,15 @@ bgSelect.addEventListener('change', (e) => {
 });
 
 applySavedSettings();
+
+function restoreDialogFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  const dialog = params.get('dialog');
+  if (dialog === 'settings') openSettingsDialog(params.get('tab') || 'general');
+  else if (dialog === 'resize') openResizeDialog();
+  else if (dialog === 'new' && newFileDialog && !newFileDialog.open) newFileDialog.showModal();
+}
+restoreDialogFromUrl();
 
 const iconCopyFormats = ['SVG', 'PNG 26x26', 'PNG 100x100', 'PNG 300x300', 'PNG 500x500'];
 let iconCopyIndex = 0;
@@ -1263,6 +1439,7 @@ renderTextStyleControls();
 // ---------- Sidebar Init ----------
 document.getElementById('btn-history-panel').addEventListener('click', () => sidebar.toggleHistory());
 document.getElementById('btn-ai-chat').addEventListener('click', () => sidebar.toggleAi());
+document.getElementById('history-settings-link')?.addEventListener('click', () => openSettingsDialog('history'));
 
 document.querySelectorAll('.ribbon-group-title').forEach(titleEl => {
   titleEl.addEventListener('click', () => {
@@ -1287,10 +1464,30 @@ void canvasManager.restoreFromStorage({ maxAgeMs: RECENT_CANVAS_TTL_MS }).then((
   }
 }).catch((error) => console.warn('Unable to restore recent image:', error));
 
+let lifecycleSnapshotQueued = false;
+function queueLifecycleHistorySnapshot() {
+  if (lifecycleSnapshotQueued || !sidebar.globalHistory.historyEnabled) return;
+  lifecycleSnapshotQueued = true;
+  try {
+    localStorage.setItem('paint:pending-history-save', JSON.stringify({
+      dataUrl: canvasManager.canvas.toDataURL('image/png'),
+      width: canvasManager.width,
+      height: canvasManager.height,
+      queuedAt: Date.now(),
+    }));
+  } catch (error) {
+    console.warn('Unable to queue lifecycle history snapshot:', error);
+  }
+}
+
 window.addEventListener('beforeunload', () => {
   persistSession();
   if (shouldAutoSaveOnClose()) sidebar.saveCurrentToHistory();
+  if (shouldAutoSaveOnClose()) queueLifecycleHistorySnapshot();
 });
+window.addEventListener('pagehide', () => {
+  if (shouldAutoSaveOnClose()) queueLifecycleHistorySnapshot();
+}, { once: true });
 let historySaveTimer = 0;
 window.addEventListener('paint:changed', () => {
   if (!shouldAutoSaveHistory()) return;
@@ -1307,7 +1504,9 @@ saveToolSelection(savedTool);
 // Finish sidebar initialization after globalHistory is ready
 (async () => {
   await sidebar.finishInit();
+  await sidebar.flushPendingAutoSave();
   syncHistoryLimitSelect(sidebar.globalHistory.maxHistory);
+  renderSegmentedChoices();
 })();
 
 // Click outside the paint area to commit and clear selection

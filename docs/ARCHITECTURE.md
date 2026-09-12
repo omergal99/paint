@@ -37,15 +37,20 @@ paint/
 │   ├── ui/                    # Non-canvas UI components
 │   │   ├── Toolbar.js         # Ribbon buttons: tools, shapes, fill modes, file/undo actions
 │   │   ├── Sidebar.js         # Right sidebar: history + AI chat + group settings
+│   │   ├── PanelLayoutManager.js # Reusable dock/float/hide panel layout state
+│   │   ├── SegmentedChoice.js # Reusable quick-choice buttons backed by a select
 │   │   ├── StatusBar.js       # Pointer / selection / canvas-size / zoom footer
 │   │   ├── ColorPalette.js    # Swatches + custom color input
 │   │   └── ColorInspector.js  # Hex/RGB readout + copy actions
+│   ├── settings/
+│   │   └── SettingsRegistry.js # Central reset contract for persisted preferences
 │   ├── utils/
 │   │   ├── color.js           # hex→rgb conversions
 │   │   └── transform.js       # rotate/flip/scale/remove-background helpers
 │   ├── clipboard/ClipboardManager.js  # OS clipboard bridge (copy/cut/paste)
 │   └── history/HistoryManager.js      # Snapshot-based undo/redo (≤50 steps)
 ├── docs/
+│   ├── ai-integration/        # Provider-neutral AI connection/editing plan
 │   ├── ARCHITECTURE.md        # This file
 │   ├── future_ideas.md        # Long-running wishlist (features requested over time)
 │   ├── future_ideas2.md       # Second-wave ideas (PWA, mobile, selection, etc.)
@@ -127,7 +132,25 @@ visible canvas at any zoom:
 
 ---
 
-## 5. Tools contract
+## 5. Settings reset contract
+
+`js/settings/SettingsRegistry.js` owns the list of local-storage preference
+keys and reset handlers. The About tab uses it for **Reset Settings**. Resetting
+preferences preserves the current canvas and saved history entries; **Clear
+Data** remains the separate destructive action.
+
+When adding a persisted preference, register its storage key with the registry.
+When a feature stores settings outside localStorage, register an async reset
+handler as well. This keeps the UI independent from feature storage details:
+
+```js
+settingsRegistry.registerStorageKey('paint:my-feature');
+settingsRegistry.registerResetHandler(() => myFeature.resetSettings());
+```
+
+---
+
+## 6. Tools contract
 
 Every tool in `js/tools/` implements the same interface:
 
@@ -155,7 +178,7 @@ Every tool in `js/tools/` implements the same interface:
 
 ---
 
-## 6. Styling conventions
+## 7. Styling conventions
 
 - Theme tokens (`--w10-*`) are defined in `css/styles.css` under `:root` and
   `body.dark-mode`; components consume tokens only.
@@ -168,7 +191,7 @@ Every tool in `js/tools/` implements the same interface:
 
 ---
 
-## 7. Testing & validation
+## 8. Testing & validation
 
 ```bash
 npm test                 # node --test tests/**/*.test.js  (no browser needed)
