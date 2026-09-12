@@ -4,10 +4,18 @@ The current AI Chat panel is intentionally a local mock and is closed for new
 users. Real provider connections should be added as an isolated feature rather
 than making the canvas or `Sidebar` know provider-specific details.
 
+The first local slice is implemented in
+`js/ai/DeterministicCommandService.js`. It powers the AI panel's **Quick
+actions** and recognizes explicit commands such as `/dark`, `/light`, `/grid`,
+`/zoom 100`, `/flip horizontal`, `/rotate 90`, `/save`, and `/image-info`.
+These actions are allowlisted and call application capabilities supplied by the
+composition root; they do not execute arbitrary text as code.
+
 ## Proposed structure
 
 ```text
 js/ai/
+  DeterministicCommandService.js # safe local commands used by quick actions/chat
   AiAgentService.js       # provider-agnostic request/session interface
   AiContextBuilder.js      # prompt, current image, selection and metadata
   AiEditPipeline.js       # preview -> approve -> apply, with undo snapshot
@@ -43,7 +51,8 @@ the active selection—not hidden application state.
 
 ## Delivery slices
 
-1. Add the provider-neutral service contract and a fake provider for tests.
+1. Extract the provider-neutral service contract around the deterministic layer
+   and add a fake provider for tests.
 2. Add connection UI and persistence with no canvas mutation.
 3. Add current-image/selection context preview and request cancellation.
 4. Add image-result preview, Apply/Discard, and undo integration.

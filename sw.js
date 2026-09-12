@@ -1,4 +1,4 @@
-const CACHE_NAME = 'paint-shell-v1-6-0';
+const CACHE_NAME = 'paint-shell-v1-6-1';
 const SHELL = [
   './',
   './index.html',
@@ -6,6 +6,7 @@ const SHELL = [
   './css/styles.css',
   './js/app.js',
   './js/version.js',
+  './js/ai/DeterministicCommandService.js',
   './js/main.js',
   './js/storage.js',
   './js/telemetry.js',
@@ -25,6 +26,7 @@ const SHELL = [
   './js/ui/ColorPalette.js',
   './js/ui/ColorInspector.js',
   './js/ui/StatusBar.js',
+  './js/ui/DialogService.js',
   './js/ui/Toolbar.js',
   './js/ui/Sidebar.js',
   './js/settings/SettingsRegistry.js',

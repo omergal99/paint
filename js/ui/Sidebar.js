@@ -2,10 +2,11 @@
 import { GlobalHistory } from '../history/GlobalHistory.js';
 
 export class Sidebar {
-  constructor({ canvasManager, statusBar, palette }) {
+  constructor({ canvasManager, statusBar, palette, aiCommandService = null, dialogService }) {
     this.canvasManager = canvasManager;
     this.statusBar = statusBar;
     this.palette = palette;
+    this.dialogService = dialogService;
     
     this.sidebar = document.getElementById('right-sidebar');
     this.title = document.getElementById('sidebar-title');
@@ -21,6 +22,8 @@ export class Sidebar {
     this.aiMessages = document.getElementById('ai-chat-messages');
     this.aiInput = document.getElementById('ai-chat-input');
     this.aiSend = document.getElementById('ai-chat-send');
+    this.aiActions = document.getElementById('ai-chat-actions');
+    this.aiCommandService = aiCommandService;
     
     this.groupSettingsContent = document.getElementById('sidebar-group-settings');
     this.groupSettingsContainer = document.getElementById('group-settings-container');
@@ -66,7 +69,13 @@ export class Sidebar {
     
     // Clear all button with strong confirmation
     this.clearBtn.addEventListener('click', async () => {
-      if (confirm('Are you sure you want to permanently delete all saved history? This cannot be undone.')) {
+      const confirmed = await this.dialogService.confirm({
+        title: 'Clear history',
+        message: 'Are you sure you want to permanently delete all saved history? This cannot be undone.',
+        confirmLabel: 'Clear history',
+        danger: true,
+      });
+      if (confirmed) {
         await this.globalHistory.clearAll();
         // Use retry logic to ensure render completes
         if (this.activeTab === 'history') {
@@ -92,6 +101,7 @@ export class Sidebar {
     });
     
     this._bindResizer();
+    this._renderAiActions();
     
     // Mark initialization as complete
     this._initComplete = true;
@@ -108,6 +118,28 @@ export class Sidebar {
   async resetSettings() {
     await this._waitForInit();
     return this.globalHistory.resetSettings();
+  }
+
+  setAiCommandService(service) {
+    this.aiCommandService = service;
+    this._renderAiActions();
+  }
+
+  _renderAiActions() {
+    if (!this.aiActions) return;
+    this.aiActions.innerHTML = '';
+    const actions = this.aiCommandService?.getQuickActions?.() || [];
+    actions.forEach(({ id, label, command }) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'ai-quick-action';
+      button.dataset.aiCommand = command;
+      button.dataset.aiCommandId = id;
+      button.textContent = label;
+      button.title = `Run ${command}`;
+      button.addEventListener('click', () => this.handleAiSubmit(command));
+      this.aiActions.appendChild(button);
+    });
   }
 
   async _loadHistoryWithRetry() {
@@ -514,7 +546,13 @@ export class Sidebar {
       img.alt = `Import history image ${index + 1} of ${sessions.length}`;
       img.title = 'Click to import this image';
       img.addEventListener('click', async () => {
-        if (confirm('Load this image? Unsaved current work will be lost.')) {
+        const confirmed = await this.dialogService.confirm({
+          title: 'Load history image',
+          message: 'Load this image? Unsaved current work will be lost.',
+          confirmLabel: 'Load image',
+          danger: true,
+        });
+        if (confirmed) {
           await this.canvasManager.loadImageDataUrl(session.dataUrl, session.width, session.height);
           this.statusBar.flash('Loaded from history');
         }
@@ -560,8 +598,8 @@ export class Sidebar {
     return sessions.length;
   }
 
-  handleAiSubmit() {
-    const text = this.aiInput.value.trim();
+  async handleAiSubmit(commandInput = null) {
+    const text = String(commandInput ?? this.aiInput.value).trim();
     if (!text) return;
     this.aiInput.value = '';
     
@@ -571,15 +609,14 @@ export class Sidebar {
     uMsg.textContent = text;
     this.aiMessages.appendChild(uMsg);
     
-    // Mock AI response
-    setTimeout(() => {
-      const bMsg = document.createElement('div');
-      bMsg.className = 'ai-msg bot';
-      bMsg.textContent = 'I am a mockup AI. I cannot actually execute: "' + text + '" yet!';
-      this.aiMessages.appendChild(bMsg);
-      this.aiMessages.scrollTop = this.aiMessages.scrollHeight;
-    }, 500);
-    
+    const result = this.aiCommandService
+      ? await this.aiCommandService.execute(text)
+      : { reply: 'Deterministic actions are not ready yet.' };
+    const bMsg = document.createElement('div');
+    bMsg.className = `ai-msg bot${result.matched ? ' ai-msg-applied' : ''}`;
+    bMsg.textContent = result.reply;
+    this.aiMessages.appendChild(bMsg);
+
     this.aiMessages.scrollTop = this.aiMessages.scrollHeight;
   }
 }

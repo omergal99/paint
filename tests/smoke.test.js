@@ -174,6 +174,58 @@ test('Action menus choose their direction from available viewport space', () => 
   assert.match(main, /menuItems\.dataset\.direction\s*=\s*openAbove\s*\?\s*'up'\s*:\s*'down'/);
 });
 
+test('Size menu provides a responsive quick-button matrix', () => {
+  const sizeOptions = [...html.matchAll(/data-size-option="(\d+)"/g)].map((match) => Number(match[1]));
+  assert.ok(sizeOptions.length >= 20);
+  assert.ok(sizeOptions.includes(128));
+  assert.ok(sizeOptions.includes(300));
+  assert.match(read('css/styles.css'), /\.size-menu-items\s*\{[^}]*grid-template-columns:\s*repeat\(5/s);
+});
+
+test('Floating ribbon and side layouts remain scrollable and resizable', () => {
+  const layout = read('js/ui/PanelLayoutManager.js');
+  const css = read('css/styles.css');
+  assert.match(layout, /floatWidth/);
+  assert.match(layout, /ResizeObserver/);
+  assert.match(css, /#app\.ribbon-float \.ribbon\s*\{[^}]*resize:\s*both/s);
+  assert.match(css, /#app\.ribbon-float \.ribbon\s*\{[^}]*overflow-x:\s*auto/s);
+  assert.match(css, /\.main-area\s*\{[^}]*min-width:\s*0/s);
+  assert.match(css, /\.right-sidebar\s*\{[^}]*max-width:\s*min\(42vw/s);
+});
+
+test('AI chat exposes safe deterministic actions through one command service', () => {
+  const ai = read('js/ai/DeterministicCommandService.js');
+  assert.match(html, /id="ai-chat-actions"/);
+  assert.match(ai, /export function createDeterministicCommandService/);
+  assert.match(ai, /theme-dark/);
+  assert.match(ai, /background-checkerboard/);
+  assert.match(ai, /flip-horizontal/);
+  assert.match(main, /createDeterministicCommandService/);
+  assert.match(sidebar, /setAiCommandService/);
+});
+
+test('Versioning has one source of truth and a release sync command', () => {
+  const packageJson = JSON.parse(read('package.json'));
+  assert.match(packageJson.version, /^\d+\.\d+\.\d+$/);
+  assert.match(read('package.json'), /version:sync/);
+  assert.match(read('scripts/sync-version.mjs'), /PAINT_VERSION/);
+  assert.match(read('js/version.js'), new RegExp(`APP_VERSION = '${packageJson.version}'`));
+});
+
+test('Application confirmations use the themed dialog service', () => {
+  assert.match(main, /createDialogService/);
+  assert.match(read('js/ui/DialogService.js'), /showModal/);
+  assert.doesNotMatch(main, /window\.(?:alert|confirm|prompt)\s*\(/);
+  assert.doesNotMatch(sidebar, /window\.(?:alert|confirm|prompt)\s*\(/);
+  assert.match(html, /id="app-dialog"/);
+});
+
+test('Settings includes a feedback path to GitHub issues', () => {
+  assert.match(html, /data-settings-tab="feedback"/);
+  assert.match(html, /data-settings-panel="feedback"/);
+  assert.match(html, /github\.com\/omergal99\/paint\/issues\/new/);
+});
+
 test('New defaults are safe and configurable', () => {
   assert.match(read('js/history/GlobalHistory.js'), /DEFAULT_HISTORY_LIMIT = 50/);
   assert.match(html, /id="setting-show-ai-chat"\s*\/>/);

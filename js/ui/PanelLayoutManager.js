@@ -2,7 +2,14 @@
 // The panel itself stays present in the DOM; this class only manages its
 // placement, visibility and the always-available restore affordance.
 
-const DEFAULT_LAYOUT = Object.freeze({ visible: true, position: 'top', floatX: null, floatY: null });
+const DEFAULT_LAYOUT = Object.freeze({
+  visible: true,
+  position: 'top',
+  floatX: null,
+  floatY: null,
+  floatWidth: null,
+  floatHeight: null,
+});
 const VALID_POSITIONS = new Set(['top', 'left', 'right', 'bottom', 'float']);
 
 export class PanelLayoutManager {
@@ -19,6 +26,7 @@ export class PanelLayoutManager {
     this.restoreButton?.addEventListener('click', () => this.setVisible(true));
     this.settingsButton?.addEventListener('click', () => this.onChange?.({ ...this.state, action: 'settings' }));
     this._bindFloatDrag();
+    this._bindFloatResize();
     this.apply();
   }
 
@@ -30,6 +38,8 @@ export class PanelLayoutManager {
         position: VALID_POSITIONS.has(value.position) ? value.position : DEFAULT_LAYOUT.position,
         floatX: Number.isFinite(value.floatX) ? value.floatX : null,
         floatY: Number.isFinite(value.floatY) ? value.floatY : null,
+        floatWidth: Number.isFinite(value.floatWidth) && value.floatWidth >= 320 ? value.floatWidth : null,
+        floatHeight: Number.isFinite(value.floatHeight) && value.floatHeight >= 76 ? value.floatHeight : null,
       };
     } catch {
       return { ...DEFAULT_LAYOUT };
@@ -91,15 +101,43 @@ export class PanelLayoutManager {
   }
 
   _applyFloatPosition() {
-    if (this.state.position !== 'float' || this.state.floatX == null || this.state.floatY == null) {
+    if (this.state.position !== 'float') {
       this.panel?.style.removeProperty('left');
       this.panel?.style.removeProperty('top');
       this.panel?.style.removeProperty('transform');
+      this.panel?.style.removeProperty('width');
+      this.panel?.style.removeProperty('height');
       return;
     }
-    this.panel.style.left = `${this.state.floatX}px`;
-    this.panel.style.top = `${this.state.floatY}px`;
-    this.panel.style.transform = 'none';
+    if (this.state.floatX != null && this.state.floatY != null) {
+      this.panel.style.left = `${this.state.floatX}px`;
+      this.panel.style.top = `${this.state.floatY}px`;
+      this.panel.style.transform = 'none';
+    } else {
+      this.panel.style.removeProperty('left');
+      this.panel.style.removeProperty('top');
+      this.panel.style.removeProperty('transform');
+    }
+    if (this.state.floatWidth != null) this.panel.style.width = `${this.state.floatWidth}px`;
+    if (this.state.floatHeight != null) this.panel.style.height = `${this.state.floatHeight}px`;
+  }
+
+  _bindFloatResize() {
+    if (!this.panel || typeof ResizeObserver === 'undefined') return;
+    let frame = 0;
+    this._floatResizeObserver = new ResizeObserver(() => {
+      if (this.state.position !== 'float' || frame) return;
+      frame = requestAnimationFrame(() => {
+        frame = 0;
+        const rect = this.panel.getBoundingClientRect();
+        if (rect.width < 320 || rect.height < 76) return;
+        this.state.floatWidth = Math.round(rect.width);
+        this.state.floatHeight = Math.round(rect.height);
+        this._write();
+        this.onChange?.({ ...this.state });
+      });
+    });
+    this._floatResizeObserver.observe(this.panel);
   }
 
   apply() {

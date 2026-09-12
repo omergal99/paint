@@ -11,6 +11,8 @@ Chrome/Edge.
 ```
 paint/
 ├── index.html                 # Single page: Fluent ribbon, status bar, canvas stage
+├── AGENTS.md                  # Agent entry point for project engineering rules
+├── .skills/                   # Concise project skills for future contributors
 ├── css/
 │   ├── styles.css             # Design system + component styles (ribbon, canvas area, dialogs)
 │   └── progressive.css        # Progressive/mobile enhancement layer (safe-area, touch, dark-mode fixes)
@@ -35,6 +37,7 @@ paint/
 │   │   ├── EyedropperTool.js  # Color picker
 │   │   └── ZoomTool.js        # Magnifier tool
 │   ├── ui/                    # Non-canvas UI components
+│   │   ├── DialogService.js    # Themed promise-based confirm/prompt dialogs
 │   │   ├── Toolbar.js         # Ribbon buttons: tools, shapes, fill modes, file/undo actions
 │   │   ├── Sidebar.js         # Right sidebar: history + AI chat + group settings
 │   │   ├── PanelLayoutManager.js # Reusable dock/float/hide panel layout state
@@ -48,6 +51,7 @@ paint/
 │   │   ├── color.js           # hex→rgb conversions
 │   │   └── transform.js       # rotate/flip/scale/remove-background helpers
 │   ├── clipboard/ClipboardManager.js  # OS clipboard bridge (copy/cut/paste)
+│   ├── ai/                    # Deterministic commands and future provider boundary
 │   └── history/HistoryManager.js      # Snapshot-based undo/redo (≤50 steps)
 ├── docs/
 │   ├── ai-integration/        # Provider-neutral AI connection/editing plan
@@ -56,6 +60,7 @@ paint/
 │   ├── future_ideas2.md       # Second-wave ideas (PWA, mobile, selection, etc.)
 │   └── NEXT_STEPS_PLAN.md     # Prioritized roadmap (effort × impact)
 ├── tests/smoke.test.js        # Node smoke tests (run: `npm test`)
+├── scripts/sync-version.mjs   # Keeps browser version.js aligned with package.json
 ├── sw.js                      # Service worker shell cache
 ├── manifest.json              # PWA manifest
 └── package.json
@@ -204,4 +209,13 @@ served locally:
 ```bash
 python3 -m http.server 8000   # then open http://localhost:8000
 ```
+
+### Versioning
+
+`package.json` is the version source of truth. Run `npm run version:patch` for
+a release bump; it updates `package.json` and synchronizes `js/version.js`.
+CI can run `npm run version:sync` after injecting `PAINT_VERSION`, but the app
+does not need a version bump for every feature commit. Keeping release bumps
+explicit avoids noisy cache/release churn while still making support builds
+identifiable.
 |                                | is temporarily locked via `.prevent-scroll`.                    |

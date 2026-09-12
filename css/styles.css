@@ -431,14 +431,24 @@ body {
 	text-align: center;
 }
 .size-menu-items {
-	min-width: 24px;
-	max-height: 280px;
+	width: 238px;
+	min-width: 238px;
+	max-height: min(330px, calc(100vh - 24px));
 	overflow-y: auto;
+	grid-template-columns: repeat(5, minmax(0, 1fr));
+	gap: 2px;
 }
 .size-menu-items button {
 	justify-content: center;
-	min-width: 22px;
+	min-width: 0;
 	padding: 5px 6px;
+	border: 1px solid transparent;
+	border-radius: 2px;
+	font-variant-numeric: tabular-nums;
+}
+.size-menu-items button.active {
+	background: var(--w10-active);
+	border-color: var(--w10-active-border);
 }
 
 /* Color group */
@@ -479,11 +489,12 @@ body {
 .palette-grid {
 	display: grid;
 	grid-template-columns: repeat(10, 16px);
-	grid-template-rows: repeat(2, 16px);
+	grid-auto-rows: 16px;
 	gap: 1px;
+	width: max-content;
 }
 .palette-grid button {
-	width: 16px;
+	width: 100%;
 	height: 16px;
 	border: 1px solid rgba(0, 0, 0, 0.25);
 	padding: 0;
@@ -502,11 +513,14 @@ body {
 	padding: 2px 4px;
 	font-size: 12px;
 	color: var(--w10-text);
+	min-width: 0;
+	flex-wrap: nowrap;
 }
 .ci-swatch-container {
 	display: flex;
 	align-items: center;
 	gap: 4px;
+	min-width: 0;
 }
 .color-inspector.collapsed > :not(.ci-swatch-container),
 .color-inspector.collapsed .ci-swatch-container > :not(.ci-toggle) {
@@ -548,6 +562,7 @@ body {
 	display: flex;
 	align-items: center;
 	gap: 4px;
+	min-width: 0;
 }
 .ci-field code {
 	font-family: "Cascadia Code", Consolas, monospace;
@@ -580,6 +595,8 @@ body {
 	display: flex;
 	flex: 1;
 	overflow: hidden;
+	min-width: 0;
+	min-height: 0;
 }
 
 /* Dockable ribbon positions. PanelLayoutManager owns the state; these rules
@@ -615,6 +632,7 @@ body {
 #app.ribbon-right .ribbon {
 	flex: 0 0 116px;
 	width: 116px;
+	min-width: 116px;
 	max-height: none;
 	flex-direction: column;
 	overflow-x: hidden;
@@ -629,6 +647,35 @@ body {
 #app.ribbon-left .rbtn-row,
 #app.ribbon-right .rbtn-row {
 	flex-wrap: wrap;
+	justify-content: center;
+}
+#app.ribbon-left .ribbon-group-colors .rbtn-row,
+#app.ribbon-right .ribbon-group-colors .rbtn-row {
+	flex-direction: column;
+	align-items: stretch;
+}
+#app.ribbon-left .ribbon-group-colors .swatch-stack,
+#app.ribbon-right .ribbon-group-colors .swatch-stack {
+	align-self: center;
+	margin: 0 0 4px;
+}
+#app.ribbon-left .ribbon-group-colors .palette-grid,
+#app.ribbon-right .ribbon-group-colors .palette-grid {
+	width: 100%;
+	grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+#app.ribbon-left .color-inspector,
+#app.ribbon-right .color-inspector {
+	width: 100%;
+	flex-direction: column;
+	align-items: stretch;
+	gap: 4px;
+	padding: 5px 3px;
+}
+#app.ribbon-left .ci-swatch-container,
+#app.ribbon-right .ci-swatch-container,
+#app.ribbon-left .ci-field,
+#app.ribbon-right .ci-field {
 	justify-content: center;
 }
 #app.ribbon-bottom .ribbon {
@@ -652,6 +699,26 @@ body {
 	z-index: 60;
 	border: 1px solid var(--w10-border-strong);
 	box-shadow: 0 5px 18px rgba(0, 0, 0, .22);
+	resize: both;
+	overflow-x: auto;
+	overflow-y: hidden;
+	min-width: 320px;
+	min-height: 76px;
+	max-height: min(70vh, 360px);
+	scrollbar-width: thin;
+}
+#app.ribbon-float .ribbon::-webkit-scrollbar {
+	display: block;
+	height: 8px;
+}
+#app.ribbon-float .ribbon::-webkit-scrollbar-thumb {
+	background: var(--w10-border-strong);
+	border-radius: 8px;
+}
+#app.ribbon-float .ribbon-drag-handle {
+	position: sticky;
+	left: 0;
+	z-index: 1;
 }
 .ribbon-drag-handle {
 	display: none;
@@ -699,6 +766,8 @@ body {
 	background: var(--w10-canvas-bg);
 	padding: 10px;
 	position: relative;
+	min-width: 0;
+	min-height: 0;
 }
 
 .canvas-viewport.bg-checkerboard {
@@ -721,13 +790,15 @@ body {
 
 /* ===================== RIGHT SIDEBAR ===================== */
 .right-sidebar {
-	width: 250px;
-	min-width: 220px;
-	max-width: 80vw;
+	width: clamp(220px, 26vw, 360px);
+	min-width: 190px;
+	max-width: min(42vw, 420px);
+	flex: 0 1 auto;
 	background: var(--w10-bg);
 	border-left: 1px solid var(--w10-border-strong);
 	display: flex;
 	flex-direction: column;
+	min-height: 0;
 }
 .sidebar-resizer {
 	position: absolute;
@@ -775,6 +846,8 @@ body {
 	display: flex;
 	flex-direction: column;
 	overflow: auto;
+	min-width: 0;
+	min-height: 0;
 }
 
 .sidebar-content .checkbox-row,
@@ -1016,6 +1089,32 @@ body {
 .ai-msg.user {
 	background: var(--w10-active);
 	align-self: flex-end;
+}
+.ai-msg-applied {
+	border-left: 3px solid var(--w10-accent);
+}
+.ai-chat-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+	padding: 6px 10px 8px;
+	border-top: 1px solid var(--w10-border);
+	max-height: 92px;
+	overflow-y: auto;
+}
+.ai-quick-action {
+	padding: 4px 7px;
+	border: 1px solid var(--w10-border);
+	border-radius: 999px;
+	background: var(--w10-ribbon-bg);
+	color: var(--w10-text);
+	font-size: 11px;
+	cursor: pointer;
+}
+.ai-quick-action:hover,
+.ai-quick-action:focus-visible {
+	background: var(--w10-hover);
+	border-color: var(--w10-accent);
 }
 .ai-chat-input-area {
 	padding: 10px;
@@ -1260,6 +1359,8 @@ dialog {
 	border-radius: 4px;
 	padding: 16px 16px;
 	font-family: var(--font-ui);
+	background: var(--w10-bg);
+	color: var(--w10-text);
 	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
 }
 dialog::backdrop {
@@ -1268,6 +1369,31 @@ dialog::backdrop {
 dialog h3 {
 	margin: 0 0 12px;
 	font-size: 14px;
+}
+.app-dialog {
+	width: min(430px, calc(100vw - 32px));
+	max-width: calc(100vw - 32px);
+	padding: 20px;
+}
+.app-dialog form {
+	display: grid;
+	gap: 10px;
+}
+.app-dialog p {
+	margin: 0;
+	color: var(--w10-text-dim);
+	font-size: 13px;
+	line-height: 1.45;
+	white-space: pre-wrap;
+}
+.app-dialog-input {
+	width: 100%;
+	min-height: 32px;
+	padding: 5px 7px;
+	border: 1px solid var(--w10-border-strong);
+	background: var(--w10-bg);
+	color: var(--w10-text);
+	font: inherit;
 }
 
 .settings-shell {
@@ -1352,6 +1478,36 @@ dialog h3 {
 	border-left-color: var(--w10-accent);
 	background: var(--w10-hover);
 	color: var(--w10-text);
+}
+.feedback-actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+	margin-top: 18px;
+}
+.settings-link-button,
+.settings-link {
+	display: inline-flex;
+	align-items: center;
+	min-height: 30px;
+	padding: 5px 9px;
+	border: 1px solid var(--w10-border-strong);
+	background: var(--w10-ribbon-bg);
+	color: var(--w10-text);
+	font-size: 12px;
+	text-decoration: none;
+	cursor: pointer;
+}
+.settings-link-button:hover,
+.settings-link:hover {
+	border-color: var(--w10-accent);
+	background: var(--w10-hover);
+}
+.settings-link {
+	border-color: transparent;
+	background: transparent;
+	color: var(--w10-accent);
 }
 .settings-panel {
 	padding-left: 18px;
@@ -1855,6 +2011,9 @@ dialog input[type="number"] {
 		right: 0;
 		top: 0;
 		bottom: 0;
+		width: min(88vw, 360px);
+		max-width: 88vw;
+		flex-basis: auto;
 		z-index: 50;
 		box-shadow: -4px 0 10px rgba(0, 0, 0, 0.1);
 	}

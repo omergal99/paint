@@ -20,7 +20,9 @@ Then open the printed `localhost` URL in Chrome or Edge.
 
 ## Architecture & How It's Built
 
-The application follows a modular, object-oriented design in vanilla JavaScript, leveraging browser API native capabilities. Below is a Mermaid diagram explaining how the components interact:
+The application follows a modular vanilla-JavaScript design, with focused
+manager, tool, service, and UI-component modules that use browser-native APIs.
+Below is a Mermaid diagram explaining how the components interact:
 
 ```mermaid
 graph TD

@@ -19,7 +19,9 @@ import { Toolbar } from './ui/Toolbar.js';
 import { Sidebar } from './ui/Sidebar.js';
 import { PanelLayoutManager } from './ui/PanelLayoutManager.js';
 import { SegmentedChoice } from './ui/SegmentedChoice.js';
+import { createDialogService } from './ui/DialogService.js';
 import { createSettingsRegistry } from './settings/SettingsRegistry.js';
+import { createDeterministicCommandService } from './ai/DeterministicCommandService.js';
 import { hexToRgb } from './utils/color.js';
 import { rotateCanvas, rotateCanvasByAngle, flipCanvas, scaleCanvas, removeBackground } from './utils/transform.js';
 import { APP_VERSION } from './version.js';
@@ -29,6 +31,15 @@ const stage = document.getElementById('canvas-stage');
 const canvasEl = document.getElementById('paint-canvas');
 const overlayEl = document.getElementById('overlay-canvas');
 const scaleEl = document.getElementById('canvas-scale');
+const dialogService = createDialogService({
+  dialog: document.getElementById('app-dialog'),
+  title: document.getElementById('app-dialog-title'),
+  message: document.getElementById('app-dialog-message'),
+  input: document.getElementById('app-dialog-input'),
+  confirmButton: document.getElementById('app-dialog-confirm'),
+  cancelButton: document.getElementById('app-dialog-cancel'),
+  form: document.getElementById('app-dialog-form'),
+});
 
 // ---------- Core managers ----------
 const canvasManager = new CanvasManager({ canvas: canvasEl, overlay: overlayEl, width: 800, height: 600 });
@@ -112,7 +123,7 @@ if (primaryRgb) {
   colorInspector.show({ ...primaryRgb, hex: colorPalette.primary });
 }
 
-const sidebar = new Sidebar({ canvasManager, statusBar, palette: colorPalette });
+const sidebar = new Sidebar({ canvasManager, statusBar, palette: colorPalette, dialogService });
 
 // ---------- Selection state + overlay drawing ----------
 function drawSelectionOutline(region) {
@@ -638,8 +649,15 @@ document.getElementById('btn-rotate').addEventListener('click', (event) => {
 document.getElementById('btn-rotate-90').addEventListener('click', () => applyTransformation(c => rotateCanvas(c, 1)));
 document.getElementById('btn-rotate-180').addEventListener('click', () => applyTransformation(c => rotateCanvas(c, 2)));
 document.getElementById('btn-rotate-270').addEventListener('click', () => applyTransformation(c => rotateCanvas(c, 3)));
-document.getElementById('btn-rotate-free').addEventListener('click', () => {
-  const degrees = Number.parseFloat(window.prompt('Rotation angle in degrees', '15'));
+document.getElementById('btn-rotate-free').addEventListener('click', async () => {
+  const value = await dialogService.prompt({
+    title: 'Free rotation',
+    message: 'Enter the rotation angle in degrees.',
+    value: '15',
+    type: 'number',
+    confirmLabel: 'Rotate',
+  });
+  const degrees = Number.parseFloat(value);
   if (Number.isFinite(degrees)) applyTransformation(c => rotateCanvasByAngle(c, degrees));
 });
 document.getElementById('btn-flip').addEventListener('click', (event) => {
@@ -830,6 +848,27 @@ const SETTINGS_KEY = 'omerpaint:settings';
 const settingsRegistry = createSettingsRegistry();
 settingsRegistry.registerResetHandler(() => colorPalette.resetToDefaults());
 settingsRegistry.registerResetHandler(() => sidebar.resetSettings());
+const deterministicAi = createDeterministicCommandService({
+  setTheme: (theme) => {
+    dmCheckbox.checked = theme === 'dark';
+    document.body.classList.toggle('dark-mode', dmCheckbox.checked);
+    saveSettings();
+  },
+  setCanvasBackground: (background) => {
+    bgSelect.value = background;
+    bgSelect.dispatchEvent(new Event('change'));
+  },
+  setZoom: (zoom) => viewportManager.setZoom(zoom),
+  flip: (direction) => applyTransformation((canvas) => flipCanvas(canvas, direction === 'horizontal')),
+  rotate: (degrees) => applyTransformation((canvas) => rotateCanvasByAngle(canvas, degrees)),
+  saveToHistory: () => sidebar.saveCurrentToHistory(),
+  getImageContext: () => {
+    const selection = canvasManager.selection;
+    const selectionText = selection ? ` Selection: ${selection.w}×${selection.h}px.` : ' No active selection.';
+    return `Current image: ${canvasManager.width}×${canvasManager.height}px.${selectionText}`;
+  },
+});
+sidebar.setAiCommandService(deterministicAi);
 
 function setDialogUrl(dialog, extra = {}) {
   const params = new URLSearchParams(window.location.search);
@@ -1196,8 +1235,14 @@ function populateRibbonSettings() {
 
 populateRibbonSettings();
 
-document.getElementById('settings-reset').addEventListener('click', () => {
-  if (!window.confirm('Reset all settings to their defaults? Colors, layout, tools, zoom, history preferences and other preferences will be reset. Saved images and history entries will not be deleted.')) return;
+document.getElementById('settings-reset').addEventListener('click', async () => {
+  const confirmed = await dialogService.confirm({
+    title: 'Reset settings',
+    message: 'Reset all settings to their defaults? Colors, layout, tools, zoom, history preferences and other preferences will be reset. Saved images and history entries will not be deleted.',
+    confirmLabel: 'Reset settings',
+    danger: true,
+  });
+  if (!confirmed) return;
   const resetButton = document.getElementById('settings-reset');
   if (resetButton) resetButton.disabled = true;
   settingsRegistry.resetAll().finally(() => {
@@ -1212,7 +1257,13 @@ settingsDialog.addEventListener('close', () => {
 document.getElementById('settings-close').addEventListener('click', () => settingsDialog.close());
 
 document.getElementById('settings-clear-data').addEventListener('click', async () => {
-  if (!window.confirm('Clear saved canvas data and history?')) return;
+  const confirmed = await dialogService.confirm({
+    title: 'Clear all saved data',
+    message: 'Clear the saved canvas, workspace data, settings, and history? This cannot be undone.',
+    confirmLabel: 'Clear data',
+    danger: true,
+  });
+  if (!confirmed) return;
   localStorage.clear();
   indexedDB.deleteDatabase('omerpaint_global_history');
   indexedDB.deleteDatabase('paint-workspace');
@@ -1274,7 +1325,13 @@ window.addEventListener('paint:history-export-item', (e) => {
 });
 document.getElementById('settings-history-export-all')?.addEventListener('click', () => exportAllHistory());
 document.getElementById('settings-history-clear')?.addEventListener('click', async () => {
-  if (!window.confirm('Are you sure you want to permanently delete all saved history? This cannot be undone.')) return;
+  const confirmed = await dialogService.confirm({
+    title: 'Clear history',
+    message: 'Are you sure you want to permanently delete all saved history? This cannot be undone.',
+    confirmLabel: 'Clear history',
+    danger: true,
+  });
+  if (!confirmed) return;
   await sidebar.globalHistory.clearAll();
   if (sidebar.activeTab === 'history') await sidebar.refreshHistory();
   statusBar.flash('History cleared');

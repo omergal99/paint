@@ -544,12 +544,26 @@
 									<button type="button" data-size-option="1" role="menuitem">1px</button>
 									<button type="button" data-size-option="2" role="menuitem">2px</button>
 									<button type="button" data-size-option="3" role="menuitem">3px</button>
+									<button type="button" data-size-option="4" role="menuitem">4px</button>
 									<button type="button" data-size-option="5" role="menuitem">5px</button>
+									<button type="button" data-size-option="6" role="menuitem">6px</button>
 									<button type="button" data-size-option="8" role="menuitem">8px</button>
+									<button type="button" data-size-option="10" role="menuitem">10px</button>
 									<button type="button" data-size-option="12" role="menuitem">12px</button>
+									<button type="button" data-size-option="16" role="menuitem">16px</button>
 									<button type="button" data-size-option="20" role="menuitem">20px</button>
+									<button type="button" data-size-option="24" role="menuitem">24px</button>
+									<button type="button" data-size-option="32" role="menuitem">32px</button>
 									<button type="button" data-size-option="40" role="menuitem">40px</button>
+									<button type="button" data-size-option="48" role="menuitem">48px</button>
 									<button type="button" data-size-option="60" role="menuitem">60px</button>
+									<button type="button" data-size-option="80" role="menuitem">80px</button>
+									<button type="button" data-size-option="100" role="menuitem">100px</button>
+									<button type="button" data-size-option="128" role="menuitem">128px</button>
+									<button type="button" data-size-option="160" role="menuitem">160px</button>
+									<button type="button" data-size-option="200" role="menuitem">200px</button>
+									<button type="button" data-size-option="256" role="menuitem">256px</button>
+									<button type="button" data-size-option="300" role="menuitem">300px</button>
 								</div>
 							</div>
 						</div>
@@ -743,10 +757,11 @@
 				</div>
 				<div class="sidebar-content" id="sidebar-ai-content" style="display: none;">
 					<div class="ai-chat-messages" id="ai-chat-messages">
-						<div class="ai-msg bot">Hi! What do you want to change in the image?</div>
+						<div class="ai-msg bot">Use Quick actions or type a supported command. I will show exactly what I apply.</div>
 					</div>
+					<div class="ai-chat-actions" id="ai-chat-actions" aria-label="Quick actions"></div>
 					<div class="ai-chat-input-area">
-						<input type="text" id="ai-chat-input" placeholder="e.g. /dark, /flip, /save" />
+						<input type="text" id="ai-chat-input" placeholder="Try /dark, /grid, /zoom 100, /save" />
 						<button id="ai-chat-send">Send</button>
 					</div>
 				</div>
@@ -832,6 +847,7 @@
 				<button type="button" class="settings-tab" data-settings-tab="history">HISTORY</button>
 				<button type="button" class="settings-tab" data-settings-tab="ribbon">RIBBON</button>
 				<button type="button" class="settings-tab" data-settings-tab="about">ABOUT</button>
+				<button type="button" class="settings-tab" data-settings-tab="feedback">FEEDBACK</button>
 			</nav>
 			<form method="dialog" id="settings-form" class="settings-panel settings-body" data-settings-panel="general">
 				<h3>General</h3>
@@ -935,6 +951,15 @@
 					<button type="button" id="settings-about-close">Close</button>
 				</div>
 			</section>
+			<section class="settings-panel settings-body" data-settings-panel="feedback" hidden>
+				<h3>Feedback &amp; support</h3>
+				<p>Your feedback is important because it helps prioritize fixes, accessibility improvements, and features that make paint useful in real workflows.</p>
+				<p>If something feels broken or confusing, please open a GitHub issue with what you expected, what happened, and—when possible—steps to reproduce it.</p>
+				<div class="feedback-actions">
+					<a class="settings-link-button" href="https://github.com/omergal99/paint/issues/new" target="_blank" rel="noopener noreferrer">Open a new GitHub issue</a>
+					<a class="settings-link" href="https://github.com/omergal99/paint/issues" target="_blank" rel="noopener noreferrer">Browse existing issues</a>
+				</div>
+			</section>
 			<footer class="settings-footer"><button type="button" id="settings-footer-close">Close</button></footer>
 		</div>
 	</dialog>
@@ -947,6 +972,18 @@
 			<div class="dialog-actions">
 				<button type="button" id="new-file-cancel">Cancel</button>
 				<button type="button" id="new-file-ok" class="danger">New Image</button>
+			</div>
+		</form>
+	</dialog>
+
+	<dialog id="app-dialog" class="app-dialog" aria-labelledby="app-dialog-title">
+		<form method="dialog" id="app-dialog-form">
+			<h3 id="app-dialog-title">Please confirm</h3>
+			<p id="app-dialog-message"></p>
+			<input id="app-dialog-input" class="app-dialog-input" type="text" aria-label="Dialog value" hidden />
+			<div class="dialog-actions">
+				<button type="button" id="app-dialog-cancel">Cancel</button>
+				<button type="submit" id="app-dialog-confirm">Continue</button>
 			</div>
 		</form>
 	</dialog>
