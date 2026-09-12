@@ -433,8 +433,6 @@ body {
 .size-menu-items {
 	width: 238px;
 	min-width: 238px;
-	max-height: min(330px, calc(100vh - 24px));
-	overflow-y: auto;
 	grid-template-columns: repeat(5, minmax(0, 1fr));
 	gap: 2px;
 }
@@ -492,10 +490,14 @@ body {
 	grid-auto-rows: 16px;
 	gap: 1px;
 	width: max-content;
+	min-width: 0;
 }
 .palette-grid button {
 	width: 100%;
 	height: 16px;
+	min-width: 0;
+	display: block;
+	box-sizing: border-box;
 	border: 1px solid rgba(0, 0, 0, 0.25);
 	padding: 0;
 	cursor: pointer;
@@ -663,6 +665,7 @@ body {
 #app.ribbon-right .ribbon-group-colors .palette-grid {
 	width: 100%;
 	grid-template-columns: repeat(7, minmax(0, 1fr));
+	grid-auto-rows: 16px;
 }
 #app.ribbon-left .color-inspector,
 #app.ribbon-right .color-inspector {
@@ -677,6 +680,21 @@ body {
 #app.ribbon-left .ci-field,
 #app.ribbon-right .ci-field {
 	justify-content: center;
+}
+#app.ribbon-top .color-inspector,
+#app.ribbon-bottom .color-inspector,
+#app.ribbon-float .color-inspector {
+	min-width: 120px;
+}
+#app.ribbon-left .main-area,
+#app.ribbon-right .main-area,
+#app.ribbon-left .canvas-viewport,
+#app.ribbon-right .canvas-viewport {
+	width: 100%;
+	min-width: 0;
+}
+#app.ribbon-right .right-sidebar {
+	max-width: min(36vw, 320px);
 }
 #app.ribbon-bottom .ribbon {
 	order: 3;
@@ -699,12 +717,11 @@ body {
 	z-index: 60;
 	border: 1px solid var(--w10-border-strong);
 	box-shadow: 0 5px 18px rgba(0, 0, 0, .22);
-	resize: both;
+	resize: horizontal;
 	overflow-x: auto;
 	overflow-y: hidden;
 	min-width: 320px;
-	min-height: 76px;
-	max-height: min(70vh, 360px);
+	max-height: none;
 	scrollbar-width: thin;
 }
 #app.ribbon-float .ribbon::-webkit-scrollbar {
@@ -1067,6 +1084,35 @@ body {
 }
 
 /* AI Content */
+.ai-connection-panel {
+	padding: 8px 10px;
+	border-bottom: 1px solid var(--w10-border);
+	background: var(--w10-bg);
+}
+.ai-connection-panel h4 {
+	margin: 0 0 5px;
+	font-size: 12px;
+}
+.ai-connection-panel select {
+	width: 100%;
+	font-size: 12px;
+}
+.ai-connection-row {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	margin-top: 6px;
+}
+.ai-connection-row span {
+	flex: 1;
+	min-width: 0;
+	font-size: 10px;
+	color: var(--w10-text-dim);
+}
+.ai-connection-row button {
+	padding: 3px 6px;
+	font-size: 10px;
+}
 .ai-chat-messages {
 	flex: 1;
 	overflow-y: auto;
@@ -1684,8 +1730,6 @@ dialog h3 {
 	align-items: center;
 	gap: 8px;
 	width: 100%;
-	min-width: max-content;
-	padding: 7px 10px;
 	border: 0;
 	background: transparent;
 	color: var(--w10-text);

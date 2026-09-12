@@ -8,7 +8,6 @@ const DEFAULT_LAYOUT = Object.freeze({
   floatX: null,
   floatY: null,
   floatWidth: null,
-  floatHeight: null,
 });
 const VALID_POSITIONS = new Set(['top', 'left', 'right', 'bottom', 'float']);
 
@@ -39,7 +38,6 @@ export class PanelLayoutManager {
         floatX: Number.isFinite(value.floatX) ? value.floatX : null,
         floatY: Number.isFinite(value.floatY) ? value.floatY : null,
         floatWidth: Number.isFinite(value.floatWidth) && value.floatWidth >= 320 ? value.floatWidth : null,
-        floatHeight: Number.isFinite(value.floatHeight) && value.floatHeight >= 76 ? value.floatHeight : null,
       };
     } catch {
       return { ...DEFAULT_LAYOUT };
@@ -106,7 +104,6 @@ export class PanelLayoutManager {
       this.panel?.style.removeProperty('top');
       this.panel?.style.removeProperty('transform');
       this.panel?.style.removeProperty('width');
-      this.panel?.style.removeProperty('height');
       return;
     }
     if (this.state.floatX != null && this.state.floatY != null) {
@@ -119,7 +116,6 @@ export class PanelLayoutManager {
       this.panel.style.removeProperty('transform');
     }
     if (this.state.floatWidth != null) this.panel.style.width = `${this.state.floatWidth}px`;
-    if (this.state.floatHeight != null) this.panel.style.height = `${this.state.floatHeight}px`;
   }
 
   _bindFloatResize() {
@@ -130,9 +126,8 @@ export class PanelLayoutManager {
       frame = requestAnimationFrame(() => {
         frame = 0;
         const rect = this.panel.getBoundingClientRect();
-        if (rect.width < 320 || rect.height < 76) return;
+        if (rect.width < 320) return;
         this.state.floatWidth = Math.round(rect.width);
-        this.state.floatHeight = Math.round(rect.height);
         this._write();
         this.onChange?.({ ...this.state });
       });

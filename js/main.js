@@ -22,6 +22,7 @@ import { SegmentedChoice } from './ui/SegmentedChoice.js';
 import { createDialogService } from './ui/DialogService.js';
 import { createSettingsRegistry } from './settings/SettingsRegistry.js';
 import { createDeterministicCommandService } from './ai/DeterministicCommandService.js';
+import { createAiConnectionStore } from './ai/AiConnectionStore.js';
 import { hexToRgb } from './utils/color.js';
 import { rotateCanvas, rotateCanvasByAngle, flipCanvas, scaleCanvas, removeBackground } from './utils/transform.js';
 import { APP_VERSION } from './version.js';
@@ -123,7 +124,8 @@ if (primaryRgb) {
   colorInspector.show({ ...primaryRgb, hex: colorPalette.primary });
 }
 
-const sidebar = new Sidebar({ canvasManager, statusBar, palette: colorPalette, dialogService });
+const aiConnectionStore = createAiConnectionStore();
+const sidebar = new Sidebar({ canvasManager, statusBar, palette: colorPalette, dialogService, aiConnectionStore });
 
 // ---------- Selection state + overlay drawing ----------
 function drawSelectionOutline(region) {
@@ -895,6 +897,17 @@ function syncRibbonLayoutControls(state) {
   if (position) position.value = state.position;
 }
 
+function applyAiChatVisibility(visible) {
+  const enabled = Boolean(visible);
+  if (aiCheckbox) aiCheckbox.checked = enabled;
+  const aiButton = document.getElementById('btn-ai-chat');
+  if (aiButton) {
+    aiButton.hidden = !enabled;
+    aiButton.style.display = enabled ? '' : 'none';
+  }
+  if (!enabled && sidebar.activeTab === 'ai') sidebar.hide();
+}
+
 const ribbonLayoutManager = new PanelLayoutManager({
   app: document.getElementById('app'),
   panel: document.getElementById('ribbon'),
@@ -1140,12 +1153,7 @@ function applySavedSettings() {
       .filter((child) => !child.classList.contains('ribbon-group-title'))
       .forEach((child) => { child.hidden = false; child.style.display = child.classList.contains('rbtn-row') ? 'flex' : ''; });
   }
-  const aiButton = document.getElementById('btn-ai-chat');
-  if (aiButton) {
-    aiButton.hidden = aiCheckbox?.checked !== true;
-    aiButton.style.display = aiCheckbox?.checked === true ? '' : 'none';
-  }
-  if (aiCheckbox?.checked !== true && sidebar.activeTab === 'ai') sidebar.hide();
+  applyAiChatVisibility(aiCheckbox?.checked === true);
   const inspectorSeparator = document.querySelector('.color-inspector')?.nextElementSibling;
   if (inspectorSeparator?.classList.contains('separator')) {
     inspectorSeparator.style.display = ciCheckbox.checked ? '' : 'none';
@@ -1295,11 +1303,13 @@ function persistHistoryPrefs() {
   }
 }
 
-const onAutoSaveChange = () => {
-  if (settingAutoSave && autoSaveToggle) settingAutoSave.checked = autoSaveToggle.checked;
-  if (autoSaveToggle && settingAutoSave) autoSaveToggle.checked = settingAutoSave.checked;
+const onAutoSaveChange = (event) => {
+  const enabled = event?.target?.checked ?? settingAutoSave?.checked ?? autoSaveToggle?.checked ?? true;
+  if (settingAutoSave) settingAutoSave.checked = enabled;
+  if (autoSaveToggle) autoSaveToggle.checked = enabled;
   persistHistoryPrefs();
   applyHistoryState();
+  saveSettings();
 };
 autoSaveToggle?.addEventListener('change', onAutoSaveChange);
 settingAutoSave?.addEventListener('change', onAutoSaveChange);
@@ -1372,12 +1382,11 @@ ciCheckbox.addEventListener('change', (e) => {
   saveSettings();
 });
 aiCheckbox?.addEventListener('change', (e) => {
-  const aiButton = document.getElementById('btn-ai-chat');
-  if (aiButton) {
-    aiButton.hidden = !e.target.checked;
-    aiButton.style.display = e.target.checked ? '' : 'none';
-  }
-  if (!e.target.checked && sidebar.activeTab === 'ai') sidebar.hide();
+  applyAiChatVisibility(e.target.checked);
+  saveSettings();
+});
+window.addEventListener('paint:ai-chat-visibility-change', (event) => {
+  applyAiChatVisibility(event.detail === true);
   saveSettings();
 });
 bgSelect.addEventListener('change', (e) => {

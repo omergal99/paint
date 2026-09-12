@@ -756,6 +756,14 @@
 					<div class="history-grid" id="history-grid"></div>
 				</div>
 				<div class="sidebar-content" id="sidebar-ai-content" style="display: none;">
+					<section class="ai-connection-panel" aria-labelledby="ai-connection-title">
+						<h4 id="ai-connection-title">AI provider</h4>
+						<select id="ai-provider-select" aria-label="AI provider"></select>
+						<div class="ai-connection-row">
+							<span id="ai-connection-status" role="status"></span>
+							<button type="button" id="ai-connect-button">Connection details</button>
+						</div>
+					</section>
 					<div class="ai-chat-messages" id="ai-chat-messages">
 						<div class="ai-msg bot">Use Quick actions or type a supported command. I will show exactly what I apply.</div>
 					</div>

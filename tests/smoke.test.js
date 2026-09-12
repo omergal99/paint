@@ -187,7 +187,8 @@ test('Floating ribbon and side layouts remain scrollable and resizable', () => {
   const css = read('css/styles.css');
   assert.match(layout, /floatWidth/);
   assert.match(layout, /ResizeObserver/);
-  assert.match(css, /#app\.ribbon-float \.ribbon\s*\{[^}]*resize:\s*both/s);
+  assert.match(css, /#app\.ribbon-float \.ribbon\s*\{[^}]*resize:\s*horizontal/s);
+  assert.doesNotMatch(css, /#app\.ribbon-float \.ribbon\s*\{[^}]*min-height/s);
   assert.match(css, /#app\.ribbon-float \.ribbon\s*\{[^}]*overflow-x:\s*auto/s);
   assert.match(css, /\.main-area\s*\{[^}]*min-width:\s*0/s);
   assert.match(css, /\.right-sidebar\s*\{[^}]*max-width:\s*min\(42vw/s);
@@ -202,6 +203,21 @@ test('AI chat exposes safe deterministic actions through one command service', (
   assert.match(ai, /flip-horizontal/);
   assert.match(main, /createDeterministicCommandService/);
   assert.match(sidebar, /setAiCommandService/);
+});
+
+test('AI provider choice is visible but does not fake external authentication', () => {
+  assert.match(html, /id="ai-provider-select"/);
+  assert.match(html, /id="ai-connect-button"/);
+  assert.match(read('js/ai/AiConnectionStore.js'), /createAiConnectionStore/);
+  assert.match(sidebar, /Provider login is planned/);
+  assert.match(read('js/settings/SettingsRegistry.js'), /paint:ai-connection/);
+});
+
+test('Mirrored preference checkboxes use the event source and persist together', () => {
+  assert.match(main, /const onAutoSaveChange = \(event\)/);
+  assert.match(main, /const enabled = event\?\.target\?\.checked/);
+  assert.match(main, /paint:ai-chat-visibility-change/);
+  assert.match(main, /applyAiChatVisibility\(aiCheckbox\?\.checked === true\)/);
 });
 
 test('Versioning has one source of truth and a release sync command', () => {

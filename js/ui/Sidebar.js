@@ -1,8 +1,9 @@
 // js/ui/Sidebar.js
 import { GlobalHistory } from '../history/GlobalHistory.js';
+import { AI_PROVIDERS } from '../ai/AiConnectionStore.js';
 
 export class Sidebar {
-  constructor({ canvasManager, statusBar, palette, aiCommandService = null, dialogService }) {
+  constructor({ canvasManager, statusBar, palette, aiCommandService = null, dialogService, aiConnectionStore = null }) {
     this.canvasManager = canvasManager;
     this.statusBar = statusBar;
     this.palette = palette;
@@ -24,6 +25,10 @@ export class Sidebar {
     this.aiSend = document.getElementById('ai-chat-send');
     this.aiActions = document.getElementById('ai-chat-actions');
     this.aiCommandService = aiCommandService;
+    this.aiConnectionStore = aiConnectionStore;
+    this.aiProviderSelect = document.getElementById('ai-provider-select');
+    this.aiConnectButton = document.getElementById('ai-connect-button');
+    this.aiConnectionStatus = document.getElementById('ai-connection-status');
     
     this.groupSettingsContent = document.getElementById('sidebar-group-settings');
     this.groupSettingsContainer = document.getElementById('group-settings-container');
@@ -101,6 +106,7 @@ export class Sidebar {
     });
     
     this._bindResizer();
+    this._bindAiConnectionControls();
     this._renderAiActions();
     
     // Mark initialization as complete
@@ -123,6 +129,39 @@ export class Sidebar {
   setAiCommandService(service) {
     this.aiCommandService = service;
     this._renderAiActions();
+  }
+
+  _bindAiConnectionControls() {
+    if (!this.aiProviderSelect || !this.aiConnectionStore) return;
+    this.aiProviderSelect.innerHTML = '';
+    AI_PROVIDERS.forEach(({ id, label }) => {
+      const option = document.createElement('option');
+      option.value = id;
+      option.textContent = label;
+      this.aiProviderSelect.appendChild(option);
+    });
+    const render = () => {
+      const state = this.aiConnectionStore.getState();
+      this.aiProviderSelect.value = state.provider;
+      if (state.provider === 'local') {
+        this.aiConnectionStatus.textContent = 'Ready: local actions only';
+        this.aiConnectButton.textContent = 'Connected';
+        this.aiConnectButton.disabled = true;
+      } else {
+        this.aiConnectionStatus.textContent = 'Provider login is planned; no credentials are requested yet.';
+        this.aiConnectButton.textContent = 'Connection details';
+        this.aiConnectButton.disabled = false;
+      }
+    };
+    this.aiProviderSelect.addEventListener('change', (event) => {
+      this.aiConnectionStore.setProvider(event.target.value);
+      render();
+    });
+    this.aiConnectButton?.addEventListener('click', () => {
+      render();
+      this.aiConnectionStatus.textContent = 'This provider adapter is not connected yet. Your canvas was not uploaded.';
+    });
+    render();
   }
 
   _renderAiActions() {
@@ -353,6 +392,11 @@ export class Sidebar {
       cbBtn.addEventListener('change', (e) => {
         btn.hidden = !e.target.checked;
         btn.style.display = e.target.checked ? '' : 'none';
+        if (btn.id === 'btn-ai-chat') {
+          window.dispatchEvent(new CustomEvent('paint:ai-chat-visibility-change', {
+            detail: e.target.checked,
+          }));
+        }
         this._saveRibbonButtonState();
         window.dispatchEvent(new CustomEvent('paint:ribbon-change'));
       });

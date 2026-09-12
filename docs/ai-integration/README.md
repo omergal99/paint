@@ -1,8 +1,10 @@
 # AI integration plan
 
-The current AI Chat panel is intentionally a local mock and is closed for new
-users. Real provider connections should be added as an isolated feature rather
-than making the canvas or `Sidebar` know provider-specific details.
+The current AI Chat panel is intentionally a local deterministic feature and is
+closed for new users. It now exposes a provider selector for Local, OpenAI,
+Anthropic, and Google so the future connection state has a visible home. The
+external provider entries are intentionally marked as not connected: OAuth,
+API-key handling, provider requests, and image upload are not implemented yet.
 
 The first local slice is implemented in
 `js/ai/DeterministicCommandService.js`. It powers the AI panel's **Quick

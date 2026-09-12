@@ -21,6 +21,7 @@ export const DEFAULT_SETTING_STORAGE_KEYS = Object.freeze([
   'paint:sidebar-width',
   'paint:ribbon-button-state',
   'paint:pending-history-save',
+  'paint:ai-connection',
 ]);
 
 export function createSettingsRegistry({ storage = globalThis.localStorage } = {}) {
