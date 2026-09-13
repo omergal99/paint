@@ -1,0 +1,4 @@
+interface:
+  display_name: "Community Standards Audit"
+  short_description: "Audit open-source project readiness and security"
+  default_prompt: "Use $community-standards-audit to audit this repository's community, documentation, security, and contribution readiness."

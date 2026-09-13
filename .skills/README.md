@@ -9,3 +9,4 @@ relevant note before editing; read `AGENTS.md` first for the required baseline.
 - [`performance.md`](performance.md) — browser/canvas performance rules.
 - [`seo.md`](seo.md) — metadata, accessibility, and discoverability.
 - [`validation.md`](validation.md) — tests, smoke checks, and safe handoff.
+- [`community-standards-audit/SKILL.md`](community-standards-audit/SKILL.md) — open-source community, security, documentation, and contribution readiness.

@@ -1,6 +1,14 @@
-# omerpaint paint online paint like windows but online
+# Paint Online
 
-A browser-based paint app styled after classic **Windows 10 Paint** (Fluent ribbon, light theme, Segoe UI) — built with plain JavaScript (ES modules), no framework, no build step. Targets **Chrome/Edge** (uses the Async Clipboard API and the File System Access API).
+A browser-based image editor styled after classic **Windows Paint**. It uses
+plain JavaScript ES modules, no framework, and no build step. The app runs
+locally in the browser, keeps ordinary editing state on the device, and does
+not require an account or API key.
+
+Project status: actively maintained, with a focused vanilla-JavaScript
+architecture and browser-native storage/clipboard features. The current
+community and security readiness status is tracked in
+[`docs/COMMUNITY_STANDARDS.md`](./docs/COMMUNITY_STANDARDS.md).
 
 ![omerpaint screenshot](./css/assets/screenshot.png)
 
@@ -17,6 +25,18 @@ python3 -m http.server 8000
 ```
 
 Then open the printed `localhost` URL in Chrome or Edge.
+
+## Contributing and support
+
+- [Contributing guide](./CONTRIBUTING.md)
+- [Code of conduct](./CODE_OF_CONDUCT.md)
+- [Security policy](./SECURITY.md)
+- [Open an issue](https://github.com/omergal99/paint/issues/new)
+- [Community standards audit](./docs/COMMUNITY_STANDARDS.md)
+
+The project does not yet declare an open-source license. That is an explicit
+maintainer decision still required before presenting the repository as
+licensed open source.
 
 ## Architecture & How It's Built
 

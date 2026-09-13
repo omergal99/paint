@@ -299,3 +299,21 @@ test('Settings reset is centralized and lives with destructive About actions', (
   assert.match(read('js/ui/ColorPalette.js'), /resetToDefaults/);
   assert.match(read('js/history/GlobalHistory.js'), /resetSettings/);
 });
+
+test('Community standards files and contributor templates are discoverable', () => {
+  for (const file of [
+    'CONTRIBUTING.md',
+    'CODE_OF_CONDUCT.md',
+    'SECURITY.md',
+    '.github/pull_request_template.md',
+    '.github/ISSUE_TEMPLATE/bug_report.md',
+    '.github/ISSUE_TEMPLATE/feature_request.md',
+    'docs/COMMUNITY_STANDARDS.md',
+    '.skills/community-standards-audit/SKILL.md',
+  ]) {
+    assert.ok(fs.existsSync(path.join(root, file)), `Missing community file: ${file}`);
+  }
+  assert.match(read('README.md'), /CONTRIBUTING\.md/);
+  assert.match(read('README.md'), /SECURITY\.md/);
+  assert.match(read('docs/COMMUNITY_STANDARDS.md'), /Needs owner decision/);
+});

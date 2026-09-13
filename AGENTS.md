@@ -13,3 +13,7 @@ Required habits:
 - Avoid duplication and unnecessary work in hot paths; preserve canvas pixels.
 - Validate with `npm test`, syntax checks, and `git diff --check` before handoff.
 - Do not add provider secrets, arbitrary code execution, or native browser alert UI.
+
+For public-project readiness, security, or contributor-workflow changes, also
+read [`.skills/community-standards-audit/SKILL.md`](.skills/community-standards-audit/SKILL.md)
+and its relevant references.
