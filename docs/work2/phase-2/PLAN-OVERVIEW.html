@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Paint Online — Phase 2 Plan</title>
+  <style>
+    :root { color-scheme: light; --ink:#0f172a; --muted:#475569; --line:#cbd5e1; --blue:#2563eb; --blue-soft:#dbeafe; --green:#047857; --amber:#b45309; --bg:#f8fafc; }
+    * { box-sizing:border-box; }
+    body { margin:0; padding:32px; max-width:1280px; margin-inline:auto; background:var(--bg); color:var(--ink); font:15px/1.55 system-ui,sans-serif; }
+    h1,h2 { line-height:1.2; }
+    h1 { color:#1d4ed8; }
+    section { margin:24px 0; padding:20px; background:white; border:1px solid var(--line); border-radius:12px; box-shadow:0 2px 8px #0f172a0a; }
+    table { width:100%; border-collapse:collapse; }
+    th,td { padding:9px 10px; border-bottom:1px solid #e2e8f0; text-align:left; vertical-align:top; }
+    th { background:#eff6ff; }
+    .p0 { color:#b91c1c; font-weight:700; }
+    .p1 { color:var(--amber); font-weight:700; }
+    .p2 { color:var(--green); font-weight:700; }
+    .mermaid { overflow:auto; }
+    code { background:#eef2ff; padding:1px 4px; border-radius:4px; }
+  </style>
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+    mermaid.initialize({ startOnLoad:true, theme:'base', themeVariables:{ primaryColor:'#dbeafe', primaryTextColor:'#0f172a', lineColor:'#64748b' } });
+  </script>
+</head>
+<body>
+  <h1>Paint Online — Work 2 / Phase 2</h1>
+  <p><strong>Status:</strong> planning only. No application implementation changes are part of this document.</p>
+
+  <section>
+    <h2>Dependency flow</h2>
+    <div class="mermaid">
+      flowchart LR
+        A[01 Baseline] --> B[02 Contracts and SSOT]
+        B --> C[03 Ribbon, settings, history]
+        B --> D[04 Resize and transparency]
+        C --> E[07 Events and performance]
+        D --> F[05 Colors]
+        D --> G[08 Storage and memory]
+        F --> H[06 Editable text]
+        E --> I[09 Modularization]
+        G --> I
+        I --> J[10 Tests and types]
+        J --> K[11 PWA, a11y, Lighthouse]
+        K --> L[12 Optional Python adapter]
+        J --> M[13 Tabs, split, recovery]
+        style A fill:#fee2e2,stroke:#b91c1c
+        style B fill:#dbeafe,stroke:#2563eb
+        style G fill:#fef3c7,stroke:#b45309
+        style M fill:#dcfce7,stroke:#047857
+    </div>
+  </section>
+
+  <section>
+    <h2>Architecture direction</h2>
+    <div class="mermaid">
+      flowchart TB
+        Boot[app.js boot] --> Root[compose/root]
+        Root --> Bus[EventBus]
+        Root --> Settings[SettingsStore]
+        Root --> Document[PaintDocument]
+        Document --> Pixels[CanvasManager / raster pixels]
+        Document --> Objects[Editable objects: text first]
+        Document --> History[HistoryStore: byte-bounded]
+        Root --> Ribbon[Ribbon + feature controllers]
+        Root --> Panels[History / Settings / AI panels]
+        Objects --> Render[Compositor / hit testing]
+        History --> IDB[(IndexedDB)]
+        Settings --> Local[(localStorage prefs)]
+        Document --> Session[(future SessionService)]
+    </div>
+  </section>
+
+  <section>
+    <h2>Ranked quality target</h2>
+    <table>
+      <thead><tr><th>Area</th><th>Current planning score</th><th>Target</th><th>Proof</th></tr></thead>
+      <tbody>
+        <tr><td>Runtime draw path</td><td>7/10</td><td>8.5/10</td><td>Pointer benchmark, no duplicate coordinate conversion, visible-tab telemetry.</td></tr>
+        <tr><td>Memory / OOM safety</td><td>5.5/10</td><td>8/10</td><td>Byte cap, canvas/import limits, quota recovery tests.</td></tr>
+        <tr><td>Structure / modularity</td><td>5.5/10</td><td>8/10</td><td>Reduced god-file responsibilities and public module contracts.</td></tr>
+        <tr><td>Tests</td><td>3/10</td><td>8/10</td><td>Green CI, behavioral tests, coverage report, no source-regex-only gates for new behavior.</td></tr>
+        <tr><td>Accessibility</td><td>4/10</td><td>8/10</td><td>Keyboard journeys, focus handling, Lighthouse/axe evidence, manual checks.</td></tr>
+        <tr><td>Launch readiness</td><td>6/10</td><td>9/10</td><td>Repeatable Lighthouse budgets, installable PWA assets, SW resilience.</td></tr>
+      </tbody>
+    </table>
+  </section>
+</body>
+</html>
