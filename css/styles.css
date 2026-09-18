@@ -117,8 +117,8 @@ body {
 
 .separator {
 	width: 1px;
-	background: var(--w10-border-strong);
-	margin: 4px 4px 8px;
+	background: var(--w10-border);
+	margin: 0px 2px 4px 2px;
 	flex-shrink: 0;
 }
 
@@ -233,7 +233,7 @@ body {
 	display: flex;
 	flex-direction: column;
 	align-items: stretch;
-	gap: 1px;
+	gap: 2px;
 }
 .quick-tools-row {
 	display: flex;
@@ -266,6 +266,7 @@ body {
 	display: flex;
 	align-items: stretch;
 	width: 100%;
+	gap: 2px;
 }
 .ribbon-group-tools .tools-menu-current {
 	/* min-width: 28px; */
@@ -276,7 +277,8 @@ body {
 	flex: 1 1 auto;
 	min-height: 16px;
 	justify-content: center;
-	border-radius: 0 2px 2px 0;
+	border-radius: 4px;
+	border: 1px solid var(--w10-border-strong);
 }
 .ribbon-group-tools .tools-menu-current[hidden] + .tools-menu-arrow {
 	border-radius: 2px;
@@ -518,7 +520,7 @@ body {
 	position: relative;
 	width: 34px;
 	height: 34px;
-	margin-right: 8px;
+	margin-right: 4px;
 }
 .swatch {
 	position: absolute;
@@ -2030,6 +2032,7 @@ dialog h3 {
 	border-radius: 0 2px 2px 0;
 	width: 100%;
 	height: 20px;
+	width: 34px;
 	border: 1px solid var(--w10-border-strong);
 	background: var(--w10-ribbon-bg);
 	.menu-arrow {
@@ -2041,6 +2044,7 @@ dialog h3 {
 .shapes-menu-current.active-shape-status {
 	background: rgba(163, 73, 164, 0.1);
 	border-color: #c58ac6;
+	width: 34px;
 }
 .shapes-menu-current.active-shape-status .icon {
 	fill: #8d3e91;
@@ -2050,6 +2054,7 @@ dialog h3 {
 	background: transparent;
 	border-color: transparent;
 	color: var(--w10-text-dim);
+	width: 34px;
 }
 .shapes-menu-current.inactive-shape-status .icon {
 	fill: var(--w10-text-dim);
