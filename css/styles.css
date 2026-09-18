@@ -1690,9 +1690,9 @@ dialog h3 {
 	display: grid;
 	grid-template-columns: 112px minmax(260px, 1fr);
 	width: 560px;
-	height: min(560px, 88vh);
+	height: min(440px, 88vh);
 	max-width: min(560px, 80vw);
-	max-height: min(560px, 88vh);
+	max-height: min(440px, 88vh);
 	position: relative;
 }
 .settings-shell {
