@@ -382,13 +382,13 @@ test('Round-2 fixes: V glyph, session persistence, view-aware actions, storage m
   assert.match(history, /SESSION_BACKUP_KEY/);
   assert.match(history, /sessionStorage/);
   assert.match(history, /clearSession/);
-  // 2.1 view-aware action labels + per-view clear/save/export
-  assert.match(html, /Save to[\s\S]*?History/);
-  assert.match(html, /Clear History/);
+    // 2.1 action label mirrors the active tab + view-aware button wording
+  assert.match(html, /id=\"history-actions-label\"/);
+  assert.match(html, /Save Current/);
+  assert.match(html, /Export All/);
+  assert.match(html, /Clear All/);
   assert.match(sidebar, /_syncHistoryActionLabels/);
-  assert.match(sidebar, /Clear Session/);
-  assert.match(sidebar, /Save to Session/);
-  assert.match(sidebar, /Export Session/);
+  assert.match(sidebar, /history-actions-label/);
   assert.match(main, /exportSessionEntry/);
   assert.match(main, /sidebar\.historyView === 'session'/);
   // 3. taller settings dialog + compact ribbon rows
@@ -425,4 +425,17 @@ test('select after draw: a lifted shape is a layer, and unload bakes it', () => 
   // Moving a lifted layer must not lift + erase again (that erased artwork under
   // the shape). SelectTool only lifts when nothing is floating yet.
   assert.match(read('js/tools/SelectTool.js'), /if \(!ctx\.canvasManager\.floatingCanvas\) \{[\s\S]*?fillRegion\(sel, ctx\.canvasManager\.backgroundColor\)/);
+  // The click that places the shape is mid-gesture: the tool restore must be
+  // deferred to that gesture's pointerup (ToolManager), never applied during
+  // onDown — an immediate switch leaves SelectTool a stale drag start + 0x0
+  // marquee, so the next mouse move ghost-draws a phantom selection.
+  const toolManager = read('js/tools/ToolManager.js');
+  assert.match(main, /if \(toolManager\._dragging\) toolContext\._pendingToolRestore = target/);
+  assert.match(main, /else toolManager\.setActive\(target\)/);
+  assert.match(toolManager, /const pending = this\.toolContext\?\._pendingToolRestore/);
+  assert.match(toolManager, /if \(wasDragging\) this\._handle\('onUp', e\)/);
+  // Both tools drop stale gesture state when activated, so a mid-gesture
+  // switch can never leak a phantom drag into the new tool.
+  assert.match(read('js/tools/SelectTool.js'), /onActivate\(ctx\) \{[\s\S]*?this\._start = null;/);
+  assert.match(shapeTool, /onActivate\(\) \{[\s\S]*?this\._start = null;/);
 });

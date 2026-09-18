@@ -10,6 +10,11 @@ export class ShapeTool {
     this._start = null;
   }
 
+  onActivate() {
+    // Never resume a drag from before this tool (re)gained focus.
+    this._start = null;
+  }
+
   onDown(pt, ctx) {
     this._start = pt;
     this._button = pt.button;
@@ -170,6 +175,12 @@ export class ShapeTool {
         g.textAlign = 'center';
         g.textBaseline = 'middle';
         g.fillText(ctx.getEmoji?.() || '😀', x + w / 2, y + h / 2);
+        break;
+      }
+      case 'emoji-picker': {
+        // Picker affordance drawn by the picker button itself; kept here only
+        // so the shape-tool draw path never surprises the app with a hidden
+        // render-to-body under any circumstance.
         break;
       }
       default:

@@ -26,8 +26,17 @@ export class ToolManager {
     });
     surface.addEventListener('pointermove', (e) => this._handle('onMove', e));
     window.addEventListener('pointerup', (e) => {
-      if (this._dragging) this._handle('onUp', e);
+      const wasDragging = this._dragging;
+      if (wasDragging) this._handle('onUp', e);
       this._dragging = false;
+      // A tool restore deferred by a mid-gesture commit (select-after-draw
+      // click-outside) is applied only after the owning tool finished its own
+      // onUp, so gesture state is always cleaned up before the switch.
+      const pending = this.toolContext?._pendingToolRestore;
+      if (pending) {
+        this.toolContext._pendingToolRestore = null;
+        this.setActive(pending);
+      }
       try {
         surface.releasePointerCapture?.(e.pointerId);
       } catch (err) {}

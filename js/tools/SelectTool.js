@@ -13,7 +13,12 @@ export class SelectTool {
   }
 
   onActivate(ctx) {
-    // Keep selection if it's already floating (e.g. on paste), otherwise do nothing.
+    // Keep selection if it's already floating (e.g. on paste). Also drop any
+    // gesture state a mid-gesture tool switch may have left behind — otherwise
+    // the next plain mouse move would ghost-draw a marquee from a stale
+    // pointerdown point.
+    this._start = null;
+    this._moving = false;
   }
 
   onDeactivate(ctx) {

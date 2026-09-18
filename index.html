@@ -773,12 +773,16 @@
 							<option value="50">50 images</option>
 							<option value="100">100 images</option>
 						</select>
+						<!-- Label sits above the action buttons and mirrors the active tab
+					     (History / Session), so "Save Current / Export All / Clear All"
+				 		always read as actions on the currently shown store. -->
+						<div class="history-actions-label" id="history-actions-label" aria-live="polite">
+							Actions: History
+						</div>
 						<div class="history-actions">
-							<button type="button" id="history-save-current-btn" title="Save current paint to history">Save to
-								History</button>
-							<button type="button" id="history-export-all-btn" title="Export the whole history to your computer">Export
-								History</button>
-							<button type="button" id="history-clear-btn" title="Clear all saved history">Clear History</button>
+							<button type="button" id="history-save-current-btn" title="Save current paint to history">Save Current</button>
+							<button type="button" id="history-export-all-btn" title="Export the whole history to your computer">Export All</button>
+							<button type="button" id="history-clear-btn" title="Clear all saved history">Clear All</button>
 						</div>
 					</div>
 					<div class="history-view-tabs" id="history-view-tabs" role="tablist" aria-label="History views">
