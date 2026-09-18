@@ -1,11 +1,14 @@
 // js/history/GlobalHistory.js
-// Saves sessions across page loads using IndexedDB
+// Saves sessions across page loads using IndexedDB.
+// v2 adds compressed `thumb` + `docId` fields; v1 entries keep working.
 
 const DB_NAME = 'omerpaint_global_history';
+const DB_VERSION = 2;
 const STORE_NAME = 'sessions';
 const SETTINGS_STORE = 'settings';
 export const DEFAULT_HISTORY_LIMIT = 50;
 export const DEFAULT_HISTORY_ENABLED = true;
+const THUMB_MAX = 160;
 
 export class GlobalHistory {
   constructor() {
@@ -16,8 +19,8 @@ export class GlobalHistory {
 
   async init() {
     return new Promise((resolve, reject) => {
-      const request = indexedDB.open(DB_NAME, 1);
-      
+      const request = indexedDB.open(DB_NAME, DB_VERSION);
+
       request.onupgradeneeded = (e) => {
         const db = e.target.result;
         if (!db.objectStoreNames.contains(STORE_NAME)) {
@@ -82,9 +85,14 @@ export class GlobalHistory {
     return this.saveSettings(DEFAULT_HISTORY_LIMIT, DEFAULT_HISTORY_ENABLED);
   }
 
-  async addSession(dataUrl, width, height) {
+  async addSession(dataUrl, width, height, { docId = null } = {}) {
     if (!this.historyEnabled || !this.db) return;
-    
+
+    const thumb = await makeThumbnail(dataUrl, width, height).catch(() => null);
+    // OOM guard: if storage is >90% full, drop oldest first so this write
+    // has room instead of throwing QuotaExceededError at the user.
+    await this._ensureQuotaRoom().catch(() => {});
+
     return new Promise((resolve, reject) => {
       const tx = this.db.transaction(STORE_NAME, 'readwrite');
       const store = tx.objectStore(STORE_NAME);
@@ -92,9 +100,11 @@ export class GlobalHistory {
         timestamp: Date.now(),
         dataUrl,
         width,
-        height
+        height,
+        docId,
       };
-      
+      if (thumb) item.thumb = thumb;
+
       const request = store.add(item);
       request.onsuccess = () => {
         this._enforceLimit().then(resolve);
@@ -140,9 +150,9 @@ export class GlobalHistory {
     if (!this.db) return;
     const sessions = await this.getSessions();
     if (sessions.length <= this.maxHistory) return;
-    
+
     const toDelete = sessions.slice(this.maxHistory);
-    
+
     return new Promise((resolve) => {
       const tx = this.db.transaction(STORE_NAME, 'readwrite');
       const store = tx.objectStore(STORE_NAME);
@@ -152,4 +162,57 @@ export class GlobalHistory {
       tx.oncomplete = () => resolve();
     });
   }
+
+  // Drop oldest entries when the origin quota is nearly full (OOM safety).
+  async _ensureQuotaRoom() {
+    try {
+      const estimate = await navigator.storage?.estimate?.();
+      if (!estimate?.quota) return;
+      if ((estimate.usage || 0) / estimate.quota < 0.9) return;
+      const sessions = await this.getSessions();
+      const victims = sessions.slice(-Math.max(1, Math.ceil(sessions.length * 0.2)));
+      if (!victims.length) return;
+      await new Promise((resolve) => {
+        const tx = this.db.transaction(STORE_NAME, 'readwrite');
+        const store = tx.objectStore(STORE_NAME);
+        victims.forEach((s) => store.delete(s.id));
+        tx.oncomplete = () => resolve();
+      });
+    } catch {}
+  }
+}
+
+// Downscaled preview (max 160px, webp q0.6 → jpeg fallback) used by the
+// history grid. Full image is kept in `dataUrl` and decoded only on load,
+// so this runs once per save, never on the stroke hot path.
+export async function makeThumbnail(dataUrl, width, height) {
+  const bitmap = await createImageBitmapFromDataUrl(dataUrl);
+  const scale = Math.min(1, THUMB_MAX / Math.max(1, Math.max(bitmap.width, bitmap.height)));
+  const w = Math.max(1, Math.round(bitmap.width * scale));
+  const h = Math.max(1, Math.round(bitmap.height * scale));
+  const canvas = document.createElement('canvas');
+  canvas.width = w;
+  canvas.height = h;
+  canvas.getContext('2d').drawImage(bitmap, 0, 0, w, h);
+  bitmap.close?.();
+  for (const type of ['image/webp', 'image/jpeg']) {
+    try {
+      const url = canvas.toDataURL(type, 0.6);
+      if (url && url.length < (dataUrl?.length || Infinity)) return url;
+    } catch {}
+  }
+  return null;
+}
+
+function createImageBitmapFromDataUrl(dataUrl) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      if (typeof createImageBitmap === 'function') {
+        createImageBitmap(img).then(resolve, () => resolve(img));
+      } else resolve(img);
+    };
+    img.onerror = () => reject(new Error('Thumbnail decode failed'));
+    img.src = dataUrl;
+  });
 }

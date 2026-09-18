@@ -24,9 +24,55 @@ export class ShapeTool {
   onUp(pt, ctx) {
     if (!this._start) return;
     ctx.canvasManager.clearOverlay();
-    ctx.historyManager.snapshot();
-    this._draw(ctx.canvasManager.ctx, ctx, this._start, pt, this._button);
+    const start = this._start;
+    const button = this._button;
     this._start = null;
+
+    // Optional "select after draw": lift the shape as a floating *layer* and
+    // leave the main canvas untouched. The pixels behind it keep their original
+    // values (no background patch, no erased artwork underneath) and the shape
+    // is only composited when the selection is committed — a tool switch or a
+    // click outside, via ctx.commitFloatingSelection(). After that one relocation
+    // the shape is placed and the shape tool stays active so you can draw another
+    // shape immediately; using Select afterward is up to the user.
+    if (ctx.getSelectAfterDraw?.() === true && this._liftAsSelection(ctx, start, pt, button)) {
+      ctx.setActiveTool?.('select');
+      // Defer re-activation of the shape tool to release, not to the lift.
+      // If the user clicks away from the lifted shape, we restore the shape tool
+      // right after the shape is placed (release-to-place semantics).
+      ctx._deferShapeToolReactivate = true;
+      return;
+    }
+
+    ctx.historyManager.snapshot();
+    this._draw(ctx.canvasManager.ctx, ctx, start, pt, button);
+  }
+
+  /**
+   * Render the shape alone on a transparent layer and select its exact ink
+   * bounds. Returns false (so the caller falls back to baking normally) when
+   * nothing was painted.
+   */
+  _liftAsSelection(ctx, start, end, button) {
+    const cm = ctx.canvasManager;
+    const x = Math.min(start.x, end.x);
+    const y = Math.min(start.y, end.y);
+    const w = Math.abs(end.x - start.x);
+    const h = Math.abs(end.y - start.y);
+    if (w < 1 && h < 1) return false; // a click, not a drag
+    const lifted = cm.renderShapeLayer(
+      { x: Math.round(x), y: Math.round(y), w: Math.round(w), h: Math.round(h) },
+      (g) => this._draw(g, ctx, start, end, button),
+      cm.lineWidth * 2, // stroke can overhang by lineWidth/2 on each side
+    );
+    if (!lifted) return false;
+    // The canvas itself has not changed yet, so the dedup in snapshot() would
+    // treat this as a no-op. Force the entry: undo has to be able to drop the
+    // floating shape rather than skipping back past an earlier stroke.
+    ctx.historyManager.snapshot?.({ force: true });
+    cm.floatingCanvas = lifted.layer;
+    ctx.setSelection({ x: lifted.x, y: lifted.y, w: lifted.w, h: lifted.h });
+    return true;
   }
 
   _draw(g, ctx, start, end, button) {
@@ -116,6 +162,16 @@ export class ShapeTool {
       case 'v':
         drawNormalizedV(g, x, y, w, h);
         break;
+      case 'emoji': {
+        // System emoji: OS color-emoji font, sized to the drag box.
+        // The shared size control scales line width, not the glyph.
+        const size = Math.max(8, Math.min(w, h));
+        g.font = `${size}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`;
+        g.textAlign = 'center';
+        g.textBaseline = 'middle';
+        g.fillText(ctx.getEmoji?.() || '😀', x + w / 2, y + h / 2);
+        break;
+      }
       default:
         g.moveTo(start.x, start.y);
         g.lineTo(end.x, end.y);
@@ -146,11 +202,36 @@ function drawNormalizedX(g, x, y, w, h) {
   g.lineTo(box.left, box.top + box.size);
 }
 
+// Gallery-tile geometry for the V mark, authored on the standard 20-grid so
+// the icon and the canvas glyph can never disagree.
+// Keep in sync with the tile <path> in index.html: M 3 10.5 L 8 15.5 L 17 4.5
+// The bbox is centred in the 20x20 viewBox: x 3..17 and y 4.5..15.5 both
+// centre on 10, so the tile sits dead-centre (the old 24-grid numbers did not,
+// which is why the ribbon preview looked off-centre).
+const V_MARK = {
+  points: [[3, 10.5], [8, 15.5], [17, 4.5]],
+  minX: 3,
+  maxX: 17,
+  minY: 4.5,
+  maxY: 15.5,
+};
+
 function drawNormalizedV(g, x, y, w, h) {
+  // Check-mark "V". Every point is scaled with a SINGLE factor, so both arms
+  // keep a constant angle whatever the drag shape is — scaling the two axes
+  // independently (the old per-axis width/height fractions) is what used to
+  // make the arms skew while drawing. It lives in the same square box as the X,
+  // so the start point never drifts (identical contract to X and rectangle).
   const box = squareBounds(x, y, w, h);
-  g.moveTo(box.left, box.top + box.size * 0.45);
-  g.lineTo(box.left + box.size * 0.34, box.top + box.size * 0.78);
-  g.lineTo(box.left + box.size, box.top);
+  const spanX = V_MARK.maxX - V_MARK.minX;
+  const spanY = V_MARK.maxY - V_MARK.minY;
+  const k = box.size / Math.max(spanX, spanY);
+  const offX = box.left + (box.size - spanX * k) / 2;
+  const offY = box.top + (box.size - spanY * k) / 2;
+  const pts = V_MARK.points.map(([px, py]) => [offX + (px - V_MARK.minX) * k, offY + (py - V_MARK.minY) * k]);
+  g.moveTo(pts[0][0], pts[0][1]);
+  g.lineTo(pts[1][0], pts[1][1]);
+  g.lineTo(pts[2][0], pts[2][1]);
 }
 
 function roundRectPath(g, x, y, w, h, r) {

@@ -1,0 +1,45 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>Paint — Verification Report (Rounds 2–4)</title>
+<style>body{font-family:"Segoe UI",Arial,sans-serif;max-width:1000px;margin:24px auto;padding:0 16px;color:#1a1a1a;line-height:1.5}h1{font-size:24px}h2{font-size:18px;margin-top:28px;border-bottom:2px solid #0078d4;padding-bottom:4px}h3{font-size:14px;margin:18px 0 6px}table{border-collapse:collapse;width:100%;font-size:13px;margin:8px 0}th,td{border:1px solid #ccc;padding:6px 8px;text-align:left;vertical-align:top}th{background:#f0f6fc}.ok{display:inline-block;background:#e6f6e8;border:1px solid #6fbf7f;color:#14532d;border-radius:4px;padding:2px 10px;font-weight:700}.bad{display:inline-block;background:#fdecec;border:1px solid #e08a8a;color:#7f1d1d;border-radius:4px;padding:2px 8px;font-weight:700}code{background:#f4f4f4;padding:1px 5px;border-radius:3px;font-size:12px}li{margin-bottom:6px}.check{list-style:none;padding:0}.check li:before{content:"☐ "}blockquote{border-left:3px solid #0078d4;margin:10px 0;padding:2px 12px;color:#444;background:#fafcff}</style>
+</head><body>
+<h1>Paint — Verification Report, Rounds 2–4 <span class="ok">BUILD GOOD ✅ 41/41</span></h1>
+<p><b>Date:</b> 2026-09-18 · <b>Scope:</b> P0 quick wins + P1 history/storage (#1–#6, #8) + select-after-draw layer · <b>#7 tabs/split:</b> planned, not started (agreed last).</p>
+
+<h2>1. Build status</h2>
+<table><tr><th>Check</th><th>Result</th><th>Evidence</th></tr>
+<tr><td><code>npm test</code></td><td><b>41 pass / 0 fail, EXIT:0</b></td><td><code>/tmp/final4.log</code> → <code># pass 41</code>, <code>1..41</code></td></tr>
+<tr><td><code>node --check</code> × 5 touched files</td><td><b>all clean</b></td><td>CanvasManager, ShapeTool, main, shape-layer.test, smoke.test</td></tr>
+<tr><td>Service worker</td><td><b>cache bumped</b></td><td><code>paint-shell-v1-6-3</code></td></tr>
+<tr><td>Round-3 fixes re-confirmed</td><td><b>yes</b></td><td>V tile centred, dialog <code>min(560px,88vh)</code>, 2-decimal storage</td></tr></table>
+
+<h2>2. Feedback loop — request by request (rounds 2–3)</h2>
+<table><tr><th>#</th><th>Request</th><th>Verdict</th></tr>
+<tr><td>1</td><td>V moves; Shapes-More toggle, default OFF</td><td>✅ V anchored to drag box; checkbox persisted, OFF</td></tr>
+<tr><td>2</td><td>First paste on clean New → 0,0</td><td>✅ <code>isCleanDocument()</code>; stale pointer ignored when clean</td></tr>
+<tr><td>3</td><td>Font slider 1–120, reusable</td><td>✅ <code>SliderControl.js</code>, synced both ways</td></tr>
+<tr><td>4</td><td>Release Notes (1.5.0 + Unreleased), deep-link</td><td>✅ tab + panel + <code>releaseNotes.js</code></td></tr>
+<tr><td>5</td><td><code>inactive-status</code> hover clickable</td><td>✅ hover/focus + pointer cursor + title</td></tr>
+<tr><td>6</td><td>Dedup; History/Session tabs; 2-col; colors</td><td>✅ signature dedup; sessionStorage Session; responsive grid</td></tr>
+<tr><td>8</td><td>Quota + compressed thumbs</td><td>✅ Used/Free/bar; IDB v2 thumbs; 90% quota guard</td></tr>
+<tr><td>+</td><td>Ctrl+Z / Shift+Z / Ctrl+Y · OOM safety</td><td>✅ global handler (skips typing); quota guards</td></tr></table>
+<h2>3. Round 3 — bugs I caught reviewing my own work</h2>
+<table><tr><th>#</th><th>Bug</th><th>Root cause</th><th>Fix</th></tr>
+<tr><td>A</td><td><b>V icon off-centre + arms skewing while drawing</b></td><td>Your SVG was authored on a <b>24×24</b> grid but the gallery uses <code>viewBox="0 0 20 20"</code> → bbox centre <code>(12,11.5)</code>≠<code>(10,10)</code>, and the round cap at x=19 was clipped. On canvas the two axes were scaled independently (<code>w*0.12…0.88</code> / <code>h*0.18…0.74</code>)</td><td>Tile re-authored centred on the 20-grid: <code>M 3 10.5 L 8 15.5 L 17 4.5</code> (stroke 1.6). Canvas uses a <code>V_MARK</code> table + <b>one</b> scale factor <code>k = box.size / max(spanX, spanY)</code></td></tr>
+<tr><td>B</td><td><b>Settings dialog still 440px</b> <span class="bad">regression</span></td><td>Round-2 edit landed on a different rule; <code>.settings-shell</code> kept <code>min(440px, 88vh)</code> while the test asserted 560px</td><td><code>height</code>/<code>max-height</code> → <code>min(560px, 88vh)</code></td></tr>
+<tr><td>C</td><td><b>"0 MB" + 0% bar with data stored</b></td><td>Usage was <b>rounded to whole MB</b> → 0.4 MB rendered as <code>0 MB</code> → the <code>&gt; 0</code> guard was false → bar 0%, breaking your rule "0% only when truly empty"</td><td>Usage keeps 2 decimals (<code>0.40 MB</code>); quota stays whole-MB and capped at 10 000. Bar shows ≥1% for any real usage</td></tr></table>
+
+<h3>3.1 Proof — validated shipped code, not summaries</h3>
+<ul>
+<li><b>V glyph:</b> drove the real <code>ShapeTool._draw()</code> with a mock 2D context over 5 drags (square, wide, tall, reverse, tiny) → <code>arm1=45.00° arm2=-50.71°</code> <b>identical for all 5</b>; glyph stays inside the drag box; valley below &amp; between both tips; tile bbox centre = <code>(10,10)</code>. <b>ALL PASS</b></li>
+<li><b>Storage math:</b> extracted and executed the real <code>updateAboutStats()</code> with injected stubs: empty → <code>0.00 MB</code> / <code>10,000 MB free of 10,000 MB</code> / <code>0%</code>; 0.4 MB → <code>0.40 MB</code> / <code>1%</code>; your report (2.87 MB, quota 10242.87 MB) → <code>2.87 MB</code> / <code>9,997 MB free of 10,000 MB</code> / <code>1%</code>; quota missing or <code>estimate()</code> throwing → <code>Unavailable</code>. <b>ALL PASS</b></li>
+<li>Regression guards added for the centred tile path, <code>V_MARK</code>, the uniform-scale <code>k</code>, absence of the old per-axis maths, and 2-decimal formatting.</li></ul>
+<h2>4. Round 4 — select-after-draw: shape-only layer + exact ink bounds ✅</h2>
+<blockquote>"it not catch it all, like we have some sides it draw but not in the selection"</blockquote>
+<blockquote>"the selection also select the whole background behind it! — it should select only the shape drawn without changing or affecting the area … it will make layer and then make it selection and only when selection leave it will paste it to the main layer paint."</blockquote>
+<p>That is now exactly how it works.</p>
+<table><tr><th>#</th><th>Symptom</th><th>Root cause</th><th>Fix</th></tr>
+<tr><td>D</td><td>Painted pixels fell <b>outside</b> their own selection; edges clipped on commit</td><td>Selection was set to the <b>raw drag box</b>, but the ink is not inside it: emoji glyphs are wider than their font size (<code>min(w,h)</code>), and caps/joins + stroke width overhang</td><td><code>CanvasManager.renderShapeLayer(bounds, drawFn, pad)</code> draws the shape on a <b>transparent</b> scratch canvas, measures the real alpha bbox (<code>_alphaBounds</code>), inflating by 25% / ≥8px / <code>lineWidth*2</code>. If ink <b>touches a scratch edge that is not a canvas edge</b> it was cut off → scratch doubles and re-measures (≤4 passes; always converges once clamped to the canvas)</td></tr>
+<tr><td>E</td><td>Selection dragged a <b>background rectangle</b>; artwork underneath was affected</td><td>The lift copied the rectangular region out of the main canvas (background + whatever was underneath) and painted a background patch into the hole</td><td>The shape is drawn <b>in isolation on transparency</b> — the main canvas is never read, erased or painted during the lift. The layer is cropped to the ink box, so it is the shape alone; committing composites with real alpha, leaving the artwork behind untouched</td></tr></table>
+
+<h3>4.1 Lifecycle — "only when selection leaves does it paste to the main layer"</h3>
+<p>The canvas keeps its pre-lift pixels while the layer floats. Commit happens on tool switch (<code>SelectTool.onDeactivate</code>), click outside (viewport <code>pointerdown</code>, <code>SelectTool.onDown</code>), save, resize, <code>beforeunload</code>, <code>pagehide</code> → <code>commitFloatingSelection()</code> → <code>drawImage(layer, x, y)</code>. Escape/undo discard the layer instead. Moving a lifted shape never lifts-and-erases again (the <code>!floatingCanvas</code> guard), so no hole is cut under your shape.</p>
+</body></html>

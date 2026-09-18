@@ -66,8 +66,10 @@ export class SelectTool {
   }
 
   onUp(pt, ctx) {
+    if (!this._start) return;
     if (this._moving) {
       this._moving = false;
+      ctx.canvasManager.persistToStorage();
     } else {
       // If we were drawing a marquee, check if it has 0 area.
       const sel = ctx.getSelection();

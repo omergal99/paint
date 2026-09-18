@@ -1,0 +1,42 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>Paint — Verification & Completion Report</title>
+<style>body{font-family:"Segoe UI",Arial,sans-serif;max-width:980px;margin:24px auto;padding:0 16px;color:#1a1a1a;line-height:1.5}h1{font-size:24px}h2{font-size:18px;margin-top:28px;border-bottom:2px solid #0078d4;padding-bottom:4px}table{border-collapse:collapse;width:100%;font-size:13px}th,td{border:1px solid #ccc;padding:6px 8px;text-align:left;vertical-align:top}th{background:#f0f6fc}.ok{display:inline-block;background:#e6f6e8;border:1px solid #6fbf7f;color:#14532d;border-radius:4px;padding:2px 10px;font-weight:700}.badge{display:inline-block;border-radius:4px;padding:1px 8px;font-size:12px;font-weight:600}.done{background:#e6f6e8;color:#14532d}.plan{background:#e4f1fd;color:#0c3d75}code{background:#f4f4f4;padding:1px 5px;border-radius:3px;font-size:12px}li{margin-bottom:6px}.check{list-style:none;padding:0}.check li:before{content:"☐ "}</style>
+</head><body>
+<h1>Paint — Verification &amp; Completion Report <span class="ok">BUILD GOOD ✅ 33/33</span></h1>
+<p><b>Date:</b> 2026-09-15 · <b>Scope:</b> P0 + P1 (#1–#6, #8) · #7 tabs/split planned, not started.</p>
+<h2>1. Build status</h2>
+<table><tr><th>Check</th><th>Result</th><th>Evidence</th></tr>
+<tr><td><code>node --test tests/smoke.test.js</code></td><td><span class="badge done">33 pass / 0 fail</span></td><td><code>/tmp/verify2.log</code> EXIT:0</td></tr>
+<tr><td><code>node --check</code> × 9 touched files</td><td><span class="badge done">SYNTAX-OK</span></td><td>SliderControl, releaseNotes, GlobalHistory, main, ShapeTool, Toolbar, Sidebar, CanvasManager, ClipboardManager</td></tr>
+<tr><td>Service worker offline</td><td><span class="badge done">updated</span></td><td>2 new modules precached, cache v1-6-2</td></tr></table>
+<h2>2. What was done</h2>
+<table><tr><th>#</th><th>Request</th><th>Implementation</th></tr>
+<tr><td>1</td><td>V moves; want create→select→move toggle, default OFF</td><td>V re-anchored to drag box; <code>Select after draw</code> checkbox in Shapes More; ON lifts shape as floating selection</td></tr>
+<tr><td>2</td><td>First paste on clean New → 0,0</td><td><code>isCleanDocument()</code> pixel signature; clean ignores stale pointer</td></tr>
+<tr><td>3</td><td>Font slider 1–120, reusable</td><td>New <code>SliderControl.js</code> component; mounted above boxes, synced both ways</td></tr>
+<tr><td>4</td><td>Release Notes tab (1.5.0 + Unreleased)</td><td>New tab + panel + <code>releaseNotes.js</code>; deep-link works</td></tr>
+<tr><td>5</td><td>tool-status hover clickable</td><td>Hover/focus highlight + pointer + tooltip</td></tr>
+<tr><td>6</td><td>No-change skip; History/Session tabs; 2-col; colors</td><td>Undo + save dedup; Session = in-memory steps; responsive grid; green/blue/red buttons</td></tr>
+<tr><td>8</td><td>Quota + compressed thumbs</td><td>About Used/Free/bar; IDB v2 thumbs webp ≤160px; 90% quota guard (OOM-safe)</td></tr>
+<tr><td>+</td><td>Undo/redo shortcuts</td><td>Ctrl/Cmd+Z, Ctrl+Y, Ctrl+Shift+Z (skipped while typing)</td></tr></table>
+<h2>3. Self-review loop — bugs found &amp; fixed</h2>
+<ol>
+<li><b>SelectTool guard inversion</b> (<code>if (this._start)</code> → <code>if (!this._start)</code>) — would have frozen selection moves.</li>
+<li><b>Toolbar <code>label</code> undefined</b> — reordered definition before use.</li>
+<li><b>index.html malformed nesting</b> — About rows + tab indent broke <code>&lt;dl&gt;</code>; repaired.</li>
+<li><b>SW missing new modules</b> — added precache + cache bump so offline keeps working.</li>
+<li><b>Smoke test nesting bug</b> — P0 test was nested inside another test; moved top-level → clean 33/33.</li>
+<li><b>Loose assertion</b> — multiline regex failed; tightened + added SW/cursor assertions.</li></ol>
+<h2>4. Manual QA checklist (~5 min)</h2>
+<ul class="check">
+<li>V drag anchors at pointer; toggle ON makes shape movable after draw</li>
+<li>Blank New → paste at 0,0; after drawing → paste follows cursor</li>
+<li>Slider 1–120 syncs with number/boxes/committed text</li>
+<li>Release Notes shows Unreleased + 1.5.0; deep-link opens it</li>
+<li>Dim tool-status button highlights on hover</li>
+<li>History/Session tabs switch; Session restores mid-stroke; no dup saves; green/blue/red buttons</li>
+<li>About shows Used + Free + bar</li>
+<li>Ctrl+Z / Ctrl+Shift+Z / Ctrl+Y work on canvas</li></ul>
+<h2>5. Next: #7 tabs/split <span class="badge plan">planned</span></h2>
+<p><code>js/session/</code> service, TabBar + SplitView, per-doc keys, crash recovery, <code>.skills/</code> docs. Ready when you say go.</p>
+<p>Full details: <code>docs/VERIFY-REPORT.md</code> · Plans: <code>docs/PLAN-OVERVIEW.md</code>, <code>docs/PLAN-DETAILS.md</code></p>
+</body></html>

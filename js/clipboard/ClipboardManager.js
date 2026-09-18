@@ -40,9 +40,10 @@ export class ClipboardManager {
 
     this.historyManager.snapshot();
 
-    // Anchor insertion at the cursor if one exists; otherwise use the top-left
-    // corner so the image is immediately visible and draggable.
-    const pt = this.statusBar?.currentPointer;
+    // A clean New canvas (no paint, no image yet) always pastes at 0,0 so a
+    // cold-start paste is visible and predictable. Otherwise anchor at cursor.
+    const isClean = this.canvasManager.isCleanDocument?.() === true;
+    const pt = isClean ? null : this.statusBar?.currentPointer;
     const x = pt ? Math.floor(pt.x) : 0;
     const y = pt ? Math.floor(pt.y) : 0;
     const w = bitmap.width;

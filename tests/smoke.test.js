@@ -317,3 +317,112 @@ test('Community standards files and contributor templates are discoverable', () 
   assert.match(read('README.md'), /SECURITY\.md/);
   assert.match(read('docs/COMMUNITY_STANDARDS.md'), /Needs owner decision/);
 });
+
+test('P0 quick wins: hover affordance, slider, release notes, fresh paste, undo keys', () => {
+  const css = read('css/styles.css');
+  const toolbar = read('js/ui/Toolbar.js');
+  // #5 hover affordance for inactive tool-status button
+  assert.match(css, /\.tool-status-btn\.inactive-status:hover/);
+  assert.match(css, /cursor:\s*pointer/);
+  // #3 reusable slider component mounted above size boxes
+  assert.ok(fs.existsSync(path.join(root, 'js/ui/SliderControl.js')), 'SliderControl.js missing');
+  assert.match(html, /id="size-slider-row"/);
+  assert.match(toolbar, /createSliderControl/);
+  assert.match(toolbar, /Font size slider/);
+  // SW precaches new modules so offline stays intact
+  assert.match(read('sw.js'), /SliderControl\.js/);
+  assert.match(read('sw.js'), /releaseNotes\.js/);
+  assert.match(read('sw.js'), /EmojiStore\.js/);
+  // #4 release notes tab + deep link support
+  assert.match(html, /data-settings-tab="release"/);
+  assert.match(html, /data-settings-panel="release"/);
+  assert.match(html, /id="release-notes-list"/);
+  assert.ok(fs.existsSync(path.join(root, 'js/releaseNotes.js')), 'releaseNotes.js missing');
+  assert.match(main, /renderReleaseNotes/);
+  // #2 clean-doc first paste at 0,0
+  assert.match(read('js/clipboard/ClipboardManager.js'), /isCleanDocument/);
+  assert.match(read('js/canvas/CanvasManager.js'), /isCleanDocument\(\)/);
+  // #1 select-after-draw toggle (default OFF) + V anchored to drag box
+  assert.match(html, /id="shape-select-after-draw"/);
+  assert.match(toolbar, /paint:shape-select-after-draw/);
+  assert.match(read('js/tools/ShapeTool.js'), /getSelectAfterDraw/);
+  // #6/#8 history tabs + thumbs + quota + undo shortcuts
+  assert.match(html, /data-history-view="session"/);
+  assert.match(css, /\.history-view-tab/);
+  assert.match(css, /#history-save-current-btn/);
+  assert.match(read('js/history/GlobalHistory.js'), /makeThumbnail/);
+  assert.match(html, /id="about-storage-free"/);
+  assert.match(main, /Ctrl\/Cmd\+Shift\+Z/);
+});
+
+test('Round-2 fixes: V glyph, session persistence, view-aware actions, storage math', () => {
+  const css = read('css/styles.css');
+  const history = read('js/history/HistoryManager.js');
+  const sidebar = read('js/ui/Sidebar.js');
+  // 1. V icon + glyph: user check-mark path, re-authored centred on the
+  //    20-grid, and drawn with ONE scale factor so the arms keep their angle
+  const shapeToolSrc = read('js/tools/ShapeTool.js');
+  assert.match(html, /data-shape="v"[\s\S]*?viewBox="0 0 20 20"[\s\S]*?d="M 3 10\.5 L 8 15\.5 L 17 4\.5"/);
+  assert.match(shapeToolSrc, /Check-mark "V"/);
+  assert.match(shapeToolSrc, /const V_MARK = \{/);
+  // glyph bbox centre == viewBox centre (10,10) so the tile is dead-centre
+  assert.match(shapeToolSrc, /minX: 3,[\s\S]*?maxX: 17,[\s\S]*?minY: 4\.5,[\s\S]*?maxY: 15\.5/);
+  // uniform scale => constant arm angles regardless of drag aspect
+  assert.match(shapeToolSrc, /const k = box\.size \/ Math\.max\(spanX, spanY\)/);
+  assert.ok(!/w \* 0\.12/.test(shapeToolSrc), 'V glyph must not stretch x/y independently');
+  // Emoji shape: gallery tile + picker + canvas render + shift-ratio resize
+  assert.match(html, /data-shape="emoji"/);
+  assert.match(html, /id="shape-emoji-grid"/);
+  assert.match(read('js/tools/EmojiStore.js'), /EMOJI_CATALOG/);
+  assert.match(read('js/tools/ShapeTool.js'), /case 'emoji'/);
+  assert.match(read('js/ui/Toolbar.js'), /getSelectedEmoji/);
+  assert.match(main, /hold Shift to keep the aspect ratio/);
+  assert.match(read('css/styles.css'), /\.shape-emoji-grid/);
+  // 2. Session survives refresh, dies with browser tab (sessionStorage)
+  assert.match(history, /SESSION_BACKUP_KEY/);
+  assert.match(history, /sessionStorage/);
+  assert.match(history, /clearSession/);
+  // 2.1 view-aware action labels + per-view clear/save/export
+  assert.match(html, /Save to[\s\S]*?History/);
+  assert.match(html, /Clear History/);
+  assert.match(sidebar, /_syncHistoryActionLabels/);
+  assert.match(sidebar, /Clear Session/);
+  assert.match(sidebar, /Save to Session/);
+  assert.match(sidebar, /Export Session/);
+  assert.match(main, /exportSessionEntry/);
+  assert.match(main, /sidebar\.historyView === 'session'/);
+  // 3. taller settings dialog + compact ribbon rows
+  assert.match(css, /height:\s*min\(560px,\s*88vh\)/);
+  assert.match(css, /\.ribbon-setting-row:hover/);
+  // 3.2 stable storage math: 2-decimal usage (0.00 only when truly empty),
+  //     whole-MB capped quota, min-1% bar
+  assert.match(main, /displayQuotaMB/);
+  assert.match(main, /minimumFractionDigits: 2/);
+  assert.match(main, /Math\.max\(1, Math\.ceil/);
+});
+
+test('select after draw: a lifted shape is a layer, and unload bakes it', () => {
+  const main = read('js/main.js');
+  const shapeTool = read('js/tools/ShapeTool.js');
+  const canvas = read('js/canvas/CanvasManager.js');
+  // The shape is measured on a transparent scratch canvas so the layer carries
+  // the ink only — never a copy of the background or of the artwork underneath.
+  assert.match(canvas, /renderShapeLayer\(bounds, drawFn, pad = 0\)/);
+  assert.match(canvas, /_alphaBounds\(/);
+  assert.match(canvas, /const scratch = document\.createElement\('canvas'\)/);
+  // Ink bounds (not the drag box) set the selection, with a re-measure when the
+  // measured ink touches the scratch edge and was therefore cut off.
+  assert.match(canvas, /if \(!out\.clipped \|\| out\.area > MAX_MEASURE_PIXELS\) return out\.result/);
+  assert.match(canvas, /const MAX_MEASURE_PIXELS = 16 \* 1024 \* 1024/);
+  assert.match(shapeTool, /cm\.floatingCanvas = lifted\.layer/);
+  assert.match(shapeTool, /ctx\.setSelection\(\{ x: lifted\.x, y: lifted\.y, w: lifted\.w, h: lifted\.h \}\)/);
+  // The canvas is untouched until the selection is left, so force the undo entry.
+  assert.match(shapeTool, /snapshot\?\.\(\{ force: true \}\)/);
+  // Closing or refreshing counts as leaving the selection: bake before saving,
+  // otherwise the just-drawn shape would be silently discarded.
+  assert.match(main, /beforeunload'[\s\S]{0,400}?commitFloatingSelection\(\)/);
+  assert.match(main, /pagehide'[\s\S]{0,200}?commitFloatingSelection\(\)/);
+  // Moving a lifted layer must not lift + erase again (that erased artwork under
+  // the shape). SelectTool only lifts when nothing is floating yet.
+  assert.match(read('js/tools/SelectTool.js'), /if \(!ctx\.canvasManager\.floatingCanvas\) \{[\s\S]*?fillRegion\(sel, ctx\.canvasManager\.backgroundColor\)/);
+});

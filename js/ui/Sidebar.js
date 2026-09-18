@@ -3,8 +3,9 @@ import { GlobalHistory } from '../history/GlobalHistory.js';
 import { AI_PROVIDERS } from '../ai/AiConnectionStore.js';
 
 export class Sidebar {
-  constructor({ canvasManager, statusBar, palette, aiCommandService = null, dialogService, aiConnectionStore = null }) {
+  constructor({ canvasManager, statusBar, palette, aiCommandService = null, dialogService, aiConnectionStore = null, historyManager = null }) {
     this.canvasManager = canvasManager;
+    this.historyManager = historyManager;
     this.statusBar = statusBar;
     this.palette = palette;
     this.dialogService = dialogService;
@@ -76,8 +77,37 @@ export class Sidebar {
       }
     });
     
-    // Clear all button with strong confirmation
+    // History sub-tabs: History (IndexedDB) + Session (sessionStorage-backed)
+    this.historyView = 'history';
+    this._historyTabsEl = document.getElementById('history-view-tabs');
+    this._historyTabsEl?.querySelectorAll('[data-history-view]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        this.historyView = btn.dataset.historyView === 'session' ? 'session' : 'history';
+        this._historyTabsEl.querySelectorAll('[data-history-view]').forEach((b) =>
+          b.classList.toggle('active', b === btn));
+        this._syncHistoryActionLabels();
+        this.refreshHistory();
+      });
+    });
+    this._historyTabsEl?.querySelector('[data-history-view="history"]')?.classList.add('active');
+    this._syncHistoryActionLabels();
+
+    // Clear button clears whichever view is active (labels follow the tab).
     this.clearBtn.addEventListener('click', async () => {
+      if (this.historyView === 'session') {
+        const confirmed = await this.dialogService.confirm({
+          title: 'Clear session',
+          message: 'Delete all session steps for this browser tab? Saved history is kept.',
+          confirmLabel: 'Clear session',
+          danger: true,
+        });
+        if (confirmed) {
+          this.historyManager?.clearSession();
+          if (this.activeTab === 'history') await this._loadHistoryWithRetry();
+          this.statusBar?.flash?.('Session cleared');
+        }
+        return;
+      }
       const confirmed = await this.dialogService.confirm({
         title: 'Clear history',
         message: 'Are you sure you want to permanently delete all saved history? This cannot be undone.',
@@ -94,9 +124,16 @@ export class Sidebar {
       }
     });
 
-    // Save current paint to history button
+    // Save current paint to the ACTIVE view (history or session snapshot).
     if (this.saveToHistoryBtn) {
       this.saveToHistoryBtn.addEventListener('click', async () => {
+        if (this.historyView === 'session') {
+          this.historyManager?.snapshot?.();
+          this.historyManager?._persistSessionBackup?.();
+          this.refreshHistory();
+          this.statusBar?.flash?.('Saved to session');
+          return;
+        }
         await this.saveCurrentToHistory();
         this.statusBar?.flash?.('Saved to history');
       });
@@ -212,7 +249,35 @@ export class Sidebar {
     });
   }
 
+  // Action buttons follow the active view: Clear/Save/Export say exactly
+  // which store they touch (History = IndexedDB, Session = browser tab).
+  _syncHistoryActionLabels() {
+    const session = this.historyView === 'session';
+    if (this.saveToHistoryBtn) {
+      this.saveToHistoryBtn.textContent = session ? 'Save to Session' : 'Save to History';
+      this.saveToHistoryBtn.title = session
+        ? 'Snapshot the current paint into this tab session'
+        : 'Save current paint to history';
+    }
+    const exportBtn = document.getElementById('history-export-all-btn');
+    if (exportBtn) {
+      exportBtn.textContent = session ? 'Export Session' : 'Export History';
+      exportBtn.title = session
+        ? 'Export the session steps to your computer'
+        : 'Export the whole history to your computer';
+    }
+    if (this.clearBtn) {
+      this.clearBtn.textContent = session ? 'Clear Session' : 'Clear History';
+      this.clearBtn.title = session ? 'Clear session steps' : 'Clear all saved history';
+    }
+  }
+
   async _loadHistoryWithRetry() {
+    // Session view has no IDB count to converge on — render once directly.
+    if (this.historyView === 'session') {
+      await this.refreshHistory();
+      return;
+    }
     const maxRetries = 5;
 
     for (let attempt = 0; attempt < maxRetries; attempt++) {
@@ -288,6 +353,11 @@ export class Sidebar {
 
   async saveDataUrlToHistory(dataUrl, width, height) {
     if (!this.globalHistory.historyEnabled) return;
+    // Skip no-change saves: identical pixels to the newest entry are dropped.
+    try {
+      const latest = (await this.globalHistory.getSessions())[0];
+      if (latest && latest.dataUrl === dataUrl) return;
+    } catch {}
     await this.globalHistory.addSession(dataUrl, width, height);
     if (this.activeTab === 'history') this.refreshHistory();
   }
@@ -605,6 +675,7 @@ export class Sidebar {
 
   async refreshHistory() {
     this.historyGrid.innerHTML = '';
+    if (this.historyView === 'session') return this._renderSessionView();
     const sessions = await this.globalHistory.getSessions();
     if (sessions.length === 0) {
       const message = this.globalHistory.historyEnabled ? 'No history found' : 'History saving is off';
@@ -617,7 +688,8 @@ export class Sidebar {
       item.className = 'history-item';
       
       const img = document.createElement('img');
-      img.src = session.dataUrl;
+      img.loading = 'lazy';
+      img.src = session.thumb || session.dataUrl;
       img.alt = `Import history image ${index + 1} of ${sessions.length}`;
       img.title = 'Click to import this image';
       img.addEventListener('click', async () => {
@@ -671,6 +743,59 @@ export class Sidebar {
       this.historyGrid.appendChild(item);
     });
     return sessions.length;
+  }
+
+  // Session view: undo snapshots + current canvas, so the user can jump back
+  // to an exact moment without pressing Undo N times. Backed by
+  // sessionStorage thumbnails: survives refresh, dies with the browser tab.
+  async _renderSessionView() {
+    const entries = this.historyManager?.getSessionEntries?.() || [];
+    if (entries.length === 0) {
+      this.historyGrid.innerHTML = '<div class="history-empty">No session steps yet — draw something first</div>';
+      return 0;
+    }
+    entries.forEach((entry, index) => {
+      const item = document.createElement('div');
+      item.className = 'history-item';
+      const img = document.createElement('img');
+      img.loading = 'lazy';
+      img.src = entry.thumb || entry.dataUrl;
+      img.alt = `Session step ${index + 1} of ${entries.length}`;
+      img.title = 'Click to restore this session step';
+      img.addEventListener('click', async () => {
+        const confirmed = await this.dialogService.confirm({
+          title: 'Restore session step',
+          message: 'Restore this step? Unsaved current work will be lost.',
+          confirmLabel: 'Restore step',
+          danger: true,
+        });
+        if (confirmed) {
+          await this.historyManager._restore(entry);
+          this.statusBar.flash('Restored session step');
+          this.refreshHistory();
+        }
+      });
+      item.appendChild(img);
+      const info = document.createElement('div');
+      info.className = 'history-info';
+      info.textContent = `${entry.label || `Step ${index + 1}`} · ${entry.width}x${entry.height}`;
+      item.appendChild(info);
+      const saveButton = document.createElement('button');
+      saveButton.type = 'button';
+      saveButton.className = 'history-save';
+      saveButton.innerHTML = '<span aria-hidden="true">⬇</span>';
+      saveButton.setAttribute('aria-label', `Save session step ${index + 1} of ${entries.length} to computer`);
+      saveButton.title = 'Save this step to your computer';
+      saveButton.addEventListener('click', (event) => {
+        event.stopPropagation();
+        window.dispatchEvent(new CustomEvent('paint:history-export-item', {
+          detail: { session: entry, index },
+        }));
+      });
+      item.append(saveButton);
+      this.historyGrid.appendChild(item);
+    });
+    return entries.length;
   }
 
   async handleAiSubmit(commandInput = null) {

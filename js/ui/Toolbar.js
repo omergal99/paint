@@ -1,5 +1,8 @@
 // js/ui/Toolbar.js
+import { createSliderControl } from './SliderControl.js';
+import { getSelectedEmoji, setSelectedEmoji, renderEmojiGrid } from '../tools/EmojiStore.js';
 const SHAPE_STORAGE_KEY = 'paint:selected-shape';
+const SHAPE_AFTER_DRAW_KEY = 'paint:shape-select-after-draw';
 const STYLE_STORAGE_KEY = 'paint:tool-styles';
 const STYLE_HISTORY_KEY = 'paint:style-history';
 
@@ -21,8 +24,10 @@ export class Toolbar {
 
     this._bindTools();
     this._bindShapes();
+    this._bindEmojiPicker();
     this._bindFillModes();
     this._bindLineSize(setLineWidth, setFontSize);
+    this._bindSelectAfterDraw();
     this._bindFileButtons();
     this._bindUndoRedo();
 
@@ -87,11 +92,17 @@ export class Toolbar {
       statusButton.dataset.tool = name;
       statusButton.hidden = false;
       statusButton.style.display = '';
-      statusButton.title = source
+      const label = source
         ? `Current tool: ${source.title.replace(/ \(.+\)$/, '')}`
         : name === 'shape' ? `Current tool: Shape (${this._shapeKind})` : 'Current tool';
+      statusButton.title = label;
       statusButton.classList.toggle('active-status', Boolean(source) && this._showCurrentTool);
       statusButton.classList.toggle('inactive-status', !source || !this._showCurrentTool);
+      if (!source || !this._showCurrentTool) {
+        statusButton.title = 'Show tools (click to open the tools menu)';
+      }
+      // Tooltip is the affordance when there is nothing to preview; the
+      // inactive-status:hover CSS handles the visual part.
       const iconSource = source || shapeSource;
       if (statusIcon && iconSource) {
         const icon = iconSource.querySelector('svg');
@@ -168,6 +179,36 @@ export class Toolbar {
     });
   }
 
+  getSelectAfterDraw() { return this._selectAfterDraw === true; }
+
+  _bindSelectAfterDraw() {
+    let saved = false;
+    try { saved = localStorage.getItem(SHAPE_AFTER_DRAW_KEY) === 'true'; } catch {}
+    this._selectAfterDraw = saved; // default OFF
+    const box = this.root.querySelector('#shape-select-after-draw');
+    if (box) {
+      box.checked = saved;
+      box.addEventListener('change', () => {
+        this._selectAfterDraw = box.checked === true;
+        try { localStorage.setItem(SHAPE_AFTER_DRAW_KEY, String(this._selectAfterDraw)); } catch {}
+      });
+    }
+  }
+
+  _bindEmojiPicker() {
+    const grid = this.root.querySelector('#shape-emoji-grid');
+    if (!grid) return;
+    renderEmojiGrid({
+      container: grid,
+      onPick: (emoji) => {
+        setSelectedEmoji(emoji);
+        this.selectShape('emoji');
+      },
+    });
+  }
+
+  getSelectedEmoji() { return getSelectedEmoji(); }
+
   _setShapeMenuIcon(menuIcon, tileSvg) {
     menuIcon.innerHTML = tileSvg.innerHTML;
     menuIcon.setAttribute('viewBox', tileSvg.getAttribute('viewBox') || '0 0 20 20');
@@ -209,6 +250,27 @@ export class Toolbar {
     customInput.addEventListener('input', () => applySize(customInput.value));
     this._setLineWidth = setLineWidth;
     this._setFontSize = setFontSize;
+    this._sizeSlider = this._mountSizeSlider(applySize);
+  }
+
+  // Reusable slider (1-120) mounted above the preset boxes. It reuses the
+  // same applySize() path so number input, boxes and slider always agree.
+  _mountSizeSlider(applySize) {
+    const host = this.root.querySelector('#size-slider-row');
+    if (!host) return null;
+    const slider = createSliderControl({
+      min: 1, max: 120, value: Number(this.root.querySelector('#custom-line-size')?.value) || 3,
+      label: 'Font / line size', unit: 'px', ariaLabel: 'Font size slider, 1 to 120 pixels',
+    });
+    slider.onInput = (val) => applySize(val);
+    host.appendChild(slider.element);
+    const sync = () => {
+      const cur = Number(this.root.querySelector('#custom-line-size')?.value);
+      if (Number.isFinite(cur) && cur >= 1 && cur <= 120
+        && slider.getValue() !== cur) slider.setValue(cur);
+    };
+    host.closest('.size-menu-items')?.addEventListener('pointerenter', sync);
+    return slider;
   }
 
   _styleKeyFor(tool) { return tool === 'shape' ? `shape:${this._shapeKind}` : tool; }
@@ -285,6 +347,7 @@ export class Toolbar {
     this.root.querySelectorAll('[data-size-option]').forEach((option) => {
       option.classList.toggle('active', Number(option.dataset.sizeOption) === size);
     });
+    this._sizeSlider?.setValue(Math.max(1, Math.min(120, size)));
     if (style.color) this.handlers.setPrimaryColor?.(style.color);
   }
   getPreviousTool() { return this._previousTool || 'select'; }

@@ -1,0 +1,47 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
+<title>Paint — Plan Overview</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({startOnLoad:true});</script>
+<style>body{font-family:Segoe UI,Arial,sans-serif;max-width:960px;margin:24px auto;padding:0 16px;color:#1a1a1a}table{border-collapse:collapse;width:100%;font-size:13px}th,td{border:1px solid #ccc;padding:6px 8px;text-align:left}.pre{background:#f4f4f4;padding:12px;border-radius:6px}.mermaid{background:#fafafa;border:1px solid #ddd;border-radius:6px;padding:8px}a{color:#0078d4}</style>
+</head><body>
+<h1>Paint — Plan Overview (concise)</h1>
+<p>Details: <a href="PLAN-DETAILS.md">PLAN-DETAILS.md</a>. No code changed.</p>
+<h2>Scope map</h2>
+<table><tr><th>#</th><th>Title</th><th>Effort</th><th>Risk</th></tr>
+<tr><td>1</td><td>V anchor + create-then-move toggle (Shapes More)</td><td>S-M</td><td>Low</td></tr>
+<tr><td>2</td><td>First paste on fresh New → 0,0</td><td>S</td><td>Low</td></tr>
+<tr><td>3</td><td>Font slider 1–120 above boxes</td><td>S</td><td>Low</td></tr>
+<tr><td>4</td><td>Settings Release Notes tab</td><td>S</td><td>Low</td></tr>
+<tr><td>5</td><td>tool-status-btn hover affordance</td><td>XS</td><td>None</td></tr>
+<tr><td>6</td><td>History: dedup + History/Session tabs + 2-col + colors</td><td>M</td><td>Med</td></tr>
+<tr><td>7</td><td>Tabs ≤10 + split + session service [BIG]</td><td>XL</td><td>High</td></tr>
+<tr><td>8</td><td>Quota display + compressed thumbs</td><td>M</td><td>Med</td></tr>
+</table>
+<h2>Order</h2>
+<div class="mermaid">flowchart LR
+  A[1 Shape V + move-toggle] --> G[7 Tabs/Split]
+  B[2 First-paste 0,0] --> G
+  C[3 Font slider] --> G
+  D[4 Release notes] -.-> G
+  E[5 Hover] -.-> G
+  H[8 Quota + thumbs] --> F[6 History upgrade]
+  F --> G[7 Tabs/Split Session Service]
+  style G fill:#e8f0ff,stroke:#447</div>
+<h2>Architecture</h2>
+<div class="mermaid">flowchart TB
+  subgraph Now [Now single doc]
+    CM[CanvasManager] --- HM[HistoryManager 20 undo]
+    CM --- GH[GlobalHistory IDB]
+    CM --- CB[ClipboardManager]
+  end
+  subgraph After7 [After #7 multi-doc]
+    SVC[SessionService] --> DOC[PaintDocument x N]
+    DOC --> SPLIT[SplitView L/R + TabBar]
+    SVC --> REC[Recovery + TTL trash]
+  end
+  Now -. migrate .-> After7</div>
+<h2>Decisions for review</h2>
+<ol><li>#1 default OFF? (planned OFF)</li><li>#6 Session = volatile undo stacks? (planned yes)</li><li>#7 10 tabs total, min 1? (planned yes)</li><li>#8 webp thumb 96-160px? (planned yes)</li></ol>
+<h2>Phases</h2>
+<p><b>P0 quick wins:</b> 5,3,2,4,1 · <b>P1:</b> 8→6 · <b>P2:</b> 7 (tabs→keys→split→undo-close). Skills written at P2 kickoff.</p>
+</body></html>

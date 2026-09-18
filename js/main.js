@@ -23,6 +23,7 @@ import { createDialogService } from './ui/DialogService.js';
 import { createSettingsRegistry } from './settings/SettingsRegistry.js';
 import { createDeterministicCommandService } from './ai/DeterministicCommandService.js';
 import { createAiConnectionStore } from './ai/AiConnectionStore.js';
+import { getReleaseNotes } from './releaseNotes.js';
 import { hexToRgb } from './utils/color.js';
 import { rotateCanvas, rotateCanvasByAngle, flipCanvas, scaleCanvas, removeBackground } from './utils/transform.js';
 import { APP_VERSION } from './version.js';
@@ -125,7 +126,7 @@ if (primaryRgb) {
 }
 
 const aiConnectionStore = createAiConnectionStore();
-const sidebar = new Sidebar({ canvasManager, statusBar, palette: colorPalette, dialogService, aiConnectionStore });
+const sidebar = new Sidebar({ canvasManager, historyManager, statusBar, palette: colorPalette, dialogService, aiConnectionStore });
 
 // ---------- Selection state + overlay drawing ----------
 function drawSelectionOutline(region) {
@@ -223,6 +224,21 @@ function bindSelectionHandles() {
         if (direction.includes('w')) { w = Math.max(1, Math.round(fixed.x - point.x)); x = fixed.x - w; }
         if (direction.includes('s')) h = Math.max(1, Math.round(point.y - original.y));
         if (direction.includes('n')) { h = Math.max(1, Math.round(fixed.y - point.y)); y = fixed.y - h; }
+        // Word-style: hold Shift to keep the aspect ratio while resizing.
+        if (moveEvent.shiftKey && w > 0 && h > 0) {
+          const ratio = original.w / Math.max(1, original.h);
+          if (direction.length === 1) {
+            // Edge handle: derive the other dimension from the ratio.
+            if (direction === 'e' || direction === 'w') h = Math.max(1, Math.round(w / ratio));
+            else w = Math.max(1, Math.round(h * ratio));
+          } else {
+            // Corner handle: fit the dragged box into the ratio.
+            if (w / h > ratio) w = Math.max(1, Math.round(h * ratio));
+            else h = Math.max(1, Math.round(w / ratio));
+          }
+          if (direction.includes('w')) x = fixed.x - w;
+          if (direction.includes('n')) y = fixed.y - h;
+        }
         if (canvasManager.floatingCanvas) canvasManager.floatingCanvas = scaleCanvas(canvasManager.floatingCanvas, w, h);
         setSelection({ x, y, w, h }, { preview: true });
       };
@@ -344,6 +360,8 @@ const toolContext = {
   getPreviousTool: () => toolbar.getPreviousTool(),
   getShapeKind: () => toolbar.getShapeKind(),
   getShapeFillMode: () => toolbar.getFillMode(),
+  getSelectAfterDraw: () => toolbar.getSelectAfterDraw(),
+  getEmoji: () => toolbar.getSelectedEmoji(),
   getFontSize: () => currentFontSize,
   getFontFamily: () => "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
   getTextStyle: getTextStyles,
@@ -1031,7 +1049,9 @@ function syncHistoryLimitSelect(value) {
 }
 
 async function exportHistoryItem(session, index) {
-  const stamp = new Date(session.timestamp).toISOString().replace(/[:.]/g, '-').slice(0, 19);
+  const stamp = session.timestamp
+    ? new Date(session.timestamp).toISOString().replace(/[:.]/g, '-').slice(0, 19)
+    : 'session-step';
   const name = `history-${index + 1}-${stamp}.png`;
   const a = document.createElement('a');
   a.href = session.dataUrl;
@@ -1041,7 +1061,30 @@ async function exportHistoryItem(session, index) {
   a.remove();
 }
 
+async function exportSessionEntry(entry, index) {
+  const a = document.createElement('a');
+  a.href = entry.dataUrl;
+  a.download = `session-${index + 1}.png`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
 async function exportAllHistory() {
+  const sessionView = sidebar.historyView === 'session';
+  if (sessionView) {
+    const entries = sidebar.historyManager?.getSessionEntries?.() || [];
+    if (!entries.length) {
+      statusBar.flash('No session steps to export');
+      return;
+    }
+    for (let i = 0; i < entries.length; i += 1) {
+      await exportSessionEntry(entries[i], i);
+      await new Promise((resolve) => setTimeout(resolve, 250));
+    }
+    statusBar.flash(`Exported ${entries.length} session images`);
+    return;
+  }
   const sessions = await sidebar.globalHistory.getSessions();
   if (!sessions.length) {
     statusBar.flash('No history to export');
@@ -1180,12 +1223,72 @@ function syncRibbonSettingsControls() {
 async function updateAboutStats() {
   document.getElementById('about-version').textContent = APP_VERSION;
   document.getElementById('about-activity').textContent = new Date().toLocaleString();
+  // Storage numbers are estimates, not disk truth.
+  //  - usage keeps 2 decimals: rounding it to whole MB displayed "0 MB" (and a
+  //    0% bar) for a small but non-empty store. "0.00 MB" / 0% must mean
+  //    genuinely empty, so any real usage shows at least 1%.
+  //  - the quota is whole MB and capped: browsers report ~10 GB fantasy quotas,
+  //    which made the old "10242.87 MB" total read like a real, unstable limit.
+  const MB = 1024 * 1024;
+  const fmt2 = (mb) => `${mb.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MB`;
+  const fmt0 = (mb) => `${Math.round(mb).toLocaleString('en-US')} MB`;
   try {
     const estimate = await navigator.storage?.estimate();
-    const megabytes = (estimate?.usage || 0) / (1024 * 1024);
-    document.getElementById('about-storage').textContent = `${megabytes.toFixed(2)} MB`;
-  } catch { document.getElementById('about-storage').textContent = 'Unavailable'; }
+    const usageMB = (estimate?.usage || 0) / MB;
+    const quotaMB = (estimate?.quota || 0) / MB;
+    const displayQuotaMB = quotaMB > 0 ? Math.min(Math.round(quotaMB), 10000) : 0;
+    document.getElementById('about-storage').textContent = fmt2(usageMB);
+    const freeEl = document.getElementById('about-storage-free');
+    if (freeEl) {
+      freeEl.textContent = displayQuotaMB > 0
+        ? `${fmt0(Math.max(0, displayQuotaMB - usageMB))} free of ${fmt0(displayQuotaMB)}`
+        : 'Unavailable';
+    }
+    const fill = document.getElementById('about-storage-bar-fill');
+    if (fill) {
+      let pct = 0;
+      if (displayQuotaMB > 0 && usageMB > 0) {
+				pct = Math.max(1, Math.ceil((usageMB / displayQuotaMB) * 100));
+			}
+			const addingNormelize = pct > 50 && pct !== 0 ? 0 : 2;
+      fill.style.width = pct + addingNormelize + '%';
+    }
+  } catch {
+    document.getElementById('about-storage').textContent = 'Unavailable';
+    const freeEl = document.getElementById('about-storage-free');
+    if (freeEl) freeEl.textContent = 'Unavailable';
+  }
 }
+
+function renderReleaseNotes() {
+  const host = document.getElementById('release-notes-list');
+  if (!host) return;
+  host.innerHTML = '';
+  for (const note of getReleaseNotes()) {
+    const card = document.createElement('div');
+    card.className = 'release-note-card';
+    const head = document.createElement('div');
+    head.className = 'release-note-head';
+    const ver = document.createElement('strong');
+    ver.textContent = note.version === 'Unreleased' ? 'Unreleased' : `v${note.version}`;
+    head.appendChild(ver);
+    if (note.date) {
+      const date = document.createElement('span');
+      date.className = 'release-note-date';
+      date.textContent = note.date;
+      head.appendChild(date);
+    }
+    const list = document.createElement('ul');
+    for (const item of note.highlights) {
+      const li = document.createElement('li');
+      li.textContent = item;
+      list.appendChild(li);
+    }
+    card.append(head, list);
+    host.appendChild(card);
+  }
+}
+renderReleaseNotes();
 
 document.querySelectorAll('[data-settings-tab]').forEach((tab) => {
   tab.addEventListener('click', () => {
@@ -1547,11 +1650,17 @@ function queueLifecycleHistorySnapshot() {
 }
 
 window.addEventListener('beforeunload', () => {
+  // A shape lifted by "select after draw" exists only as a floating layer until
+  // the selection is left. Closing or refreshing IS leaving it, so bake it onto
+  // the canvas first — otherwise the refresh would silently discard the shape
+  // that was just drawn (the canvas holds the pre-lift pixels, not the shape).
+  commitFloatingSelection();
   persistSession();
   if (shouldAutoSaveOnClose()) sidebar.saveCurrentToHistory();
   if (shouldAutoSaveOnClose()) queueLifecycleHistorySnapshot();
 });
 window.addEventListener('pagehide', () => {
+  commitFloatingSelection();
   if (shouldAutoSaveOnClose()) queueLifecycleHistorySnapshot();
 }, { once: true });
 let historySaveTimer = 0;
@@ -1594,6 +1703,21 @@ const TOOL_KEYS = {
 window.addEventListener('keydown', (e) => {
   const tag = document.activeElement?.tagName;
   const typing = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
+  // Undo: Ctrl/Cmd+Z (Shift = redo). Redo: Ctrl+Y or Ctrl/Cmd+Shift+Z.
+  // Skipped while typing so text fields keep native behavior.
+  if ((e.ctrlKey || e.metaKey) && !e.altKey && !typing) {
+    const key = e.key.toLowerCase();
+    if (key === 'z' && !e.shiftKey) {
+      e.preventDefault();
+      historyManager.undo();
+      return;
+    }
+    if ((key === 'y') || (key === 'z' && e.shiftKey)) {
+      e.preventDefault();
+      historyManager.redo();
+      return;
+    }
+  }
 
   if (e.ctrlKey || e.metaKey) {
     switch (e.key.toLowerCase()) {
