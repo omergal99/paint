@@ -8,8 +8,8 @@ so everything will be take in whole scope and we can go over all and plan like p
 i want you to combine all this data and tasks i will send here by points and make a plan how we can implement them with examples - and all plan docs needed like html with mermaid graphs like in paint/docs/work2/phase-1/ dir - but much better orgenized and well structure.
 
 read all paint files if you need and also you can read the /home/omer/DEV/ai-3-DevEx-proj/paint/.skills dir and improve it too to add there skills from interent with high score to add to our project here to help us for this current mission of planning and also for the future.
-/home/omer/DEV/ai-3-DevEx-proj/paint/.skills/proj-work
-/home/omer/DEV/ai-3-DevEx-proj/paint/.skills/retro
+paint/.skills/proj-work
+paint/.skills/retro
 can help you to understand good standard for working.
 
 
