@@ -2,7 +2,8 @@
 
 ## 2026-09-19 — planning pass
 
-- Read `init/initIstructions.txt` completely.
+- Read the private initialization brief completely; the source brief and
+  processed working notes are intentionally excluded from the public tree.
 - Read `paint/AGENTS.md`, local architecture/coding/UI/performance/SEO/
   validation skills, `proj-work`, `retro`, and community-audit guidance.
 - Inspected the repository tree, README, package metadata, workflows, source
@@ -11,8 +12,8 @@
 - Ran `npm test`: `shape-layer.test.js` passed; `smoke.test.js` failed.
 - Confirmed `paint/docs/w2/PLAN-OVERVIEW.html` is absent.
 - Tried the local skill CLI; npm registry access failed with `EAI_AGAIN`.
-- Used web skill discovery as fallback; candidate skills are recorded in
-  `init/processedData/04-skills-and-tooling.md`.
+- Used web skill discovery as fallback and reviewed the local skills/tooling
+  inventory during planning.
 - Created this Phase 2 plan, source-processing notes, HTML overview, and step
   workspaces. No `paint/js`, `paint/css`, `paint/index.html`, test, or workflow
   implementation file was changed.
@@ -37,7 +38,25 @@ that changed from `DECISIONS.md`.
   cannot be proven.
 - Pruned the installed Paint copies of `web-quality-audit`, `accessibility`,
   and `playwright` to relevant local workflows while preserving symlink targets
-  and legal/metadata files.
+and legal/metadata files.
+
+## 2026-09-19 — Round 6 customer handoff hardening
+
+- Added the functional Hand/Pan tool, H shortcut, viewport cursor states, and
+  a More Tools menu entry for mouse/touch panning.
+- Fixed Select text after draw so clicking outside a moved text focus target
+  clears the focus, avoids a pixel marquee, and restores the Text tool.
+- Added Settings → App install/update controls, manual iOS guidance, immediate
+  service-worker update checks, version-keyed worker registration, and
+  idempotent cache-version synchronization.
+- Added 192px Apple touch icon metadata and a stable manifest id.
+- Removed raw .playwright-cli snapshots and Phase-2 initialization inputs from
+  Git tracking while preserving them locally through ignore rules. Curated
+  browser evidence remains under output/playwright/phase-2/playwright-cli/.
+- Browser evidence is recorded in
+  output/playwright/phase-2/playwright-cli/round6-browser-fixtures.json.
+- Verification: npm run version:sync, npm test (5/5), syntax checks,
+  git diff --check, live PWA update check, and focused interaction journeys.
 
 ## 2026-09-19 — Steps 01–04 implementation
 

@@ -11,7 +11,7 @@ export const RELEASE_NOTES = Object.freeze([
 			'Independent opacity controls, transparent color support, and safer shape placement',
 			'History and Settings improvements with keyboard-friendly tabs and Ribbon controls',
 			'Recent text history, optional text selection, and movable text-layer selections',
-			'Responsive Ribbon layouts and improved offline/PWA foundations',
+			'Hand/Pan navigation, responsive Ribbon layouts, and install/update controls for the offline app',
 		],
 	},
   {

@@ -1,0 +1,42 @@
+{
+  "round": 6,
+  "date": "2026-09-19",
+  "url": "http://127.0.0.1:4174/",
+  "tooling": "installed Playwright CLI",
+  "checks": {
+    "moreTools": {
+      "handPanVisible": true,
+      "menuLabel": "Hand / Pan"
+    },
+    "handPan": {
+      "zoomPercent": 200,
+      "beforeScroll": { "x": 0, "y": 0 },
+      "afterDragScroll": { "x": 100, "y": 80 },
+      "panModeAfterPointerUp": true,
+      "panningClassAfterPointerUp": false
+    },
+    "textSelectAfterDraw": {
+      "selectedTargetCleared": true,
+      "focusTargetCountAfterClear": 1,
+      "pixelSelectionStatus": "",
+      "activeToolAfterOutsideClick": "text"
+    },
+    "pwa": {
+      "settingsAppTabVisible": true,
+      "installButtonVisible": true,
+      "manualInstallGuidanceVisible": true,
+      "updateButtonVisible": true,
+      "updateStatus": "Paint is up to date.",
+      "serviceWorkerScript": "http://127.0.0.1:4174/sw.js?version=1.6.0"
+    },
+    "accessibleToolStatus": {
+      "datasetTool": "text",
+      "ariaLabel": "Current tool: Text",
+      "title": "Current tool: Text"
+    },
+    "console": {
+      "errors": 0,
+      "warnings": 0
+    }
+  }
+}

@@ -6,8 +6,8 @@ This is the short, updateable handoff for what is usable now, what is only a
 foundation, and how to experience each delivered improvement in Paint. The
 detailed evidence remains in each step workspace and `PROGRESS-LOG.md`.
 
-Latest round: [`PHASE-2-STATUS_5.md`](PHASE-2-STATUS_5.md) ·
-[visual HTML status](PHASE-2-STATUS_5.html)
+Latest round: [`PHASE-2-STATUS_6.md`](PHASE-2-STATUS_6.md) ·
+[visual HTML status](PHASE-2-STATUS_6.html)
 
 ## Status at a glance
 
@@ -18,12 +18,12 @@ Latest round: [`PHASE-2-STATUS_5.md`](PHASE-2-STATUS_5.md) ·
 | 03 | Done | 8/10 | History/session UX, settings summaries, Ribbon/menu behavior, compact Settings layout | Smoke tests plus 1280px browser evidence; alternate Ribbon matrix remains | Complete alternate-layout browser matrix and keyboard menu audit | Open Settings and History; inspect Current-first history, two-column General choices, and the grid Ribbon tab |
 | 04 | Done with follow-up | 8/10 | Resize percentage/ratio/selection behavior and transparent canvas foundation | `transparency.test.js` plus browser checkerboard check; file round trips remain | Add transparent PNG/import/export and resize regression fixtures | Open Resize; try 50% with ratio lock; choose General → Transparent and inspect the checkerboard viewport |
 | 05 | Stabilized with browser gate | 9.5/10 | Compact checkerboard opacity menu, pointer-positioned palette context menu, shared outside-click lifecycle, persisted alpha, alpha-aware drawing, and source-over floating placement | `npm test` 5/5; direct browser pixel fixture matches `[237,219,237,255]`; focused menu checks | Broaden file/import/eyedropper alpha fixtures and keyboard context invocation | Open Colors, set 20%, right-click a palette slot, click outside, then draw/select/place |
-| 06 | Separate text layer + safe focus movement | 9.5/10 | Recent text history, empty draggable toolbar when off, accurate bounds, transparent committed text layer, optional focus target, metadata-only move, and outside-click clear | Live browser: selected text moves while `#status-selection` stays empty; click outside clears focus; source contract prevents TextTool raster writes | Edit-after-blur, range formatting, and reloadable text metadata remain deferred; normal pixel operations intentionally flatten the text layer |
+| 06 | Separate text layer + safe focus movement | 9.7/10 | Recent text history, empty draggable toolbar when off, accurate bounds, transparent committed text layer, optional focus target, metadata-only move, outside-click clear, and return to Text after placement | Live browser: selected text moves while `#status-selection` stays empty; click outside clears focus and reactivates Text; source contract prevents TextTool raster writes | Edit-after-blur, range formatting, and reloadable text metadata remain deferred; normal pixel operations intentionally flatten the text layer |
 | 07 | Foundation | 4/10 | Functional seams and EventBus groundwork | Static listener inventory and contract tests; repeatable pointer trace, coalescing, and teardown measurements are still missing | No new visible performance claim yet; browser trace and listener audit remain |
 | 08 | Foundation | 4/10 | Memory-budget report and 64 MiB in-memory history cap | Memory contract tests; browser Blob/object-URL, quota-error, and IndexedDB recovery fixtures remain | Open About to see cached storage quota separately from memory; recovery flows are not complete |
 | 09 | Functional panel seams + shared menu placement | 8.7/10 | ActionMenuController, HistoryPanel, SettingsDialog, and one clamped placement contract for top-level/submenu/context menus | Live 1280px/320px bounds: representative menus have no viewport overflow; outside/Escape closure passes | Move more data callbacks behind seams after teardown coverage |
 | 10 | Browser fixture gate delivered | 8.8/10 | Alpha composition, text focus/move handoff, selection nudge, toolbar, nested menus, constants, and CSS contracts | `npm test` 5/5; syntax; diff; live console errors 0 | Add transparent PNG/import, `checkJs`, coverage, and error-path fixtures |
-| 11 | Accessibility/layout/PWA improved; final audit open | 9/10 | Settings radio group, menu bounds at 1280/320, keyboard semantics, reduced-motion CSS, 192/512 PNG icons, resilient SW shell, offline reload, and mobile Ribbon journey | Live Chromium: SW activated and controls offline reload; manifest/icons fetch; reduced-motion media true; 320px Ribbon is 74px and internally scrollable | Lighthouse, browser-level 200% zoom evidence, update-prompt behavior, and final device matrix remain |
+| 11 | Accessibility/layout/PWA improved; install/update flow delivered | 9.4/10 | Settings radio group, menu bounds at 1280/320, keyboard semantics, reduced-motion CSS, 192/512 PNG icons, resilient versioned SW shell, offline reload, mobile Ribbon journey, and App install/update controls | Live Chromium: SW activated and controls offline reload; manifest/icons fetch; reduced-motion media true; 320px Ribbon is 74px and internally scrollable; App tab exposes browser-native install and update checks | Lighthouse, browser-level 200% zoom evidence, and final device matrix remain |
 | 12 | Planned | 0/10 | Optional lazy background-removal provider | Not available yet | Not available yet |
 | 13 | Planned | 0/10 | Tabs, split panes, session/recovery | Not available yet | Not available yet |
 
@@ -47,19 +47,20 @@ behavior and its relevant browser or contract evidence are both complete.
   drawing path are now implemented; Step 05 still has broader file/fixture
   follow-up before its score can reach 10.
 - “Select text after draw” is intentionally tracked in Step 06 and can be
-  turned on or off. It focuses the committed metadata target and leaves the
-  current tool in Select after the editor commits; it must not be confused with
-  unsafe text-object editing.
+  turned on or off. It focuses the committed metadata target after commit;
+  clicking elsewhere clears the focus and returns the current tool to Text. It
+  must not be confused with unsafe text-object editing.
 - About storage uses the browser estimate API once per 24-hour cache window,
   stores raw validated bytes in local storage, and calculates free space as
   `max(0, quota - usage)` before formatting. Browser memory remains a separate
   budget.
 - The full Steps 01–08 completeness audit is recorded in
   [`STEP-01-08-AUDIT.md`](STEP-01-08-AUDIT.md).
-- Step 11 now has installable PNG icons, resilient shell installation, reduced
-  motion support, and live offline reload evidence. Lighthouse, browser-level
-  200% zoom, update-prompt behavior, and device-matrix evidence remain before
-  calling the PWA gate fully closed.
+- Step 11 now has installable PNG icons, resilient versioned shell installation,
+  reduced-motion support, offline reload evidence, and an App settings tab for
+  browser-native installation/update checks. Lighthouse, browser-level 200%
+  zoom, and device-matrix evidence remain before calling the PWA gate fully
+  closed.
 
 ## Professional quality snapshot
 

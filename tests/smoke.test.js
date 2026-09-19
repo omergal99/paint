@@ -226,6 +226,31 @@ test('Service Worker precache entries exist', () => {
   }
 });
 
+test('PWA settings expose install/update controls and versioned update flow', () => {
+	const pwa = read('js/pwa/PwaInstallManager.js');
+	const syncVersion = read('scripts/sync-version.mjs');
+	const appBootstrap = read('js/app.js');
+	assert.match(html, /data-settings-tab="app"/);
+	assert.match(html, /id="pwa-install-button"/);
+	assert.match(html, /id="pwa-update-button"/);
+	assert.match(pwa, /beforeinstallprompt/);
+	assert.match(pwa, /controllerchange/);
+	assert.match(pwa, /registration\.update/);
+	assert.match(syncVersion, /CACHE_NAME/);
+	assert.match(serviceWorker, /SKIP_WAITING/);
+	assert.match(appBootstrap, /sw\.js\?version=/);
+});
+
+test('Hand/Pan is available as a shared tool and shortcut', () => {
+	const pan = read('js/tools/PanTool.js');
+	assert.match(html, /data-tool="pan"/);
+	assert.match(main, /createPanTool/);
+	assert.match(main, /h:\s*'pan'/);
+	assert.match(pan, /scrollLeft/);
+	assert.match(pan, /scrollTop/);
+	assert.match(read('css/styles.css'), /#canvas-viewport\.pan-mode/);
+});
+
 test('Mobile status bar stays on one line and hides app branding', () => {
   assert.match(responsiveStyle, /\.status-bar\s*\{[^}]*white-space:\s*nowrap/s);
   assert.match(responsiveStyle, /\.status-item\.app-name\s*\{\s*display:\s*none/s);

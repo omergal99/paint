@@ -260,6 +260,14 @@ body {
 .tools-menu {
 	display: none;
 }
+
+#canvas-viewport.pan-mode {
+	cursor: grab;
+}
+
+#canvas-viewport.pan-mode.is-panning {
+	cursor: grabbing;
+}
 .ribbon-group-tools .tool-grid .tool-btn[data-tool="pencil"],
 .ribbon-group-tools .tool-grid .tool-btn[data-tool="fill"],
 .ribbon-group-tools .tool-grid .tool-btn[data-tool="eraser"],
@@ -2096,6 +2104,30 @@ dialog h3 {
 	align-items: center;
 	gap: 8px;
 	margin-top: 18px;
+}
+.pwa-install-card,
+.pwa-update-card {
+	border: 1px solid var(--w10-border);
+	border-radius: 5px;
+	padding: 10px;
+	margin-top: 10px;
+	background: var(--w10-ribbon-bg);
+}
+.pwa-install-card p,
+.pwa-update-card p {
+	margin: 6px 0 10px;
+}
+.pwa-status {
+	font-size: 12px;
+	color: var(--w10-text-dim);
+}
+.pwa-status[data-state="ready"],
+.pwa-status[data-state="installed"],
+.pwa-status[data-state="current"] {
+	color: #26733b;
+}
+.pwa-status[data-state="error"] {
+	color: #a33;
 }
 .settings-link-button,
 .settings-link {

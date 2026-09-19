@@ -2,6 +2,7 @@
   "name": "paint",
   "short_name": "paint",
   "description": "A fast, offline-capable browser painting app.",
+  "id": "./",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

@@ -1,6 +1,7 @@
 import { canvasManager } from './main.js';
 import { installCanvasAutosave } from './storage.js';
 import { installTelemetry } from './telemetry.js';
+import { APP_VERSION } from './version.js';
 
 const canvas = document.getElementById('paint-canvas');
 
@@ -19,7 +20,12 @@ if (canvas) {
 }
 
 if ('serviceWorker' in navigator && window.isSecureContext) {
-  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch((error) => {
-    console.warn('Offline mode unavailable:', error);
-  }), { once: true });
+  window.addEventListener('load', async () => {
+    try {
+      const workerUrl = `./sw.js?version=${encodeURIComponent(APP_VERSION)}`;
+      await navigator.serviceWorker.register(workerUrl, { scope: './' });
+    } catch (error) {
+      console.warn('Offline mode unavailable:', error);
+    }
+  }, { once: true });
 }

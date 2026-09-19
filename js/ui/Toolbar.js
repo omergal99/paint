@@ -107,6 +107,7 @@ export class Toolbar {
       if (!source || !this._showCurrentTool) {
         statusButton.title = 'Show tools (click to open the tools menu)';
       }
+      statusButton.setAttribute('aria-label', statusButton.title);
       // Tooltip is the affordance when there is nothing to preview; the
       // inactive-status:hover CSS handles the visual part.
       const iconSource = source || shapeSource;

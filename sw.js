@@ -32,6 +32,7 @@ const SHELL = [
   './js/tools/TextTool.js',
   './js/tools/EyedropperTool.js',
   './js/tools/ZoomTool.js',
+  './js/tools/PanTool.js',
   './js/tools/SelectTool.js',
   './js/ui/ColorPalette.js',
   './js/ui/ActionMenuController.js',
@@ -44,6 +45,7 @@ const SHELL = [
   './js/ui/SliderControl.js',
   './js/tools/EmojiStore.js',
   './js/releaseNotes.js',
+  './js/pwa/PwaInstallManager.js',
   './js/ui/Sidebar.js',
   './js/settings/SettingsRegistry.js',
   './js/settings/SettingsStore.js',
@@ -73,6 +75,10 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(caches.keys().then((keys) => Promise.all(
     keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key)),
   )).then(() => self.clients.claim()));
+});
+
+self.addEventListener('message', (event) => {
+  if (event.data?.type === 'SKIP_WAITING') self.skipWaiting();
 });
 
 self.addEventListener('fetch', (event) => {

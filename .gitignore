@@ -3,3 +3,11 @@ z-next
 # Playwright CLI snapshots/logs are ephemeral; curated evidence lives under
 # output/playwright/phase-2/playwright-cli/.
 .playwright-cli/*
+
+# Private planning inputs and processed working notes are not product docs.
+# Keep curated plans/status pages under docs/work2/phase-2 public instead.
+/docs/work2/phase-2/init/
+
+# Use docs-internal for future local-only engineering notes in any docs tree.
+/docs-internal/
+**/docs-internal/

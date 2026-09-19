@@ -26,6 +26,15 @@ python3 -m http.server 8000
 
 Then open the printed `localhost` URL in Chrome or Edge.
 
+### Install and update
+
+On a supported browser, open **Settings → App** and choose **Install paint**.
+On iPhone or iPad, use the browser’s **Share → Add to Home Screen** action.
+Published releases run `npm run version:patch` (or the matching version
+command), which synchronizes `js/version.js` and the service-worker cache
+version. The service worker checks for the new shell and controlled pages
+reload once the new worker takes control.
+
 ## Contributing and support
 
 - [Contributing guide](./CONTRIBUTING.md)
@@ -101,7 +110,7 @@ graph TD
 | `Ctrl+Z` / `Ctrl+Y` / `Ctrl+Shift+Z` | Undo / Redo |
 | `Ctrl+C` / `Ctrl+X` / `Ctrl+V` | Copy / Cut / Paste (real OS clipboard, full resolution) |
 | `Ctrl+S` / `Ctrl+O` / `Ctrl+N` | Save / Open / New |
-| `S P B F E T K Z` | Select / Pencil / Brush / Fill / Eraser / Text / Eyedropper / Zoom |
+| `S P B F E T K Z H` | Select / Pencil / Brush / Fill / Eraser / Text / Eyedropper / Zoom / Hand-Pan |
 | `Ctrl+Scroll` / `Cmd+Scroll` over canvas | Zoom in/out (plain scroll just pans/scrolls the viewport) |
 | `Esc` (while typing text) | Cancel the text box without committing |
 | `Delete` / `Backspace` | Discard active floating selection or clear marquee selection |

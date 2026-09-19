@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Paint — Phase 2 Round 6 Status</title>
+  <style>
+    :root { color-scheme: light; font-family: system-ui, sans-serif; background: #fff; color: #17202a; }
+    body { max-width: 1100px; margin: 0 auto; padding: 24px; line-height: 1.5; }
+    h1 { margin-bottom: 4px; color: #0b5394; }
+    .muted { color: #52606d; }
+    table { width: 100%; border-collapse: collapse; margin: 18px 0; }
+    th, td { border: 1px solid #c7d0d9; padding: 10px; text-align: left; vertical-align: top; }
+    th { background: #eaf3fb; }
+    .done { color: #176b38; font-weight: 700; }
+    code { background: #f1f3f5; padding: 2px 4px; border-radius: 3px; }
+  </style>
+</head>
+<body>
+  <h1>Phase 2 — Round 6 Status</h1>
+  <p class="muted">Customer handoff evidence for version 1.6.0 · 2026-09-19</p>
+  <table>
+    <thead><tr><th>Area</th><th>Result</th><th>Try it</th><th>Evidence / remaining gate</th></tr></thead>
+    <tbody>
+      <tr><td>Text placement</td><td class="done">Done</td><td>Enable Select text after draw, draw and move text, click elsewhere, then draw again.</td><td>Focus clears, pixel selection stays empty, and Text becomes active again.</td></tr>
+      <tr><td>Hand/Pan</td><td class="done">Done</td><td>More → Hand / Pan or press H, then drag with mouse/touch.</td><td>Viewport scrolls without changing zoom or pixels.</td></tr>
+      <tr><td>PWA install</td><td class="done">Done</td><td>Settings → App → Install paint.</td><td>Uses the browser-native prompt; unsupported browsers receive manual guidance.</td></tr>
+      <tr><td>PWA update</td><td class="done">Done</td><td>Settings → App → Check for updates.</td><td>Versioned service-worker cache and controlled-page reload flow are wired.</td></tr>
+      <tr><td>Public boundary</td><td class="done">Done</td><td>Review <code>.gitignore</code> and curated output evidence.</td><td>Raw CLI snapshots and initialization inputs are excluded from future public commits.</td></tr>
+    </tbody>
+  </table>
+  <h2>Verification</h2>
+  <p><code>npm test</code>: 5/5 files passed. Syntax checks and <code>git diff --check</code> passed.</p>
+  <p class="muted">Remaining Step 11 gates: Lighthouse, real-browser 200% zoom, and final device matrix.</p>
+</body>
+</html>

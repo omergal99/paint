@@ -69,8 +69,7 @@ Steps 09–11 now proceed as a gated sequence rather than three broad rewrites:
 4. Execute Step 11 in accessibility-first, then PWA, CSS, and Lighthouse order.
 
 The scorecard and UI verification paths are maintained in
-`PHASE-2-STATUS.md`; the processed review decisions are in
-`init/processedData/06-current-gaps-and-next-plan.md`.
+`PHASE-2-STATUS.md`; review decisions are maintained in `DECISIONS.md`.
 
 Round 2 results and visual status are maintained in
 [`PHASE-2-STATUS_2.md`](PHASE-2-STATUS_2.md) and

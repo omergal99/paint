@@ -12,6 +12,7 @@ import { createShapeTool } from './tools/ShapeTool.js';
 import { createTextTool } from './tools/TextTool.js';
 import { createEyedropperTool } from './tools/EyedropperTool.js';
 import { createZoomTool } from './tools/ZoomTool.js';
+import { createPanTool } from './tools/PanTool.js';
 import { createColorPalette } from './ui/ColorPalette.js';
 import { createColorInspector } from './ui/ColorInspector.js';
 import { createStatusBar } from './ui/StatusBar.js';
@@ -35,6 +36,7 @@ import { createTextLayerService } from './document/TextLayerService.js';
 import { createTextSelectionOverlay } from './ui/TextSelectionOverlay.js';
 import { createActionMenuController } from './ui/ActionMenuController.js';
 import { createSettingsDialog } from './ui/SettingsDialog.js';
+import { createPwaInstallManager } from './pwa/PwaInstallManager.js';
 
 // ---------- DOM refs ----------
 const stage = document.getElementById('canvas-stage');
@@ -487,6 +489,7 @@ const toolManager = new ToolManager({ surface: overlayEl, viewportManager, toolC
 	createTextTool(),
 	createEyedropperTool(),
 	createZoomTool(),
+	createPanTool(),
 ].forEach((t) => toolManager.register(t));
 
 viewportManager.onZoomChange = () => {
@@ -1064,6 +1067,13 @@ const settingsDialogController = createSettingsDialog({
 	},
 });
 settingsDialogController.bind();
+
+const pwaInstallManager = createPwaInstallManager({
+	installButton: document.getElementById('pwa-install-button'),
+	statusEl: document.getElementById('pwa-install-status'),
+	updateButton: document.getElementById('pwa-update-button'),
+});
+pwaInstallManager.start();
 
 const openSettingsDialog = (tab = 'general') => {
 	settingsDialogController.open(tab);
@@ -1960,7 +1970,18 @@ saveToolSelection(savedTool);
 const viewportEl = document.getElementById('canvas-viewport');
 document.addEventListener('pointerdown', (event) => {
 	const target = event.target instanceof Element ? event.target : null;
-	if (!target?.closest('.text-object-focus-target')) textSelectionOverlay.clear();
+	if (target?.closest('.text-object-focus-target')) return;
+	const selectedTextId = textSelectionOverlay.getSelectedId?.();
+	textSelectionOverlay.clear();
+	// A committed text object temporarily activates Select so it can be moved.
+	// Clicking elsewhere in the canvas finishes that interaction and returns to
+	// Text. Stop the same pointerdown from entering SelectTool and starting a
+	// pixel marquee underneath the text affordance.
+	if (selectedTextId && target?.closest('#canvas-viewport')) {
+		setSelection(null);
+		toolManager.setActive('text');
+		event.stopPropagation();
+	}
 }, true);
 if (viewportEl) {
 	viewportEl.addEventListener('pointerdown', (e) => {
@@ -1974,7 +1995,7 @@ if (viewportEl) {
 
 // ---------- Keyboard shortcuts ----------
 const TOOL_KEYS = {
-	s: 'select', p: 'pencil', b: 'brush', f: 'fill', e: 'eraser', t: 'text', k: 'eyedropper', z: 'zoom',
+	s: 'select', p: 'pencil', b: 'brush', f: 'fill', e: 'eraser', t: 'text', k: 'eyedropper', z: 'zoom', h: 'pan',
 };
 
 window.addEventListener('keydown', (e) => {

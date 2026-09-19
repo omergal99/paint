@@ -31,6 +31,7 @@
 	<meta name="twitter:image" content="https://omergal99.github.io/paint/css/assets/preview.png" />
 	<meta name="twitter:image:alt" content="Paint - Online Drawing & Canvas Tool" />
 	<link rel="icon" type="image/svg+xml" href="css/assets/icon.svg">
+	<link rel="apple-touch-icon" sizes="192x192" href="css/assets/icon-192.png">
 	<link rel="stylesheet" href="css/styles.css" />
 	<link rel="stylesheet" href="css/progressive.css" />
 	<link rel="manifest" href="manifest.json" />
@@ -324,6 +325,13 @@
 								role="menuitem">Color picker</button>
 							<button type="button" class="rbtn small tool-menu-item tool-btn" data-tool="zoom"
 								role="menuitem">Magnifier</button>
+							<button type="button" class="rbtn small tool-menu-item tool-btn" data-tool="pan"
+								role="menuitem" title="Hand / Pan (H)">
+								<svg class="icon" viewBox="0 0 20 20" aria-hidden="true">
+									<path d="M6.5 9V4.5a1 1 0 0 1 2 0V9V3.5a1 1 0 0 1 2 0V9V4.5a1 1 0 0 1 2 0V9V6a1 1 0 0 1 2 0v5.2c0 3.2-2.1 5.3-5.1 5.3H8.6c-1.6 0-2.8-.8-3.6-2.1L3.6 12a1.2 1.2 0 0 1 2.1-1.1L6.5 12V9Z" fill="none" stroke="currentColor" stroke-linejoin="round" />
+								</svg>
+								<span>Hand / Pan</span>
+							</button>
 							<div class="style-history-block">
 								<span class="style-history-title">Recent styles</span>
 								<div id="style-history-list" class="style-history-list"></div>
@@ -885,6 +893,7 @@
 				<button type="button" class="settings-tab" data-settings-tab="ribbon">RIBBON</button>
 				<button type="button" class="settings-tab" data-settings-tab="release">RELEASE NOTES</button>
 				<button type="button" class="settings-tab" data-settings-tab="about">ABOUT</button>
+				<button type="button" class="settings-tab" data-settings-tab="app">APP</button>
 				<button type="button" class="settings-tab" data-settings-tab="feedback">FEEDBACK</button>
 			</nav>
 			<form method="dialog" id="settings-form" class="settings-panel settings-body" data-settings-panel="general">
@@ -1034,6 +1043,19 @@
 				<h3>Release notes</h3>
 				<p>What is new in each version. Newest first.</p>
 				<div id="release-notes-list" class="release-notes-list"></div>
+			</section>
+			<section class="settings-panel settings-body" data-settings-panel="app" hidden>
+				<h3>Install &amp; updates</h3>
+				<p>Install paint as an app for a focused window, quick launch, and offline use. The browser decides when direct installation is available.</p>
+				<div class="pwa-install-card">
+					<button type="button" class="settings-link-button" id="pwa-install-button">Install paint</button>
+					<p id="pwa-install-status" class="pwa-status" role="status" aria-live="polite">Checking install options…</p>
+				</div>
+				<div class="pwa-update-card">
+					<strong>Version updates</strong>
+					<p>When a new version is published, the service worker checks for it and applies it automatically on the next safe reload.</p>
+					<button type="button" class="settings-link-button" id="pwa-update-button">Check for updates</button>
+				</div>
 			</section>
 			<section class="settings-panel settings-body" data-settings-panel="feedback" hidden>
 				<h3>Feedback &amp; support</h3>
