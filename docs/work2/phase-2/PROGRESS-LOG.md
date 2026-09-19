@@ -204,3 +204,32 @@ that changed from `DECISIONS.md`.
 - Step 10 quick win: extracted `commitLayerWithSourceOver()` into the canvas
   seam and added a fake-context behavior test proving a floating layer is drawn
   at alpha `1` with `source-over`, then the caller state is restored.
+
+## 2026-09-19 — Round 3 fixes and Steps 09.1–11.1
+
+- Fixed the palette context menu lifecycle: it now uses the shared functional
+  action-menu controller, opens beside the right-clicked swatch, clamps to the
+  viewport, and closes on outside click/Escape. The item container is explicitly
+  `action-menu-items color-palette-context-menu-items`.
+- Changed the Recent text toolbar toggle to preserve an empty, draggable shell;
+  the controls become hidden children while the toolbar remains in the DOM.
+  Select text after draw now exposes a stronger selected focus target with a
+  visible move glyph, `aria-pressed`, and the Select tool remains active after
+  commit. Text-object pixel editing is still intentionally gated.
+- Added arrow/Shift+arrow nudging for ordinary marquee selections. The first
+  nudge lifts the selected pixels once, clamps movement to the canvas, and does
+  not steal arrow events already consumed by menus.
+- Added functional `HistoryPanel` and `SettingsDialog` seams. History/Session
+  tabs, action wording, settings tab roles, panel visibility, keyboard traversal,
+  and close-focus restoration now have one owner each.
+- Added 10.1 direct browser alpha evidence: a 20% foreground shape with Select
+  after draw commits once and matches the expected source-over pixel. Added the
+  11.1 1280/320 Ribbon matrix plus Enter/Escape and settings-arrow checks.
+- Added `PHASE-2-STATUS_3.md` and white-theme `PHASE-2-STATUS_3.html`, updated
+  the current status links/scorecard, added the Round 3 JSON fixture report,
+  precached both new seam modules, and converted Round 2 HTML to the requested
+  white-only theme.
+- Verification at this checkpoint: `npm test` 4/4 top-level files, changed-file
+  syntax checks, live Playwright UI journeys, direct alpha pixel match, and
+  keyboard/layout matrix passed. Remaining quality gates are analyzer output,
+  `git diff --check`, checkJs/coverage, Lighthouse, and offline update checks.

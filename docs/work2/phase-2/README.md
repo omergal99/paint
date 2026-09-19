@@ -15,6 +15,9 @@ step that owns them and must pass the documented gates.
 - [Phase 2 status](PHASE-2-STATUS.md) — current delivery status and quick UI checks for every step.
 - [Round 2 status](PHASE-2-STATUS_2.md) — latest stabilization results, scores, gaps, and UI walkthrough.
 - [Round 2 visual status](PHASE-2-STATUS_2.html) — accessible HTML tables/meters for the same round.
+- [Round 3 status](PHASE-2-STATUS_3.md) — current UI fixes, seams, browser fixtures, matrix, and updated score.
+- [Round 3 visual status](PHASE-2-STATUS_3.html) — white-theme HTML status for the current round.
+- [Round 3 web-quality report](WEB-QUALITY-AUDIT-ROUND3.json) — analyzer, browser, and final-gate results.
 - [Round 2 web-quality reports](WEB-QUALITY-AUDIT-ROUND2.json) — analyzer output for the app and status page.
 - [Steps 01–08 audit](STEP-01-08-AUDIT.md) — completeness check, transparency ownership, and remaining gates.
 - [Progress log](PROGRESS-LOG.md) — planning and later implementation evidence.

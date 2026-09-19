@@ -1,6 +1,7 @@
 // js/ui/Sidebar.js
 import { GlobalHistory } from '../history/GlobalHistory.js';
 import { AI_PROVIDERS } from '../ai/AiConnectionStore.js';
+import { createHistoryPanel } from './HistoryPanel.js';
 
 export class Sidebar {
 	constructor({ canvasManager, statusBar, palette, aiCommandService = null, dialogService, aiConnectionStore = null, historyManager = null }) {
@@ -34,6 +35,15 @@ export class Sidebar {
 		this.aiConnectionDescription = document.getElementById('ai-connection-description');
 		this.aiProviderLink = document.getElementById('ai-provider-link');
 		this.aiCopyImageButton = document.getElementById('ai-copy-current-image');
+		this.historyPanel = createHistoryPanel({
+			root: this.sidebar,
+			onViewChange: (view) => {
+				this.historyView = view;
+				if (this.activeTab === 'history') void this.refreshHistory();
+			},
+		});
+		this.historyView = this.historyPanel.getView();
+		this.historyPanel.bind();
 
 		this.groupSettingsContent = document.getElementById('sidebar-group-settings');
 		this.groupSettingsContainer = document.getElementById('group-settings-container');
@@ -78,20 +88,6 @@ export class Sidebar {
 		});
 
 		// History sub-tabs: History (IndexedDB) + Session (sessionStorage-backed)
-		this.historyView = 'history';
-		this._historyTabsEl = document.getElementById('history-view-tabs');
-			this._historyTabsEl?.querySelectorAll('[data-history-view]').forEach((btn) => {
-				btn.addEventListener('click', () => {
-					this.historyView = btn.dataset.historyView === 'session' ? 'session' : 'history';
-					this._historyTabsEl.querySelectorAll('[data-history-view]').forEach((b) =>
-						b.classList.toggle('active', b === btn));
-					this._historyTabsEl.querySelectorAll('[data-history-view]').forEach((b) =>
-						b.setAttribute('aria-selected', String(b === btn)));
-				this._syncHistoryActionLabels();
-				this.refreshHistory();
-			});
-		});
-		this._historyTabsEl?.querySelector('[data-history-view="history"]')?.classList.add('active');
 		this._syncHistoryActionLabels();
 
 		// Clear button clears whichever view is active (labels follow the tab).
@@ -254,29 +250,7 @@ export class Sidebar {
 	// Action buttons follow the active view: Clear/Save/Export say exactly
 	// which store they touch (History = IndexedDB, Session = browser tab).
 	_syncHistoryActionLabels() {
-		const session = this.historyView === 'session';
-		// The label above the buttons mirrors the active store so the action
-		// wording (Save Current / Export All / Clear All) always reads as acting
-		// on what the user is looking at right now.
-		const labelEl = document.getElementById('history-actions-label');
-		if (labelEl) labelEl.textContent = session ? 'Actions: Session' : 'Actions: History';
-		if (this.saveToHistoryBtn) {
-			this.saveToHistoryBtn.textContent = 'Save Current';
-			this.saveToHistoryBtn.title = session
-				? 'Snapshot the current paint into this tab session'
-				: 'Save current paint to history';
-		}
-		const exportBtn = document.getElementById('history-export-all-btn');
-		if (exportBtn) {
-			exportBtn.textContent = 'Export All';
-			exportBtn.title = session
-				? 'Export the session steps to your computer'
-				: 'Export the whole history to your computer';
-		}
-		if (this.clearBtn) {
-			this.clearBtn.textContent = 'Clear All';
-			this.clearBtn.title = session ? 'Clear session steps' : 'Clear all saved history';
-		}
+		this.historyPanel?.sync();
 	}
 
 	async _loadHistoryWithRetry() {

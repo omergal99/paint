@@ -27,6 +27,32 @@ export const createActionMenuController = ({ root = document } = {}) => {
     if (!keep.includes(menu)) closeMenu(menu);
   });
 
+  const positionMenu = (menu, menuItems, { x, y } = {}) => {
+    menuItems.style.visibility = 'hidden';
+    menuItems.style.display = 'grid';
+    const menuHeight = menuItems.getBoundingClientRect().height || 80;
+    const menuWidth = menuItems.getBoundingClientRect().width || 180;
+    menuItems.style.display = '';
+    menuItems.style.visibility = '';
+
+    const requestedX = Number.isFinite(x) ? x : 0;
+    const requestedY = Number.isFinite(y) ? y : 0;
+    const maxX = Math.max(8, window.innerWidth - menuWidth - 8);
+    const maxY = Math.max(8, window.innerHeight - menuHeight - 8);
+    menuItems.style.left = `${Math.round(Math.min(Math.max(8, requestedX), maxX))}px`;
+    menuItems.style.top = `${Math.round(Math.min(Math.max(8, requestedY), maxY))}px`;
+  };
+
+  const openMenuAt = (menu, point = {}) => {
+    const menuItems = menu?.querySelector('.action-menu-items');
+    if (!menu || !menuItems) return false;
+    closeAll([menu]);
+    menu.hidden = false;
+    menu.classList.add('open');
+    positionMenu(menu, menuItems, point);
+    return true;
+  };
+
   const toggleMenu = (trigger) => {
     const menu = trigger.closest('.action-menu');
     const menuItems = menu?.querySelector('.action-menu-items');
@@ -38,7 +64,6 @@ export const createActionMenuController = ({ root = document } = {}) => {
     if (!shouldOpen) return;
 
     const bounds = trigger.getBoundingClientRect();
-    menuItems.style.left = `${Math.round(bounds.left)}px`;
     menuItems.style.visibility = 'hidden';
     menuItems.style.display = 'grid';
     const menuHeight = menuItems.getBoundingClientRect().height || 80;
@@ -111,7 +136,11 @@ export const createActionMenuController = ({ root = document } = {}) => {
     });
     root.addEventListener('click', () => closeAll());
     root.addEventListener('keydown', handleKeyboard);
+    root.addEventListener('paint:action-menu-open-at', (event) => {
+      const { menu, x, y } = event.detail || {};
+      openMenuAt(menu, { x, y });
+    });
   };
 
-  return Object.freeze({ bind, closeAll, toggle });
+  return Object.freeze({ bind, closeAll, toggle, openAt: openMenuAt });
 };

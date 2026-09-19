@@ -31,8 +31,11 @@ export const createTextSelectionOverlay = ({ root, store }) => {
       target.className = 'text-object-focus-target';
       target.dataset.textObjectId = object.id;
       target.setAttribute('aria-label', labelFor(object));
-      target.title = 'Focus text object (editing is not enabled yet)';
+      target.title = object.id === selectedId
+        ? 'Selected text focus target (safe pixel editing is not enabled yet)'
+        : 'Focus text object (safe pixel editing is not enabled yet)';
       target.classList.toggle('selected', object.id === selectedId);
+      target.setAttribute('aria-pressed', String(object.id === selectedId));
       target.style.left = `${object.x}px`;
       target.style.top = `${object.y}px`;
       target.style.width = `${Math.max(4, object.width)}px`;

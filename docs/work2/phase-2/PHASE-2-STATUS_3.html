@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Paint Phase 2 — Round 3 Status</title>
+  <style>
+    :root { color-scheme: light; --bg: #f7f9fc; --panel: #fff; --line: #cbd5e1; --text: #172033; --muted: #526174; --good: #087443; --accent: #145dcc; --soft: #eaf2ff; }
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 24px; background: var(--bg); color: var(--text); font: 15px/1.5 system-ui, sans-serif; }
+    main { max-width: 1480px; margin: 0 auto; }
+    h1, h2 { line-height: 1.2; }
+    h1 { margin-top: 0; color: #123d88; }
+    .lede, .note { color: var(--muted); }
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; margin: 20px 0; }
+    .card, section { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+    .card { padding: 14px; }
+    .card strong { display: block; font-size: 1.55rem; color: var(--accent); }
+    section { margin: 18px 0; padding: 16px; overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; min-width: 980px; }
+    caption { text-align: left; font-weight: 700; padding-bottom: 8px; }
+    th, td { padding: 9px 10px; border-bottom: 1px solid var(--line); vertical-align: top; text-align: left; }
+    th { color: #123d88; background: var(--soft); }
+    meter { width: 120px; height: 1em; vertical-align: middle; }
+    a { color: #0b4fae; }
+    code { color: #075f39; background: #eef8f2; padding: 1px 4px; border-radius: 3px; }
+    .flow { display: grid; grid-template-columns: repeat(auto-fit, minmax(165px, 1fr)); gap: 8px; padding: 0; list-style: none; }
+    .flow li { padding: 12px; border: 1px solid var(--line); border-radius: 6px; background: #fff; }
+    .flow li::after { content: ' →'; color: var(--good); }
+    .flow li:last-child::after { content: ''; }
+    @media (max-width: 640px) { body { padding: 12px; } section { padding: 10px; } }
+  </style>
+</head>
+<body>
+<main>
+  <p><a href="PHASE-2-STATUS.md">← Current Markdown status</a> · <a href="PHASE-2-STATUS_3.md">Round 3 Markdown</a></p>
+  <h1>Paint Phase 2 — Round 3 Stabilization</h1>
+  <p class="lede">2026-09-19 · UI fixes plus the 09.1 HistoryPanel, 09.2 SettingsDialog, 10.1 alpha fixture, and 11.1 keyboard/layout matrix slices.</p>
+  <div class="cards" aria-label="Round summary">
+    <div class="card"><strong>4/4</strong>test files green</div>
+    <div class="card"><strong>8.1/10</strong>professional readiness</div>
+    <div class="card"><strong>5</strong>layout matrix states</div>
+    <div class="card"><strong>0</strong>application console errors</div>
+  </div>
+  <section>
+    <h2>Round 3 results</h2>
+    <table>
+      <caption>What changed, how it was measured, what is still missing, and how to experience it</caption>
+      <thead><tr><th>Area</th><th>Score</th><th>Delivered</th><th>Measured verification</th><th>Missing points</th><th>UI check</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">Palette context menu</th><td><meter min="0" max="10" value="9.5">9.5/10</meter></td><td>Pointer-positioned named menu and shared close lifecycle.</td><td>Open and outside-close snapshots.</td><td>Keyboard context invocation and file alpha fixture.</td><td>Right-click a color swatch, then click outside.</td></tr>
+        <tr><th scope="row">Text toolbar off</th><td><meter min="0" max="10" value="9">9/10</meter></td><td>Empty, non-hidden, draggable shell remains.</td><td>Shell position changed after drag; <code>hidden=false</code>.</td><td>Multi-editor direct unit fixture.</td><td>Turn Recent text toolbar off and drag its empty bar.</td></tr>
+        <tr><th scope="row">Select text after draw</th><td><meter min="0" max="10" value="8.5">8.5/10</meter></td><td>Visible selected metadata target with move glyph; tool becomes Select.</td><td>Accessible label, pressed state, glyph snapshot.</td><td>Safe pixel-preserving text movement/editing.</td><td>Enable it, draw text, click outside, inspect the target.</td></tr>
+        <tr><th scope="row">Selection arrows</th><td><meter min="0" max="10" value="9">9/10</meter></td><td>Arrow/Shift+Arrow nudges normal marquee selections.</td><td>Measured x <code>616 → 617</code>.</td><td>Undo/reload browser journey.</td><td>Select an area and press ArrowRight.</td></tr>
+        <tr><th scope="row">09.1 / 09.2 seams</th><td><meter min="0" max="10" value="8">8/10</meter></td><td>Functional HistoryPanel and SettingsDialog controllers.</td><td>Roles, selected tabs, panel visibility, focus/keyboard checks.</td><td>More data callbacks and teardown coverage.</td><td>Use History and Settings tab arrows.</td></tr>
+        <tr><th scope="row">10.1 / 11.1 gates</th><td><meter min="0" max="10" value="8.25">8.25/10</meter></td><td>Direct source-over pixel fixture and 1280/320 layout matrix.</td><td>20% alpha pixel match; 74px Ribbon; narrow overflow; Enter/Escape.</td><td>PNG/import, 200% zoom, Lighthouse, offline.</td><td>Set 20% opacity; try Ribbon positions and 320px width.</td></tr>
+      </tbody>
+    </table>
+  </section>
+  <section>
+    <h2>Professional quality</h2>
+    <table>
+      <thead><tr><th>Dimension</th><th>Score</th><th>Reason</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">Code design</th><td><meter min="0" max="10" value="8">8/10</meter></td><td>Three focused functional seams now reduce UI ownership spread; legacy owners remain.</td></tr>
+        <tr><th scope="row">UI design</th><td><meter min="0" max="10" value="8.5">8.5/10</meter></td><td>Compact controls, visible focus affordance, and measured Ribbon layouts are stable.</td></tr>
+        <tr><th scope="row">Logic/data safety</th><td><meter min="0" max="10" value="8">8/10</meter></td><td>Alpha source-over and selection movement are covered; text editing remains gated.</td></tr>
+        <tr><th scope="row">Verification</th><td><meter min="0" max="10" value="8">8/10</meter></td><td>Node suite, syntax, browser pixel, keyboard, and layout evidence are recorded.</td></tr>
+        <tr><th scope="row">Overall</th><td><meter min="0" max="10" value="8.1">8.1/10</meter></td><td>Meaningfully improved, with explicit remaining release gates.</td></tr>
+      </tbody>
+    </table>
+  </section>
+  <section>
+    <h2>Next path</h2>
+    <ol class="flow" aria-label="Next recommended sequence">
+      <li>Transparent PNG/import fixture</li>
+      <li>History/Settings callback and teardown coverage</li>
+      <li>checkJs and subsystem coverage</li>
+      <li>Lighthouse, 200% zoom, offline shell</li>
+    </ol>
+    <p class="note">Advanced text compositing/editing, optional Python/background removal, and automated service-worker list synchronization remain explicitly deferred behind proof gates.</p>
+  </section>
+  <section>
+    <h2>Evidence</h2>
+    <ul>
+      <li><a href="../../../output/playwright/phase-2/playwright-cli/round3-browser-fixtures.json">Browser fixture and layout matrix JSON</a></li>
+      <li><a href="../../../output/playwright/phase-2/playwright-cli/round3-palette-context-open.yml">Palette context menu open</a></li>
+      <li><a href="../../../output/playwright/phase-2/playwright-cli/round3-text-toolbar-empty.yml">Empty text toolbar</a></li>
+      <li><a href="../../../output/playwright/phase-2/playwright-cli/round3-text-select-visible.yml">Visible text focus target</a></li>
+    </ul>
+  </section>
+</main>
+</body>
+</html>

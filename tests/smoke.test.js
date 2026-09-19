@@ -9,6 +9,8 @@ const read = (file) => fs.readFileSync(path.join(root, file), 'utf8');
 const html = read('index.html');
 const main = read('js/main.js');
 const sidebar = read('js/ui/Sidebar.js');
+const historyPanel = read('js/ui/HistoryPanel.js');
+const settingsDialog = read('js/ui/SettingsDialog.js');
 const app = read('js/app.js');
 const serviceWorker = read('sw.js');
 const responsiveStyle = read('css/progressive.css');
@@ -92,6 +94,7 @@ test('Settings and text controls expose the refined layout and accessible fields
 	assert.match(html, /class="settings-field ribbon-position-row"/);
 	assert.match(css, /dialog h3\s*\{[^}]*margin:\s*0 0 6px/s);
 	assert.match(css, /\.settings-footer-nav\s*\{[^}]*grid-column:\s*1/);
+	assert.match(css, /\.settings-footer-nav\s*\{[^}]*border-top:\s*1px solid var\(--w10-border\)/s);
 	assert.match(css, /\.settings-general-options\s*\{[^}]*grid-template-columns:\s*repeat\(2/s);
 	assert.match(css, /\.ribbon-setting-row\s*\{[^}]*display:\s*grid/s);
 	assert.match(css, /\.ribbon-settings-list\s*\{[^}]*display:\s*grid/s);
@@ -451,7 +454,7 @@ test('Round-2 fixes: V glyph, session persistence, view-aware actions, storage m
   assert.match(html, /Export All/);
   assert.match(html, /Clear All/);
   assert.match(sidebar, /_syncHistoryActionLabels/);
-  assert.match(sidebar, /history-actions-label/);
+  assert.match(historyPanel, /history-actions-label/);
   assert.match(main, /exportSessionEntry/);
   assert.match(main, /sidebar\.historyView === 'session'/);
   // 3. taller settings dialog + compact ribbon rows
@@ -489,12 +492,22 @@ test('Round-2 stabilization: alpha, text commit, and nested image actions', () =
 	assert.match(canvas, /globalAlpha = 1;[\s\S]*globalCompositeOperation = 'source-over'/);
 	assert.match(main, /commitLayerWithSourceOver\(canvasManager\.ctx/);
 	assert.match(textTool, /commit\(\);\s*ctx\.setActiveTool\?\.\('select'\)/);
-	assert.match(css, /\.text-editor-toolbar\[hidden\]\s*\{[^}]*display:\s*none\s*!important/s);
-	assert.match(textTool, /toolbar\.setAttribute\('aria-hidden', String\(visible === false\)\)/);
+	assert.match(css, /\.text-editor-toolbar\.is-empty\s*\{/);
+	assert.match(textTool, /toolbar\.hidden = false/);
+	assert.match(textTool, /toolbar\.setAttribute\('aria-hidden', String\(!historyVisible\)\)/);
+	assert.match(textTool, /control\.hidden = !historyVisible/);
 	assert.match(controller, /const ancestorsOf = \(menu\) =>/);
 	assert.match(controller, /const handleKeyboard = \(event\) =>/);
 	assert.match(controller, /event\.key === 'ArrowLeft'/);
 	assert.match(controller, /submenuTrigger\?\.focus\(\)/);
+	assert.match(controller, /paint:action-menu-open-at/);
+	assert.match(read('js/ui/ColorPalette.js'), /paint:action-menu-open-at/);
+	assert.match(main, /const nudgeSelection = \(dx, dy\) =>/);
+	assert.match(main, /if \(e\.defaultPrevented\) return/);
+	assert.match(historyPanel, /export const createHistoryPanel/);
+	assert.match(sidebar, /createHistoryPanel/);
+	assert.match(settingsDialog, /export const createSettingsDialog/);
+	assert.match(main, /createSettingsDialog/);
 });
 
 test('Phase 2 Steps 02–04 contracts and UX hooks are wired', () => {

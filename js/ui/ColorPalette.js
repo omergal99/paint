@@ -102,11 +102,9 @@ export const createColorPalette = ({
     if (!paletteMenu || !Number.isInteger(index)) return;
     paletteMenu.dataset.index = String(index);
     paletteMenu.hidden = false;
-    paletteMenu.classList.add('open');
-    const width = 180;
-    const height = 136;
-    paletteMenu.style.left = `${Math.min(event.clientX, window.innerWidth - width - 8)}px`;
-    paletteMenu.style.top = `${Math.min(event.clientY, window.innerHeight - height - 8)}px`;
+    document.dispatchEvent(new CustomEvent('paint:action-menu-open-at', {
+      detail: { menu: paletteMenu, x: event.clientX + 4, y: event.clientY + 4 },
+    }));
     paletteMenu.querySelector('button')?.focus();
   };
 

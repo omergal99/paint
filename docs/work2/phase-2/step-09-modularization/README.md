@@ -34,3 +34,13 @@ and nested menus through one functional seam. Image → More owns Crop, Rotate,
 and Flip submenus; ancestor menus remain open while a child opens, while one
 document-level outside-click/Escape lifecycle closes all levels. The next
 slice is HistoryPanel extraction.
+
+## Round 3 progress
+
+09.1 and 09.2 are now delivered as focused functional seams:
+`js/ui/HistoryPanel.js` owns History/Session tab semantics, roving tab index,
+and view-aware action labels; `js/ui/SettingsDialog.js` owns settings tab
+roles, panel visibility, arrow navigation, and close-focus restoration. The
+existing Sidebar/main composition remains compatible while data/rendering
+owners stay explicit. Further extraction is gated on teardown and callback
+coverage.

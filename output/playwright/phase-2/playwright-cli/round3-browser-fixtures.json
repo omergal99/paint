@@ -1,0 +1,64 @@
+{
+  "round": "3",
+  "date": "2026-09-19",
+  "browser": "Playwright Chromium via installed playwright-cli",
+  "url": "http://127.0.0.1:4174/",
+  "fixes": {
+    "paletteContextMenu": {
+      "open": true,
+      "menuClass": "action-menu-items color-palette-context-menu-items",
+      "openedAtPointer": true,
+      "outsideClickClosed": true
+    },
+    "textToolbarOff": {
+      "toolbarPresent": true,
+      "hidden": false,
+      "ariaHidden": true,
+      "class": "text-editor-toolbar is-empty",
+      "dragChangedShellPosition": true
+    },
+    "selectTextAfterDraw": {
+      "focusTargetVisible": true,
+      "accessibleLabel": "Focus text: Alpha test",
+      "pressed": true,
+      "moveAffordance": "✥",
+      "toolAfterCommit": "select"
+    },
+    "selectionArrowNudge": {
+      "normalMarqueeBeforeX": 616,
+      "afterArrowRightX": 617,
+      "deltaPixels": 1
+    },
+    "textMenuArrow": {
+      "width": "16px",
+      "minWidth": "16px",
+      "hoverRulePresent": true
+    }
+  },
+  "directAlphaFixture": {
+    "foreground": "#a349a4",
+    "opacity": 0.2,
+    "selectAfterDraw": true,
+    "floatingLayerBeforeCommit": true,
+    "selectionHandlesBeforeCommit": 8,
+    "canvasPixelBeforeCommit": [255, 255, 255, 255],
+    "canvasPixelAfterCommit": [237, 219, 237, 255],
+    "expectedSourceOverPixel": [237, 219, 237, 255],
+    "result": "pass",
+    "consoleErrors": 0,
+    "note": "The single repeated-readback warning was emitted by the inspection eval, not by the application journey."
+  },
+  "layoutMatrix": [
+    { "viewport": "1280x800", "layout": "top", "appClass": "ribbon-top", "ribbon": { "x": 0, "y": 0, "width": 1280, "height": 74 } },
+    { "viewport": "1280x720", "layout": "left", "appClass": "ribbon-left", "ribbon": { "x": 0, "y": 0, "width": 116, "height": 694 } },
+    { "viewport": "1280x720", "layout": "bottom", "appClass": "ribbon-bottom", "ribbon": { "x": 0, "y": 620, "width": 1280, "height": 74 } },
+    { "viewport": "1280x720", "layout": "floating", "appClass": "ribbon-float", "ribbon": { "x": 190, "y": 10, "width": 900, "height": 75 } },
+    { "viewport": "320x720", "layout": "top-mobile-order", "appClass": "ribbon-top", "ribbon": { "x": 0, "y": 646, "width": 320, "height": 74 }, "overflow": { "scrollWidth": 1065, "clientWidth": 320 } }
+  ],
+  "keyboardMatrix": {
+    "settingsArrowTabNavigation": true,
+    "menuEnterOpens": true,
+    "menuEscapeCloses": true,
+    "result": "pass"
+  }
+}

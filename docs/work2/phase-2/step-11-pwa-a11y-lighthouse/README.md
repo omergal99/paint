@@ -36,6 +36,16 @@ toolbar is removed from the visual and accessibility surface. These are focused
 representative checks, with ArrowDown/Enter/ArrowLeft keyboard movement, not
 the final all-layout audit.
 
+## Round 3 progress
+
+11.1 now has measured top/left/bottom/floating Ribbon states at 1280px and a
+320px narrow state with horizontal overflow preserved. Settings arrow-tab
+navigation, Image More Enter-open, and Escape-close all pass in the live
+browser. The palette context menu is pointer-positioned and outside-click
+closed through the shared menu seam. Remaining gates are 200% zoom,
+reduced-motion, Lighthouse, offline shell/update behavior, and a final visual
+regression capture.
+
 ## Done when
 
 Scores and failures are recorded, targets are met or explicitly waived, and the

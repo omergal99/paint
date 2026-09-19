@@ -210,10 +210,17 @@ export const createTextTool = () => {
     toolbar.setAttribute('aria-label', 'Text editor controls');
     toolbar.tabIndex = 0;
     const setHistoryToolbarVisibility = (visible) => {
-      toolbar.hidden = visible === false;
-      toolbar.setAttribute('aria-hidden', String(visible === false));
+      const historyVisible = visible !== false;
+      // Keep the toolbar shell in the DOM. It is also the drag handle for the
+      // live editor, so hiding the element itself made the editor impossible
+      // to reposition when recent-text controls were disabled.
+      toolbar.hidden = false;
+      toolbar.classList.toggle('is-empty', !historyVisible);
+      toolbar.setAttribute('aria-hidden', String(!historyVisible));
+      [historyLabel, nextHistorySelect, clearHistoryButton].forEach((control) => {
+        control.hidden = !historyVisible;
+      });
     };
-    setHistoryToolbarVisibility(ctx.getTextHistoryToolbarVisible?.() !== false);
     const historyLabel = document.createElement('span');
     historyLabel.className = 'text-editor-toolbar-label';
     historyLabel.textContent = 'Recent text';
@@ -226,6 +233,7 @@ export const createTextTool = () => {
     clearHistoryButton.textContent = 'Clear';
     clearHistoryButton.setAttribute('aria-label', 'Clear recent text history');
     toolbar.append(historyLabel, nextHistorySelect, clearHistoryButton);
+    setHistoryToolbarVisibility(ctx.getTextHistoryToolbarVisible?.() !== false);
 
     const nextEditor = document.createElement('textarea');
     nextEditor.className = 'op-text-box';

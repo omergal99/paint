@@ -33,6 +33,7 @@ import { createTextDocumentStore } from './document/TextDocumentStore.js';
 import { createTextHistoryStore } from './document/TextHistoryStore.js';
 import { createTextSelectionOverlay } from './ui/TextSelectionOverlay.js';
 import { createActionMenuController } from './ui/ActionMenuController.js';
+import { createSettingsDialog } from './ui/SettingsDialog.js';
 
 // ---------- DOM refs ----------
 const stage = document.getElementById('canvas-stage');
@@ -197,6 +198,27 @@ const setSelection = (region, opts = {}) => {
 		drawSelectionOutline(region);
 	}
 	updateSelectionHandles(region);
+}
+
+const nudgeSelection = (dx, dy) => {
+	const selection = canvasManager.selection;
+	if (!selection?.w || !selection?.h) return false;
+	if (!canvasManager.floatingCanvas) {
+		historyManager.snapshot();
+		canvasManager.floatingCanvas = canvasManager.extractRegion(selection);
+		canvasManager.fillRegion(selection, canvasManager.backgroundColor);
+	}
+	const width = canvasManager.floatingCanvas?.width || selection.w;
+	const height = canvasManager.floatingCanvas?.height || selection.h;
+	const maxX = Math.max(0, canvasManager.width - width);
+	const maxY = Math.max(0, canvasManager.height - height);
+	setSelection({
+		x: Math.max(0, Math.min(maxX, selection.x + dx)),
+		y: Math.max(0, Math.min(maxY, selection.y + dy)),
+		w: width,
+		h: height,
+	});
+	return true;
 }
 
 const selectionHandles = [...document.querySelectorAll('[data-selection-handle]')];
@@ -1004,9 +1026,19 @@ const setDialogUrl = (dialog, extra = {}) => {
 	window.history.replaceState(null, '', `${window.location.pathname}${query ? `?${query}` : ''}${window.location.hash}`);
 }
 
+const settingsDialogController = createSettingsDialog({
+	dialog: settingsDialog,
+	tabs: document.querySelectorAll('[data-settings-tab]'),
+	panels: document.querySelectorAll('[data-settings-panel]'),
+	onChange: (tab) => {
+		if (tab === 'about') updateAboutStats();
+		if (settingsDialog.open) setDialogUrl('settings', { tab });
+	},
+});
+settingsDialogController.bind();
+
 const openSettingsDialog = (tab = 'general') => {
-	if (!settingsDialog.open) settingsDialog.showModal();
-	document.querySelector(`[data-settings-tab="${tab}"]`)?.click();
+	settingsDialogController.open(tab);
 	setDialogUrl('settings', { tab });
 }
 
@@ -1464,17 +1496,6 @@ const renderReleaseNotes = () => {
 }
 renderReleaseNotes();
 
-document.querySelectorAll('[data-settings-tab]').forEach((tab) => {
-	tab.addEventListener('click', () => {
-		document.querySelectorAll('[data-settings-tab]').forEach((item) => item.classList.toggle('active', item === tab));
-		document.querySelectorAll('[data-settings-panel]').forEach((panel) => {
-			panel.hidden = panel.dataset.settingsPanel !== tab.dataset.settingsTab;
-		});
-		if (tab.dataset.settingsTab === 'about') updateAboutStats();
-		if (settingsDialog.open) setDialogUrl('settings', { tab: tab.dataset.settingsTab });
-	});
-});
-
 const RIBBON_GROUP_ORDER = Object.freeze([
 	'ribbon-group-file',
 	'ribbon-group-clipboard',
@@ -1908,6 +1929,7 @@ const TOOL_KEYS = {
 };
 
 window.addEventListener('keydown', (e) => {
+	if (e.defaultPrevented) return;
 	const tag = document.activeElement?.tagName;
 	const typing = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
 	// Undo: Ctrl/Cmd+Z (Shift = redo). Redo: Ctrl+Y or Ctrl/Cmd+Shift+Z.
@@ -1996,15 +2018,15 @@ window.addEventListener('keydown', (e) => {
 	}
 
 	if (e.key.startsWith('Arrow')) {
-		if (canvasManager.floatingCanvas && canvasManager.selection) {
+		if (canvasManager.selection?.w && canvasManager.selection?.h) {
 			e.preventDefault();
-			const sel = canvasManager.selection;
 			const step = e.shiftKey ? 10 : 1;
-			if (e.key === 'ArrowUp') sel.y -= step;
-			if (e.key === 'ArrowDown') sel.y += step;
-			if (e.key === 'ArrowLeft') sel.x -= step;
-			if (e.key === 'ArrowRight') sel.x += step;
-			setSelection(sel);
+			const deltas = {
+				ArrowUp: [0, -step], ArrowDown: [0, step],
+				ArrowLeft: [-step, 0], ArrowRight: [step, 0],
+			};
+			const [dx, dy] = deltas[e.key];
+			nudgeSelection(dx, dy);
 			return;
 		}
 	}

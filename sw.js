@@ -32,6 +32,8 @@ const SHELL = [
   './js/tools/SelectTool.js',
   './js/ui/ColorPalette.js',
   './js/ui/ActionMenuController.js',
+  './js/ui/HistoryPanel.js',
+  './js/ui/SettingsDialog.js',
   './js/ui/ColorInspector.js',
   './js/ui/StatusBar.js',
   './js/ui/DialogService.js',

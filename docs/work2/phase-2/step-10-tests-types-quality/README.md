@@ -30,6 +30,16 @@ and nested Image menu wiring. The permanent gap is a direct browser pixel
 fixture for selected-shape placement plus `checkJs`, coverage, and teardown
 behavior tests.
 
+## Round 3 progress
+
+10.1 is complete for the selected-shape alpha gate. The browser fixture sets
+foreground `#a349a4` to 20%, enables Select after draw, observes the floating
+layer and eight selection handles, commits once, and matches the expected
+source-over pixel `[237,219,237,255]`. Evidence is in
+`output/playwright/phase-2/playwright-cli/round3-browser-fixtures.json`.
+Transparent PNG/import/export, `checkJs`, subsystem coverage, and negative
+teardown/error-path fixtures remain open.
+
 ## Done when
 
 CI is green, coverage is measured, and the highest-risk workflows have direct
