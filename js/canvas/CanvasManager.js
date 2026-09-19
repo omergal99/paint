@@ -57,6 +57,8 @@ export class CanvasManager {
 
     this.selection = null; // {x,y,w,h} in image pixels, or null
     this.floatingCanvas = null; // offscreen canvas for active floating selection
+    this.layerComposer = null;
+    this.onRasterLoad = null;
 
     this._setSize(width, height);
     this.clear(backgroundColor);
@@ -90,10 +92,45 @@ export class CanvasManager {
     // A floating shape has not been composited yet, so pixel-wise the canvas can
     // still look blank — treat it as dirty so a paste does not land at 0,0.
     if (this.floatingCanvas) return false;
+    if (this.layerComposer?.hasContent?.()) return false;
     return this._pixelsSignature() === this._cleanSignature;
   }
 
   markDocumentDirty() { this._cleanSignature = null; }
+
+  setLayerComposer(layerComposer = null) {
+    this.layerComposer = layerComposer;
+  }
+
+  createCompositeCanvas() {
+    if (typeof document === 'undefined' || !this.layerComposer?.hasContent?.()) return this.canvas;
+    const composite = document.createElement('canvas');
+    composite.width = this.width;
+    composite.height = this.height;
+    const context = composite.getContext('2d');
+    context.drawImage(this.canvas, 0, 0);
+    this.layerComposer.composite?.(context);
+    return composite;
+  }
+
+  toDataURL(type = 'image/png', quality) {
+    const source = this.createCompositeCanvas();
+    return source.toDataURL(type, quality);
+  }
+
+  // Flatten auxiliary layers only when a pixel operation needs to own them.
+  // Text focus/move never calls this method, so it cannot erase or duplicate
+  // unrelated pixels behind a text object.
+  flattenLayers() {
+    if (!this.layerComposer?.hasContent?.() || typeof document === 'undefined') return false;
+    const composite = this.createCompositeCanvas();
+    this.ctx.clearRect(0, 0, this.width, this.height);
+    this.ctx.drawImage(composite, 0, 0);
+    this.layerComposer.clear?.();
+    this.markDocumentDirty();
+    this.onRasterLoad?.({ reason: 'flatten' });
+    return true;
+  }
 
   _setSize(w, h) {
     this.canvas.width = w;
@@ -107,7 +144,7 @@ export class CanvasManager {
   persistToStorage() {
     if (typeof window === 'undefined' || !window.localStorage) return;
     try {
-      const dataUrl = this.canvas.toDataURL('image/png');
+      const dataUrl = this.toDataURL('image/png');
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ dataUrl, width: this.width, height: this.height, updatedAt: Date.now() }));
       window.dispatchEvent(new CustomEvent('paint:changed', {
         detail: { width: this.width, height: this.height },
@@ -218,6 +255,7 @@ export class CanvasManager {
         this.clearOverlay();
         this.selection = null;
         this.markDocumentDirty();
+        this.onRasterLoad?.({ reason: 'load-image-data' });
         if (this.onSizeChange) this.onSizeChange(targetWidth, targetHeight);
         resolve();
       };
@@ -254,6 +292,7 @@ export class CanvasManager {
     this.ctx.drawImage(source, 0, 0);
     this.clearOverlay();
     this.selection = null;
+    this.onRasterLoad?.({ reason: 'load-source' });
     // A New blank source resets the clean baseline; real images mark dirty.
     this._cleanSignature = this._pixelsSignature();
     if (this.onSizeChange) this.onSizeChange(w, h);
@@ -264,7 +303,8 @@ export class CanvasManager {
   getPixelColor(x, y) {
     x = Math.min(Math.max(0, Math.floor(x)), this.width - 1);
     y = Math.min(Math.max(0, Math.floor(y)), this.height - 1);
-    const [r, g, b, a] = this.ctx.getImageData(x, y, 1, 1).data;
+    const source = this.createCompositeCanvas();
+    const [r, g, b, a] = source.getContext('2d', { willReadFrequently: true }).getImageData(x, y, 1, 1).data;
     return { r, g, b, a };
   }
 
@@ -274,7 +314,7 @@ export class CanvasManager {
     const out = document.createElement('canvas');
     out.width = r.w;
     out.height = r.h;
-    out.getContext('2d').drawImage(this.canvas, r.x, r.y, r.w, r.h, 0, 0, r.w, r.h);
+    out.getContext('2d').drawImage(this.createCompositeCanvas(), r.x, r.y, r.w, r.h, 0, 0, r.w, r.h);
     return out;
   }
 
@@ -391,6 +431,7 @@ export class CanvasManager {
   }
 
   toBlob(type = 'image/png') {
-    return new Promise((resolve) => this.canvas.toBlob(resolve, type));
+    const source = this.createCompositeCanvas();
+    return new Promise((resolve) => source.toBlob(resolve, type));
   }
 }

@@ -1661,6 +1661,10 @@ body.dark-mode #history-clear-btn {
 	image-rendering: -webkit-optimize-contrast;
 }
 
+.text-layer-canvas {
+	pointer-events: none;
+}
+
 .text-object-focus-layer {
 	position: absolute;
 	inset: 0;
@@ -1689,7 +1693,7 @@ body.dark-mode #history-clear-btn {
 	box-shadow: 0 0 0 1px #fff, 0 0 0 3px var(--w10-accent);
 	cursor: move;
 	outline: none;
-	pointer-events: none;
+	pointer-events: auto;
 }
 .text-object-focus-target.selected::after {
 	content: '✥';

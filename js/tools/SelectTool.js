@@ -20,6 +20,10 @@ export const createSelectTool = () => {
   }
 
   const onDown = (pt, ctx) => {
+    // A normal pixel selection must own any committed text pixels first.
+    // Text focus targets do not reach this surface, so moving text itself never
+    // takes this path.
+    ctx.flattenLayers?.();
     const sel = ctx.getSelection();
     if (sel && inside(pt, sel)) {
       // Begin moving the existing selection.

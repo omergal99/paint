@@ -1,0 +1,45 @@
+{
+  "round": 5,
+  "date": "2026-09-19",
+  "release": "1.6.0",
+  "textLayer": {
+    "viewport": "1280x900",
+    "committedTarget": "Focus text: Movable text",
+    "normalPixelSelectionStatusBeforeMove": "",
+    "normalPixelSelectionStatusAfterMove": "",
+    "targetMovedByCssPixels": { "x": 100, "y": 50 },
+    "outsideClickSelectedTargetCount": 0,
+    "consoleErrors": 0
+  },
+  "pwa": {
+    "serviceWorker": {
+      "state": "activated",
+      "controlledOfflineReload": true
+    },
+    "reducedMotion": true,
+    "manifestIcons": [
+      { "src": "css/assets/icon-192.png", "status": 200, "dimensions": "192x192" },
+      { "src": "css/assets/icon-512.png", "status": 200, "dimensions": "512x512" },
+      { "src": "css/assets/icon-512-maskable.png", "status": 200, "dimensions": "512x512" }
+    ],
+    "offlineReload": {
+      "title": "Paint",
+      "appRoot": true,
+      "textLayerCanvas": true,
+      "serviceWorkerController": true
+    }
+  },
+  "mobile": {
+    "viewport": "320x720",
+    "ribbonHeight": 74,
+    "ribbonScrollWidth": 1065,
+    "bodyClientWidth": 320,
+    "horizontalRibbonScrollIsIntentional": true
+  },
+  "remaining": [
+    "Lighthouse budget run",
+    "Real browser-level 200% zoom",
+    "Service-worker update-prompt behavior",
+    "Final device matrix"
+  ]
+}

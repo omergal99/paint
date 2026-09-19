@@ -15,6 +15,11 @@ body,
   height: 100dvh;
 }
 
+html,
+body {
+  overflow-x: hidden;
+}
+
 body {
   padding-bottom: var(--paint-safe-bottom);
 }
@@ -23,13 +28,26 @@ body {
 .canvas-stage,
 .canvas-scale,
 #paint-canvas,
+#text-layer-canvas,
 #overlay-canvas {
   touch-action: none;
 }
 
 #paint-canvas,
+#text-layer-canvas,
 #overlay-canvas {
   image-rendering: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 body.dark-mode .ci-field code {

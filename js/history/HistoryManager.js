@@ -8,6 +8,8 @@ import { summarizeHistoryMemory } from '../storage/MemoryBudget.js';
 const MAX_HISTORY = 20;
 const MAX_HISTORY_BYTES = 64 * 1024 * 1024;
 const SESSION_BACKUP_KEY = 'paint:session-backup';
+const canvasDataUrl = (canvasManager) => canvasManager.toDataURL?.('image/png')
+	|| canvasManager.canvas.toDataURL('image/png');
 
 export class HistoryManager {
   constructor(canvasManager) {
@@ -66,7 +68,7 @@ export class HistoryManager {
     const height = Number(this.canvasManager.height) || Number(this.canvasManager.canvas.height);
     const sig = this.canvasManager._pixelsSignature?.();
     if (!force && sig && sig === this._lastSnapshotSig) return false;
-    const dataUrl = this.canvasManager.canvas.toDataURL('image/png');
+    const dataUrl = canvasDataUrl(this.canvasManager);
     this._lastSnapshotSig = sig || null;
     this.undoStack.push({ dataUrl, width, height, id: this._newId('session'), kind: 'session' });
     if (this.undoStack.length > MAX_HISTORY) this.undoStack.shift();
@@ -81,7 +83,7 @@ export class HistoryManager {
   async undo() {
     if (this.undoStack.length === 0) return;
     const current = {
-      dataUrl: this.canvasManager.canvas.toDataURL('image/png'),
+      dataUrl: canvasDataUrl(this.canvasManager),
       width: this.canvasManager.width,
       height: this.canvasManager.height,
     };
@@ -95,7 +97,7 @@ export class HistoryManager {
   async redo() {
     if (this.redoStack.length === 0) return;
     const current = {
-      dataUrl: this.canvasManager.canvas.toDataURL('image/png'),
+      dataUrl: canvasDataUrl(this.canvasManager),
       width: this.canvasManager.width,
       height: this.canvasManager.height,
     };
@@ -176,7 +178,7 @@ export class HistoryManager {
       const live = {
         id: 'current',
         kind: 'current',
-        dataUrl: this.canvasManager.canvas.toDataURL('image/png'),
+        dataUrl: canvasDataUrl(this.canvasManager),
         width: this.canvasManager.width,
         height: this.canvasManager.height,
         label: 'Current',

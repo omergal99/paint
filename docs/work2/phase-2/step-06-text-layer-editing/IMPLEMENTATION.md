@@ -4,8 +4,9 @@
 
 - Added bounded closure-based `TextDocumentStore` with normalized objects,
   revisions, z-order, subscription, replacement, removal, and serialization.
-- Text commits register metadata in the store while retaining the current
-  raster output path.
+- Text commits register metadata and render to a separate transparent text
+  canvas. CanvasManager composites that layer for save, copy, history, and
+  export; the base paint raster is not modified by a text commit.
 - Added closure-based `TextHistoryStore` with local persistence, newest-first
   ordering, de-duplication, safe parsing, clear support, and a maximum of 20
   entries.
@@ -13,33 +14,32 @@
   restore or clear entry history without introducing text-object editing.
 - Added a persisted Text options checkbox for Select text after draw. When
   enabled, a committed text object is selected through an accurate,
-  metadata-bound focus target and handed to the normal pixel-selection handles;
-  the target remains visible and follows a committed raster move.
+  metadata-bound focus target. Pointer drag and arrow keys update only the
+  text object; the normal pixel-selection handles are not involved.
 - Kept shape select-after-draw behavior covered by the existing shape-layer
   tests.
 
 ## Safety boundary
 
-This is intentionally not the full editable compositor. Text-only
-move/resize/edit-after-blur, range formatting, right-click Edit, and reveal mode
-remain postponed. The current handoff uses the ordinary raster selection path;
-it does not claim that only text pixels are isolated from paint underneath.
-The non-negotiable overlap acceptance case is still open: editing a text object
-after partial paint overlap must not erase unrelated pixels, duplicate text, or
-make the text vanish. The metadata store must not be treated as proof of that
-behavior.
+This is intentionally not the full editable compositor. Text-only resize,
+edit-after-blur, range formatting, right-click Edit, and reveal mode remain
+postponed. A normal pixel operation explicitly flattens the committed text
+layer before it starts, so it cannot duplicate the layer or erase unrelated
+paint. Reload currently restores the composited image, not editable text
+metadata. The non-negotiable overlap acceptance case for future editing still
+requires undo/redo and reload proof before those features are enabled.
 
 ## Verification
 
-- `npm test` — all 4 top-level test files passed, including the bounded
-  history contract and existing shape-layer/select-after-draw coverage.
+- `npm test` — all 5 top-level test files passed, including the bounded
+  history contract, renderer contract, and existing shape-layer coverage.
 - `node --check` — passed for the changed JavaScript modules.
 - `git diff --check` — passed.
 - Browser smoke — local headless Chrome opened the real Text tool, committed
-  one entry, restored it through Recent text, and cleared history while the
-  textarea stayed open. A second browser pass verified the enabled checkbox,
-  selected focus target, and no-raster-edit boundary. No object-editing claim
-  was made by this check.
+  text, restored it through Recent text, and cleared history while the textarea
+  stayed open. A second pass verified the enabled checkbox, moved the selected
+  target by `+100,+50` while pixel-selection status stayed empty, and cleared
+  the target on outside click. No unsafe object-editing claim was made.
 
 ## Round 2 stabilization
 
@@ -49,8 +49,8 @@ behavior.
 - “Show Recent text toolbar” now hides the live toolbar visually and
   semantically when false (`hidden`, `aria-hidden`, and `display: none`).
 - “Select text after draw” remains deliberately safe: after commit it exposes
-  a labeled metadata focus target with a text cursor, but does not repaint or
-  edit existing pixels. It can always be turned off.
+  a labeled metadata focus target, and pointer/keyboard movement updates only
+  the text layer. It can always be turned off.
 - Playwright evidence includes the hidden-toolbar state, outside commit/tool
   exit, and the focus-target option. Full object editing remains gated by the
   overlap/duplicate/vanish plus undo/redo/reload proof.

@@ -235,10 +235,11 @@ journey before the next extraction.
 
 ## Step 11 — PWA, accessibility, CSS, Lighthouse
 
-Step 11 is not fully complete yet. The accessibility/layout slice is delivered,
-but the app is not allowed to claim production PWA readiness until the manifest
-has installable 192×192 and 512×512 PNG icons, offline/update behavior is
-verified, and Lighthouse results are recorded.
+Step 11 is substantially delivered but not fully complete. The manifest now
+has installable 192×192 and 512×512 PNG icons, including a maskable variant;
+the shell has resilient caching, reduced-motion support, and offline reload
+evidence. Production PWA readiness still requires Lighthouse, real
+browser-level 200% zoom, update-prompt behavior, and a final device matrix.
 
 - Add 192×192 and 512×512 PNG icons, including a maskable variant if the visual
   design supports it.

@@ -6,8 +6,8 @@ This is the short, updateable handoff for what is usable now, what is only a
 foundation, and how to experience each delivered improvement in Paint. The
 detailed evidence remains in each step workspace and `PROGRESS-LOG.md`.
 
-Latest round: [`PHASE-2-STATUS_4.md`](PHASE-2-STATUS_4.md) ·
-[visual HTML status](PHASE-2-STATUS_4.html)
+Latest round: [`PHASE-2-STATUS_5.md`](PHASE-2-STATUS_5.md) ·
+[visual HTML status](PHASE-2-STATUS_5.html)
 
 ## Status at a glance
 
@@ -17,13 +17,13 @@ Latest round: [`PHASE-2-STATUS_4.md`](PHASE-2-STATUS_4.md) ·
 | 02 | Done | 8/10 | Shared contracts, settings persistence, functional EventBus | Contract tests plus Settings reload check; remaining legacy owners are inventoried | Finish remaining legacy class/event owners and teardown assertions | Open Settings, change a preference, reload, and confirm it persists |
 | 03 | Done | 8/10 | History/session UX, settings summaries, Ribbon/menu behavior, compact Settings layout | Smoke tests plus 1280px browser evidence; alternate Ribbon matrix remains | Complete alternate-layout browser matrix and keyboard menu audit | Open Settings and History; inspect Current-first history, two-column General choices, and the grid Ribbon tab |
 | 04 | Done with follow-up | 8/10 | Resize percentage/ratio/selection behavior and transparent canvas foundation | `transparency.test.js` plus browser checkerboard check; file round trips remain | Add transparent PNG/import/export and resize regression fixtures | Open Resize; try 50% with ratio lock; choose General → Transparent and inspect the checkerboard viewport |
-| 05 | Stabilized with browser gate | 9.5/10 | Compact checkerboard opacity menu, pointer-positioned palette context menu, shared outside-click lifecycle, persisted alpha, alpha-aware drawing, and source-over floating placement | `npm test` 4/4; direct browser pixel fixture matches `[237,219,237,255]`; focused menu checks | Broaden file/import/eyedropper alpha fixtures and keyboard context invocation | Open Colors, set 20%, right-click a palette slot, click outside, then draw/select/place |
-| 06 | Safe focus + raster-selection handoff | 8.8/10 | Recent text history, empty draggable toolbar when off, accurate text bounds, optional focus target, and normal selection handles/move handoff | Live browser: off keeps Text active; on shows selected target and 8 handles; drag offset follows metadata | Keep text-object edit-after-blur/compositor/range formatting behind overlap/undo/reload proof; pixel handoff is not text-only editing |
+| 05 | Stabilized with browser gate | 9.5/10 | Compact checkerboard opacity menu, pointer-positioned palette context menu, shared outside-click lifecycle, persisted alpha, alpha-aware drawing, and source-over floating placement | `npm test` 5/5; direct browser pixel fixture matches `[237,219,237,255]`; focused menu checks | Broaden file/import/eyedropper alpha fixtures and keyboard context invocation | Open Colors, set 20%, right-click a palette slot, click outside, then draw/select/place |
+| 06 | Separate text layer + safe focus movement | 9.5/10 | Recent text history, empty draggable toolbar when off, accurate bounds, transparent committed text layer, optional focus target, metadata-only move, and outside-click clear | Live browser: selected text moves while `#status-selection` stays empty; click outside clears focus; source contract prevents TextTool raster writes | Edit-after-blur, range formatting, and reloadable text metadata remain deferred; normal pixel operations intentionally flatten the text layer |
 | 07 | Foundation | 4/10 | Functional seams and EventBus groundwork | Static listener inventory and contract tests; repeatable pointer trace, coalescing, and teardown measurements are still missing | No new visible performance claim yet; browser trace and listener audit remain |
 | 08 | Foundation | 4/10 | Memory-budget report and 64 MiB in-memory history cap | Memory contract tests; browser Blob/object-URL, quota-error, and IndexedDB recovery fixtures remain | Open About to see cached storage quota separately from memory; recovery flows are not complete |
 | 09 | Functional panel seams + shared menu placement | 8.7/10 | ActionMenuController, HistoryPanel, SettingsDialog, and one clamped placement contract for top-level/submenu/context menus | Live 1280px/320px bounds: representative menus have no viewport overflow; outside/Escape closure passes | Move more data callbacks behind seams after teardown coverage |
-| 10 | Browser fixture gate delivered | 8.8/10 | Alpha composition, text focus/move handoff, selection nudge, toolbar, nested menus, constants, and CSS contracts | `npm test` 4/4; syntax; diff; analyzer 0/0; live console errors 0 | Add transparent PNG/import, `checkJs`, coverage, and error-path fixtures |
-| 11 | Accessibility/layout partial; PWA gate open | 8.2/10 | Settings radio group, menu bounds at 1280/320, keyboard semantics, text focus, mobile overflow | Live Chromium checks; `manifest.json` inspection; console errors 0 | 192/512 PNG icons, offline/update, Lighthouse, 200% zoom, reduced motion, full mobile QA |
+| 10 | Browser fixture gate delivered | 8.8/10 | Alpha composition, text focus/move handoff, selection nudge, toolbar, nested menus, constants, and CSS contracts | `npm test` 5/5; syntax; diff; live console errors 0 | Add transparent PNG/import, `checkJs`, coverage, and error-path fixtures |
+| 11 | Accessibility/layout/PWA improved; final audit open | 9/10 | Settings radio group, menu bounds at 1280/320, keyboard semantics, reduced-motion CSS, 192/512 PNG icons, resilient SW shell, offline reload, and mobile Ribbon journey | Live Chromium: SW activated and controls offline reload; manifest/icons fetch; reduced-motion media true; 320px Ribbon is 74px and internally scrollable | Lighthouse, browser-level 200% zoom evidence, update-prompt behavior, and final device matrix remain |
 | 12 | Planned | 0/10 | Optional lazy background-removal provider | Not available yet | Not available yet |
 | 13 | Planned | 0/10 | Tabs, split panes, session/recovery | Not available yet | Not available yet |
 
@@ -33,12 +33,12 @@ behavior and its relevant browser or contract evidence are both complete.
 
 ## Current safety notes
 
-- Text is still rasterized on commit. The metadata `TextDocumentStore` is a
-  future ownership boundary, not proof that text objects can be edited safely.
-- Text-object compositor, hit-testing, move/resize/edit-after-blur, range
-  formatting, right-click Edit, and reveal mode remain deferred. “Select text
-  after draw” now hands the selected raster bounds to the normal pixel
-  selection handles; it does not claim text-only editing or overlap safety.
+- Text now renders on a separate transparent layer and is composited for save,
+  copy, history, and export. The metadata `TextDocumentStore` remains an
+  in-memory ownership boundary; it is not persisted as editable text yet.
+- Text-object edit-after-blur, resize, range formatting, right-click Edit, and
+  reveal mode remain deferred. “Select text after draw” moves metadata only;
+  normal pixel operations explicitly flatten the text layer before editing.
 - Before enabling those features, tests must prove that editing after partial
   paint overlap does not erase unrelated pixels, duplicate text, or make text
   vanish; undo/redo and reload must be included.
@@ -56,18 +56,20 @@ behavior and its relevant browser or contract evidence are both complete.
   budget.
 - The full Steps 01–08 completeness audit is recorded in
   [`STEP-01-08-AUDIT.md`](STEP-01-08-AUDIT.md).
-- Step 11 is partial: the PWA manifest still needs installable PNG icons and
-  offline/update/Lighthouse evidence before a customer-facing release claim.
+- Step 11 now has installable PNG icons, resilient shell installation, reduced
+  motion support, and live offline reload evidence. Lighthouse, browser-level
+  200% zoom, update-prompt behavior, and device-matrix evidence remain before
+  calling the PWA gate fully closed.
 
 ## Professional quality snapshot
 
 | Dimension | Score | Current gap |
 |---|---:|---|
-| Code design | 8.5/10 | Legacy class owners and the large composition root remain |
-| UI design | 8.8/10 | RTL/PWA polish and full visual regression remain |
-| Logic/data safety | 8.5/10 | Text-only overlap-safe editing and storage recovery are gated |
-| Verification | 8.4/10 | checkJs, coverage, Lighthouse, offline/update, and 200% zoom remain |
-| Overall | **8.5/10** | Strong Phase 2 release candidate, not yet a complete PWA gate |
+| Code design | 8.9/10 | Legacy class owners and the large composition root remain |
+| UI design | 9/10 | RTL/PWA polish and full visual regression remain |
+| Logic/data safety | 9/10 | Text metadata is isolated; editable text and storage recovery remain gated |
+| Verification | 8.9/10 | checkJs, coverage, Lighthouse, update behavior, and 200% zoom remain |
+| Overall | **8.9/10** | Strong `1.6.0` release candidate; final PWA audit remains |
 
 ## Updating this file
 

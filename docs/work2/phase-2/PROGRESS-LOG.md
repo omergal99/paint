@@ -259,3 +259,23 @@ that changed from `DECISIONS.md`.
   Lighthouse, zoom, reduced-motion, and mobile evidence close.
 - Verification: `npm test` 4/4, changed-module syntax, `git diff --check`,
   analyzer 0 issues/0 warnings, live browser console errors 0.
+
+## 2026-09-19 — Round 5 text-layer boundary, release 1.6.0, and PWA quick wins
+
+- Replaced the text commit’s direct paint-canvas write with a transparent
+  `TextLayerService` and shared `TextLayerRenderer`. Text selection targets now
+  drag and nudge metadata only; the normal pixel-selection status remains
+  empty, and outside click clears the focus affordance.
+- Added CanvasManager composition for storage, history, copy, and export. A
+  normal pixel operation explicitly flattens auxiliary text layers before it
+  begins, preserving a clear ownership boundary.
+- Versioned the customer release as `1.6.0`, removed internal “Phase 2” labels
+  from customer release notes, added 192/512/maskable PNG PWA icons, resilient
+  service-worker shell installation, manifest precaching, and reduced-motion
+  CSS.
+- Browser evidence: text focus movement and outside-clear pass; service worker
+  is activated and controls an offline reload; manifest/icon fetches pass;
+  reduced-motion is detected; 320px Ribbon is 74px and internally scrollable.
+- Added [`PHASE-2-STATUS_5.md`](PHASE-2-STATUS_5.md) and its white-theme HTML
+  companion. Steps 12–13 remain planned until the 1.6.0 release boundary and
+  remaining Step 11 audit gates are approved.

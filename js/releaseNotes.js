@@ -1,19 +1,19 @@
 import { APP_VERSION } from './version.js';
 
 // Static per-version highlights. Keep newest first. The settings dialog
-// renders this; "Unreleased" collects the current roadmap items.
+// renders this as customer-facing release history.
 export const RELEASE_NOTES = Object.freeze([
-  {
-    version: 'Unreleased',
-    date: '2026-09-19',
-    highlights: [
-      'Phase 2: shared action-menu placement, outside-click/Escape closure, and reliable palette color editing',
-      'Phase 2: compact alpha controls, source-over Select-after-draw composition, and transparent canvas groundwork',
-      'Phase 2: functional History/Session and Settings seams with keyboard semantics and focus restoration',
-      'Phase 2: recent text history, optional text focus targets, accurate bounds, and shape-like raster-selection handoff',
-      'Phase 2: Ribbon position buttons, mobile layout checks, storage estimate display, and release-readiness evidence',
-    ],
-  },
+	{
+		version: '1.6.0',
+		date: '2026-09-19',
+		highlights: [
+			'Reliable menus with viewport-aware placement and outside-click/Escape closing',
+			'Independent opacity controls, transparent color support, and safer shape placement',
+			'History and Settings improvements with keyboard-friendly tabs and Ribbon controls',
+			'Recent text history, optional text selection, and movable text-layer selections',
+			'Responsive Ribbon layouts and improved offline/PWA foundations',
+		],
+	},
   {
     version: '1.5.0',
     date: '2026-09',

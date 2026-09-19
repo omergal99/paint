@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Paint — Round 5 delivery status</title>
+  <style>
+    :root { color-scheme: light; font-family: Segoe UI, Arial, sans-serif; background: #fff; color: #1f2937; }
+    body { max-width: 1180px; margin: 0 auto; padding: 28px; background: #fff; line-height: 1.5; }
+    h1, h2 { color: #0f3d68; }
+    .summary { border-left: 5px solid #0078d4; padding: 12px 16px; background: #eef7ff; }
+    table { width: 100%; border-collapse: collapse; margin: 14px 0 26px; font-size: .94rem; }
+    th, td { border: 1px solid #c7d3df; padding: 9px 10px; text-align: left; vertical-align: top; }
+    th { background: #eaf2f8; color: #123b5d; }
+    .score { font-weight: 700; white-space: nowrap; color: #075985; }
+    code { background: #f1f5f9; padding: 1px 4px; border-radius: 3px; }
+    a { color: #005a9e; }
+  </style>
+</head>
+<body>
+  <h1>Paint — Round 5 delivery status</h1>
+  <p><strong>Customer release:</strong> 1.6.0 · <strong>Updated:</strong> 2026-09-19</p>
+  <p class="summary"><strong>Overall professional readiness: 8.9/10.</strong> Text focus movement is now layer-owned and the quick PWA gates are evidenced. Lighthouse, real browser 200% zoom, update behavior, and the final device matrix remain.</p>
+
+  <h2>Round results</h2>
+  <table>
+    <thead><tr><th>Area</th><th>Score</th><th>Delivered</th><th>Verification / UI path</th><th>Remaining</th></tr></thead>
+    <tbody>
+      <tr><th>Text layer</th><td class="score">9.5/10</td><td>Transparent <code>#text-layer-canvas</code>, shared renderer, composited save/history/export.</td><td>Draw text and inspect a focus target; normal selection status stays empty.</td><td>Reloadable editable metadata and edit-after-blur remain deferred.</td></tr>
+      <tr><th>Select text after draw</th><td class="score">9.5/10</td><td>Metadata-only drag and arrow movement; outside click clears focus.</td><td>Text options → Select text after draw → draw → drag target → click outside.</td><td>Range formatting and right-click Edit remain future work.</td></tr>
+      <tr><th>Release</th><td class="score">9/10</td><td>Versioned customer notes at 1.6.0 with no internal phase wording.</td><td>Settings → Release notes.</td><td>No tag/push/deployment was performed.</td></tr>
+      <tr><th>PWA</th><td class="score">9/10</td><td>192/512/maskable icons, resilient shell install, offline reload, reduced motion.</td><td>Manifest/icon fetches OK; SW active and controls offline reload.</td><td>Lighthouse, update prompt, real browser 200% zoom.</td></tr>
+      <tr><th>Mobile</th><td class="score">8.5/10</td><td>320px Ribbon remains 74px and internally scrollable.</td><td>Resize to 320px and browse the Ribbon.</td><td>Final device matrix.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Next release decision</h2>
+  <p>Steps 12 and 13 may be planned now. Implementation should begin after approval of the 1.6.0 release boundary and the remaining Step 11 audit. Recommended order: Step 12 lazy provider seam, then Step 13 persistent tabs, split pane, and recovery.</p>
+  <p><a href="PHASE-2-STATUS.md">Return to the current status index</a></p>
+</body>
+</html>

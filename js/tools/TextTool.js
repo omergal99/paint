@@ -1,33 +1,24 @@
 // js/tools/TextTool.js
-// Functional text tool: the live editor is a DOM textarea and the committed
-// result is drawn with the canvas context. Layout values are kept together so
-// the editor and the committed text can be tuned without changing font-size
-// dependent magic numbers in several different places.
+// Functional text tool: the live editor is a DOM textarea and committed text
+// metadata is rendered by TextLayerService. Layout values stay shared so the
+// editor and committed layer keep the same font-size-dependent geometry.
 
-import { hexToRgb } from '../utils/color.js';
 import { KEYBOARD_KEYS } from '../core/constants.js';
-
-export const TEXT_EDITOR_LAYOUT = Object.freeze({
-  // Position of the editor top edge relative to the click/caret anchor.
-  // Negative values place the editor above the pointer.
-  topOffsetPercent: -70,
-  // Position of the canvas ink relative to the same click/caret anchor.
-  canvasTextOffsetPercent: -50,
-  // One means 100% of the current font size. Keep this normalized value
-  // stable so changing font-size does not change the editor's proportions.
-  lineHeightPercent: 1.2,
-});
+import { hexToRgb } from '../utils/color.js';
+import {
+  TEXT_EDITOR_LAYOUT,
+  getTextFont,
+  getTextStyleSet,
+  measureTextObject,
+  renderTextObject,
+} from '../document/TextLayerRenderer.js';
 
 const getStyleSet = (ctx) => {
-  const value = ctx.getTextStyle?.() || [];
-  if (Array.isArray(value)) return new Set(value);
-  return value === 'plain' ? new Set() : new Set([value]);
+  return getTextStyleSet(ctx.getTextStyle?.() || []);
 }
 
 const getFontDeclaration = (ctx, fontSize, styles) => {
-  const fontStyle = styles.has('italic') ? 'italic' : 'normal';
-  const fontWeight = styles.has('bold') ? '700' : '400';
-  return `${fontStyle} ${fontWeight} ${fontSize}px ${ctx.getFontFamily()}`;
+  return getTextFont({ fontSize, fontFamily: ctx.getFontFamily(), styles });
 }
 
 const getRenderSize = (ctx) => {
@@ -36,13 +27,10 @@ const getRenderSize = (ctx) => {
   return Math.max(1, Math.round(ctx.getFontSize() * 100 / ctx.viewportManager.zoom));
 }
 
-const getLineHeight = (fontSize) => {
-  return fontSize * TEXT_EDITOR_LAYOUT.lineHeightPercent;
-}
-
-const getCanvasTextOffset = (fontSize) => {
-  return fontSize * TEXT_EDITOR_LAYOUT.canvasTextOffsetPercent / 100;
-}
+const getLineHeight = (fontSize) => fontSize * TEXT_EDITOR_LAYOUT.lineHeightPercent;
+const getCanvasTextOffset = (fontSize) => (
+  fontSize * TEXT_EDITOR_LAYOUT.canvasTextOffsetPercent / 100
+);
 
 export const createTextTool = () => {
   let editor = null;
@@ -142,59 +130,23 @@ export const createTextTool = () => {
     });
     ctx.historyManager.snapshot();
     const canvasContext = ctx.canvasManager.ctx;
-    const lineHeight = getLineHeight(fontSize);
     const canvasTextOffset = getCanvasTextOffset(fontSize);
-
-    canvasContext.save();
-    canvasContext.globalAlpha = Number(ctx.canvasManager.primaryAlpha ?? 1);
-    canvasContext.fillStyle = ctx.canvasManager.primaryColor;
-    canvasContext.font = getFontDeclaration(ctx, fontSize, styles);
-    canvasContext.textBaseline = 'top';
-    if (styles.has('shadow')) {
-      canvasContext.shadowColor = 'rgba(0,0,0,.45)';
-      canvasContext.shadowBlur = Math.max(2, fontSize * .12);
-      canvasContext.shadowOffsetX = fontSize * .08;
-      canvasContext.shadowOffsetY = fontSize * .08;
-    }
-    if (styles.has('neon')) {
-      canvasContext.shadowColor = ctx.canvasManager.primaryColor;
-      canvasContext.shadowBlur = Math.max(6, fontSize * .25);
-    }
-
-    const lines = text.split('\n');
-    const lineWidths = lines.map((line) => canvasContext.measureText(line).width);
-    lines.forEach((line, index) => {
-      const lineX = anchor.x + 1;
-      const lineY = anchor.y + canvasTextOffset + index * lineHeight;
-      if (styles.has('outline') || styles.has('black-outline')) {
-        canvasContext.strokeStyle = styles.has('black-outline') ? '#000' : ctx.canvasManager.primaryColor;
-        canvasContext.lineWidth = Math.max(1, fontSize * .06);
-        canvasContext.strokeText(line, lineX, lineY);
-      }
-      canvasContext.fillText(line, lineX, lineY);
-      if (styles.has('underline')) {
-        canvasContext.fillRect(
-          lineX,
-          lineY + fontSize * 1.08,
-          canvasContext.measureText(line).width,
-          Math.max(1, fontSize * .06),
-        );
-      }
-    });
-    canvasContext.restore();
     const rgb = hexToRgb(ctx.canvasManager.primaryColor) || { r: 0, g: 0, b: 0 };
-    const textObject = ctx.textDocumentStore?.add({
+    const draft = {
       text,
       x: anchor.x,
       y: anchor.y + canvasTextOffset,
-      width: Math.max(0, ...lineWidths),
-      height: Math.max(lineHeight, text.split('\n').length * lineHeight),
       fontSize,
       fontFamily: ctx.getFontFamily(),
       color: { ...rgb, a: Number(ctx.canvasManager.primaryAlpha ?? 1) },
       styles: [...styles],
       zIndex: Date.now(),
-    });
+    };
+    const measured = measureTextObject({ context: canvasContext, object: draft });
+    const textObject = ctx.textDocumentStore?.add({ ...draft, ...measured });
+    // The application supplies TextLayerService. Keep this fallback for small
+    // isolated consumers that instantiate TextTool without the full app shell.
+    if (textObject && !ctx.textLayerService) renderTextObject({ context: canvasContext, object: textObject });
     if (textObject && ctx.getTextSelectAfterDraw?.() === true) {
       ctx.selectTextObject?.(textObject.id);
     }

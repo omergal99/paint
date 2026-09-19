@@ -46,13 +46,18 @@ closed through the shared menu seam. Remaining gates are 200% zoom,
 reduced-motion, Lighthouse, offline shell/update behavior, and a final visual
 regression capture.
 
-## Current release boundary
+## Round 5 progress
 
-The live keyboard/layout work is evidence for the accessibility slice, not a
-complete PWA claim. `manifest.json` still declares only an SVG icon, so the
-192×192/512×512 PNG installability gate is open. Step 11 remains partial until
-those assets, offline reload/update behavior, Lighthouse, and mobile checks are
-recorded together.
+The manifest now includes 192×192, 512×512, and maskable PNG icons rendered
+from the existing app icon. The service worker precaches the manifest and new
+text-layer/icon assets, and install caching uses `Promise.allSettled` so one
+optional asset cannot cancel the whole shell. Reduced-motion CSS is explicit.
+Live browser evidence confirms that the worker is activated, controls the
+offline reload, all manifest icons fetch successfully, reduced-motion is
+detected, and the 320px Ribbon remains a 74px internally scrollable strip.
+
+Step 11 remains partial until Lighthouse, real browser-level 200% zoom,
+update-prompt behavior, and the final device matrix are recorded.
 
 ## Done when
 

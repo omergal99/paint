@@ -7,7 +7,7 @@ so everything will be take in whole scope and we can go over all and plan like p
 
 i want you to combine all this data and tasks i will send here by points and make a plan how we can implement them with examples - and all plan docs needed like html with mermaid graphs like in paint/docs/work2/phase-1/ dir - but much better orgenized and well structure.
 
-read all paint files if you need and also you can read the /home/omer/DEV/ai-3-DevEx-proj/paint/.skills dir and improve it too to add there skills from interent with high score to add to our project here to help us for this current mission of planning and also for the future.
+read all paint files if you need and also you can read the /paint/.skills dir and improve it too to add there skills from interent with high score to add to our project here to help us for this current mission of planning and also for the future.
 paint/.skills/proj-work
 paint/.skills/retro
 can help you to understand good standard for working.
@@ -56,7 +56,7 @@ so lets see were it can be done in the planning.
 about the "Suggested execution order (4 phases)" in paint/docs/AUDIT-REPORT.md - it's not relevant for this planning.. 
 
 
-4. we have some left over points we didn't do yet and need to become in next planning: from "file:///home/omer/DEV/ai-3-DevEx-proj/paint/docs/w2/PLAN-OVERVIEW.html" you can put the points 7 and 8 at the end of planning- but not sure.. check where the most suitable area it to be and also if needed tasks split some before by the structure of how we save and orchestration to make sure we will be ready by design to this tasks in future.
+4. we have some left over points we didn't do yet and need to become in next planning: from "/paint/docs/w2/PLAN-OVERVIEW.html" you can put the points 7 and 8 at the end of planning- but not sure.. check where the most suitable area it to be and also if needed tasks split some before by the structure of how we save and orchestration to make sure we will be ready by design to this tasks in future.
 
 
 

@@ -31,6 +31,7 @@ import { DEFAULT_SETTINGS, HISTORY_VIEWS, KEYBOARD_KEYS, RIBBON_POSITIONS, STORA
 import { createSettingsStore } from './settings/SettingsStore.js';
 import { createTextDocumentStore } from './document/TextDocumentStore.js';
 import { createTextHistoryStore } from './document/TextHistoryStore.js';
+import { createTextLayerService } from './document/TextLayerService.js';
 import { createTextSelectionOverlay } from './ui/TextSelectionOverlay.js';
 import { createActionMenuController } from './ui/ActionMenuController.js';
 import { createSettingsDialog } from './ui/SettingsDialog.js';
@@ -86,14 +87,37 @@ const canvasResizer = new CanvasResizer({
 	ghost: document.getElementById('resize-ghost'),
 });
 
+const textLayerService = createTextLayerService({
+	root: scaleEl,
+	store: textDocumentStore,
+	canvasManager,
+	onMoveStart: () => historyManager.snapshot({ force: true }),
+	onMoveEnd: () => canvasManager.persistToStorage(),
+});
+canvasManager.setLayerComposer({
+	composite: (context) => textLayerService.compositeTo(context),
+	hasContent: () => textLayerService.hasContent(),
+	clear: () => textLayerService.clear(),
+});
+
 const textSelectionOverlay = createTextSelectionOverlay({
 	root: scaleEl,
 	store: textDocumentStore,
+	getZoom: () => Number(viewportManager.zoom || 100) / 100,
+	onMoveStart: (options) => textLayerService.beginMove(options),
+	onMove: (options) => textLayerService.move(options),
+	onMoveEnd: (options) => textLayerService.endMove(options),
 });
+
+canvasManager.onRasterLoad = () => {
+	textLayerService.clear();
+	textSelectionOverlay.clear();
+};
 
 canvasManager.onSizeChange = (w, h) => {
 	statusBar.setCanvasSize(w, h);
 	canvasResizer.reposition();
+	textLayerService.resize({ width: w, height: h });
 	// Redraw any selection that CanvasManager.resize() preserved (clamped to the
 	// new bounds) so resizing the canvas no longer drops an active marquee.
 	setSelection(canvasManager.selection);
@@ -310,19 +334,8 @@ const commitFloatingPixels = (region) => {
 
 const commitFloatingSelection = () => {
 	if (canvasManager.floatingCanvas && canvasManager.selection) {
-		const selectedText = toolContext._textSelectionSession;
-		const selection = canvasManager.selection;
 		commitFloatingPixels(canvasManager.selection);
 		canvasManager.floatingCanvas = null;
-		if (selectedText
-			&& selection.w === selectedText.w
-			&& selection.h === selectedText.h) {
-			textDocumentStore.update(selectedText.id, {
-				x: selection.x,
-				y: selection.y,
-			});
-		}
-		toolContext._textSelectionSession = null;
 		selectionRotation = null;
 		setSelection(null);
 		canvasManager.persistToStorage();
@@ -427,6 +440,7 @@ const toolContext = {
 	historyManager,
 	textDocumentStore,
 	textHistoryStore,
+	textLayerService,
 	viewportManager,
 	stage,
 	scaleEl,
@@ -445,6 +459,7 @@ const toolContext = {
 	getSelectAfterDraw: () => toolbar.getSelectAfterDraw(),
 	getTextSelectAfterDraw: () => toolbar.getTextSelectAfterDraw?.() === true,
 	selectTextObject: (id) => textSelectionOverlay?.select(id),
+	flattenLayers: () => canvasManager.flattenLayers(),
 	getEmoji: () => toolbar.getSelectedEmoji(),
 	getFontSize: () => currentFontSize,
 	getFontFamily: () => "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
@@ -651,7 +666,7 @@ const save = async () => {
 
 const downloadPNG = () => {
 	const a = document.createElement('a');
-	a.href = canvasManager.canvas.toDataURL('image/png');
+	a.href = canvasManager.toDataURL('image/png');
 	a.download = 'untitled.png';
 	a.click();
 	statusBar.flash('Downloaded as PNG');
@@ -680,6 +695,7 @@ const crop = () => {
 		commitFloatingPixels(sel);
 		canvasManager.floatingCanvas = null;
 	}
+	canvasManager.flattenLayers();
 	historyManager.snapshot();
 	const region = canvasManager.extractRegion(sel);
 	canvasManager.loadFromSource(region);
@@ -692,6 +708,7 @@ const applyTransformation = (transformFn) => {
 	// A menu transform starts a new operation; do not use a previous rotate
 	// handle's base canvas for it.
 	selectionRotation = null;
+	canvasManager.flattenLayers();
 	historyManager.snapshot();
 	const selection = canvasManager.selection;
 	if (selection && !canvasManager.floatingCanvas) {
@@ -1836,20 +1853,6 @@ toolManager.onToolChange = (name) => {
 	updateSelectionHandles(canvasManager.selection);
 };
 
-textSelectionOverlay.element.addEventListener('paint:text-object-focus', (event) => {
-	const object = event.detail;
-	if (!object?.id || !object.width || !object.height) return;
-	const region = {
-		x: Math.max(0, Math.round(object.x)),
-		y: Math.max(0, Math.round(object.y)),
-		w: Math.max(1, Math.round(object.width)),
-		h: Math.max(1, Math.round(object.height)),
-	};
-	toolContext._textSelectionSession = { id: object.id, w: region.w, h: region.h };
-	setSelection(region);
-	toolManager.setActive('select');
-});
-
 document.querySelectorAll('.text-style-option').forEach((button) => {
 	button.addEventListener('click', (event) => {
 		// Keep More Tools open while styles are previewed and combined.
@@ -1908,7 +1911,7 @@ const queueLifecycleHistorySnapshot = () => {
 	lifecycleSnapshotQueued = true;
 	try {
 		localStorage.setItem('paint:pending-history-save', JSON.stringify({
-			dataUrl: canvasManager.canvas.toDataURL('image/png'),
+			dataUrl: canvasManager.toDataURL('image/png'),
 			width: canvasManager.width,
 			height: canvasManager.height,
 			queuedAt: Date.now(),
@@ -1955,11 +1958,16 @@ saveToolSelection(savedTool);
 
 // Click outside the paint area to commit and clear selection
 const viewportEl = document.getElementById('canvas-viewport');
+document.addEventListener('pointerdown', (event) => {
+	const target = event.target instanceof Element ? event.target : null;
+	if (!target?.closest('.text-object-focus-target')) textSelectionOverlay.clear();
+}, true);
 if (viewportEl) {
 	viewportEl.addEventListener('pointerdown', (e) => {
 		if (e.target === viewportEl || e.target === stage) {
 			commitFloatingSelection();
 			setSelection(null);
+			textSelectionOverlay.clear();
 		}
 	});
 }

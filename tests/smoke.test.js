@@ -571,3 +571,22 @@ test('select after draw: a lifted shape is a layer, and unload bakes it', () => 
 	assert.match(read('js/tools/SelectTool.js'), /const onActivate = \(ctx\) => \{[\s\S]*?state\.start = null;/);
 	assert.match(shapeTool, /const onActivate = \(\) => \{[\s\S]*?state\.start = null;/);
 });
+
+test('text focus owns a separate layer instead of the pixel-selection path', () => {
+  const textTool = read('js/tools/TextTool.js');
+  const layerService = read('js/document/TextLayerService.js');
+  const overlay = read('js/ui/TextSelectionOverlay.js');
+  const canvas = read('js/canvas/CanvasManager.js');
+  assert.ok(fs.existsSync(path.join(root, 'js/document/TextLayerRenderer.js')));
+  assert.match(main, /createTextLayerService/);
+  assert.match(main, /setLayerComposer/);
+  assert.match(html, /id="text-layer-canvas"/);
+  assert.match(layerService, /createTextLayerService/);
+  assert.match(layerService, /store\.update\(id/);
+  assert.match(overlay, /onMoveStart/);
+  assert.match(overlay, /ArrowLeft/);
+  assert.match(textTool, /textLayerService/);
+  assert.doesNotMatch(textTool, /canvasContext\.fillText/);
+  assert.match(canvas, /flattenLayers()/);
+  assert.match(canvas, /toDataURL\(type = 'image\/png'/);
+});

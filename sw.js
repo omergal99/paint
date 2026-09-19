@@ -1,7 +1,8 @@
-const CACHE_NAME = 'paint-shell-v1-6-3';
+const CACHE_NAME = 'paint-shell-v1-6-0';
 const SHELL = [
   './',
   './index.html',
+  './manifest.json',
   './css/progressive.css',
   './css/styles.css',
   './js/app.js',
@@ -14,6 +15,8 @@ const SHELL = [
   './js/core/DocumentContract.js',
   './js/document/TextDocumentStore.js',
   './js/document/TextHistoryStore.js',
+  './js/document/TextLayerRenderer.js',
+  './js/document/TextLayerService.js',
   './js/storage.js',
   './js/storage/MemoryBudget.js',
   './js/telemetry.js',
@@ -51,11 +54,19 @@ const SHELL = [
   './js/utils/colorContract.js',
   './js/utils/transform.js',
   './css/assets/icon.svg',
+  './css/assets/icon-192.png',
+  './css/assets/icon-512.png',
+  './css/assets/icon-512-maskable.png',
   './css/assets/preview.png',
 ];
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(SHELL)).then(() => self.skipWaiting()));
+  event.waitUntil(caches.open(CACHE_NAME).then(async (cache) => {
+    const results = await Promise.allSettled(SHELL.map((asset) => cache.add(asset)));
+    results.forEach((result, index) => {
+      if (result.status === 'rejected') console.warn('Offline shell asset unavailable:', SHELL[index]);
+    });
+  }).then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', (event) => {

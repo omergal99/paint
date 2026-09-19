@@ -1,1 +1,5 @@
 z-next
+
+# Playwright CLI snapshots/logs are ephemeral; curated evidence lives under
+# output/playwright/phase-2/playwright-cli/.
+.playwright-cli/*
