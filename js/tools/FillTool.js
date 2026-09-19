@@ -12,7 +12,8 @@ export const createFillTool = () => {
     ctx.historyManager.snapshot();
 
     const fillColorHex = pt.button === 2 ? cm.secondaryColor : cm.primaryColor;
-    const fill = hexToRgba(fillColorHex);
+    const fillAlpha = pt.button === 2 ? cm.secondaryAlpha : cm.primaryAlpha;
+    const fill = hexToRgba(fillColorHex, fillAlpha);
 
     const imageData = cm.ctx.getImageData(0, 0, cm.width, cm.height);
     const data = imageData.data;
@@ -50,10 +51,10 @@ export const createFillTool = () => {
   return { name: 'fill', cursor: 'crosshair', onDown, onMove() {}, onUp() {} };
 }
 
-const hexToRgba = (hex) => {
+const hexToRgba = (hex, alpha = 1) => {
   const h = hex.replace('#', '');
   const num = parseInt(h, 16);
-  return [(num >> 16) & 255, (num >> 8) & 255, num & 255, 255];
+  return [(num >> 16) & 255, (num >> 8) & 255, num & 255, Math.round(Math.max(0, Math.min(1, Number(alpha))) * 255)];
 }
 
 const colorsMatch = (a, b) => {

@@ -19,6 +19,16 @@ rasterized text is already a safely editable layer.
   formatting, right-click Edit, reveal mode, and T/chevron split until the
   overlap proof is strong enough.
 
+## Future enablement checklist
+
+“Select text after draw” is a required future behavior, not a forgotten option.
+The current checkbox remains disabled until the overlap-safe object path proves
+that the text object survives partial paint overlap without erasing unrelated
+pixels, duplicating text, or vanishing. When enabled, the interaction should
+also provide a dedicated text-edit/focus cursor and a reveal mode so users can
+see which raster regions are editable; the normal pointer tool alone is not a
+sufficient discoverability plan.
+
 ## Done when
 
 Select-after-draw remains covered by its existing layer tests, and the textarea

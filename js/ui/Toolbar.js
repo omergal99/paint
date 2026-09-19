@@ -199,6 +199,9 @@ export class Toolbar {
     historyToolbarToggle.addEventListener('change', () => {
       this._showTextHistoryToolbar = historyToolbarToggle.checked === true;
       try { localStorage.setItem(TEXT_HISTORY_TOOLBAR_KEY, String(this._showTextHistoryToolbar)); } catch {}
+      window.dispatchEvent(new CustomEvent('paint:text-history-toolbar-change', {
+        detail: { visible: this._showTextHistoryToolbar },
+      }));
     });
   }
 

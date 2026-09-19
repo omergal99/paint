@@ -278,17 +278,22 @@ body {
 .text-tool-split {
 	display: flex;
 	align-items: stretch;
+	border: 1px solid var(--w10-border-strong);
+	border-radius: 2px;
+	overflow: hidden;
 }
 .text-tool-main {
-	border-radius: 2px 0 0 2px;
+	border: 0;
+	border-radius: 0;
 }
-.text-tool-menu-arrow {
-	width: 15px;
-	min-width: 15px;
+.rbtn.cell.text-tool-menu-arrow {
+	box-sizing: border-box;
+	width: 16px;
+	min-width: 16px;
 	padding: 0 2px;
-	border: 1px solid var(--w10-border-strong);
-	border-left: 0;
-	border-radius: 0 2px 2px 0;
+	border: 0;
+	border-left: 1px solid var(--w10-border-strong);
+	border-radius: 0;
 	background: var(--w10-ribbon-bg);
 }
 .text-tool-menu-arrow .menu-arrow {
@@ -575,6 +580,11 @@ body {
 	height: 34px;
 	margin-right: 4px;
 }
+.color-swatches-column {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
 .swatch {
 	position: absolute;
 	width: 22px;
@@ -602,6 +612,48 @@ body {
 	opacity: 0;
 	pointer-events: none;
 }
+.swatch-alpha-controls {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	min-width: 0;
+}
+.swatch-alpha-control {
+	display: grid;
+	grid-template-columns: 18px minmax(30px, 1fr) 26px 22px;
+	align-items: center;
+	gap: 2px;
+	min-width: 96px;
+	font-size: 8px;
+	line-height: 14px;
+	color: var(--w10-text-dim);
+}
+.swatch-alpha-control input[type="range"] {
+	width: 100%;
+	min-width: 0;
+	height: 12px;
+	margin: 0;
+	accent-color: var(--w10-accent);
+}
+.swatch-alpha-control output {
+	text-align: right;
+	font-variant-numeric: tabular-nums;
+	color: var(--w10-text);
+}
+.swatch-alpha-transparent {
+	min-width: 0;
+	padding: 0 2px;
+	border: 1px solid var(--w10-border);
+	background: var(--w10-ribbon-bg);
+	color: var(--w10-text-dim);
+	font-size: 9px;
+	line-height: 13px;
+	cursor: pointer;
+}
+.swatch-alpha-transparent:hover {
+	border-color: var(--w10-accent);
+	color: var(--w10-text);
+}
 
 .palette-grid {
 	display: grid;
@@ -623,6 +675,33 @@ body {
 }
 .palette-grid button:hover {
 	outline: 1px solid var(--w10-accent);
+}
+.color-palette-context-menu {
+	position: fixed;
+	display: grid;
+	gap: 2px;
+	min-width: 164px;
+	padding: 4px;
+	border: 1px solid var(--w10-border-strong);
+	background: var(--w10-panel-bg);
+	box-shadow: 0 4px 12px rgba(0, 0, 0, .2);
+	z-index: 120;
+}
+.color-palette-context-menu button {
+	padding: 5px 7px;
+	border: 1px solid transparent;
+	background: transparent;
+	color: var(--w10-text);
+	text-align: left;
+	cursor: pointer;
+	font: inherit;
+	font-size: 11px;
+}
+.color-palette-context-menu button:hover,
+.color-palette-context-menu button:focus-visible {
+	border-color: var(--w10-accent);
+	background: var(--w10-hover);
+	outline: none;
 }
 
 /* ===================== COLOR INSPECTOR ===================== */
@@ -1962,8 +2041,8 @@ dialog h3 {
 	font-variant-numeric: tabular-nums;
 }
 .ribbon-settings-list {
-	display: flex;
-	flex-direction: column;
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
 	gap: 8px;
 }
 .settings-field {

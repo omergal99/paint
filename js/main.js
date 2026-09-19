@@ -120,6 +120,12 @@ const colorPalette = createColorPalette({
 	primarySwatchEl: document.getElementById('primary-swatch'),
 	secondarySwatchEl: document.getElementById('secondary-swatch'),
 	colorPickerInput: document.getElementById('color-picker'),
+	primaryAlphaInput: document.getElementById('primary-alpha'),
+	secondaryAlphaInput: document.getElementById('secondary-alpha'),
+	primaryAlphaOutput: document.getElementById('primary-alpha-output'),
+	secondaryAlphaOutput: document.getElementById('secondary-alpha-output'),
+	primaryTransparentButton: document.getElementById('primary-alpha-transparent'),
+	secondaryTransparentButton: document.getElementById('secondary-alpha-transparent'),
 	onPrimaryChange: (hex, alpha = 1) => {
 		canvasManager.primaryColor = hex;
 		canvasManager.primaryAlpha = alpha;
@@ -381,8 +387,8 @@ const toolContext = {
 	commitFloatingSelection,
 	discardFloatingSelection,
 	drawSelectionOutline,
-	setPrimaryColor: (hex) => colorPalette.setPrimary(hex),
-	setSecondaryColor: (hex) => colorPalette.setSecondary(hex),
+	setPrimaryColor: (hex, alpha = canvasManager.primaryAlpha) => colorPalette.setPrimary(hex, alpha),
+	setSecondaryColor: (hex, alpha = canvasManager.secondaryAlpha) => colorPalette.setSecondary(hex, alpha),
 	setActiveTool: (name) => toolManager.setActive(name),
 	getPreviousTool: () => toolbar.getPreviousTool(),
 	getShapeKind: () => toolbar.getShapeKind(),
@@ -1397,38 +1403,54 @@ const syncRibbonSettingsControls = () => {
 	});
 }
 
+const STORAGE_ESTIMATE_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+
+const normalizeStorageEstimate = (value) => {
+	const usage = Number(value?.usage);
+	const quota = Number(value?.quota);
+	if (!Number.isFinite(usage) || !Number.isFinite(quota) || usage < 0 || quota <= 0 || usage > quota) return null;
+	return { usage, quota, checkedAt: Number(value?.checkedAt) || Date.now() };
+}
+
+const getCachedStorageEstimate = async () => {
+	let cached = null;
+	try {
+		cached = normalizeStorageEstimate(JSON.parse(localStorage.getItem(STORAGE_KEYS.storageEstimate) || 'null'));
+	} catch {}
+	if (cached && Date.now() - cached.checkedAt < STORAGE_ESTIMATE_CACHE_TTL_MS) return cached;
+
+	const estimate = await navigator.storage?.estimate?.();
+	const normalized = normalizeStorageEstimate({ ...estimate, checkedAt: Date.now() });
+	if (!normalized) return null;
+	try { localStorage.setItem(STORAGE_KEYS.storageEstimate, JSON.stringify(normalized)); } catch {}
+	return normalized;
+}
+
 const updateAboutStats = async () => {
 	document.getElementById('about-version').textContent = APP_VERSION;
 	document.getElementById('about-activity').textContent = new Date().toLocaleString();
-	// Storage numbers are estimates, not disk truth.
-	//  - usage keeps 2 decimals: rounding it to whole MB displayed "0 MB" (and a
-	//    0% bar) for a small but non-empty store. "0.00 MB" / 0% must mean
-	//    genuinely empty, so any real usage shows at least 1%.
-	//  - the quota is whole MB and capped: browsers report ~10 GB fantasy quotas,
-	//    which made the old "10242.87 MB" total read like a real, unstable limit.
+	// Storage numbers are estimates, not disk truth. Cache one validated browser
+	// estimate for 24 hours so opening the About tab does not probe repeatedly.
 	const MB = 1024 * 1024;
 	const fmt2 = (mb) => `${mb.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MB`;
-	const fmt0 = (mb) => `${Math.round(mb).toLocaleString('en-US')} MB`;
 	try {
-		const estimate = await navigator.storage?.estimate();
-		const usageMB = (estimate?.usage || 0) / MB;
-		const quotaMB = (estimate?.quota || 0) / MB;
-		const displayQuotaMB = quotaMB > 0 ? Math.min(Math.round(quotaMB), 10000) : 0;
-		document.getElementById('about-storage').textContent = fmt2(usageMB);
+		const estimate = await getCachedStorageEstimate();
+		const usageMB = estimate ? estimate.usage / MB : 0;
+		const quotaMB = estimate ? estimate.quota / MB : 0;
+		document.getElementById('about-storage').textContent = estimate ? fmt2(usageMB) : 'Unavailable';
 		const freeEl = document.getElementById('about-storage-free');
 		if (freeEl) {
-			freeEl.textContent = displayQuotaMB > 0
-				? `${fmt0(Math.max(0, displayQuotaMB - usageMB))} free of ${fmt0(displayQuotaMB)}`
+			freeEl.textContent = estimate
+				? `${fmt2(Math.max(0, quotaMB - usageMB))} free of ${fmt2(quotaMB)}`
 				: 'Unavailable';
 		}
 		const fill = document.getElementById('about-storage-bar-fill');
 		if (fill) {
 			let pct = 0;
-			if (displayQuotaMB > 0 && usageMB > 0) {
-				pct = Math.max(1, Math.ceil((usageMB / displayQuotaMB) * 100));
+			if (estimate && quotaMB > 0 && usageMB > 0) {
+				pct = Math.min(100, Math.max(1, Math.ceil((usageMB / quotaMB) * 100)));
 			}
-			const addingNormelize = pct > 50 && pct !== 0 ? 0 : 2;
-			fill.style.width = pct + addingNormelize + '%';
+			fill.style.width = `${pct}%`;
 		}
 	} catch {
 		document.getElementById('about-storage').textContent = 'Unavailable';

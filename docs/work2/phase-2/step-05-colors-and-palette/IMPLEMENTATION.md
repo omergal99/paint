@@ -11,17 +11,24 @@
   later palette migration can add alpha without invalidating current saved
   colors.
 - Added contract coverage for normalization and alpha-preserving CSS output.
+- Added independent foreground/background opacity sliders and explicit `0%`
+  transparent actions beneath the Ribbon swatches, with checkerboard swatch
+  rendering and local persistence.
+- Added a keyboard-reachable palette-slot context menu with Edit, Set as
+  foreground, Set as background, and Reset slot actions.
+- Routed alpha through Freehand, Shape, Fill, Text, and Eyedropper operations;
+  the canvas remains the PNG/export source of truth.
 
 ## Remaining gate
 
-The current `.ribbon-group-colors` renders the swatches, color picker, and
-palette grid, but it does not yet render the requested keyboard-reachable
-transparent/alpha control beneath the large swatches. Palette UI still needs a
-keyboard-reachable slot editor, independent alpha controls, and end-to-end
-eyedropper/shape/text/export coverage before Step 05 is complete.
+The browser evidence now confirms the controls, persistence, palette context
+menu, and a real non-opaque drawing pixel. Step 05 still needs explicit
+alpha-bearing Open/Paste/Crop/Resize/Save/New fixtures and export assertions
+before the full acceptance gate is closed.
 
-The persisted alpha values are groundwork only: Freehand, Shape, Fill, and Text
-raster paths still need to consume the normalized alpha values instead of
-using hex-only styles. These tasks are intentionally separate from the Settings
-refinement and must be covered by DOM/keyboard, persistence, pixel, and export
-tests.
+Browser verification at 1280×900 recorded: alpha controls present, primary alpha
+persisted, checkerboard swatch visible, arrow width 16px, split borders visible,
+text toolbar hid live, palette menu received focus, Ribbon settings used two
+columns, storage free-space text was available, and the drawn pixel measured
+alpha `26/255` on a transparent canvas. A follow-up layout check confirmed the
+Ribbon remained exactly `74px` high while the alpha controls stayed visible.

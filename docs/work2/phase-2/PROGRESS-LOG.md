@@ -128,3 +128,24 @@ that changed from `DECISIONS.md`.
 - No feature implementation was claimed in this audit; the next Step 05 gate
   is the complete control → RGBA drawing/composition → persistence/pixel/export
   test path.
+
+## 2026-09-19 — Step 05 alpha controls and Steps 01–08 scorecard
+
+- Implemented the missing Ribbon Colors alpha path: independent foreground and
+  background sliders, explicit `0%` transparent actions, checkerboard swatches,
+  persisted alpha state, a keyboard-reachable palette context menu, and alpha
+  propagation through Freehand, Shape, Fill, Text, and Eyedropper.
+- Fixed the Text options behavior so changing “Show Recent text toolbar” hides
+  or reveals an already-open editor immediately; the split now has a 16px arrow
+  and visible outer/divider borders.
+- Changed Ribbon settings to a responsive two-column grid when the available
+  width supports it. About storage now caches one validated raw browser estimate
+  per 24-hour window and calculates free space from raw `quota - usage` bytes.
+- Browser verification at 1280×900 passed the controls, persistence, menu
+  focus, live toolbar toggle, two-column Ribbon settings, storage display, and
+  non-opaque canvas pixel checks. The measured test pixel was `26/255` alpha.
+- A follow-up Ribbon layout check confirmed the alpha controls remain visible
+  while `#ribbon` stays at the requested `74px` height.
+- Added completion/evidence scores and measurement descriptions for every Phase
+  2 row in `PHASE-2-STATUS.md`. Steps 09–11 are re-sequenced as modular slices
+  after the remaining Step 07/08 gates, then quality gates, then PWA/accessibility.

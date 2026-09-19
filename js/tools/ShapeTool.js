@@ -83,6 +83,8 @@ export const createShapeTool = () => {
 
     const outlineColor = button === 2 ? cm.secondaryColor : cm.primaryColor;
     const fillColor = button === 2 ? cm.primaryColor : cm.secondaryColor;
+    const outlineAlpha = button === 2 ? cm.secondaryAlpha : cm.primaryAlpha;
+    const fillAlpha = button === 2 ? cm.primaryAlpha : cm.secondaryAlpha;
 
     g.save();
     g.lineWidth = cm.lineWidth;
@@ -90,6 +92,7 @@ export const createShapeTool = () => {
     g.lineCap = 'round';
     g.strokeStyle = outlineColor;
     g.fillStyle = fillColor;
+    g.globalAlpha = outlineAlpha;
 
     // Lines with arrowheads render themselves (shaft stroked in the outline
     // color, solid head filled in the same color). They intentionally ignore
@@ -185,8 +188,14 @@ export const createShapeTool = () => {
     }
 
     if (kind !== 'line' && kind !== 'x' && kind !== 'v') {
-      if (fillMode === 'fill' || fillMode === 'outline-fill') g.fill();
-      if (fillMode === 'outline' || fillMode === 'outline-fill') g.stroke();
+      if (fillMode === 'fill' || fillMode === 'outline-fill') {
+        g.globalAlpha = fillAlpha;
+        g.fill();
+      }
+      if (fillMode === 'outline' || fillMode === 'outline-fill') {
+        g.globalAlpha = outlineAlpha;
+        g.stroke();
+      }
     } else {
       g.stroke();
     }

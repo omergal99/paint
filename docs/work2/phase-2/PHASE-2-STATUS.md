@@ -8,21 +8,25 @@ detailed evidence remains in each step workspace and `PROGRESS-LOG.md`.
 
 ## Status at a glance
 
-| Step | Status | What is available now | Quick UI/check path |
-|---:|---|---|---|
-| 01 | Done | Baseline, standards, and release safety evidence | Run `npm test`; no separate feature surface |
-| 02 | Done | Shared contracts, settings persistence, functional EventBus | Open Settings, change a preference, reload, and confirm it persists |
-| 03 | Done | History/session UX, settings summaries, ribbon/menu behavior, compact Settings layout | Open Settings and History; inspect Current-first history, two-column General choices, and the grid Ribbon tab |
-| 04 | Done with follow-up | Resize percentage/ratio/selection behavior and transparent canvas foundation | Open Resize; try 50% with ratio lock; choose General → Transparent and inspect the checkerboard viewport |
-| 05 | Foundation; requested Ribbon control is not implemented yet | RGBA contract and palette migration groundwork | Open Colors: swatches and palette work, but the transparent/alpha control is not present yet; this is the next Step 05 gate |
-| 06 | Safe slice done | Textarea Recent text history, restore/clear, max 20; split Text options menu; shape select-after-draw remains tested | Choose Text, open its arrow, type text, blur to commit, open Text again, restore from Recent text; drag the bottom toolbar or focus it and use Arrow keys |
-| 07 | Foundation | Functional seams and EventBus groundwork | No new visible performance claim yet; browser trace and listener audit remain |
-| 08 | Foundation | Memory-budget report and 64 MiB in-memory history cap | No new required UI flow; storage/quota recovery remains |
-| 09 | Planned | Incremental `main.js`/`Sidebar.js` modularization | Not available yet |
-| 10 | Planned | Broader behavioral/type/quality gates | Not available yet |
-| 11 | Planned | PWA, accessibility, CSS organization, Lighthouse matrix | Not available yet |
-| 12 | Planned | Optional lazy background-removal provider | Not available yet |
-| 13 | Planned | Tabs, split panes, session/recovery | Not available yet |
+| Step | Status | Score* | What is available now | Measurement / verification | Quick UI/check path |
+|---:|---|:---:|---|---|---|
+| 01 | Done | 9/10 | Baseline, standards, and release safety evidence | `npm test` 4/4; baseline and `git diff --check` recorded | Run `npm test`; no separate feature surface |
+| 02 | Done | 8/10 | Shared contracts, settings persistence, functional EventBus | Contract tests plus Settings reload check; remaining legacy owners are inventoried | Open Settings, change a preference, reload, and confirm it persists |
+| 03 | Done | 8/10 | History/session UX, settings summaries, Ribbon/menu behavior, compact Settings layout | Smoke tests plus 1280px browser evidence; alternate Ribbon matrix remains | Open Settings and History; inspect Current-first history, two-column General choices, and the grid Ribbon tab |
+| 04 | Done with follow-up | 8/10 | Resize percentage/ratio/selection behavior and transparent canvas foundation | `transparency.test.js` plus browser checkerboard check; file round trips remain | Open Resize; try 50% with ratio lock; choose General → Transparent and inspect the checkerboard viewport |
+| 05 | Implemented with follow-up | 8/10 | Alpha controls, checkerboard swatches, palette context menu, persisted primary/secondary alpha, and alpha-aware drawing paths | `npm test` 4/4; browser: controls persisted, context menu focused, and real pixel alpha measured at 26/255; broader fixture matrix remains | Open Colors: adjust FG/BG sliders or press `0%`, right-click a palette slot, draw on a transparent canvas, and inspect the swatch/pixel result |
+| 06 | Safe slice done; text-object selection gated | 7/10 | Textarea Recent text history, restore/clear, max 20; split Text options menu; shape select-after-draw remains tested | Store/shape/smoke tests plus browser history restore and live toolbar toggle; overlap-safe text proof is still required | Choose Text, open its arrow, type text, blur to commit, restore from Recent text; text “Select after draw” stays disabled until the proof gate |
+| 07 | Foundation | 4/10 | Functional seams and EventBus groundwork | Static listener inventory and contract tests; repeatable pointer trace, coalescing, and teardown measurements are still missing | No new visible performance claim yet; browser trace and listener audit remain |
+| 08 | Foundation | 4/10 | Memory-budget report and 64 MiB in-memory history cap | Memory contract tests; browser Blob/object-URL, quota-error, and IndexedDB recovery fixtures remain | Open About to see cached storage quota separately from memory; recovery flows are not complete |
+| 09 | Planned; re-sequenced | 0/10 | Incremental `main.js`/`Sidebar.js` modularization | Not measured yet; begins after Step 07 listener seams and Step 08 recovery contracts are locked | Not available yet |
+| 10 | Planned; follows Step 09 slices | 0/10 | Behavioral tests, `checkJs`, coverage, and quality gates | Not measured yet; each Step 09 slice must add its behavior gate | Not available yet |
+| 11 | Planned; follows Step 10 gates | 0/10 | PWA, accessibility, CSS organization, and Lighthouse matrix | Not measured yet; use representative editor journeys and all Ribbon layouts | Not available yet |
+| 12 | Planned | 0/10 | Optional lazy background-removal provider | Not available yet | Not available yet |
+| 13 | Planned | 0/10 | Tabs, split panes, session/recovery | Not available yet | Not available yet |
+
+\* Score is a current completion/evidence score out of 10, not a subjective
+product-quality rating. A score cannot reach 10 until the step’s acceptance
+behavior and its relevant browser or contract evidence are both complete.
 
 ## Current safety notes
 
@@ -35,9 +39,17 @@ detailed evidence remains in each step workspace and `PROGRESS-LOG.md`.
   paint overlap does not erase unrelated pixels, duplicate text, or make text
   vanish; undo/redo and reload must be included.
 - The requested transparency/opacity control inside the Ribbon Colors group is
-  Step 05 work, not Step 04 canvas-background work. `ColorPalette` persists
-  alpha values as groundwork, but the visible control and alpha application in
-  drawing/composition are not complete yet.
+  Step 05 work, not Step 04 canvas-background work. The control and core alpha
+  drawing path are now implemented; Step 05 still has broader file/fixture
+  follow-up before its score can reach 10.
+- “Select text after draw” is intentionally tracked in Step 06. The checkbox
+  must remain disabled until text hit-testing/compositing proves safe editing
+  after partial overlap; its future cursor/reveal affordance is recorded in the
+  Step 06 plan.
+- About storage uses the browser estimate API once per 24-hour cache window,
+  stores raw validated bytes in local storage, and calculates free space as
+  `max(0, quota - usage)` before formatting. Browser memory remains a separate
+  budget.
 - The full Steps 01–08 completeness audit is recorded in
   [`STEP-01-08-AUDIT.md`](STEP-01-08-AUDIT.md).
 

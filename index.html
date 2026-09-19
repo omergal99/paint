@@ -619,9 +619,25 @@
 			<!-- Color group -->
 			<section class="ribbon-group ribbon-group-colors">
 				<div class="rbtn-row">
-					<div class="swatch-stack" title="Click to edit colors" data-tag="swatch-stack">
-						<button id="primary-swatch" class="swatch primary" data-tag="primary-swatch"></button>
-						<button id="secondary-swatch" class="swatch secondary" data-tag="secondary-swatch"></button>
+					<div class="color-swatches-column">
+						<div class="swatch-stack" title="Click to edit colors" data-tag="swatch-stack">
+							<button id="primary-swatch" class="swatch primary" data-tag="primary-swatch" aria-label="Edit foreground color"></button>
+							<button id="secondary-swatch" class="swatch secondary" data-tag="secondary-swatch" aria-label="Edit background color"></button>
+						</div>
+						<div class="swatch-alpha-controls" aria-label="Color opacity controls">
+							<label class="swatch-alpha-control" title="Foreground opacity; 0% is transparent">
+								<span aria-hidden="true">FG</span>
+								<input type="range" id="primary-alpha" min="0" max="100" step="1" value="100" aria-label="Foreground opacity" />
+								<output id="primary-alpha-output" for="primary-alpha">100%</output>
+								<button type="button" class="swatch-alpha-transparent" id="primary-alpha-transparent" aria-label="Make foreground transparent" title="Make foreground transparent">0%</button>
+							</label>
+							<label class="swatch-alpha-control" title="Background opacity; 0% is transparent">
+								<span aria-hidden="true">BG</span>
+								<input type="range" id="secondary-alpha" min="0" max="100" step="1" value="100" aria-label="Background opacity" />
+								<output id="secondary-alpha-output" for="secondary-alpha">100%</output>
+								<button type="button" class="swatch-alpha-transparent" id="secondary-alpha-transparent" aria-label="Make background transparent" title="Make background transparent">0%</button>
+							</label>
+						</div>
 						<input type="color" id="color-picker" class="hidden-color-input" data-tag="color-picker" />
 					</div>
 					<div class="palette-grid" id="palette-grid" data-tag="palette-grid"></div>

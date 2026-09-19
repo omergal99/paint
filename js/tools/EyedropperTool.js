@@ -19,10 +19,11 @@ export const createEyedropperTool = () => {
   }
 
   const onDown = (pt, ctx) => {
-    const { r, g, b } = ctx.canvasManager.getPixelColor(pt.x, pt.y);
+    const { r, g, b, a } = ctx.canvasManager.getPixelColor(pt.x, pt.y);
     const hex = rgbToHex(r, g, b);
-    if (pt.button === 2) ctx.setSecondaryColor(hex);
-    else ctx.setPrimaryColor(hex);
+    const alpha = Number(a ?? 255) / 255;
+    if (pt.button === 2) ctx.setSecondaryColor(hex, alpha);
+    else ctx.setPrimaryColor(hex, alpha);
     ctx.colorInspector.show({ r, g, b, hex });
     ctx.setActiveTool?.(ctx.getPreviousTool?.() || 'select');
   }

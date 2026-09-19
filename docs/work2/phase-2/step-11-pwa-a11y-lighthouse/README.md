@@ -6,15 +6,22 @@ Prepare the public app for a domain launch with measured quality.
 
 ## Tasks
 
-- Add installable 192/512 PNG icons and resilient SW caching.
-- Split CSS by component only with browser coverage.
-- Fix focus, keyboard menu overflow, history tile semantics, dialog focus
-  restore, tabs, and drag alternatives.
-- Measure Ribbon height in compact, expanded, top, left, bottom, and floating
-  layouts. Defer automated service-worker asset-list synchronization until the
-  higher-risk PWA/accessibility gates are stable.
-- Run Lighthouse and browser QA on representative editor journeys.
-- Promote budgets from manual workflow to repeatable CI/nightly checks.
+- Track the work in this order:
+  1. accessibility journeys: focus, keyboard menu overflow, history tile
+     semantics, dialog focus restore, tabs, and drag alternatives;
+  2. PWA shell: installable 192/512 PNG icons and resilient SW caching;
+  3. CSS organization, only after browser coverage protects the component
+     boundaries;
+  4. Ribbon measurements in compact, expanded, top, left, bottom, and floating
+     layouts;
+  5. Lighthouse and browser QA on representative editor journeys;
+  6. repeatable CI/nightly budgets.
+- Defer automated service-worker asset-list synchronization until the higher-risk
+  runtime and accessibility gates are stable.
+
+The installed accessibility, web-quality-audit, and Playwright guidance should
+be used as focused verification inputs for these gates; project-specific claims
+still require evidence in this workspace.
 
 ## Done when
 

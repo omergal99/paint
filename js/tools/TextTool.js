@@ -50,6 +50,7 @@ export const createTextTool = () => {
   let context = null;
   let origin = null;
   let historyUnsubscribe = null;
+  let historyToolbarListener = null;
 
   const getEditorParent = (ctx) => ctx.scaleEl || ctx.stage;
 
@@ -99,7 +100,9 @@ export const createTextTool = () => {
 
   const clearEditorReferences = () => {
     historyUnsubscribe?.();
+    if (historyToolbarListener) window.removeEventListener('paint:text-history-toolbar-change', historyToolbarListener);
     historyUnsubscribe = null;
+    historyToolbarListener = null;
     editor = null;
     editorShell = null;
     historySelect = null;
@@ -142,6 +145,7 @@ export const createTextTool = () => {
     const canvasTextOffset = getCanvasTextOffset(fontSize);
 
     canvasContext.save();
+    canvasContext.globalAlpha = Number(ctx.canvasManager.primaryAlpha ?? 1);
     canvasContext.fillStyle = ctx.canvasManager.primaryColor;
     canvasContext.font = getFontDeclaration(ctx, fontSize, styles);
     canvasContext.textBaseline = 'top';
@@ -202,7 +206,10 @@ export const createTextTool = () => {
     toolbar.setAttribute('role', 'toolbar');
     toolbar.setAttribute('aria-label', 'Text editor controls');
     toolbar.tabIndex = 0;
-    toolbar.hidden = ctx.getTextHistoryToolbarVisible?.() === false;
+    const setHistoryToolbarVisibility = (visible) => {
+      toolbar.hidden = visible === false;
+    };
+    setHistoryToolbarVisibility(ctx.getTextHistoryToolbarVisible?.() !== false);
     const historyLabel = document.createElement('span');
     historyLabel.className = 'text-editor-toolbar-label';
     historyLabel.textContent = 'Recent text';
@@ -246,6 +253,8 @@ export const createTextTool = () => {
       nextEditor.focus();
     });
     historyUnsubscribe = ctx.textHistoryStore?.subscribe(renderHistoryOptions) || null;
+    historyToolbarListener = (event) => setHistoryToolbarVisibility(event.detail?.visible !== false);
+    window.addEventListener('paint:text-history-toolbar-change', historyToolbarListener);
 
     let dragState = null;
     const moveShell = (clientX, clientY) => {

@@ -94,12 +94,21 @@ test('Settings and text controls expose the refined layout and accessible fields
 	assert.match(css, /\.settings-footer-nav\s*\{[^}]*grid-column:\s*1/);
 	assert.match(css, /\.settings-general-options\s*\{[^}]*grid-template-columns:\s*repeat\(2/s);
 	assert.match(css, /\.ribbon-setting-row\s*\{[^}]*display:\s*grid/s);
+	assert.match(css, /\.ribbon-settings-list\s*\{[^}]*display:\s*grid/s);
 	assert.match(html, /id="btn-text-menu"/);
 	assert.match(html, /id="text-select-after-draw"[^>]*disabled/);
+	assert.match(html, /id="primary-alpha"/);
+	assert.match(html, /id="secondary-alpha"/);
+	assert.match(read('js/ui/ColorPalette.js'), /color-palette-context-menu|Palette color actions/);
+	assert.match(read('js/tools/FreehandTools.js'), /globalAlpha/);
+	assert.match(read('js/tools/FillTool.js'), /secondaryAlpha|primaryAlpha/);
+	assert.match(read('js/tools/ShapeTool.js'), /outlineAlpha|fillAlpha/);
+	assert.match(read('js/tools/TextTool.js'), /primaryAlpha/);
 	assert.match(textTool, /nextEditor\.id = 'text-editor-input'/);
 	assert.match(textTool, /nextEditor\.name = 'text'/);
 	assert.match(textTool, /shell\.append\(nextEditor, toolbar\)/);
 	assert.match(textTool, /toolbar\.addEventListener\('pointerdown'/);
+	assert.match(read('js/ui/Toolbar.js'), /paint:text-history-toolbar-change/);
 });
 
 test('Standalone named functions use arrow constants', () => {
@@ -440,11 +449,13 @@ test('Round-2 fixes: V glyph, session persistence, view-aware actions, storage m
   // 3. taller settings dialog + compact ribbon rows
   assert.match(css, /height:\s*min\(470px,\s*88vh\)/);
   assert.match(css, /\.ribbon-setting-row:hover/);
-  // 3.2 stable storage math: 2-decimal usage (0.00 only when truly empty),
-  //     whole-MB capped quota, min-1% bar
-  assert.match(main, /displayQuotaMB/);
-  assert.match(main, /minimumFractionDigits: 2/);
-  assert.match(main, /Math\.max\(1, Math\.ceil/);
+	// 3.2 storage math: validated raw bytes, cached browser estimate, exact free
+	//     space, and a bounded percentage bar.
+	assert.match(main, /STORAGE_ESTIMATE_CACHE_TTL_MS/);
+	assert.match(main, /normalizeStorageEstimate/);
+	assert.match(main, /STORAGE_KEYS\.storageEstimate/);
+	assert.match(main, /minimumFractionDigits: 2/);
+	assert.match(main, /Math\.min\(100, Math\.max\(1, Math\.ceil/);
 });
 
 test('Phase 2 Steps 02–04 contracts and UX hooks are wired', () => {

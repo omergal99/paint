@@ -136,6 +136,11 @@ a text object after partial overlap with paint must not erase unrelated pixels,
 duplicate text, or make the text vanish. It requires dedicated overlap,
 undo/redo, and reload tests before the postponed UI can be enabled.
 
+The future text workflow must include a distinct text-edit/focus cursor and a
+reveal affordance for selectable text regions. This is the planned route for
+“Select text after draw”; it stays disabled until the compositor and hit-test
+proof is complete.
+
 ## Step 07 — Performance and event hygiene
 
 - Combine ToolManager pointermove work into one listener and one rAF pipeline.

@@ -14,7 +14,11 @@ const createFreehandTool = (name, { sizeAware = true } = {}) => {
     const c = ctx.canvasManager.ctx;
     c.lineJoin = 'round';
     c.lineCap = 'round';
-    c.strokeStyle = name === 'eraser' ? ctx.canvasManager.backgroundColor : strokeColorFor(pt.button, ctx);
+    const isEraser = name === 'eraser';
+    c.strokeStyle = isEraser ? ctx.canvasManager.backgroundColor : strokeColorFor(pt.button, ctx);
+    c.globalAlpha = isEraser
+      ? 1
+      : (pt.button === 2 ? ctx.canvasManager.secondaryAlpha : ctx.canvasManager.primaryAlpha);
     c.lineWidth = name === 'pencil' ? 1 : ctx.canvasManager.lineWidth;
   }
 

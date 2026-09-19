@@ -56,6 +56,21 @@ Each implementation task should be small enough to verify independently. A
 step may be split into multiple PR-sized tasks; no step should be implemented
 as a single broad rewrite.
 
+## Re-planned continuation after the Steps 01–08 review
+
+Steps 09–11 now proceed as a gated sequence rather than three broad rewrites:
+
+1. Close the measurable Step 07 pointer/listener and Step 08 recovery gaps that
+   affect module ownership and storage boundaries.
+2. Execute Step 09 in small composition-root and controller extraction slices.
+3. Run Step 10 behavior/type/coverage checks after each Step 09 slice and as a
+   complete pre-launch gate.
+4. Execute Step 11 in accessibility-first, then PWA, CSS, and Lighthouse order.
+
+The scorecard and UI verification paths are maintained in
+`PHASE-2-STATUS.md`; the processed review decisions are in
+`init/processedData/06-current-gaps-and-next-plan.md`.
+
 ## Scope adjustments from review
 
 - Editable text compositing remains a design and proof obligation. If overlap,
