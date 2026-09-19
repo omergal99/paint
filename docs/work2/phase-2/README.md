@@ -13,6 +13,7 @@ step that owns them and must pass the documented gates.
 - [Quality gates](QUALITY-GATES.md) — tests, performance, memory, Lighthouse, and release gates.
 - [Decisions](DECISIONS.md) — decisions and unresolved owner choices.
 - [Phase 2 status](PHASE-2-STATUS.md) — current delivery status and quick UI checks for every step.
+- [Steps 01–08 audit](STEP-01-08-AUDIT.md) — completeness check, transparency ownership, and remaining gates.
 - [Progress log](PROGRESS-LOG.md) — planning and later implementation evidence.
 - [HTML overview](PLAN-OVERVIEW.html) — visual overview with Mermaid diagrams.
 

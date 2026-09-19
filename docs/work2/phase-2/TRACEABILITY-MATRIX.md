@@ -19,11 +19,10 @@
 | Alpha/transparent colors | Foreground/background alpha persisted and applied by drawing/composition | 05 | RGBA migration + pixel test |
 | Movable text | Text can remain selected/movable after creation via Tools More setting | 06 | Text object gesture test |
 | Text toolbar | Selected ranges support a scoped formatting toolbar with sanitized style runs | 06 | Editor model test |
-| Text history | Recent 5 visible, expand to max 30, persisted locally, click restores text | 06 | Store tests |
+| Text history | Recent textarea text, persisted locally, click restores text, clear works, and the bounded history has a maximum of 20 entries; full text-object editing is deferred | 06 | Store contract tests plus browser smoke |
 | Right-click text edit | Topmost editable text hit-test opens editor; overlapping paint does not create false hits | 06 | Hit-test/compositor test |
 | Reveal/edit mode | Temporary visual overlay identifies editable text regions | 06 | Timed UI test/manual check |
 | Text split button | T activates text; adjacent chevron independently opens text settings | 06 | DOM interaction test |
 | Whole-app audit | Measured performance, memory, listeners, structure, UI, tests, SEO/PWA, and edge cases | 01, 07–11 | Phase report with before/after metrics |
 | Phase 1 #8 | Verify and harden quota/thumb behavior; add document IDs and byte limits | 08 | Storage tests and quota fixture |
 | Phase 1 #7 | Add tabs/split/session/recovery only after document/storage seams stabilize | 13 | Multi-document acceptance suite |
-

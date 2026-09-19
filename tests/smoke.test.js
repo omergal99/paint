@@ -84,6 +84,39 @@ test('Text editing keeps recent textarea history separate from deferred object e
 	assert.match(main, /textHistoryStore/);
 });
 
+test('Settings and text controls expose the refined layout and accessible fields', () => {
+	const css = read('css/styles.css');
+	const textTool = read('js/tools/TextTool.js');
+	assert.match(html, /class="settings-footer settings-footer-nav"/);
+	assert.match(html, /class="settings-general-options"/);
+	assert.match(html, /class="settings-field ribbon-position-row"/);
+	assert.match(css, /dialog h3\s*\{[^}]*margin:\s*0 0 6px/s);
+	assert.match(css, /\.settings-footer-nav\s*\{[^}]*grid-column:\s*1/);
+	assert.match(css, /\.settings-general-options\s*\{[^}]*grid-template-columns:\s*repeat\(2/s);
+	assert.match(css, /\.ribbon-setting-row\s*\{[^}]*display:\s*grid/s);
+	assert.match(html, /id="btn-text-menu"/);
+	assert.match(html, /id="text-select-after-draw"[^>]*disabled/);
+	assert.match(textTool, /nextEditor\.id = 'text-editor-input'/);
+	assert.match(textTool, /nextEditor\.name = 'text'/);
+	assert.match(textTool, /shell\.append\(nextEditor, toolbar\)/);
+	assert.match(textTool, /toolbar\.addEventListener\('pointerdown'/);
+});
+
+test('Standalone named functions use arrow constants', () => {
+	const files = [];
+	const collect = (dir) => {
+		for (const entry of fs.readdirSync(path.join(root, dir), { withFileTypes: true })) {
+			const relative = path.join(dir, entry.name);
+			if (entry.isDirectory()) collect(relative);
+			else if (entry.name.endsWith('.js')) files.push(relative);
+		}
+	};
+	['js', 'tests', 'scripts'].forEach(collect);
+	files.forEach((file) => {
+		assert.doesNotMatch(read(file), /^\s*(?:export\s+)?(?:async\s+)?function\s+[A-Za-z_$]/m, file);
+	});
+});
+
 test('Keyboard paste defers to the native paste event for macOS support', () => {
   assert.match(read('js/main.js'), /document\.addEventListener\('paste'/);
   const shortcutBlock = main.match(/window\.addEventListener\('keydown'[\s\S]*?\n\}\);\n/)?.[0] || '';

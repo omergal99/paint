@@ -94,3 +94,37 @@ that changed from `DECISIONS.md`.
   tests proving no unrelated pixel loss, duplicate text, or vanished text.
 - Verification: `npm test`, changed-file `node --check`, `git diff --check`,
   and a local headless Chrome smoke flow all passed.
+
+## 2026-09-19 — UI refinement and arrow-function consistency
+
+- Added the requested Settings layout refinements: a left footer divider box,
+  6px dialog-heading spacing, two-column General checkboxes, grid Ribbon rows,
+  and a same-row Ribbon position label/select.
+- Added a split Text button with an options arrow. The menu owns the Recent text
+  toolbar toggle, clearly exposes the deferred text select-after-draw option,
+  and contains the existing text-style controls.
+- Kept the text anchor stable by placing the textarea before the toolbar with no
+  wrapper padding/border offset. Added `id`/`name`, pointer dragging, and Arrow/
+  Shift+Arrow keyboard movement through the toolbar.
+- Converted all standalone named functions to arrow constants and documented
+  the rule. Existing class methods remain explicit migration seams.
+- Browser verification at 1280×900 passed: settings rendered at 470px, the
+  split text menu opened, toolbar stayed below the textarea, the shell dragged,
+  and text history persisted/restored. Node tests, syntax checks, and diff
+  checks remained green.
+
+## 2026-09-19 — Steps 01–08 completeness audit
+
+- Confirmed that the requested transparency/opacity control in
+  `.ribbon-group-colors` belongs to Step 05, while Step 04 owns transparent
+  canvas/background semantics and PNG behavior.
+- Found that the Step 05 implementation is still foundation-only: alpha values
+  are normalized and persisted, but the Ribbon has no visible alpha/transparent
+  control and the Freehand, Shape, Fill, and Text raster paths do not yet apply
+  those alpha values.
+- Added `STEP-01-08-AUDIT.md`, made the Step 05 status explicit, and corrected
+  the traceability row for the delivered text-history slice from the old max-30
+  wording to the implemented max-20 behavior.
+- No feature implementation was claimed in this audit; the next Step 05 gate
+  is the complete control → RGBA drawing/composition → persistence/pixel/export
+  test path.

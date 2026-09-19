@@ -669,7 +669,7 @@ const applyTransformation = (transformFn) => {
 const toggleActionMenu = (event) => {
 	event.stopPropagation();
 	const trigger = event.currentTarget;
-	const menu = trigger.parentElement;
+	const menu = trigger.closest('.action-menu');
 	const menuItems = menu.querySelector('.action-menu-items');
 	const shouldOpen = !menu.classList.contains('open');
 	document.querySelectorAll('.action-menu.open').forEach((item) => {

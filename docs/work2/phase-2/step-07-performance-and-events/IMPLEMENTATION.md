@@ -10,6 +10,9 @@
   class owners and migration order are recorded in `FUNCTIONAL-MIGRATION.md`.
 - Added the project architecture rule for functional factories and incremental
   legacy-class migration.
+- Converted all standalone named function declarations in `js/`, `tests/`, and
+  `scripts/` to arrow constants (`const name = (...) => {}`). Class methods
+  remain unchanged until their owning class crosses a tested migration seam.
 
 ## Remaining gate
 

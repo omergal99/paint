@@ -14,6 +14,14 @@
 
 ## Remaining gate
 
-Palette UI still needs the keyboard-reachable slot editor, independent alpha
-controls, and end-to-end eyedropper/shape/text/export coverage before Step 05 is
-complete. Those are intentionally separate from the settings refinement.
+The current `.ribbon-group-colors` renders the swatches, color picker, and
+palette grid, but it does not yet render the requested keyboard-reachable
+transparent/alpha control beneath the large swatches. Palette UI still needs a
+keyboard-reachable slot editor, independent alpha controls, and end-to-end
+eyedropper/shape/text/export coverage before Step 05 is complete.
+
+The persisted alpha values are groundwork only: Freehand, Shape, Fill, and Text
+raster paths still need to consume the normalized alpha values instead of
+using hex-only styles. These tasks are intentionally separate from the Settings
+refinement and must be covered by DOM/keyboard, persistence, pixel, and export
+tests.
