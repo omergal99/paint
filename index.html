@@ -313,10 +313,10 @@
 									<label class="menu-checkbox" title="Show or hide recent text controls in the editor">
 										<input type="checkbox" id="text-history-toolbar-toggle" /> Show Recent text toolbar
 									</label>
-									<label class="menu-checkbox menu-checkbox-disabled" title="Requires the future editable text layer">
-										<input type="checkbox" id="text-select-after-draw" disabled /> Select text after draw
+									<label class="menu-checkbox" title="Focus the committed text object after drawing">
+										<input type="checkbox" id="text-select-after-draw" /> Select text after draw
 									</label>
-									<span class="menu-option-note" id="text-select-after-draw-note">Available after overlap-safe text editing is proven.</span>
+									<span class="menu-option-note" id="text-select-after-draw-note">Focus targets are safe; editing existing text remains deferred.</span>
 									<div class="text-style-picker" aria-label="Text styles">
 										<div class="text-style-picker-heading">
 											<span>Text style</span>
@@ -624,19 +624,25 @@
 							<button id="primary-swatch" class="swatch primary" data-tag="primary-swatch" aria-label="Edit foreground color"></button>
 							<button id="secondary-swatch" class="swatch secondary" data-tag="secondary-swatch" aria-label="Edit background color"></button>
 						</div>
-						<div class="swatch-alpha-controls" aria-label="Color opacity controls">
-							<label class="swatch-alpha-control" title="Foreground opacity; 0% is transparent">
-								<span aria-hidden="true">FG</span>
-								<input type="range" id="primary-alpha" min="0" max="100" step="1" value="100" aria-label="Foreground opacity" />
-								<output id="primary-alpha-output" for="primary-alpha">100%</output>
-								<button type="button" class="swatch-alpha-transparent" id="primary-alpha-transparent" aria-label="Make foreground transparent" title="Make foreground transparent">0%</button>
-							</label>
-							<label class="swatch-alpha-control" title="Background opacity; 0% is transparent">
-								<span aria-hidden="true">BG</span>
-								<input type="range" id="secondary-alpha" min="0" max="100" step="1" value="100" aria-label="Background opacity" />
-								<output id="secondary-alpha-output" for="secondary-alpha">100%</output>
-								<button type="button" class="swatch-alpha-transparent" id="secondary-alpha-transparent" aria-label="Make background transparent" title="Make background transparent">0%</button>
-							</label>
+						<div class="action-menu swatch-alpha-controls">
+							<button type="button" class="rbtn swatch-alpha-trigger action-menu-trigger" id="swatch-alpha-menu"
+								aria-haspopup="menu" aria-expanded="false" aria-label="Color opacity options" title="Color opacity options">
+								<span class="transparency-icon" aria-hidden="true"></span><span class="menu-arrow" aria-hidden="true">▾</span>
+							</button>
+							<div class="action-menu-items swatch-alpha-menu-items" role="menu" aria-label="Color opacity options">
+								<div class="swatch-alpha-control" title="Foreground opacity; 0% is transparent">
+									<label for="primary-alpha">Foreground</label>
+									<input type="range" id="primary-alpha" min="0" max="100" step="1" value="100" aria-label="Foreground opacity" />
+									<output id="primary-alpha-output" for="primary-alpha">100%</output>
+									<button type="button" class="swatch-alpha-transparent" id="primary-alpha-transparent" aria-label="Make foreground transparent" title="Make foreground transparent">0%</button>
+								</div>
+								<div class="swatch-alpha-control" title="Background opacity; 0% is transparent">
+									<label for="secondary-alpha">Background</label>
+									<input type="range" id="secondary-alpha" min="0" max="100" step="1" value="100" aria-label="Background opacity" />
+									<output id="secondary-alpha-output" for="secondary-alpha">100%</output>
+									<button type="button" class="swatch-alpha-transparent" id="secondary-alpha-transparent" aria-label="Make background transparent" title="Make background transparent">0%</button>
+								</div>
+							</div>
 						</div>
 						<input type="color" id="color-picker" class="hidden-color-input" data-tag="color-picker" />
 					</div>

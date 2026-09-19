@@ -4,6 +4,7 @@ import { getSelectedEmoji, setSelectedEmoji, renderEmojiGrid } from '../tools/Em
 import { STORAGE_KEYS } from '../core/constants.js';
 const SHAPE_STORAGE_KEY = 'paint:selected-shape';
 const SHAPE_AFTER_DRAW_KEY = 'paint:shape-select-after-draw';
+const TEXT_AFTER_DRAW_KEY = STORAGE_KEYS.textSelectAfterDraw;
 const TEXT_HISTORY_TOOLBAR_KEY = STORAGE_KEYS.textHistoryToolbar;
 const STYLE_STORAGE_KEY = 'paint:tool-styles';
 const STYLE_HISTORY_KEY = 'paint:style-history';
@@ -43,7 +44,9 @@ export class Toolbar {
     this._renderStyleHistory();
     window.addEventListener('paint:primary-color-change', (event) => {
       const key = this._activeTool === 'eyedropper' ? this._styleKeyFor(this._previousTool) : this._styleKey();
-      this._styles[key].color = event.detail;
+      const detail = typeof event.detail === 'string' ? { hex: event.detail } : (event.detail || {});
+      this._styles[key].color = detail.hex || this._styles[key].color;
+      if (Number.isFinite(Number(detail.alpha))) this._styles[key].alpha = Number(detail.alpha);
       this._saveStyles();
       this._recordStyle(key);
     });
@@ -184,6 +187,8 @@ export class Toolbar {
 
   getSelectAfterDraw() { return this._selectAfterDraw === true; }
 
+  getTextSelectAfterDraw() { return this._textSelectAfterDraw === true; }
+
   getTextHistoryToolbarVisible() { return this._showTextHistoryToolbar !== false; }
 
   _bindTextOptions() {
@@ -215,6 +220,20 @@ export class Toolbar {
       box.addEventListener('change', () => {
         this._selectAfterDraw = box.checked === true;
         try { localStorage.setItem(SHAPE_AFTER_DRAW_KEY, String(this._selectAfterDraw)); } catch {}
+      });
+    }
+
+    let textSaved = false;
+    try { textSaved = localStorage.getItem(TEXT_AFTER_DRAW_KEY) === 'true'; } catch {}
+    this._textSelectAfterDraw = textSaved;
+    const textBox = this.root.querySelector('#text-select-after-draw');
+    if (textBox) {
+      textBox.disabled = false;
+      textBox.checked = textSaved;
+      textBox.closest('.menu-checkbox')?.classList.remove('menu-checkbox-disabled');
+      textBox.addEventListener('change', () => {
+        this._textSelectAfterDraw = textBox.checked === true;
+        try { localStorage.setItem(TEXT_AFTER_DRAW_KEY, String(this._textSelectAfterDraw)); } catch {}
       });
     }
   }
@@ -308,7 +327,7 @@ export class Toolbar {
         // remembered tool entry.
         if (key === 'toJSON') return obj[key];
         if (typeof key !== 'string') return obj[key];
-        return obj[key] || (obj[key] = { size: key === 'text' ? 40 : 3, color: null });
+        return obj[key] || (obj[key] = { size: key === 'text' ? 40 : 3, color: null, alpha: null });
       },
     });
   }
@@ -324,8 +343,8 @@ export class Toolbar {
   }
   _recordStyle(key) {
     const style = this._styles[key];
-    const entry = { key, size: Number(style.size) || 3, color: style.color || '', label: this._styleLabel(key) };
-    this._styleHistory = [entry, ...this._styleHistory.filter((item) => !(item.key === entry.key && item.size === entry.size && item.color === entry.color))].slice(0, 8);
+    const entry = { key, size: Number(style.size) || 3, color: style.color || '', alpha: Number.isFinite(Number(style.alpha)) ? Number(style.alpha) : null, label: this._styleLabel(key) };
+    this._styleHistory = [entry, ...this._styleHistory.filter((item) => !(item.key === entry.key && item.size === entry.size && item.color === entry.color && item.alpha === entry.alpha))].slice(0, 8);
     this._saveStyleHistory();
     this._renderStyleHistory();
   }
@@ -352,13 +371,14 @@ export class Toolbar {
         const style = this._styles[this._styleKey()];
         style.size = entry.size;
         style.color = entry.color;
+        style.alpha = entry.alpha;
         this._saveStyles();
-        this._applyRememberedStyle();
+        this._applyRememberedStyle({ restoreColor: true });
       });
       list.appendChild(button);
     });
   }
-  _applyRememberedStyle() {
+  _applyRememberedStyle({ restoreColor = false } = {}) {
     if (!this._setLineWidth || !this._setFontSize) return;
     const style = this._styles[this._styleKey()];
     const size = Number(style.size) || (this._activeTool === 'text' ? 40 : 3);
@@ -372,7 +392,12 @@ export class Toolbar {
       option.classList.toggle('active', Number(option.dataset.sizeOption) === size);
     });
     this._sizeSlider?.setValue(Math.max(1, Math.min(120, size)));
-    if (style.color) this.handlers.setPrimaryColor?.(style.color);
+    // Foreground color/alpha are global picker state. Do not silently switch
+    // them when the user changes tools; only an explicit recent-style choice
+    // may restore the remembered color.
+    if (restoreColor && style.color) {
+      this.handlers.setPrimaryColor?.(style.color, Number.isFinite(Number(style.alpha)) ? style.alpha : undefined);
+    }
   }
   getPreviousTool() { return this._previousTool || 'select'; }
 

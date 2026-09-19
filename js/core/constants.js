@@ -21,6 +21,7 @@ export const STORAGE_KEYS = Object.freeze({
 	sidebarState: 'paint:sidebar-state',
 	sidebarWidth: 'paint:sidebar-width',
 	shapeSelectAfterDraw: 'paint:shape-select-after-draw',
+	textSelectAfterDraw: 'paint:text-select-after-draw',
 	selectedEmoji: 'paint:selected-emoji',
 	selectedShape: 'paint:selected-shape',
 	ribbonButtonState: 'paint:ribbon-button-state',

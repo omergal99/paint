@@ -31,6 +31,8 @@ import { DEFAULT_SETTINGS, STORAGE_KEYS } from './core/constants.js';
 import { createSettingsStore } from './settings/SettingsStore.js';
 import { createTextDocumentStore } from './document/TextDocumentStore.js';
 import { createTextHistoryStore } from './document/TextHistoryStore.js';
+import { createTextSelectionOverlay } from './ui/TextSelectionOverlay.js';
+import { createActionMenuController } from './ui/ActionMenuController.js';
 
 // ---------- DOM refs ----------
 const stage = document.getElementById('canvas-stage');
@@ -83,6 +85,11 @@ const canvasResizer = new CanvasResizer({
 	ghost: document.getElementById('resize-ghost'),
 });
 
+const textSelectionOverlay = createTextSelectionOverlay({
+	root: scaleEl,
+	store: textDocumentStore,
+});
+
 canvasManager.onSizeChange = (w, h) => {
 	statusBar.setCanvasSize(w, h);
 	canvasResizer.reposition();
@@ -129,7 +136,7 @@ const colorPalette = createColorPalette({
 	onPrimaryChange: (hex, alpha = 1) => {
 		canvasManager.primaryColor = hex;
 		canvasManager.primaryAlpha = alpha;
-		window.dispatchEvent(new CustomEvent('paint:primary-color-change', { detail: hex }));
+		window.dispatchEvent(new CustomEvent('paint:primary-color-change', { detail: { hex, alpha } }));
 	},
 	onSecondaryChange: (hex, alpha = 1) => {
 		canvasManager.secondaryColor = hex;
@@ -394,6 +401,8 @@ const toolContext = {
 	getShapeKind: () => toolbar.getShapeKind(),
 	getShapeFillMode: () => toolbar.getFillMode(),
 	getSelectAfterDraw: () => toolbar.getSelectAfterDraw(),
+	getTextSelectAfterDraw: () => toolbar.getTextSelectAfterDraw?.() === true,
+	selectTextObject: (id) => textSelectionOverlay?.select(id),
 	getEmoji: () => toolbar.getSelectedEmoji(),
 	getFontSize: () => currentFontSize,
 	getFontFamily: () => "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
@@ -672,43 +681,8 @@ const applyTransformation = (transformFn) => {
 	persistSession();
 }
 
-const toggleActionMenu = (event) => {
-	event.stopPropagation();
-	const trigger = event.currentTarget;
-	const menu = trigger.closest('.action-menu');
-	const menuItems = menu.querySelector('.action-menu-items');
-	const shouldOpen = !menu.classList.contains('open');
-	document.querySelectorAll('.action-menu.open').forEach((item) => {
-		item.classList.remove('open');
-		const openItems = item.querySelector('.action-menu-items');
-		openItems.style.removeProperty('top');
-		openItems.style.removeProperty('left');
-		delete openItems.dataset.direction;
-	});
-	if (!shouldOpen) return;
-	const bounds = trigger.getBoundingClientRect();
-	menuItems.style.left = `${Math.round(bounds.left)}px`;
-	menuItems.style.visibility = 'hidden';
-	menuItems.style.display = 'grid';
-	const menuHeight = menuItems.getBoundingClientRect().height || 80;
-	menuItems.style.display = '';
-	menuItems.style.visibility = '';
-	const spaceBelow = window.innerHeight - bounds.bottom;
-	const openAbove = spaceBelow < menuHeight + 8 && bounds.top >= menuHeight + 8;
-	menuItems.style.top = `${Math.round(openAbove ? bounds.top - menuHeight - 2 : bounds.bottom + 2)}px`;
-	menuItems.dataset.direction = openAbove ? 'up' : 'down';
-	menu.classList.add('open');
-}
-
-document.getElementById('btn-open-menu').addEventListener('click', (event) => {
-	toggleActionMenu(event);
-});
-document.getElementById('btn-shapes-menu').addEventListener('click', (event) => {
-	toggleActionMenu(event);
-});
-document.getElementById('btn-rotate').addEventListener('click', (event) => {
-	toggleActionMenu(event);
-});
+const actionMenuController = createActionMenuController({ root: document });
+actionMenuController.bind();
 document.getElementById('btn-rotate-90').addEventListener('click', () => applyTransformation(c => rotateCanvas(c, 1)));
 document.getElementById('btn-rotate-180').addEventListener('click', () => applyTransformation(c => rotateCanvas(c, 2)));
 document.getElementById('btn-rotate-270').addEventListener('click', () => applyTransformation(c => rotateCanvas(c, 3)));
@@ -723,17 +697,8 @@ document.getElementById('btn-rotate-free').addEventListener('click', async () =>
 	const degrees = Number.parseFloat(value);
 	if (Number.isFinite(degrees)) applyTransformation(c => rotateCanvasByAngle(c, degrees));
 });
-document.getElementById('btn-flip').addEventListener('click', (event) => {
-	toggleActionMenu(event);
-});
 document.getElementById('btn-flip-horizontal').addEventListener('click', () => applyTransformation(c => flipCanvas(c, true)));
 document.getElementById('btn-flip-vertical').addEventListener('click', () => applyTransformation(c => flipCanvas(c, false)));
-document.getElementById('btn-crop-menu').addEventListener('click', (event) => {
-	toggleActionMenu(event);
-});
-document.getElementById('btn-tools-menu')?.addEventListener('click', toggleActionMenu);
-document.getElementById('btn-text-menu')?.addEventListener('click', toggleActionMenu);
-document.getElementById('line-size')?.addEventListener('click', toggleActionMenu);
 document.getElementById('btn-remove-bg').addEventListener('click', () => applyTransformation(c => removeBackground(c, 30)));
 rotateSelectionHandle?.addEventListener('click', (event) => {
 	event.preventDefault();
@@ -843,9 +808,6 @@ const renderSelectionRotation = (rotationState) => {
 }
 bindSelectionHandles();
 
-document.addEventListener('click', () => {
-	document.querySelectorAll('.action-menu.open').forEach((menu) => menu.classList.remove('open'));
-});
 document.querySelector('.shape-gallery')?.addEventListener('click', (event) => event.stopPropagation());
 document.querySelector('.text-tool-menu-items')?.addEventListener('click', (event) => event.stopPropagation());
 
@@ -1404,6 +1366,7 @@ const syncRibbonSettingsControls = () => {
 }
 
 const STORAGE_ESTIMATE_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+const STORAGE_DISPLAY_QUOTA_CAP_MB = 10 * 1024;
 
 const normalizeStorageEstimate = (value) => {
 	const usage = Number(value?.usage);
@@ -1436,7 +1399,10 @@ const updateAboutStats = async () => {
 	try {
 		const estimate = await getCachedStorageEstimate();
 		const usageMB = estimate ? estimate.usage / MB : 0;
-		const quotaMB = estimate ? estimate.quota / MB : 0;
+		// Chromium reports a quota with implementation overhead (for example
+		// 10,240.39 MiB). The About surface presents the stable 10 GiB budget
+		// instead of exposing that fractional overhead as user storage.
+		const quotaMB = estimate ? Math.min(STORAGE_DISPLAY_QUOTA_CAP_MB, Math.floor(estimate.quota / MB)) : 0;
 		document.getElementById('about-storage').textContent = estimate ? fmt2(usageMB) : 'Unavailable';
 		const freeEl = document.getElementById('about-storage-free');
 		if (freeEl) {
@@ -1800,7 +1766,7 @@ const toolbar = new Toolbar({
 		openResizeDialog,
 		undo: () => { discardFloatingSelection(); historyManager.undo(); },
 		redo: () => { discardFloatingSelection(); historyManager.redo(); },
-		setPrimaryColor: (hex) => colorPalette.setPrimary(hex),
+		setPrimaryColor: (hex, alpha) => colorPalette.setPrimary(hex, alpha),
 	},
 });
 

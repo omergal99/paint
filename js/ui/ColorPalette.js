@@ -78,6 +78,7 @@ export const createColorPalette = ({
   const closePaletteMenu = () => {
     if (!paletteMenu) return;
     paletteMenu.hidden = true;
+    paletteMenu.classList.remove('open');
     editingPaletteIndex = null;
   };
 
@@ -87,7 +88,7 @@ export const createColorPalette = ({
     editingPaletteIndex = index;
     colorPickerInput.value = hex;
     colorPickerInput.click();
-    paletteMenu.hidden = true;
+    closePaletteMenu();
   };
 
   const updatePaletteSlot = (index, hex) => {
@@ -101,6 +102,7 @@ export const createColorPalette = ({
     if (!paletteMenu || !Number.isInteger(index)) return;
     paletteMenu.dataset.index = String(index);
     paletteMenu.hidden = false;
+    paletteMenu.classList.add('open');
     const width = 180;
     const height = 136;
     paletteMenu.style.left = `${Math.min(event.clientX, window.innerWidth - width - 8)}px`;
@@ -110,10 +112,12 @@ export const createColorPalette = ({
 
   const createPaletteMenu = () => {
     paletteMenu = document.createElement('div');
-    paletteMenu.className = 'color-palette-context-menu';
-    paletteMenu.setAttribute('role', 'menu');
-    paletteMenu.setAttribute('aria-label', 'Palette color actions');
+    paletteMenu.className = 'action-menu color-palette-context-menu';
     paletteMenu.hidden = true;
+    const items = document.createElement('div');
+    items.className = 'action-menu-items color-palette-context-menu-items';
+    items.setAttribute('role', 'menu');
+    items.setAttribute('aria-label', 'Palette color actions');
     const actions = [
       ['edit', 'Edit color'],
       ['primary', 'Set as foreground'],
@@ -138,15 +142,10 @@ export const createColorPalette = ({
           closePaletteMenu();
         }
       });
-      paletteMenu.appendChild(button);
+      items.appendChild(button);
     });
+    paletteMenu.appendChild(items);
     document.body.appendChild(paletteMenu);
-    document.addEventListener('click', (event) => {
-      if (!paletteMenu.contains(event.target)) closePaletteMenu();
-    });
-    document.addEventListener('keydown', (event) => {
-      if (event.key === 'Escape') closePaletteMenu();
-    });
   };
 
   const openPicker = (which) => {

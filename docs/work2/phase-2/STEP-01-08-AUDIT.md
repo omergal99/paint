@@ -15,9 +15,9 @@ exists.
 | 02 | Done | Shared constants, document contract, SettingsStore, functional EventBus, and service-worker entries | Continue replacing remaining class-owned seams only when their dependencies are touched |
 | 03 | Done | Session/history UX, stable IDs, accessible tabs, settings summaries, Ribbon ordering, shape-gallery propagation, and compact Settings layout | Keep the multi-layout Ribbon measurement matrix in the later quality gate |
 | 04 | Done with follow-up | Resize percentage/ratio/selection behavior and transparent canvas/checkerboard foundations | Complete Open/Paste/Crop/Save/New alpha round trips and broader transparency regression tests |
-| 05 | Implemented with follow-up | RGBA normalization, visible primary/secondary alpha controls, checkerboard swatches, palette-slot context menu, and alpha-aware drawing paths | Complete the broader alpha-bearing Open/Paste/Crop/Resize/Save/New fixture matrix and make the export evidence explicit |
-| 06 | Safe slice done | Textarea Recent text history, persistence/restore/clear, max 20 entries, split Text options menu, and the verified shape select-after-draw boundary | Full text-object editing remains deferred until overlap-safe compositor/hit-test proofs exist |
-| 07 | Foundation | Functional controller/EventBus seams and performance documentation | Finish pointermove coalescing, cached geometry, telemetry pause/resume, and the broad listener audit |
+| 05 | Stabilized with follow-up | RGBA normalization, compact checkerboard opacity menu, visible palette-slot context menu, shared outside-click lifecycle, and alpha-aware drawing paths | Complete the broader alpha-bearing Open/Paste/Crop/Resize/Save/New fixture matrix and make export evidence explicit |
+| 06 | Safe selection slice done | Textarea Recent text history, persistence/restore/clear, max 20 entries, enabled text select-after-draw, metadata focus targets, and the verified shape boundary | Full text-object editing remains deferred until overlap-safe compositor/undo/reload/hit-test proofs exist |
+| 07 | Foundation plus first modular seam | Functional controller/EventBus seams, shared ActionMenuController, and performance documentation | Finish pointermove coalescing, cached geometry, telemetry pause/resume, and broad listener audit |
 | 08 | Foundation | Memory-budget report and a 64 MiB in-memory history cap, kept distinct from storage quota | Add Blob/object-URL history, dimension guards, quota recovery, and IndexedDB corruption recovery |
 
 ## The requested transparency location
@@ -28,9 +28,11 @@ from **Step 04 — Resize and Canvas Semantics**, which owns transparent canvas
 backgrounds, checkerboard display, alpha-safe edits, and PNG behavior.
 
 The `index.html` `ribbon-group ribbon-group-colors` now contains the two
-swatches, independent foreground/background opacity sliders, explicit `0%`
-transparent actions, the native color picker, and the palette grid. The
-palette-slot context menu is keyboard reachable. `ColorPalette` persists the
+swatches, a compact checkerboard opacity icon with a shared action-menu popover,
+independent foreground/background opacity sliders, explicit `0%` transparent
+actions, the native color picker, and the palette grid. The palette-slot
+context menu is keyboard reachable, visible, and closes through the same
+outside-click/Escape lifecycle as other menus. `ColorPalette` persists the
 independent alpha values, and Freehand, Shape, Fill, Text, and Eyedropper now
 consume the alpha state. The remaining Step 05 work is the broader alpha-bearing
 file/fixture matrix, not the absence of the requested Ribbon control.

@@ -20,9 +20,13 @@ Make behavior—not source formatting—the durable regression contract.
 ## Verification order
 
 The quality gate runs after every Step 09 slice, then as a complete suite before
-Step 11. A failing type or behavior gate blocks the next extraction slice.
+Step 11. The first gate now covers the extracted ActionMenuController,
+opacity/palette behavior, stable storage display, and safe text focus. A
+failing type or behavior gate blocks the next extraction slice.
 
 ## Done when
 
 CI is green, coverage is measured, and the highest-risk workflows have direct
-behavioral tests.
+behavioral tests. Current evidence is `npm test` 4/4, syntax checks,
+`git diff --check`, and repeatable headless browser assertions; coverage,
+`checkJs`, and negative/error-path fixtures remain open.

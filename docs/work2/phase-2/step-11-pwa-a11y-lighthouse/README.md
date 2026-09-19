@@ -23,6 +23,12 @@ The installed accessibility, web-quality-audit, and Playwright guidance should
 be used as focused verification inputs for these gates; project-specific claims
 still require evidence in this workspace.
 
+The first focused pass is complete for the current slice: opacity inputs have
+labels, action-menu triggers expose `aria-expanded`, Escape/outside clicks close
+menus, palette actions are keyboard reachable, and text focus targets expose
+labels and a visible keyboard focus state. Full audits, Lighthouse, offline
+update checks, and the complete Ribbon layout matrix remain pending.
+
 ## Done when
 
 Scores and failures are recorded, targets are met or explicitly waived, and the

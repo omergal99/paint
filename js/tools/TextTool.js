@@ -181,7 +181,7 @@ export const createTextTool = () => {
     canvasContext.restore();
     const lineWidths = text.split('\n').map((line) => canvasContext.measureText(line).width);
     const rgb = hexToRgb(ctx.canvasManager.primaryColor) || { r: 0, g: 0, b: 0 };
-    ctx.textDocumentStore?.add({
+    const textObject = ctx.textDocumentStore?.add({
       text,
       x: anchor.x,
       y: anchor.y + canvasTextOffset,
@@ -193,6 +193,9 @@ export const createTextTool = () => {
       styles: [...styles],
       zIndex: Date.now(),
     });
+    if (textObject && ctx.getTextSelectAfterDraw?.() === true) {
+      ctx.selectTextObject?.(textObject.id);
+    }
     ctx.canvasManager.persistToStorage();
   };
 

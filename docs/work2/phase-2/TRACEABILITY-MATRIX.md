@@ -16,8 +16,8 @@
 | Transparent canvas/PNG | Transparent mode preserves alpha through edits and PNG save | 04 | Pixel/PNG fixture |
 | Python background removal | Optional advanced provider behind adapter; default app stays lightweight and local-first | 12 | Provider contract and failure-path test |
 | Palette right-click editing | Context menu edits a palette slot without accidental secondary-color mutation | 05 | DOM/keyboard/context-menu test |
-| Alpha/transparent colors | Foreground/background alpha persisted and applied by drawing/composition | 05 | RGBA migration + pixel test |
-| Text select-after-draw | Future text objects become selected after commit only after overlap-safe hit-testing/compositing proof; text editing needs a focus/reveal cursor affordance | 06 | Deferred overlap, undo/redo, reload, and cursor/reveal acceptance suite |
+| Alpha/transparent colors | Compact checkerboard opacity menu, foreground/background alpha persisted and applied by drawing/composition | 05 | RGBA migration + pixel test + browser menu/close trace |
+| Text select-after-draw | Committed text can opt into a non-destructive metadata-bound focus target; text editing still needs overlap-safe compositing proof and focus/reveal affordance | 06 | Browser focus-target trace now; deferred overlap, undo/redo, reload, and edit acceptance suite |
 | Movable text | Text can remain selected/movable after creation via Tools More setting | 06 | Text object gesture test |
 | Text toolbar | Selected ranges support a scoped formatting toolbar with sanitized style runs | 06 | Editor model test |
 | Text history | Recent textarea text, persisted locally, click restores text, clear works, and the bounded history has a maximum of 20 entries; full text-object editing is deferred | 06 | Store contract tests plus browser smoke |

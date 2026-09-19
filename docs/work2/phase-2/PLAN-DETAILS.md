@@ -106,7 +106,9 @@ readable migration from existing `paint:colors` data.
 
 - Left click selects primary; a clear context menu on right click offers Edit,
   Set as secondary, and Reset slot.
-- Add a transparent/alpha control below the foreground/background swatches.
+- Add a compact checkerboard transparency icon with a down-arrow action menu;
+  keep the foreground/background controls inside the menu so the Colors group
+  remains within the measured 74px Ribbon height.
 - Persist primary and secondary alpha independently, and make the swatch
   checkerboard visible when alpha is below 100%.
 - Keep eyedropper results, text colors, shape fill, brush, eraser, and export on
@@ -127,19 +129,20 @@ canvas-pixel source of truth.
 4. Preserve the current raster commit path and verify that restoring history
    does not change the anchor or create an additional canvas commit.
 
-The following remain explicitly postponed: text-object compositor and
-hit-testing, move/resize/edit-after-blur, range formatting, right-click Edit,
-reveal mode, and the T/chevron split.
+The following remain explicitly postponed: text-object compositor,
+move/resize/edit-after-blur, range formatting, right-click Edit, and reveal
+mode. A safe metadata-bound focus overlay is allowed now; it does not paint,
+erase, or imply that raster text is editable.
 
 **Future non-negotiable acceptance:** once object editing is attempted, editing
 a text object after partial overlap with paint must not erase unrelated pixels,
 duplicate text, or make the text vanish. It requires dedicated overlap,
 undo/redo, and reload tests before the postponed UI can be enabled.
 
-The future text workflow must include a distinct text-edit/focus cursor and a
-reveal affordance for selectable text regions. This is the planned route for
-“Select text after draw”; it stays disabled until the compositor and hit-test
-proof is complete.
+The current text workflow includes a distinct text-focus cursor and selectable
+metadata-bound regions. “Select text after draw” is persisted and can always be
+turned off. It selects the committed focus target only; the edit/reveal route
+stays gated until compositor and overlap proofs are complete.
 
 ## Step 07 — Performance and event hygiene
 
@@ -173,7 +176,7 @@ and less per-move work, not a cosmetic listener count.
 
 ## Step 09 — Modularization
 
-Extract in low-risk seams:
+Extract in low-risk seams (the shared ActionMenuController is the first slice):
 
 1. `SettingsStore` and constants.
 2. `HistoryPanel` from Sidebar.
@@ -190,7 +193,8 @@ instead of reaching into underscored fields.
 
 - Replace new source-regex tests with behavior tests.
 - Add history byte-cap/undo/redo tests, resize-selection tests, palette/context
-  menu tests, text store/compositor/hit-test tests, storage migration tests,
+  menu/opacity/outside-click tests, text store/focus tests plus the future
+  compositor/hit-test gate, storage migration tests,
   EventBus teardown tests, and browser smoke tests.
 - Add `jsconfig.json` with `checkJs`; document the five core typedefs first.
 - Use Node's test coverage support and set targets per subsystem rather than a

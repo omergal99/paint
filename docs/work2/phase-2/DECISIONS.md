@@ -21,6 +21,15 @@
    for decoded images, scratch surfaces, Blobs, object URLs, and undo entries.
 9. Service-worker asset-list synchronization is deferred maintenance for Step
    11, not a blocker for the first PWA/accessibility pass.
+10. “Select text after draw” is enabled as a persisted, non-destructive focus
+    affordance. It selects metadata bounds only; text-object editing remains
+    gated by partial-overlap, undo/redo, and reload proofs.
+11. About stores the validated raw browser estimate once per 24-hour window but
+    displays a stable 10,240 MiB budget, avoiding implementation-overhead noise
+    such as 10,240.39 MiB.
+12. Ribbon action menus use one functional controller for positioning,
+    outside-click/Escape close, and `aria-expanded`; new menus must use that
+    seam rather than adding a private document listener.
 
 ## Owner decisions required before implementation
 

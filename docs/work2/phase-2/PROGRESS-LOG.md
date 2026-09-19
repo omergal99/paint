@@ -149,3 +149,27 @@ that changed from `DECISIONS.md`.
 - Added completion/evidence scores and measurement descriptions for every Phase
   2 row in `PHASE-2-STATUS.md`. Steps 09–11 are re-sequenced as modular slices
   after the remaining Step 07/08 gates, then quality gates, then PWA/accessibility.
+
+## 2026-09-19 — Stabilization pass and first Steps 09–11 slices
+
+- Replaced the visible alpha sliders in the Colors ribbon with a compact
+  checkerboard transparency icon and arrow menu. Foreground/background options
+  remain independent and keyboard-labeled inside the popover.
+- Fixed the palette context menu’s transparent background by using the defined
+  Ribbon surface color, and moved it onto the shared action-menu lifecycle so
+  outside clicks and Escape close it consistently.
+- Fixed per-tool alpha carry-over by storing alpha alongside remembered tool
+  colors. Switching Brush → Shape and changing 20% → 100% now updates the
+  active shape style instead of restoring stale opacity. Tool switching no
+  longer silently restores a remembered color; only an explicit recent-style
+  action may change the global picker color.
+- Normalized About’s displayed browser budget to a stable 10,240 MiB cap while
+  retaining the validated raw browser estimate in the once-per-day cache.
+- Enabled the safe text “Select text after draw” option. It persists on/off,
+  selects a metadata-bound focus target after commit, and exposes a text cursor
+  without enabling unsafe raster editing.
+- Started Step 09 by extracting `ActionMenuController`; Step 10 now records
+  direct alpha/text/storage/menu contracts, and Step 11 records the focused
+  accessibility pass. Added both new modules to the service-worker shell so
+  the offline app can boot the same path. Unit tests and browser verification
+  passed.

@@ -23,6 +23,7 @@ export const DEFAULT_SETTING_STORAGE_KEYS = Object.freeze([
   'paint:sidebar-state',
   'paint:sidebar-width',
   'paint:shape-select-after-draw',
+  'paint:text-select-after-draw',
   'paint:selected-emoji',
   'paint:selected-shape',
   'paint:ribbon-button-state',

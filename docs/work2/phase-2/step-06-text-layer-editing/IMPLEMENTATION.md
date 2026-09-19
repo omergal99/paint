@@ -11,13 +11,18 @@
   entries.
 - Added a compact Recent text control inside the active textarea editor. It can
   restore or clear entry history without introducing text-object editing.
-- Kept select-after-draw behavior covered by the existing shape-layer tests.
+- Added a persisted Text options checkbox for Select text after draw. When
+  enabled, a committed text object is selected through a metadata-bound focus
+  target with a text cursor; clicking it never rewrites canvas pixels.
+- Kept shape select-after-draw behavior covered by the existing shape-layer
+  tests.
 
 ## Safety boundary
 
-This is intentionally not the full editable compositor. Move/edit/hit-test,
-range formatting, right-click Edit, reveal mode, and the T/chevron split remain
-postponed. The non-negotiable overlap acceptance case is still open: editing a
+This is intentionally not the full editable compositor. Move/resize/edit-after-
+blur, range formatting, right-click Edit, and reveal mode remain postponed. The
+focus overlay is safe because it only exposes stored bounds and never paints or
+erases. The non-negotiable overlap acceptance case is still open: editing a
 text object after partial paint overlap must not erase unrelated pixels,
 duplicate text, or make the text vanish. The metadata store must not be treated
 as proof of that behavior.
@@ -30,4 +35,6 @@ as proof of that behavior.
 - `git diff --check` — passed.
 - Browser smoke — local headless Chrome opened the real Text tool, committed
   one entry, restored it through Recent text, and cleared history while the
-  textarea stayed open. No object-editing claim was made by this check.
+  textarea stayed open. A second browser pass verified the enabled checkbox,
+  selected focus target, and no-raster-edit boundary. No object-editing claim
+  was made by this check.

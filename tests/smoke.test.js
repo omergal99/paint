@@ -96,7 +96,8 @@ test('Settings and text controls expose the refined layout and accessible fields
 	assert.match(css, /\.ribbon-setting-row\s*\{[^}]*display:\s*grid/s);
 	assert.match(css, /\.ribbon-settings-list\s*\{[^}]*display:\s*grid/s);
 	assert.match(html, /id="btn-text-menu"/);
-	assert.match(html, /id="text-select-after-draw"[^>]*disabled/);
+	assert.match(html, /id="text-select-after-draw"/);
+	assert.doesNotMatch(html, /id="text-select-after-draw"[^>]*disabled/);
 	assert.match(html, /id="primary-alpha"/);
 	assert.match(html, /id="secondary-alpha"/);
 	assert.match(read('js/ui/ColorPalette.js'), /color-palette-context-menu|Palette color actions/);
@@ -109,6 +110,11 @@ test('Settings and text controls expose the refined layout and accessible fields
 	assert.match(textTool, /shell\.append\(nextEditor, toolbar\)/);
 	assert.match(textTool, /toolbar\.addEventListener\('pointerdown'/);
 	assert.match(read('js/ui/Toolbar.js'), /paint:text-history-toolbar-change/);
+	assert.match(read('js/ui/Toolbar.js'), /_applyRememberedStyle\(\{ restoreColor: true \}\)/);
+	assert.match(read('js/ui/Toolbar.js'), /Foregound color\/alpha are global picker state|Foreground color\/alpha are global picker state/);
+	assert.match(read('js/ui/TextSelectionOverlay.js'), /text-object-focus-layer/);
+	assert.match(textTool, /getTextSelectAfterDraw/);
+	assert.match(main, /selectTextObject/);
 });
 
 test('Standalone named functions use arrow constants', () => {
@@ -224,9 +230,11 @@ test('Mobile status bar stays on one line and hides app branding', () => {
 });
 
 test('Action menus choose their direction from available viewport space', () => {
-  assert.match(main, /spaceBelow\s*=\s*window\.innerHeight\s*-\s*bounds\.bottom/);
-  assert.match(main, /openAbove\s*=\s*spaceBelow\s*<\s*menuHeight/);
-  assert.match(main, /menuItems\.dataset\.direction\s*=\s*openAbove\s*\?\s*'up'\s*:\s*'down'/);
+  const actionMenus = read('js/ui/ActionMenuController.js');
+  assert.match(actionMenus, /spaceBelow\s*=\s*window\.innerHeight\s*-\s*bounds\.bottom/);
+  assert.match(actionMenus, /openAbove\s*=\s*spaceBelow\s*<\s*menuHeight/);
+  assert.match(actionMenus, /menuItems\.dataset\.direction\s*=\s*openAbove\s*\?\s*'up'\s*:\s*'down'/);
+  assert.match(main, /createActionMenuController/);
 });
 
 test('Size menu provides a responsive quick-button matrix', () => {
@@ -455,6 +463,8 @@ test('Round-2 fixes: V glyph, session persistence, view-aware actions, storage m
 	assert.match(main, /normalizeStorageEstimate/);
 	assert.match(main, /STORAGE_KEYS\.storageEstimate/);
 	assert.match(main, /minimumFractionDigits: 2/);
+	assert.match(main, /STORAGE_DISPLAY_QUOTA_CAP_MB/);
+	assert.match(main, /Math\.floor\(estimate\.quota \/ MB\)/);
 	assert.match(main, /Math\.min\(100, Math\.max\(1, Math\.ceil/);
 });
 
