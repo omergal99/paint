@@ -27,6 +27,8 @@ import { getReleaseNotes } from './releaseNotes.js';
 import { hexToRgb } from './utils/color.js';
 import { rotateCanvas, rotateCanvasByAngle, flipCanvas, scaleCanvas, removeBackground } from './utils/transform.js';
 import { APP_VERSION } from './version.js';
+import { DEFAULT_SETTINGS, STORAGE_KEYS } from './core/constants.js';
+import { createSettingsStore } from './settings/SettingsStore.js';
 
 // ---------- DOM refs ----------
 const stage = document.getElementById('canvas-stage');
@@ -486,8 +488,12 @@ function makeBlankSource(w, h) {
 	c.width = w;
 	c.height = h;
 	const ctx = c.getContext('2d');
-	ctx.fillStyle = '#ffffff';
-	ctx.fillRect(0, 0, w, h);
+	if (canvasManager.backgroundMode !== 'transparent') {
+		ctx.fillStyle = canvasManager.backgroundColor;
+		ctx.fillRect(0, 0, w, h);
+	} else {
+		ctx.clearRect(0, 0, w, h);
+	}
 	return c;
 }
 
@@ -817,6 +823,7 @@ bindSelectionHandles();
 document.addEventListener('click', () => {
 	document.querySelectorAll('.action-menu.open').forEach((menu) => menu.classList.remove('open'));
 });
+document.querySelector('.shape-gallery')?.addEventListener('click', (event) => event.stopPropagation());
 
 // Native dialogs do not close on backdrop clicks by default. Keep the modal
 // interactions lightweight and predictable, like the ribbon menus.
@@ -828,13 +835,48 @@ document.querySelectorAll('dialog').forEach((dialog) => dialog.addEventListener(
 const resizeDialog = document.getElementById('resize-dialog');
 const resizeWidthInput = document.getElementById('resize-width');
 const resizeHeightInput = document.getElementById('resize-height');
+const resizePercentInput = document.getElementById('resize-percent');
+const resizeTargetStatus = document.getElementById('resize-target-status');
 const keepAspectInput = document.getElementById('resize-keep-aspect');
 let aspectRatio = 1;
+let resizeTarget = { kind: 'canvas', x: 0, y: 0, width: 800, height: 600 };
+
+function activeResizeTarget() {
+	const selection = canvasManager.selection;
+	if (selection?.w > 0 && selection?.h > 0) {
+		return {
+			kind: 'selection',
+			x: selection.x,
+			y: selection.y,
+			width: selection.w,
+			height: selection.h,
+		};
+	}
+	return { kind: 'canvas', x: 0, y: 0, width: canvasManager.width, height: canvasManager.height };
+}
+
+function syncResizePercent() {
+	if (!resizePercentInput || !resizeTarget.width) return;
+	const width = Number(resizeWidthInput.value);
+	resizePercentInput.value = String(Math.max(1, Math.round((width / resizeTarget.width) * 100)));
+}
+
+function setResizeTargetFields() {
+	resizeWidthInput.value = resizeTarget.width;
+	resizeHeightInput.value = resizeTarget.height;
+	aspectRatio = resizeTarget.width / Math.max(1, resizeTarget.height);
+	keepAspectInput.checked = true;
+	resizePercentInput.value = '100';
+	if (resizeTargetStatus) {
+		resizeTargetStatus.textContent = resizeTarget.kind === 'selection'
+			? `Selection ${resizeTarget.width} × ${resizeTarget.height}px`
+			: 'Whole canvas';
+	}
+}
 
 function openResizeDialog() {
-	resizeWidthInput.value = canvasManager.width;
-	resizeHeightInput.value = canvasManager.height;
-	aspectRatio = canvasManager.width / canvasManager.height;
+	resizeTarget = activeResizeTarget();
+	setResizeTargetFields();
 	resizeDialog.showModal();
 	setDialogUrl('resize');
 }
@@ -844,15 +886,24 @@ document.querySelectorAll('[data-resize-preset]').forEach((button) => {
 		const [width, height] = button.dataset.resizePreset.split('x').map(Number);
 		resizeWidthInput.value = width;
 		resizeHeightInput.value = height;
+		syncResizePercent();
 		document.querySelectorAll('[data-resize-preset]').forEach((item) => item.classList.toggle('selected', item === button));
 	});
 });
 
 resizeWidthInput.addEventListener('input', () => {
 	if (keepAspectInput.checked) resizeHeightInput.value = Math.round(resizeWidthInput.value / aspectRatio);
+	syncResizePercent();
 });
 resizeHeightInput.addEventListener('input', () => {
 	if (keepAspectInput.checked) resizeWidthInput.value = Math.round(resizeHeightInput.value * aspectRatio);
+	syncResizePercent();
+});
+resizePercentInput.addEventListener('input', () => {
+	const percent = Math.max(1, Math.min(1000, Number(resizePercentInput.value) || 100));
+	resizePercentInput.value = String(percent);
+	resizeWidthInput.value = Math.max(1, Math.round(resizeTarget.width * percent / 100));
+	resizeHeightInput.value = Math.max(1, Math.round(resizeTarget.height * percent / 100));
 });
 
 document.getElementById('resize-cancel').addEventListener('click', () => resizeDialog.close());
@@ -863,9 +914,34 @@ document.getElementById('resize-form').addEventListener('submit', () => {
 	const w = parseInt(resizeWidthInput.value, 10);
 	const h = parseInt(resizeHeightInput.value, 10);
 	if (w > 0 && h > 0) {
-		commitFloatingSelection();
 		historyManager.snapshot();
-		canvasManager.resize(w, h);
+		if (resizeTarget.kind === 'selection') {
+			const source = canvasManager.floatingCanvas || canvasManager.extractRegion({
+				x: resizeTarget.x,
+				y: resizeTarget.y,
+				w: resizeTarget.width,
+				h: resizeTarget.height,
+			});
+			if (!canvasManager.floatingCanvas) {
+				canvasManager.fillRegion({
+					x: resizeTarget.x,
+					y: resizeTarget.y,
+					w: resizeTarget.width,
+					h: resizeTarget.height,
+				}, canvasManager.backgroundColor);
+				canvasManager.floatingCanvas = source;
+			}
+			const requiredWidth = Math.max(canvasManager.width, resizeTarget.x + w);
+			const requiredHeight = Math.max(canvasManager.height, resizeTarget.y + h);
+			if (requiredWidth !== canvasManager.width || requiredHeight !== canvasManager.height) {
+				canvasManager.resize(requiredWidth, requiredHeight);
+			}
+			canvasManager.floatingCanvas = scaleCanvas(source, w, h);
+			setSelection({ x: resizeTarget.x, y: resizeTarget.y, w, h });
+		} else {
+			commitFloatingSelection();
+			canvasManager.resize(w, h);
+		}
 		persistSession();
 	}
 });
@@ -879,7 +955,17 @@ const aiCheckbox = document.getElementById('setting-show-ai-chat');
 const bgSelect = document.getElementById('setting-canvas-bg');
 const defaultCanvasSizeSelect = document.getElementById('setting-default-canvas-size');
 const defaultZoomSelect = document.getElementById('setting-default-zoom');
-const SETTINGS_KEY = 'omerpaint:settings';
+const SETTINGS_KEY = STORAGE_KEYS.settings;
+const settingsStore = createSettingsStore({
+	storage: globalThis.localStorage,
+	key: SETTINGS_KEY,
+	defaults: DEFAULT_SETTINGS,
+	validators: {
+		canvasBackground: (value) => ['none', 'solid', 'transparent', 'checkerboard', 'grid'].includes(value),
+		defaultZoom: (value) => Number.isFinite(Number(value)) && Number(value) > 0,
+		historyAutoSaveMode: (value) => ['all', 'close', 'lifecycle'].includes(value),
+	},
+});
 const settingsRegistry = createSettingsRegistry();
 settingsRegistry.registerResetHandler(() => colorPalette.resetToDefaults());
 settingsRegistry.registerResetHandler(() => sidebar.resetSettings());
@@ -972,7 +1058,7 @@ const segmentedChoices = [...document.querySelectorAll('.choice-summary')].map((
 function renderSegmentedChoices() { segmentedChoices.forEach((choice) => choice.render()); }
 
 function readSettings() {
-	try { return JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}'); } catch { return {}; }
+	return settingsStore.get();
 }
 
 function saveSettings() {
@@ -992,7 +1078,7 @@ function saveSettings() {
 		const historyAutoSave = (document.getElementById('history-auto-save-toggle')?.checked
 			?? document.getElementById('setting-history-auto-save')?.checked) ?? true;
 		const historyAutoSaveMode = document.getElementById('setting-history-auto-save-mode')?.value || 'all';
-		localStorage.setItem(SETTINGS_KEY, JSON.stringify({
+		settingsStore.set({
 			darkMode: dmCheckbox.checked,
 			showStatusBar: sbCheckbox.checked,
 			showColorInspector: ciCheckbox.checked,
@@ -1006,7 +1092,7 @@ function saveSettings() {
 			ribbonVisibility,
 			buttonVisibility,
 			showRotateInSelection: document.getElementById('rotate-selection-toggle')?.checked === true,
-		}));
+		});
 	} catch (error) { console.warn('Unable to save settings:', error); }
 }
 
@@ -1148,6 +1234,16 @@ function applyHistoryState() {
 	syncHistoryControls();
 }
 
+function applyCanvasBackgroundMode(mode) {
+	const value = mode || 'none';
+	canvasManager.setBackgroundMode(value === 'transparent' ? 'transparent' : 'solid');
+	const viewport = document.getElementById('canvas-viewport');
+	viewport.classList.remove('bg-checkerboard', 'bg-grid', 'bg-transparent');
+	if (value === 'transparent') viewport.classList.add('bg-transparent');
+	else if (value === 'checkerboard') viewport.classList.add('bg-checkerboard');
+	else if (value === 'grid') viewport.classList.add('bg-grid');
+}
+
 // ---------- Settings dialog ----------
 function applySavedSettings() {
 	const saved = readSettings();
@@ -1158,6 +1254,7 @@ function applySavedSettings() {
 	bgSelect.value = saved.canvasBackground || 'none';
 	defaultCanvasSizeSelect.value = saved.defaultCanvasSize || '800x600';
 	defaultZoomSelect.value = String(saved.defaultZoom || 100);
+	applyCanvasBackgroundMode(bgSelect.value);
 	viewportManager.setInitialZoom(defaultZoomSelect.value);
 	if (!localStorage.getItem('paint:zoom')) viewportManager.setZoom(defaultZoomSelect.value);
 	if (!localStorage.getItem('omerpaint:last-canvas')) {
@@ -1168,8 +1265,6 @@ function applySavedSettings() {
 	document.body.classList.toggle('dark-mode', dmCheckbox.checked);
 	document.querySelector('.status-bar').style.display = sbCheckbox.checked ? 'grid' : 'none';
 	document.getElementById('color-inspector').style.display = ciCheckbox.checked ? 'flex' : 'none';
-	document.getElementById('canvas-viewport').classList.toggle('bg-checkerboard', bgSelect.value === 'checkerboard');
-	document.getElementById('canvas-viewport').classList.toggle('bg-grid', bgSelect.value === 'grid');
 	const ribbonVisibility = saved.ribbonVisibility || {};
 	document.querySelectorAll('.ribbon-group').forEach((groupSection) => {
 		const title = groupSection.querySelector('.ribbon-group-title');
@@ -1316,11 +1411,26 @@ document.querySelectorAll('[data-settings-tab]').forEach((tab) => {
 	});
 });
 
+const RIBBON_GROUP_ORDER = Object.freeze([
+	'ribbon-group-file',
+	'ribbon-group-clipboard',
+	'ribbon-group-image',
+	'ribbon-group-tools',
+	'ribbon-group-shapes',
+	'ribbon-group-colors',
+	'ribbon-group-history',
+	'ribbon-group-extras',
+]);
+
 function populateRibbonSettings() {
 	const container = document.getElementById('ribbon-settings-list');
 	if (!container) return;
 	container.innerHTML = '';
+	const groups = RIBBON_GROUP_ORDER.map((className) => document.querySelector(`.${className}`)).filter(Boolean);
 	document.querySelectorAll('.ribbon-group').forEach((groupSection) => {
+		if (!groups.includes(groupSection)) groups.push(groupSection);
+	});
+	groups.forEach((groupSection) => {
 		const title = groupSection.querySelector('.ribbon-group-title');
 		if (!title) return;
 		const row = document.createElement('div');
@@ -1413,9 +1523,7 @@ function persistHistoryPrefs() {
 		historyAutoSaveMode: settingAutoMode ? settingAutoMode.value : 'all',
 	};
 	try {
-		const s = readSettings();
-		Object.assign(s, state);
-		localStorage.setItem(SETTINGS_KEY, JSON.stringify(s));
+		settingsStore.set(state);
 	} catch (err) {
 		console.warn('Unable to save history prefs:', err);
 	}
@@ -1465,10 +1573,7 @@ document.getElementById('settings-history-clear')?.addEventListener('click', asy
 	statusBar.flash('History cleared');
 });
 
-document.getElementById('settings-about-close').addEventListener('click', () => settingsDialog.close());
-
 document.getElementById('btn-settings').addEventListener('click', () => openSettingsDialog());
-document.getElementById('settings-cancel').addEventListener('click', () => settingsDialog.close());
 document.getElementById('settings-footer-close')?.addEventListener('click', () => settingsDialog.close());
 document.getElementById('rotate-selection-toggle')?.addEventListener('change', (event) => {
 	updateSelectionHandles(canvasManager.selection);
@@ -1508,11 +1613,7 @@ window.addEventListener('paint:ai-chat-visibility-change', (event) => {
 	saveSettings();
 });
 bgSelect.addEventListener('change', (e) => {
-	const viewport = document.getElementById('canvas-viewport');
-	viewport.classList.remove('bg-checkerboard', 'bg-grid');
-	if (e.target.value !== 'none') {
-		viewport.classList.add('bg-' + e.target.value);
-	}
+	applyCanvasBackgroundMode(e.target.value);
 	saveSettings();
 });
 

@@ -1,0 +1,164 @@
+- generic [ref=e2]:
+  - banner [ref=e3]:
+    - generic [ref=e4]:
+      - generic [ref=e5]:
+        - button "New" [ref=e6] [cursor=pointer]
+        - generic [ref=e11]:
+          - button [ref=e13] [cursor=pointer]:
+            - generic [ref=e16]:
+              - text: Open
+              - generic [aria-hidden] [ref=e17]: ▾
+          - button "Save" [ref=e18] [cursor=pointer]
+      - generic [ref=e24] [cursor=pointer]: File
+    - generic [ref=e26]:
+      - generic [ref=e27]:
+        - button "Paste" [ref=e28] [cursor=pointer]
+        - generic [ref=e34]:
+          - button "Cut" [ref=e35] [cursor=pointer]
+          - button "Copy" [ref=e41] [cursor=pointer]
+      - generic [ref=e46] [cursor=pointer]: Clipboard
+    - generic [ref=e48]:
+      - generic [ref=e49]:
+        - button "Select" [ref=e50] [cursor=pointer]
+        - generic [ref=e54]:
+          - button [ref=e56] [cursor=pointer]:
+            - generic [ref=e59]:
+              - text: Crop
+              - generic [aria-hidden] [ref=e60]: ▾
+          - button "Resize" [ref=e61] [cursor=pointer]
+        - generic [ref=e66]:
+          - button [ref=e68] [cursor=pointer]:
+            - generic [ref=e71]:
+              - text: Rotate
+              - generic [aria-hidden] [ref=e72]: ▾
+          - button [ref=e74] [cursor=pointer]:
+            - generic [ref=e77]:
+              - text: Flip
+              - generic [aria-hidden] [ref=e78]: ▾
+      - generic [ref=e79] [cursor=pointer]: Image
+    - generic [ref=e81]:
+      - generic [ref=e82]:
+        - generic [ref=e84]:
+          - button "Brush (B)" [ref=e85] [cursor=pointer]
+          - button "Text (T)" [ref=e88] [cursor=pointer]
+        - generic [ref=e91]:
+          - 'button "Current tool: Select" [ref=e92] [cursor=pointer]'
+          - button "More ▾" [ref=e95] [cursor=pointer]:
+            - generic [ref=e96]: More
+            - generic [ref=e97]: ▾
+      - generic [ref=e98] [cursor=pointer]: Tools
+    - generic [ref=e100]:
+      - generic [ref=e101]:
+        - generic [ref=e102]:
+          - button "Use current shape" [ref=e103] [cursor=pointer]
+          - button "Choose another shape" [ref=e106] [cursor=pointer]:
+            - generic [aria-hidden] [ref=e107]: ▾
+        - generic [ref=e108]:
+          - button "Rectangle" [ref=e109] [cursor=pointer]
+          - button "Arrow" [ref=e112] [cursor=pointer]
+        - generic "Current drawing or text size" [ref=e115]:
+          - generic [ref=e116]:
+            - spinbutton "Custom Size (brush stroke / text font)" [ref=e117]: "3"
+            - button "3px" [ref=e119] [cursor=pointer]:
+              - generic [aria-hidden] [ref=e121]: ▾
+      - generic [ref=e122] [cursor=pointer]: Shapes
+    - generic [ref=e124]:
+      - generic [ref=e125]:
+        - generic "Click to edit colors" [ref=e126]:
+          - button [ref=e127] [cursor=pointer]
+          - button [ref=e128] [cursor=pointer]
+          - textbox: "#000000"
+        - generic [ref=e129]:
+          - button "#000000" [ref=e130] [cursor=pointer]
+          - button "#7f7f7f" [ref=e131] [cursor=pointer]
+          - button "#880015" [ref=e132] [cursor=pointer]
+          - button "#ed1c24" [ref=e133] [cursor=pointer]
+          - button "#ff7f27" [ref=e134] [cursor=pointer]
+          - button "#fff200" [ref=e135] [cursor=pointer]
+          - button "#22b14c" [ref=e136] [cursor=pointer]
+          - button "#00a2e8" [ref=e137] [cursor=pointer]
+          - button "#3f48cc" [ref=e138] [cursor=pointer]
+          - button "#a349a4" [ref=e139] [cursor=pointer]
+          - button "#ffffff" [ref=e140] [cursor=pointer]
+          - button "#c3c3c3" [ref=e141] [cursor=pointer]
+          - button "#b97a57" [ref=e142] [cursor=pointer]
+          - button "#ffc90e" [ref=e143] [cursor=pointer]
+          - button "#efe4b0" [ref=e144] [cursor=pointer]
+          - button "#b5e61d" [ref=e145] [cursor=pointer]
+          - button "#99d9ea" [ref=e146] [cursor=pointer]
+          - button "#7092be" [ref=e147] [cursor=pointer]
+          - button "#c8bfe7" [ref=e148] [cursor=pointer]
+          - button "#ffaec9" [ref=e149] [cursor=pointer]
+          - button "#ffd700" [ref=e150] [cursor=pointer]
+          - button "#80ff80" [ref=e151] [cursor=pointer]
+          - button "#80ffff" [ref=e152] [cursor=pointer]
+          - button "#8080ff" [ref=e153] [cursor=pointer]
+          - button "#ff80ff" [ref=e154] [cursor=pointer]
+          - button "#d2691e" [ref=e155] [cursor=pointer]
+          - button "#708090" [ref=e156] [cursor=pointer]
+          - button "#deb887" [ref=e157] [cursor=pointer]
+      - generic [ref=e158] [cursor=pointer]: Colors
+    - generic [ref=e161]:
+      - generic [ref=e162]:
+        - button "Undo" [disabled] [ref=e163]
+        - button "Redo" [disabled] [ref=e168]
+      - button "History" [ref=e173] [cursor=pointer]
+    - generic [ref=e179]:
+      - button "Settings" [ref=e181] [cursor=pointer]
+      - generic [ref=e186] [cursor=pointer]: Extras
+    - generic [ref=e188]:
+      - generic [ref=e189]:
+        - button "Color picker (K)" [ref=e191] [cursor=pointer]
+        - generic [ref=e194]:
+          - code [ref=e195]: "#a349a4"
+          - button "⧉" [ref=e196] [cursor=pointer]
+        - button "Collapse color inspector" [expanded] [ref=e197] [cursor=pointer]
+      - generic [ref=e200]:
+        - code [ref=e201]: rgb(163, 73, 164)
+        - button "⧉" [ref=e202] [cursor=pointer]
+  - generic [ref=e204]:
+    - main [ref=e205]
+    - complementary [ref=e284]:
+      - generic [ref=e286]:
+        - heading "History" [level=3] [ref=e287]
+        - button "×" [ref=e288] [cursor=pointer]
+      - generic [ref=e289]:
+        - generic [ref=e290]:
+          - generic [ref=e291]:
+            - generic [ref=e292]:
+              - text: "Auto-save:"
+              - strong [ref=e293]: All automatic events
+            - generic [ref=e294]:
+              - text: "Save limit:"
+              - strong [ref=e295]: 50 images
+            - button "Open History Settings" [ref=e296] [cursor=pointer]
+          - checkbox [checked] [aria-hidden] [ref=e297]
+          - combobox [aria-hidden] [ref=e298]
+          - generic [ref=e299]: "Actions: Session"
+          - generic [ref=e300]:
+            - button "Save Current" [ref=e301] [cursor=pointer]
+            - button "Export All" [ref=e302] [cursor=pointer]
+            - button "Clear All" [ref=e303] [cursor=pointer]
+        - tablist "History views" [ref=e304]:
+          - tab "History" [ref=e305] [cursor=pointer]
+          - tab "Session" [active] [selected] [ref=e306] [cursor=pointer]
+        - generic [ref=e309]:
+          - img "Session step 1 of 1" [ref=e310] [cursor=pointer]
+          - generic [ref=e311]: Current · 800x600
+          - button "Hide current session image" [ref=e312] [cursor=pointer]:
+            - generic [aria-hidden] [ref=e313]: 🗑
+          - button "Save session step 1 of 1 to computer" [ref=e314] [cursor=pointer]:
+            - generic [aria-hidden] [ref=e315]: ⬇
+  - contentinfo [ref=e213]:
+    - generic [ref=e214]: "Pointer: —"
+    - generic [ref=e216]:
+      - img "Paint icon" [ref=e217] [cursor=pointer]
+      - generic [ref=e218]: paint
+    - generic [ref=e219]:
+      - generic [ref=e220]: 800 × 600px
+      - generic [ref=e221]:
+        - button "−" [ref=e222] [cursor=pointer]
+        - slider [ref=e223]: "100"
+        - spinbutton [ref=e224]: "100"
+        - generic [ref=e225]: "%"
+        - button "+" [ref=e226] [cursor=pointer]

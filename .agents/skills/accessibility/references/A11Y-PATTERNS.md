@@ -1,233 +1,66 @@
-# Accessibility Code Patterns
+# Paint Online accessibility patterns
 
-Practical, copy-paste-ready patterns for common accessibility requirements. Each pattern is self-contained and linked from the main [SKILL.md](../SKILL.md).
+## Native controls first
 
----
-
-## Modal focus trap
-
-Trap keyboard focus inside a modal dialog so Tab/Shift+Tab cycle through its focusable elements and Escape closes it.
-
-```javascript
-function openModal(modal) {
-  const focusableElements = modal.querySelectorAll(
-    'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-  );
-  const firstElement = focusableElements[0];
-  const lastElement = focusableElements[focusableElements.length - 1];
-
-  modal.addEventListener('keydown', (e) => {
-    if (e.key === 'Tab') {
-      if (e.shiftKey && document.activeElement === firstElement) {
-        e.preventDefault();
-        lastElement.focus();
-      } else if (!e.shiftKey && document.activeElement === lastElement) {
-        e.preventDefault();
-        firstElement.focus();
-      }
-    }
-    if (e.key === 'Escape') {
-      closeModal();
-    }
-  });
-
-  firstElement.focus();
-}
-```
-
-The native `<dialog>` element handles focus trapping automatically—prefer it when browser support allows.
-
----
-
-## Skip link
-
-Allows keyboard users to bypass repetitive navigation and jump straight to main content.
+Use `<button>`, `<a href>`, `<input>`, `<select>`, and `<textarea>` where they
+match the behavior. Do not add a keyboard handler to a native button that would
+double-trigger Enter/Space.
 
 ```html
-<body>
-  <a href="#main-content" class="skip-link">Skip to main content</a>
-  <header><!-- navigation --></header>
-  <main id="main-content" tabindex="-1">
-    <!-- main content -->
-  </main>
-</body>
+<button type="button" aria-label="Delete history image">🗑</button>
+<label for="resize-percent">Scale (%)</label>
+<input id="resize-percent" type="number" min="1" max="1000">
 ```
 
-```css
-.skip-link {
-  position: absolute;
-  top: -40px;
-  left: 0;
-  background: #000;
-  color: #fff;
-  padding: 8px 16px;
-  z-index: 100;
-}
+## Dialog close and focus
 
-.skip-link:focus {
-  top: 0;
-}
-```
+Prefer the native `<dialog>` already used by Paint. On close, restore focus to
+the trigger. Keep Escape and the visible footer/header close actions working.
 
----
+## Menus
 
-## Error handling
+Menu triggers expose an accessible name and `aria-expanded`. Menu items are
+native buttons with `role="menuitem"` only when the container is a real menu.
+Escape closes the menu; clicking outside closes it; clicks inside do not close a
+menu that intentionally stays open, such as the shape gallery.
 
-Announce errors to screen readers and focus the first invalid field on submit.
+## Tabs
 
 ```html
-<form novalidate>
-  <div class="field" aria-live="polite">
-    <label for="email">Email</label>
-    <input type="email" id="email"
-           aria-invalid="true"
-           aria-describedby="email-error">
-    <p id="email-error" class="error" role="alert">
-      Please enter a valid email address (e.g., name@example.com)
-    </p>
-  </div>
-</form>
-```
-
-```javascript
-form.addEventListener('submit', (e) => {
-  const firstError = form.querySelector('[aria-invalid="true"]');
-  if (firstError) {
-    e.preventDefault();
-    firstError.focus();
-
-    const errorSummary = document.getElementById('error-summary');
-    errorSummary.textContent =
-      `${errors.length} errors found. Please fix them and try again.`;
-    errorSummary.focus();
-  }
-});
-```
-
----
-
-## Form labels
-
-Every input needs an associated label—either explicit (`for`/`id`) or implicit (wrapping `<label>`).
-
-```html
-<!-- ❌ No label association -->
-<input type="email" placeholder="Email">
-
-<!-- ✅ Explicit label -->
-<label for="email">Email address</label>
-<input type="email" id="email" name="email"
-       autocomplete="email" required>
-
-<!-- ✅ Implicit label -->
-<label>
-  Email address
-  <input type="email" name="email" autocomplete="email" required>
-</label>
-
-<!-- ✅ With instructions -->
-<label for="password">Password</label>
-<input type="password" id="password"
-       aria-describedby="password-requirements">
-<p id="password-requirements">
-  Must be at least 8 characters with one number.
-</p>
-```
-
----
-
-## Dragging movements
-
-Any action triggered by dragging must offer a single-pointer alternative (WCAG 2.5.7).
-
-```html
-<!-- ❌ Drag-only reorder -->
-<ul class="sortable-list" draggable="true">
-  <li>Item 1</li>
-  <li>Item 2</li>
-</ul>
-
-<!-- ✅ Drag + button alternatives -->
-<ul class="sortable-list">
-  <li>
-    <span>Item 1</span>
-    <button aria-label="Move Item 1 up">↑</button>
-    <button aria-label="Move Item 1 down">↓</button>
-  </li>
-  <li>
-    <span>Item 2</span>
-    <button aria-label="Move Item 2 up">↑</button>
-    <button aria-label="Move Item 2 down">↓</button>
-  </li>
-</ul>
-```
-
-Also applies to sliders, map panning, colour pickers, and similar drag-based widgets—always provide an equivalent click/tap or keyboard path.
-
----
-
-## ARIA tabs
-
-Tabs require `role="tablist"`, `role="tab"`, and `role="tabpanel"` with proper `aria-selected`, `aria-controls`, and keyboard support.
-
-```html
-<div role="tablist" aria-label="Product information">
-  <button role="tab" id="tab-1" aria-selected="true"
-          aria-controls="panel-1">Description</button>
-  <button role="tab" id="tab-2" aria-selected="false"
-          aria-controls="panel-2" tabindex="-1">Reviews</button>
+<div role="tablist" aria-label="History views">
+  <button role="tab" aria-selected="true" aria-controls="history-panel">History</button>
+  <button role="tab" aria-selected="false" aria-controls="session-panel" tabindex="-1">Session</button>
 </div>
-<div role="tabpanel" id="panel-1" aria-labelledby="tab-1">
-  <!-- Panel content -->
-</div>
-<div role="tabpanel" id="panel-2" aria-labelledby="tab-2" hidden>
-  <!-- Panel content -->
-</div>
+<section id="history-panel" role="tabpanel" aria-labelledby="history-tab"></section>
 ```
 
-Arrow keys should move focus between tabs; the active tab receives `tabindex="0"` while inactive tabs use `tabindex="-1"`.
+Arrow keys move focus between tabs; the active tab has `tabindex="0"` and
+inactive tabs use `tabindex="-1"`.
 
----
+## Forms and errors
 
-## Live regions and notifications
+Associate labels explicitly. Add `aria-invalid="true"` and
+`aria-describedby` for invalid resize values, storage failures, or unavailable
+optional providers. The message must explain how to recover.
 
-Use `aria-live` to announce dynamic content changes to screen readers without moving focus.
+## Live status
 
 ```html
-<!-- Status updates (polite — waits for pause in speech) -->
-<div aria-live="polite" aria-atomic="true" class="status">
-  <!-- Content updates announced to screen readers -->
-</div>
-
-<!-- Urgent alerts (assertive — interrupts) -->
-<div role="alert" aria-live="assertive">
-  <!-- Interrupts current announcement -->
-</div>
+<div id="status-live" role="status" aria-live="polite" aria-atomic="true"></div>
 ```
 
-```javascript
-function showNotification(message, type = 'polite') {
-  const container = document.getElementById(`${type}-announcer`);
-  container.textContent = '';
-  requestAnimationFrame(() => {
-    container.textContent = message;
-  });
-}
-```
+Clear before writing the same message again so assistive technology can announce
+repeated actions such as “History item deleted”. Use assertive alerts only for
+data-loss or blocking errors.
 
-Clear the container before writing to ensure the same message triggers a new announcement.
+## Dragging alternatives
 
----
+Canvas resizing and selection moving need a non-drag path where practical:
+numeric width/height/percentage fields, arrow-key nudges, or explicit action
+buttons. A drag-only feature is not complete.
 
-## Screen reader commands
+## Motion and reveal mode
 
-Quick reference for the most common screen reader shortcuts.
-
-| Action | VoiceOver (Mac) | NVDA (Windows) |
-|--------|-----------------|----------------|
-| Start/Stop | ⌘ + F5 | Ctrl + Alt + N |
-| Next item | VO + → | ↓ |
-| Previous item | VO + ← | ↑ |
-| Activate | VO + Space | Enter |
-| Headings list | VO + U, then arrows | H / Shift + H |
-| Links list | VO + U | K / Shift + K |
+The editable-text reveal effect must stop or shorten under
+`prefers-reduced-motion: reduce`; the text regions must remain available without
+animation.

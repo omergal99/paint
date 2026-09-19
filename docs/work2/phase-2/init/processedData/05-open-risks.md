@@ -11,11 +11,11 @@
    a local service creates installation friction.
 4. **Ribbon height and multiple layouts conflict.** Top, left, bottom, and
    floating modes must each be measured; a top-layout CSS constant is not enough.
-5. **Current docs/tests drift.** The missing community report and stale settings
-   assertion show that documentation and tests need to be part of the gate.
-6. **Service-worker asset lists drift easily.** New modules can be shipped
-   online but fail offline if the precache list is not synchronized.
-7. **Canvas transparency semantics are easy to regress.** Checkerboard display,
+5. **Service-worker asset lists drift easily.** New modules can be shipped
+   online but fail offline if the precache list is not synchronized. This is
+   deferred maintenance for Step 11, not an early blocker.
+6. **Canvas transparency semantics are easy to regress.** Checkerboard display,
    white fill, eraser behavior, background removal, and PNG export need separate
    fixtures rather than one visual smoke test.
-
+7. **Ribbon height and multiple layouts conflict.** Top, left, bottom, and
+   floating modes must each be measured; a top-layout CSS constant is not enough.

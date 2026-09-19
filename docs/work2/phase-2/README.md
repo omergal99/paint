@@ -1,8 +1,8 @@
 # Paint Online — Work 2 / Phase 2 Plan
 
-This directory is the planning source of truth for the next development cycle.
-It is intentionally implementation-free: application code should change only
-after a step is approved and its acceptance criteria are understood.
+This directory is the planning and implementation evidence source of truth for
+the next development cycle. Application code changes are recorded beside the
+step that owns them and must pass the documented gates.
 
 ## Navigation
 
@@ -23,9 +23,8 @@ feature is to describe.
 
 ## Planning status
 
-- Status: **planned; no application implementation changes made in Phase 2**.
+- Status: **Steps 01–04 implemented and verified; Steps 05–13 remain planned**.
 - Existing Phase 1 is treated as historical input, not blindly repeated.
 - The referenced `paint/docs/w2/PLAN-OVERVIEW.html` does not exist in this
   checkout. Existing Phase 1 documents are used instead, and the missing-file
   dependency is recorded in `DECISIONS.md`.
-

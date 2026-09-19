@@ -25,7 +25,7 @@ function clampRegionToBounds(region, maxW, maxH) {
 }
 
 export class CanvasManager {
-  constructor({ canvas, overlay, width = 800, height = 600, backgroundColor = '#ffffff' }) {
+  constructor({ canvas, overlay, width = 800, height = 600, backgroundColor = '#ffffff', backgroundMode = 'solid' }) {
     this.canvas = canvas;
     this.overlay = overlay;
     this.ctx = canvas.getContext('2d', { willReadFrequently: true });
@@ -34,6 +34,7 @@ export class CanvasManager {
     this.width = width;
     this.height = height;
     this.backgroundColor = backgroundColor;
+    this.backgroundMode = backgroundMode === 'transparent' ? 'transparent' : 'solid';
 
     this.primaryColor = '#000000';
     this.secondaryColor = '#ffffff';
@@ -131,9 +132,22 @@ export class CanvasManager {
 
   clear(color = this.backgroundColor) {
     this.ctx.save();
-    this.ctx.fillStyle = color;
-    this.ctx.fillRect(0, 0, this.width, this.height);
+    this._paintBackground(this.ctx, 0, 0, this.width, this.height, color);
     this.ctx.restore();
+  }
+
+  setBackgroundMode(mode) {
+    this.backgroundMode = mode === 'transparent' ? 'transparent' : 'solid';
+    return this.backgroundMode;
+  }
+
+  _paintBackground(context, x, y, width, height, color = this.backgroundColor) {
+    if (this.backgroundMode === 'transparent' && color === this.backgroundColor) {
+      context.clearRect(x, y, width, height);
+      return;
+    }
+    context.fillStyle = color;
+    context.fillRect(x, y, width, height);
   }
 
   clearOverlay() {
@@ -160,8 +174,7 @@ export class CanvasManager {
 
     this._setSize(newWidth, newHeight);
     this.ctx.save();
-    this.ctx.fillStyle = fillColor;
-    this.ctx.fillRect(0, 0, newWidth, newHeight);
+    this._paintBackground(this.ctx, 0, 0, newWidth, newHeight, fillColor);
     this.ctx.drawImage(snapshot, 0, 0);
     this.ctx.restore();
 
@@ -352,8 +365,7 @@ export class CanvasManager {
   /** Fill a region with a color (used when cutting/moving a selection). */
   fillRegion(region, color) {
     this.ctx.save();
-    this.ctx.fillStyle = color;
-    this.ctx.fillRect(region.x, region.y, region.w, region.h);
+    this._paintBackground(this.ctx, region.x, region.y, region.w, region.h, color);
     this.ctx.restore();
   }
 

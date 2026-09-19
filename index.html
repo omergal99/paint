@@ -787,8 +787,9 @@
 					</div>
 					<div class="history-view-tabs" id="history-view-tabs" role="tablist" aria-label="History views">
 						<button type="button" class="history-view-tab active" data-history-view="history"
-							role="tab">History</button>
-						<button type="button" class="history-view-tab" data-history-view="session" role="tab">Session</button>
+							role="tab" aria-selected="true">History</button>
+						<button type="button" class="history-view-tab" data-history-view="session" role="tab"
+							aria-selected="false">Session</button>
 					</div>
 					<div class="history-grid" id="history-grid"></div>
 				</div>
@@ -874,7 +875,12 @@
 			</div>
 			<label>Width (px) <input type="number" id="resize-width" data-tag="resize-width" min="1" max="10000" /></label>
 			<label>Height (px) <input type="number" id="resize-height" data-tag="resize-height" min="1" max="10000" /></label>
-			<label class="checkbox-row"><input type="checkbox" id="resize-keep-aspect" data-tag="resize-keep-aspect" />
+			<div class="resize-scale-row">
+				<label for="resize-percent">Scale (%)</label>
+				<input type="number" id="resize-percent" data-tag="resize-percent" min="1" max="1000" step="1" value="100" />
+				<span id="resize-target-status" role="status">Whole canvas</span>
+			</div>
+			<label class="checkbox-row"><input type="checkbox" id="resize-keep-aspect" data-tag="resize-keep-aspect" checked />
 				Maintain aspect ratio</label>
 			<div class="dialog-actions">
 				<button type="button" id="resize-cancel" data-tag="resize-cancel">Cancel</button>
@@ -904,14 +910,18 @@
 				<label class="checkbox-row"><input type="checkbox" id="setting-show-color-inspector" checked /> Show Color
 					Inspector</label>
 				<label class="checkbox-row"><input type="checkbox" id="setting-show-ai-chat" /> Show AI Chat</label>
-				<label>Canvas Background
+				<div class="settings-field choice-field"><span>Canvas Background</span>
 					<select id="setting-canvas-bg">
 						<option value="none">Solid Color</option>
+						<option value="transparent">Transparent</option>
 						<option value="checkerboard">Transparent Checkerboard</option>
 						<option value="grid">Gridlines</option>
 					</select>
-				</label>
-				<label>Default new image
+					<div class="choice-summary" id="setting-canvas-bg-choice" data-select-id="setting-canvas-bg">
+						<span class="choice-summary-label">Selected: <strong data-selected-label></strong></span>
+					</div>
+				</div>
+				<div class="settings-field choice-field"><span>Default new image</span>
 					<select id="setting-default-canvas-size">
 						<option value="800x600">800 × 600</option>
 						<option value="1024x768">1024 × 768</option>
@@ -919,8 +929,11 @@
 						<option value="1123x794">A4 landscape</option>
 						<option value="794x1123">A4 portrait</option>
 					</select>
-				</label>
-				<label>Initial zoom
+					<div class="choice-summary" id="setting-default-canvas-size-choice" data-select-id="setting-default-canvas-size">
+						<span class="choice-summary-label">Selected: <strong data-selected-label></strong></span>
+					</div>
+				</div>
+				<div class="settings-field choice-field"><span>Initial zoom</span>
 					<select id="setting-default-zoom">
 						<option value="50">50%</option>
 						<option value="75">75%</option>
@@ -929,9 +942,9 @@
 						<option value="150">150%</option>
 						<option value="200">200%</option>
 					</select>
-				</label>
-				<div class="dialog-actions">
-					<button type="button" id="settings-cancel">Close</button>
+					<div class="choice-summary" id="setting-default-zoom-choice" data-select-id="setting-default-zoom">
+						<span class="choice-summary-label">Selected: <strong data-selected-label></strong></span>
+					</div>
 				</div>
 			</form>
 			<section class="settings-panel settings-body" data-settings-panel="history" hidden>
@@ -1011,7 +1024,6 @@
 				<div class="dialog-actions">
 					<button type="button" id="settings-reset" class="danger">Reset Settings</button>
 					<button type="button" id="settings-clear-data" class="danger">Clear Data</button>
-					<button type="button" id="settings-about-close">Close</button>
 				</div>
 			</section>
 			<section class="settings-panel settings-body" data-settings-panel="release" hidden>

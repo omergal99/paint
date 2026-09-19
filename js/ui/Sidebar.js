@@ -80,11 +80,13 @@ export class Sidebar {
 		// History sub-tabs: History (IndexedDB) + Session (sessionStorage-backed)
 		this.historyView = 'history';
 		this._historyTabsEl = document.getElementById('history-view-tabs');
-		this._historyTabsEl?.querySelectorAll('[data-history-view]').forEach((btn) => {
-			btn.addEventListener('click', () => {
-				this.historyView = btn.dataset.historyView === 'session' ? 'session' : 'history';
-				this._historyTabsEl.querySelectorAll('[data-history-view]').forEach((b) =>
-					b.classList.toggle('active', b === btn));
+			this._historyTabsEl?.querySelectorAll('[data-history-view]').forEach((btn) => {
+				btn.addEventListener('click', () => {
+					this.historyView = btn.dataset.historyView === 'session' ? 'session' : 'history';
+					this._historyTabsEl.querySelectorAll('[data-history-view]').forEach((b) =>
+						b.classList.toggle('active', b === btn));
+					this._historyTabsEl.querySelectorAll('[data-history-view]').forEach((b) =>
+						b.setAttribute('aria-selected', String(b === btn)));
 				this._syncHistoryActionLabels();
 				this.refreshHistory();
 			});
@@ -129,7 +131,7 @@ export class Sidebar {
 			this.saveToHistoryBtn.addEventListener('click', async () => {
 				if (this.historyView === 'session') {
 					this.historyManager?.snapshot?.();
-					this.historyManager?._persistSessionBackup?.();
+					this.historyManager?.persistSession?.();
 					this.refreshHistory();
 					this.statusBar?.flash?.('Saved to session');
 					return;
@@ -691,6 +693,7 @@ export class Sidebar {
 		sessions.forEach((session, index) => {
 			const item = document.createElement('div');
 			item.className = 'history-item';
+			item.dataset.historyId = String(session.id);
 
 			const img = document.createElement('img');
 			img.loading = 'lazy';
@@ -762,6 +765,7 @@ export class Sidebar {
 		entries.forEach((entry, index) => {
 			const item = document.createElement('div');
 			item.className = 'history-item';
+			item.dataset.historyId = String(entry.id);
 			const img = document.createElement('img');
 			img.loading = 'lazy';
 			img.src = entry.thumb || entry.dataUrl;
@@ -775,7 +779,7 @@ export class Sidebar {
 					danger: true,
 				});
 				if (confirmed) {
-					await this.historyManager._restore(entry);
+					await this.historyManager.restore(entry);
 					this.statusBar.flash('Restored session step');
 					this.refreshHistory();
 				}
@@ -785,6 +789,22 @@ export class Sidebar {
 			info.className = 'history-info';
 			info.textContent = `${entry.label || `Step ${index + 1}`} · ${entry.width}x${entry.height}`;
 			item.appendChild(info);
+			const deleteButton = document.createElement('button');
+			deleteButton.type = 'button';
+			deleteButton.className = 'history-delete';
+			deleteButton.innerHTML = '<span style="position: relative; right: 2px;" aria-hidden="true">🗑</span>';
+			deleteButton.setAttribute('aria-label', entry.kind === 'current'
+				? 'Hide current session image'
+				: `Delete session step ${index + 1} of ${entries.length}`);
+			deleteButton.title = entry.kind === 'current' ? 'Hide current session card' : 'Delete this session step';
+			deleteButton.addEventListener('click', (event) => {
+				event.stopPropagation();
+				if (this.historyManager.removeSessionEntry(entry.id)) {
+					this.refreshHistory();
+					this.statusBar?.flash?.(entry.kind === 'current' ? 'Current session card hidden' : 'Session step deleted');
+				}
+			});
+			item.appendChild(deleteButton);
 			const saveButton = document.createElement('button');
 			saveButton.type = 'button';
 			saveButton.className = 'history-save';

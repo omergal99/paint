@@ -303,19 +303,19 @@ test('Settings reset is centralized and lives with destructive About actions', (
 test('Community standards files and contributor templates are discoverable', () => {
   for (const file of [
     'CONTRIBUTING.md',
-    'CODE_OF_CONDUCT.md',
+    'docs/CODE_OF_CONDUCT.md',
     'SECURITY.md',
     '.github/pull_request_template.md',
     '.github/ISSUE_TEMPLATE/bug_report.md',
     '.github/ISSUE_TEMPLATE/feature_request.md',
-    'docs/COMMUNITY_STANDARDS.md',
+    'docs/work1/COMMUNITY_STANDARDS.md',
     '.skills/community-standards-audit/SKILL.md',
   ]) {
     assert.ok(fs.existsSync(path.join(root, file)), `Missing community file: ${file}`);
   }
   assert.match(read('README.md'), /CONTRIBUTING\.md/);
   assert.match(read('README.md'), /SECURITY\.md/);
-  assert.match(read('docs/COMMUNITY_STANDARDS.md'), /Needs owner decision/);
+  assert.match(read('docs/work1/COMMUNITY_STANDARDS.md'), /Needs owner decision/);
 });
 
 test('P0 quick wins: hover affordance, slider, release notes, fresh paste, undo keys', () => {
@@ -399,6 +399,28 @@ test('Round-2 fixes: V glyph, session persistence, view-aware actions, storage m
   assert.match(main, /displayQuotaMB/);
   assert.match(main, /minimumFractionDigits: 2/);
   assert.match(main, /Math\.max\(1, Math\.ceil/);
+});
+
+test('Phase 2 Steps 02–04 contracts and UX hooks are wired', () => {
+  const history = read('js/history/HistoryManager.js');
+  const canvas = read('js/canvas/CanvasManager.js');
+  assert.ok(fs.existsSync(path.join(root, 'js/core/constants.js')));
+  assert.ok(fs.existsSync(path.join(root, 'js/core/EventBus.js')));
+  assert.ok(fs.existsSync(path.join(root, 'js/settings/SettingsStore.js')));
+  assert.match(main, /createSettingsStore/);
+  assert.match(history, /getSessionEntries()/);
+  assert.match(history, /removeSessionEntry\(id\)/);
+  assert.match(sidebar, /historyManager\.restore\(entry\)/);
+  assert.match(sidebar, /historyManager\.removeSessionEntry\(entry\.id\)/);
+  assert.match(html, /id="resize-percent"/);
+  assert.match(html, /id="resize-keep-aspect"[^>]*checked/);
+  assert.match(main, /activeResizeTarget()/);
+  assert.match(main, /scaleCanvas\(source, w, h\)/);
+  assert.match(canvas, /backgroundMode/);
+  assert.match(canvas, /clearRect\(x, y, width, height\)/);
+  assert.match(html, /option value="transparent"/);
+  assert.doesNotMatch(html, /id="settings-cancel"/);
+  assert.doesNotMatch(html, /id="settings-about-close"/);
 });
 
 test('select after draw: a lifted shape is a layer, and unload bakes it', () => {

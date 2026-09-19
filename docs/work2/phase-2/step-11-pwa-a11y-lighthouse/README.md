@@ -10,6 +10,9 @@ Prepare the public app for a domain launch with measured quality.
 - Split CSS by component only with browser coverage.
 - Fix focus, keyboard menu overflow, history tile semantics, dialog focus
   restore, tabs, and drag alternatives.
+- Measure Ribbon height in compact, expanded, top, left, bottom, and floating
+  layouts. Defer automated service-worker asset-list synchronization until the
+  higher-risk PWA/accessibility gates are stable.
 - Run Lighthouse and browser QA on representative editor journeys.
 - Promote budgets from manual workflow to repeatable CI/nightly checks.
 
@@ -17,4 +20,3 @@ Prepare the public app for a domain launch with measured quality.
 
 Scores and failures are recorded, targets are met or explicitly waived, and the
 PWA works offline without silently losing its shell.
-

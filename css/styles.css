@@ -14,6 +14,9 @@
 	--w10-text: #1a1a1a;
 	--w10-text-dim: #595959;
 	--w10-canvas-bg: #808080;
+	--ribbon-control-band: 50px;
+	--ribbon-title-band: 12px;
+	--ribbon-compact-height: 74px;
 	--font-ui: "Segoe UI", -apple-system, "Helvetica Neue", Arial, sans-serif;
 }
 
@@ -70,7 +73,7 @@ body {
 	scrollbar-width: none;
 	-ms-overflow-style: none;
 	min-height: 0;
-	max-height: 75px;
+	max-height: var(--ribbon-compact-height);
 }
 .ribbon::-webkit-scrollbar {
 	display: none;
@@ -86,14 +89,18 @@ body {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
+	justify-content: space-between;
 	padding: 2px 2px 2px;
 	min-width: max-content;
+	min-height: var(--ribbon-control-band);
 }
 
 .ribbon-group-title {
 	font-size: 11px;
 	color: var(--w10-text-dim);
-	margin-top: 2px;
+	min-height: var(--ribbon-title-band);
+	line-height: var(--ribbon-title-band);
+	margin-top: 0;
 	white-space: nowrap;
 	cursor: pointer;
 	padding: 0 4px;
@@ -872,6 +879,15 @@ body {
 		-10px 0px;
 }
 
+.canvas-viewport.bg-transparent {
+	background-color: #f7f7f7;
+	background-image:
+		linear-gradient(45deg, #d7d7d7 25%, transparent 25%), linear-gradient(-45deg, #d7d7d7 25%, transparent 25%),
+		linear-gradient(45deg, transparent 75%, #d7d7d7 75%), linear-gradient(-45deg, transparent 75%, #d7d7d7 75%);
+	background-size: 20px 20px;
+	background-position: 0 0, 0 10px, 10px -10px, -10px 0;
+}
+
 .canvas-viewport.bg-grid {
 	background-size: 20px 20px;
 	background-image:
@@ -1075,9 +1091,15 @@ body {
 	cursor: pointer;
 }
 .history-view-tab.active {
-	background: var(--w10-bg);
+	background: var(--w10-active);
+	border-color: var(--w10-active-border);
 	color: var(--w10-text);
 	font-weight: 600;
+}
+.history-view-tab:focus-visible,
+.segmented-choice-option:focus-visible {
+	outline: 2px solid var(--w10-accent);
+	outline-offset: 1px;
 }
 #history-save-current-btn {
 	background: #e6f6e8;
@@ -1692,9 +1714,9 @@ dialog h3 {
 	display: grid;
 	grid-template-columns: 112px minmax(260px, 1fr);
 	width: 560px;
-	height: min(440px, 88vh);
+	height: min(560px, 88vh);
 	max-width: min(560px, 80vw);
-	max-height: min(440px, 88vh);
+	max-height: min(560px, 88vh);
 	position: relative;
 }
 .settings-shell {
@@ -1898,6 +1920,20 @@ dialog h3 {
 .resize-presets button.selected {
 	background: var(--w10-active);
 	border-color: var(--w10-accent);
+}
+.resize-scale-row {
+	display: grid;
+	grid-template-columns: auto 92px minmax(0, 1fr);
+	align-items: center;
+	gap: 8px;
+	margin: 10px 0;
+}
+.resize-scale-row input {
+	width: 92px;
+}
+.resize-scale-row span {
+	color: var(--w10-text-dim);
+	font-size: 11px;
 }
 #resize-dialog {
 	width: min(480px, calc(100vw - 32px));

@@ -1,7 +1,8 @@
 # Phase 2 Initialization Notes
 
 `initIstructions.txt` is the source brief. The processed material below turns
-the long request into evidence-backed planning inputs without changing the app.
+the long request into evidence-backed planning inputs; implementation evidence
+for Steps 01–04 is recorded in the step workspaces.
 
 ## Processed data
 
@@ -12,4 +13,3 @@ the long request into evidence-backed planning inputs without changing the app.
 - `processedData/04-skills-and-tooling.md` — local skills and external candidates.
 - `processedData/05-open-risks.md` — blind spots and architectural risks.
 - `processedData/06-process-record.md` — actions taken during planning.
-

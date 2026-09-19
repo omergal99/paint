@@ -5,11 +5,14 @@ should become small tasks with its own tests and browser checks.
 
 ## Step 01 — Baseline and safety gate
 
-Fix the current red gate first. The smoke test references a missing
-`docs/COMMUNITY_STANDARDS.md` and expects a 560px settings height while the
-current stylesheet says 440px. Resolve the intended behavior, do not merely
-weaken assertions. Add a baseline report with line counts, listener census,
-storage paths, and a real Lighthouse run when a browser is available.
+Fix the current red gate first. The smoke test references the wrong location
+for the existing canonical standards document (`docs/work1/COMMUNITY_STANDARDS.md`)
+and initially expected a 560px settings height while the initial stylesheet
+said 440px.
+Resolve the intended behavior, do not merely weaken assertions. Record the
+remaining docs/tests path drift as low-priority maintenance once corrected. Add
+a baseline report with line counts, listener census, storage paths, and a real
+Lighthouse run when a browser is available.
 
 **Deliverables:** green test suite, baseline metrics, link audit, manual QA
 checklist, and a CI job that blocks merges on the supported commands.
@@ -147,6 +150,9 @@ and less per-move work, not a cosmetic listener count.
 
 - Replace undo/redo full PNG strings with Blob/object URL entries or another
   byte-bounded codec. Cap total bytes, not only entry count.
+- Track browser memory separately from storage quota. Include decoded image
+  surfaces, ImageBitmaps, scratch canvases, backing stores, Blobs, object URLs,
+  and in-memory undo entries in the memory budget and release checks.
 - Revoke object URLs on eviction/clear and avoid re-encoding the current canvas
   every time the history panel opens.
 - Add maximum import/paste dimensions and a visible downscale/reject message.
@@ -184,14 +190,16 @@ instead of reaching into underscored fields.
 
 - Add 192×192 and 512×512 PNG icons, including a maskable variant if the visual
   design supports it.
-- Make Service Worker installation use resilient caching and keep its asset list
-  synchronized with source files.
+- Make Service Worker installation use resilient caching. Asset-list
+  synchronization automation is useful but deferred maintenance, not a blocker
+  for the first PWA/accessibility pass.
 - Split CSS by component only after selectors are covered by browser checks.
 - Fix history tiles, dialog focus restore, ribbon keyboard overflow, visible
-  focus, tabs/roles, and drag alternatives.
+  focus, tabs/roles, and drag alternatives. Measure Ribbon height in compact,
+  expanded, and alternate layouts rather than assuming one fixed height.
 - Promote Lighthouse from manual workflow to repeatable PR/nightly budgets.
 
-## Step 12 — Optional Python background removal
+## Step 12 — Optional advanced background removal
 
 Define a provider interface first:
 
@@ -208,6 +216,21 @@ about where the image goes. Prefer a separately deployed/local service or an
 optional runtime; do not add a large Python/WebAssembly payload to every first
 load without measuring the Lighthouse cost.
 
+Preferred implementation order:
+
+1. Keep the provider behind a small adapter and load it only after the user
+   explicitly selects advanced removal.
+2. Use native dynamic `import()` for an optional chunk; where a bundler exists,
+   mark the provider as a separate chunk so tree shaking excludes it from the
+   initial path. In the current no-build app, dynamic import plus a dedicated
+   Worker is the practical equivalent.
+3. Run the optional runtime/model in a dedicated Worker, with progress,
+   cancellation, input dimensions, memory, and wall-time limits.
+4. Self-host and version optional runtime/model assets, or use a separately
+   deployed local service with an explicit privacy/status message.
+5. If the optional path misses the memory/performance budget, keep the JS
+   fallback and postpone Python rather than making it a mandatory dependency.
+
 ## Step 13 — Tabs, split, and recovery
 
 Carry Phase 1 #7 here after the document and storage boundaries are stable:
@@ -219,3 +242,7 @@ Carry Phase 1 #7 here after the document and storage boundaries are stable:
 - Max 10 total tabs, at least one open, dirty indicator, undo-close toast.
 - Inactive documents use compressed snapshots and bounded history.
 
+Text compositing remains a future-gated concern here: do not build the tabs or
+recovery layer around a fragile text-coordinate cache. If Step 06 cannot prove
+non-destructive overlap/edit behavior, defer that text UI and keep the raster
+document contract explicit.

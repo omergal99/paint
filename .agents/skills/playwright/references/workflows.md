@@ -1,95 +1,48 @@
-# Playwright CLI Workflows
+# Paint Online browser workflows
 
-Use the wrapper script and snapshot often.
-Assume `PWCLI` is set and `pwcli` is an alias for `"$PWCLI"`.
-In this repo, run commands from `output/playwright/<label>/` to keep artifacts contained.
+Run commands from `paint/` and store screenshots/traces under
+`output/playwright/<label>/`.
 
-## Standard interaction loop
-
-```bash
-pwcli open https://example.com
-pwcli snapshot
-pwcli click e3
-pwcli snapshot
-```
-
-## Form submission
+## Baseline
 
 ```bash
-pwcli open https://example.com/form --headed
-pwcli snapshot
-pwcli fill e1 "user@example.com"
-pwcli fill e2 "password123"
-pwcli click e3
-pwcli snapshot
-pwcli screenshot
+pwcli --session baseline open http://127.0.0.1:4173/
+pwcli --session baseline snapshot
+pwcli --session baseline console warning
+pwcli --session baseline screenshot output/playwright/baseline/cold-load.png
 ```
 
-## Data extraction
+## Settings and menus
+
+Snapshot before clicking Settings or a Ribbon menu. Snapshot again after the
+dialog/menu opens, after switching tabs, and after closing it. Record focus and
+visible selected state, not only whether a click succeeded.
+
+## History and resize
+
+Create at least two changes, open History and Session, verify newest/current-first
+order, restore one item, export one item, and delete one item. Then check resize
+with ratio lock, percentage input, and an active selection.
+
+## Accessibility flow
+
+Use only `press Tab`, `press Shift+Tab`, `press Enter`, `press Space`, and
+`press Escape` for the ribbon, menus, settings, tabs, and history actions. Save a
+screenshot of the focused state when it proves a finding.
+
+## Performance trace
 
 ```bash
-pwcli open https://example.com
-pwcli snapshot
-pwcli eval "document.title"
-pwcli eval "el => el.textContent" e12
-```
-
-## Debugging and inspection
-
-Capture console messages and network activity after reproducing an issue:
-
-```bash
-pwcli console warning
-pwcli network
-```
-
-Record a trace around a suspicious flow:
-
-```bash
-pwcli tracing-start
-# reproduce the issue
-pwcli tracing-stop
-pwcli screenshot
-```
-
-## Sessions
-
-Use sessions to isolate work across projects:
-
-```bash
-pwcli --session marketing open https://example.com
-pwcli --session marketing snapshot
-pwcli --session checkout open https://example.com/checkout
-```
-
-Or set the session once:
-
-```bash
-export PLAYWRIGHT_CLI_SESSION=checkout
-pwcli open https://example.com/checkout
-```
-
-## Configuration file
-
-By default, the CLI reads `playwright-cli.json` from the current directory. Use `--config` to point at a specific file.
-
-Minimal example:
-
-```json
-{
-  "browser": {
-    "launchOptions": {
-      "headless": false
-    },
-    "contextOptions": {
-      "viewport": { "width": 1280, "height": 720 }
-    }
-  }
-}
+pwcli --session perf open http://127.0.0.1:4173/
+pwcli --session perf tracing-start
+# perform a short draw/zoom/history flow
+pwcli --session perf tracing-stop
+pwcli --session perf screenshot output/playwright/perf/after-trace.png
 ```
 
 ## Troubleshooting
 
-- If an element ref fails, run `pwcli snapshot` again and retry.
-- If the page looks wrong, re-open with `--headed` and resize the window.
-- If a flow depends on prior state, use a named `--session`.
+- stale reference: snapshot again;
+- page looks wrong: reopen headed and resize;
+- state-dependent flow: use a named session and document its starting state;
+- browser-only behavior: report it separately from `npm test`.
