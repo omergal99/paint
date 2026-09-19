@@ -46,6 +46,14 @@ closed through the shared menu seam. Remaining gates are 200% zoom,
 reduced-motion, Lighthouse, offline shell/update behavior, and a final visual
 regression capture.
 
+## Current release boundary
+
+The live keyboard/layout work is evidence for the accessibility slice, not a
+complete PWA claim. `manifest.json` still declares only an SVG icon, so the
+192×192/512×512 PNG installability gate is open. Step 11 remains partial until
+those assets, offline reload/update behavior, Lighthouse, and mobile checks are
+recorded together.
+
 ## Done when
 
 Scores and failures are recorded, targets are met or explicitly waived, and the

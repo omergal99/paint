@@ -74,6 +74,9 @@ schema owner and migration note.
   padding/border, with a measured maximum of 74px.
 - Keep quick resize buttons compact while showing exact pixel dimensions below
   each label; align Scale and dimension fields to their labels.
+- Use native Ribbon-position buttons in a radio group rather than a select;
+  keep `PanelLayoutManager` as the only owner of layout state and make arrow
+  keys move/activate the next option.
 - Stop propagation for events inside `.shape-gallery`; outside click closes the
   menu. The gallery remains open while choosing shape/fill controls.
 - Keep the text button/chevron split as a future-gated follow-up after Step 06;
@@ -213,9 +216,11 @@ Extract in low-risk seams (the shared ActionMenuController is the first slice):
 At each extraction, keep `main.js` as composition root and add a public API
 instead of reaching into underscored fields.
 
-The delivered first slice is the functional `ActionMenuController`. The next
-recommended slices are `HistoryPanel` and `SettingsDialog`; each must add a
-behavior contract and a browser journey before the next extraction.
+The delivered slices are functional `ActionMenuController`, `HistoryPanel`,
+and `SettingsDialog`. The shared action-menu seam now measures, clamps, and
+directs top-level, submenu, and pointer-positioned menus through one placement
+contract. Each future extraction must add a behavior contract and browser
+journey before the next extraction.
 
 ## Step 10 — Tests, types, and quality
 
@@ -229,6 +234,11 @@ behavior contract and a browser journey before the next extraction.
   misleading whole-repository number.
 
 ## Step 11 — PWA, accessibility, CSS, Lighthouse
+
+Step 11 is not fully complete yet. The accessibility/layout slice is delivered,
+but the app is not allowed to claim production PWA readiness until the manifest
+has installable 192×192 and 512×512 PNG icons, offline/update behavior is
+verified, and Lighthouse results are recorded.
 
 - Add 192×192 and 512×512 PNG icons, including a maskable variant if the visual
   design supports it.

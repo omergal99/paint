@@ -22,6 +22,7 @@ step that owns them and must pass the documented gates.
 - [Steps 01–08 audit](STEP-01-08-AUDIT.md) — completeness check, transparency ownership, and remaining gates.
 - [Progress log](PROGRESS-LOG.md) — planning and later implementation evidence.
 - [HTML overview](PLAN-OVERVIEW.html) — visual overview with Mermaid diagrams.
+- [Phase 3 plan](../phase-3/README.md) — localization/RTL and persistent notepad planning.
 
 ## Step workspaces
 

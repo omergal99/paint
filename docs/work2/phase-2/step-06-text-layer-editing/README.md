@@ -25,10 +25,12 @@ rasterized text is already a safely editable layer.
 ## Future enablement checklist
 
 “Select text after draw” is now an enabled, persisted option. When checked, the
-committed metadata bounds receive a dedicated focus target/cursor. Clicking a
-target selects it without rewriting the raster. The option can always be
-turned off from the Text options menu. Editing existing text remains deferred
-until the overlap-safe compositor proof passes.
+committed metadata bounds receive a dedicated focus target/cursor and hand off
+to the ordinary raster selection handles, so the user can see and move the
+selected region. This is not text-only editing: moving the region may include
+paint underneath it. The option can always be turned off from the Text options
+menu. Editing existing text remains deferred until the overlap-safe compositor
+proof passes.
 
 ## Done when
 

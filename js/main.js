@@ -27,7 +27,7 @@ import { getReleaseNotes } from './releaseNotes.js';
 import { hexToRgb } from './utils/color.js';
 import { rotateCanvas, rotateCanvasByAngle, flipCanvas, scaleCanvas, removeBackground } from './utils/transform.js';
 import { APP_VERSION } from './version.js';
-import { DEFAULT_SETTINGS, STORAGE_KEYS } from './core/constants.js';
+import { DEFAULT_SETTINGS, HISTORY_VIEWS, KEYBOARD_KEYS, RIBBON_POSITIONS, STORAGE_KEYS } from './core/constants.js';
 import { createSettingsStore } from './settings/SettingsStore.js';
 import { createTextDocumentStore } from './document/TextDocumentStore.js';
 import { createTextHistoryStore } from './document/TextHistoryStore.js';
@@ -310,8 +310,19 @@ const commitFloatingPixels = (region) => {
 
 const commitFloatingSelection = () => {
 	if (canvasManager.floatingCanvas && canvasManager.selection) {
+		const selectedText = toolContext._textSelectionSession;
+		const selection = canvasManager.selection;
 		commitFloatingPixels(canvasManager.selection);
 		canvasManager.floatingCanvas = null;
+		if (selectedText
+			&& selection.w === selectedText.w
+			&& selection.h === selectedText.h) {
+			textDocumentStore.update(selectedText.id, {
+				x: selection.x,
+				y: selection.y,
+			});
+		}
+		toolContext._textSelectionSession = null;
 		selectionRotation = null;
 		setSelection(null);
 		canvasManager.persistToStorage();
@@ -1044,9 +1055,12 @@ const openSettingsDialog = (tab = 'general') => {
 
 const syncRibbonLayoutControls = (state) => {
 	const show = document.getElementById('setting-show-ribbon');
-	const position = document.getElementById('setting-ribbon-position');
 	if (show) show.checked = state.visible;
-	if (position) position.value = state.position;
+	document.querySelectorAll('[data-ribbon-position]').forEach((button) => {
+		const selected = button.dataset.ribbonPosition === state.position;
+		button.setAttribute('aria-checked', String(selected));
+		button.tabIndex = selected ? 0 : -1;
+	});
 }
 
 const applyAiChatVisibility = (visible) => {
@@ -1073,15 +1087,28 @@ const ribbonLayoutManager = new PanelLayoutManager({
 	},
 });
 const settingsShowRibbon = document.getElementById('setting-show-ribbon');
-const settingsRibbonPosition = document.getElementById('setting-ribbon-position');
+const settingsRibbonPositionButtons = [...document.querySelectorAll('[data-ribbon-position]')];
 document.getElementById('ribbon-restore-toggle')?.addEventListener('click', () => saveSettings());
 settingsShowRibbon?.addEventListener('change', () => {
 	ribbonLayoutManager.setVisible(settingsShowRibbon.checked);
 	saveSettings();
 });
-settingsRibbonPosition?.addEventListener('change', () => {
-	ribbonLayoutManager.setPosition(settingsRibbonPosition.value);
-	saveSettings();
+settingsRibbonPositionButtons.forEach((button, index) => {
+	button.addEventListener('click', () => {
+		const position = button.dataset.ribbonPosition;
+		if (!Object.values(RIBBON_POSITIONS).includes(position)) return;
+		ribbonLayoutManager.setPosition(position);
+		saveSettings();
+	});
+	button.addEventListener('keydown', (event) => {
+		if (!KEYBOARD_KEYS.arrows.includes(event.key)) return;
+		event.preventDefault();
+		const forward = event.key === KEYBOARD_KEYS.arrowRight || event.key === KEYBOARD_KEYS.arrowDown;
+		const nextIndex = (index + (forward ? 1 : -1) + settingsRibbonPositionButtons.length)
+			% settingsRibbonPositionButtons.length;
+		settingsRibbonPositionButtons[nextIndex]?.focus();
+		settingsRibbonPositionButtons[nextIndex]?.click();
+	});
 });
 
 const segmentedChoices = [...document.querySelectorAll('.choice-summary')].map((root) => createSegmentedChoice({
@@ -1208,7 +1235,7 @@ const exportSessionEntry = async (entry, index) => {
 }
 
 const exportAllHistory = async () => {
-	const sessionView = sidebar.historyView === 'session';
+	const sessionView = sidebar.historyView === HISTORY_VIEWS.session;
 	if (sessionView) {
 		const entries = sidebar.historyManager?.getSessionEntries?.() || [];
 		if (!entries.length) {
@@ -1391,7 +1418,7 @@ const applySavedSettings = () => {
 	ribbonLayoutManager.setPosition(layout.position || 'top');
 	ribbonLayoutManager.setVisible(layout.visible !== false);
 	if (settingsShowRibbon) settingsShowRibbon.checked = ribbonLayoutManager.state.visible;
-	if (settingsRibbonPosition) settingsRibbonPosition.value = ribbonLayoutManager.state.position;
+	syncRibbonLayoutControls(ribbonLayoutManager.state);
 	renderSegmentedChoices();
 	syncRibbonSettingsControls();
 }
@@ -1677,7 +1704,7 @@ document.getElementById('settings-history-clear')?.addEventListener('click', asy
 	});
 	if (!confirmed) return;
 	await sidebar.globalHistory.clearAll();
-	if (sidebar.activeTab === 'history') await sidebar.refreshHistory();
+	if (sidebar.activeTab === HISTORY_VIEWS.history) await sidebar.refreshHistory();
 	statusBar.flash('History cleared');
 });
 
@@ -1808,6 +1835,20 @@ toolManager.onToolChange = (name) => {
 	toolbarToolChange?.(name);
 	updateSelectionHandles(canvasManager.selection);
 };
+
+textSelectionOverlay.element.addEventListener('paint:text-object-focus', (event) => {
+	const object = event.detail;
+	if (!object?.id || !object.width || !object.height) return;
+	const region = {
+		x: Math.max(0, Math.round(object.x)),
+		y: Math.max(0, Math.round(object.y)),
+		w: Math.max(1, Math.round(object.width)),
+		h: Math.max(1, Math.round(object.height)),
+	};
+	toolContext._textSelectionSession = { id: object.id, w: region.w, h: region.h };
+	setSelection(region);
+	toolManager.setActive('select');
+});
 
 document.querySelectorAll('.text-style-option').forEach((button) => {
 	button.addEventListener('click', (event) => {
@@ -2017,13 +2058,15 @@ window.addEventListener('keydown', (e) => {
 		return;
 	}
 
-	if (e.key.startsWith('Arrow')) {
+	if (KEYBOARD_KEYS.arrows.includes(e.key)) {
 		if (canvasManager.selection?.w && canvasManager.selection?.h) {
 			e.preventDefault();
 			const step = e.shiftKey ? 10 : 1;
 			const deltas = {
-				ArrowUp: [0, -step], ArrowDown: [0, step],
-				ArrowLeft: [-step, 0], ArrowRight: [step, 0],
+				[KEYBOARD_KEYS.arrowUp]: [0, -step],
+				[KEYBOARD_KEYS.arrowDown]: [0, step],
+				[KEYBOARD_KEYS.arrowLeft]: [-step, 0],
+				[KEYBOARD_KEYS.arrowRight]: [step, 0],
 			};
 			const [dx, dy] = deltas[e.key];
 			nudgeSelection(dx, dy);

@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Paint Phase 2 — Round 4 status</title>
+<style>
+body{margin:0;padding:2rem;background:#fff;color:#17202a;font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:1180px;margin:auto}h1,h2{line-height:1.2}table{width:100%;border-collapse:collapse;margin:1rem 0 2rem}th,td{border:1px solid #b8c2cc;padding:.55rem;text-align:left;vertical-align:top}th{background:#eef3f7}tbody tr:nth-child(even){background:#fafafa}.score{font-weight:700;color:#075985;white-space:nowrap}.pending{color:#92400e}.meter{height:10px;background:#e5e7eb;border-radius:5px;overflow:hidden}.meter span{display:block;height:100%;background:#0f766e}.note{border-left:4px solid #075985;padding:.75rem 1rem;background:#f0f9ff}.small{color:#475569;font-size:.92rem}
+</style>
+</head>
+<body>
+<main>
+<h1>Paint Phase 2 — Round 4 status</h1>
+<p class="small">Updated 2026-09-19 · white theme · implementation and browser evidence companion</p>
+<div class="note"><strong>Overall professional readiness: 8.5/10.</strong> Phase 2 is a strong release candidate, but Step 11 is still partial because PWA icons, Lighthouse, offline/update, 200% zoom, reduced-motion, and final mobile evidence remain open.</div>
+<h2>Scorecard</h2>
+<table><thead><tr><th>Dimension</th><th>Score</th><th>Evidence</th><th>Missing</th></tr></thead><tbody>
+<tr><td>Code design</td><td class="score">8.5/10<div class="meter"><span style="width:85%"></span></div></td><td>Functional seams and shared constants</td><td>Legacy classes and large composition roots</td></tr>
+<tr><td>UI design</td><td class="score">8.8/10<div class="meter"><span style="width:88%"></span></div></td><td>Radio settings, clamped menus, full text bounds</td><td>RTL/PWA polish and full visual regression</td></tr>
+<tr><td>Logic/data safety</td><td class="score">8.5/10<div class="meter"><span style="width:85%"></span></div></td><td>Palette state and raster-selection handoff</td><td>Text-only overlap-safe editing and recovery</td></tr>
+<tr><td>Verification</td><td class="score">8.4/10<div class="meter"><span style="width:84%"></span></div></td><td>4/4 tests, analyzer 0/0, live browser, console 0</td><td>checkJs, coverage, Lighthouse, offline/update</td></tr>
+</tbody></table>
+<h2>Round 4 results</h2>
+<table><thead><tr><th>Area</th><th>Score</th><th>What changed</th><th>How to experience it</th><th>Missing next gate</th></tr></thead><tbody>
+<tr><td>Action menus</td><td class="score">9.2/10</td><td>One placement contract for normal, submenu, and pointer menus; viewport clamping; outside/Escape closure</td><td>Open Size, Text options, Image → More → Rotate; resize to 320px</td><td>Full menu fixture and focus restore</td></tr>
+<tr><td>Palette editing</td><td class="score">9/10</td><td>Edit keeps the selected slot until the color input reports its change; native picker fallback</td><td>Right-click a palette swatch → Edit color</td><td>Native picker change fixture</td></tr>
+<tr><td>Ribbon position</td><td class="score">9/10</td><td>Native radio buttons with arrow-key activation; layout manager stays SSOT</td><td>Settings → Ribbon → choose Top/Left/Bottom/Floating</td><td>RTL/focus-restore matrix</td></tr>
+<tr><td>Text selection</td><td class="score">8.8/10</td><td>Font-accurate padded bounds; optional focus target hands off to 8 normal pixel handles; moved target follows metadata</td><td>Enable Select text after draw, draw text, click outside, drag selection</td><td>Text compositor/edit-after-blur remains gated</td></tr>
+<tr><td>Release notes</td><td class="score">9/10</td><td>Phase 2 candidate highlights added to Settings → Release notes</td><td>Open Settings → Release notes</td><td>Version/tag/push requires approval</td></tr>
+</tbody></table>
+<h2>Phase 3 plan</h2><p><a href="../phase-3/README.md">Localization/RTL and persistent tabbed notepad plan</a>.</p>
+<p class="pending"><strong>Release boundary:</strong> do not push a new customer version until the remaining Step 11 PWA decision is approved.</p>
+</main>
+</body>
+</html>

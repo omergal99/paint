@@ -5,13 +5,13 @@ import { APP_VERSION } from './version.js';
 export const RELEASE_NOTES = Object.freeze([
   {
     version: 'Unreleased',
-    date: '',
+    date: '2026-09-19',
     highlights: [
-      'V shape anchor fix + optional select-after-draw in Shapes More',
-      'First paste on a clean New canvas lands at 0,0',
-      'Reusable font-size slider (1–120)',
-      'History/Session tabs, no-change dedup, compressed thumbnails',
-      'Tabs (max 10) + split view session service (planned)',
+      'Phase 2: shared action-menu placement, outside-click/Escape closure, and reliable palette color editing',
+      'Phase 2: compact alpha controls, source-over Select-after-draw composition, and transparent canvas groundwork',
+      'Phase 2: functional History/Session and Settings seams with keyboard semantics and focus restoration',
+      'Phase 2: recent text history, optional text focus targets, accurate bounds, and shape-like raster-selection handoff',
+      'Phase 2: Ribbon position buttons, mobile layout checks, storage estimate display, and release-readiness evidence',
     ],
   },
   {

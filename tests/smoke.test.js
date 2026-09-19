@@ -234,9 +234,10 @@ test('Mobile status bar stays on one line and hides app branding', () => {
 
 test('Action menus choose their direction from available viewport space', () => {
   const actionMenus = read('js/ui/ActionMenuController.js');
-  assert.match(actionMenus, /spaceBelow\s*=\s*window\.innerHeight\s*-\s*bounds\.bottom/);
-  assert.match(actionMenus, /openAbove\s*=\s*spaceBelow\s*<\s*menuHeight/);
-  assert.match(actionMenus, /menuItems\.dataset\.direction\s*=\s*openAbove\s*\?\s*'up'\s*:\s*'down'/);
+  assert.match(actionMenus, /const measureMenu = \(menuItems\)/);
+  assert.match(actionMenus, /const clamp = \(value, min, max\)/);
+  assert.match(actionMenus, /placement === 'submenu'/);
+  assert.match(actionMenus, /menuItems\.dataset\.direction = direction/);
   assert.match(main, /createActionMenuController/);
 });
 
@@ -456,7 +457,7 @@ test('Round-2 fixes: V glyph, session persistence, view-aware actions, storage m
   assert.match(sidebar, /_syncHistoryActionLabels/);
   assert.match(historyPanel, /history-actions-label/);
   assert.match(main, /exportSessionEntry/);
-  assert.match(main, /sidebar\.historyView === 'session'/);
+	assert.match(main, /sidebar\.historyView === HISTORY_VIEWS\.session/);
   // 3. taller settings dialog + compact ribbon rows
   assert.match(css, /height:\s*min\(470px,\s*88vh\)/);
   assert.match(css, /\.ribbon-setting-row:hover/);
@@ -491,14 +492,14 @@ test('Round-2 stabilization: alpha, text commit, and nested image actions', () =
 	assert.match(canvas, /export const commitLayerWithSourceOver = \(context, layer, region\) =>/);
 	assert.match(canvas, /globalAlpha = 1;[\s\S]*globalCompositeOperation = 'source-over'/);
 	assert.match(main, /commitLayerWithSourceOver\(canvasManager\.ctx/);
-	assert.match(textTool, /commit\(\);\s*ctx\.setActiveTool\?\.\('select'\)/);
+	assert.match(textTool, /commit\(\);[\s\S]*getTextSelectAfterDraw\?\.\(\) === true/);
 	assert.match(css, /\.text-editor-toolbar\.is-empty\s*\{/);
 	assert.match(textTool, /toolbar\.hidden = false/);
 	assert.match(textTool, /toolbar\.setAttribute\('aria-hidden', String\(!historyVisible\)\)/);
 	assert.match(textTool, /control\.hidden = !historyVisible/);
 	assert.match(controller, /const ancestorsOf = \(menu\) =>/);
 	assert.match(controller, /const handleKeyboard = \(event\) =>/);
-	assert.match(controller, /event\.key === 'ArrowLeft'/);
+	assert.match(controller, /event\.key === KEYBOARD_KEYS\.arrowLeft/);
 	assert.match(controller, /submenuTrigger\?\.focus\(\)/);
 	assert.match(controller, /paint:action-menu-open-at/);
 	assert.match(read('js/ui/ColorPalette.js'), /paint:action-menu-open-at/);

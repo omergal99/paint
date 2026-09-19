@@ -1,6 +1,7 @@
 // js/ui/Sidebar.js
 import { GlobalHistory } from '../history/GlobalHistory.js';
 import { AI_PROVIDERS } from '../ai/AiConnectionStore.js';
+import { HISTORY_VIEWS } from '../core/constants.js';
 import { createHistoryPanel } from './HistoryPanel.js';
 
 export class Sidebar {
@@ -39,7 +40,7 @@ export class Sidebar {
 			root: this.sidebar,
 			onViewChange: (view) => {
 				this.historyView = view;
-				if (this.activeTab === 'history') void this.refreshHistory();
+				if (this.activeTab === HISTORY_VIEWS.history) void this.refreshHistory();
 			},
 		});
 		this.historyView = this.historyPanel.getView();
@@ -82,7 +83,7 @@ export class Sidebar {
 			const enabled = val > 0;
 			await this.globalHistory.saveSettings(val, enabled);
 			// Use retry logic to ensure render completes
-			if (this.activeTab === 'history') {
+			if (this.activeTab === HISTORY_VIEWS.history) {
 				await this._loadHistoryWithRetry();
 			}
 		});
@@ -92,7 +93,7 @@ export class Sidebar {
 
 		// Clear button clears whichever view is active (labels follow the tab).
 		this.clearBtn.addEventListener('click', async () => {
-			if (this.historyView === 'session') {
+			if (this.historyView === HISTORY_VIEWS.session) {
 				const confirmed = await this.dialogService.confirm({
 					title: 'Clear session',
 					message: 'Delete all session steps for this browser tab? Saved history is kept.',
@@ -101,7 +102,7 @@ export class Sidebar {
 				});
 				if (confirmed) {
 					this.historyManager?.clearSession();
-					if (this.activeTab === 'history') await this._loadHistoryWithRetry();
+					if (this.activeTab === HISTORY_VIEWS.history) await this._loadHistoryWithRetry();
 					this.statusBar?.flash?.('Session cleared');
 				}
 				return;
@@ -115,7 +116,7 @@ export class Sidebar {
 			if (confirmed) {
 				await this.globalHistory.clearAll();
 				// Use retry logic to ensure render completes
-				if (this.activeTab === 'history') {
+				if (this.activeTab === HISTORY_VIEWS.history) {
 					await this._loadHistoryWithRetry();
 				}
 				this.statusBar?.flash?.('History cleared');
@@ -125,7 +126,7 @@ export class Sidebar {
 		// Save current paint to the ACTIVE view (history or session snapshot).
 		if (this.saveToHistoryBtn) {
 			this.saveToHistoryBtn.addEventListener('click', async () => {
-				if (this.historyView === 'session') {
+				if (this.historyView === HISTORY_VIEWS.session) {
 					this.historyManager?.snapshot?.();
 					this.historyManager?.persistSession?.();
 					this.refreshHistory();
@@ -155,7 +156,7 @@ export class Sidebar {
 	async finishInit() {
 		await this._waitForInit();
 
-		if (this.activeTab === 'history' && this.globalHistory.db) {
+		if (this.activeTab === HISTORY_VIEWS.history && this.globalHistory.db) {
 			await this._loadHistoryWithRetry();
 		}
 	}
@@ -255,7 +256,7 @@ export class Sidebar {
 
 	async _loadHistoryWithRetry() {
 		// Session view has no IDB count to converge on — render once directly.
-		if (this.historyView === 'session') {
+		if (this.historyView === HISTORY_VIEWS.session) {
 			await this.refreshHistory();
 			return;
 		}
@@ -340,7 +341,7 @@ export class Sidebar {
 			if (latest && latest.dataUrl === dataUrl) return;
 		} catch { }
 		await this.globalHistory.addSession(dataUrl, width, height);
-		if (this.activeTab === 'history') this.refreshHistory();
+		if (this.activeTab === HISTORY_VIEWS.history) this.refreshHistory();
 	}
 
 	async flushPendingAutoSave() {
@@ -357,7 +358,7 @@ export class Sidebar {
 	}
 
 	toggleHistory() {
-		if (this.activeTab === 'history' && this.sidebar.style.display !== 'none') {
+		if (this.activeTab === HISTORY_VIEWS.history && this.sidebar.style.display !== 'none') {
 			this.hide();
 		} else {
 			this.showHistory();
@@ -373,7 +374,7 @@ export class Sidebar {
 	}
 
 	showHistory() {
-		this.activeTab = 'history';
+		this.activeTab = HISTORY_VIEWS.history;
 		this.title.textContent = 'History';
 		this.historyContent.style.display = 'block';
 		this.aiContent.style.display = 'none';
@@ -602,9 +603,9 @@ export class Sidebar {
 			const state = JSON.parse(stored);
 			if (!state.isOpen) return;
 
-			if (state.activeTab === 'history') {
+			if (state.activeTab === HISTORY_VIEWS.history) {
 				// Just set the active tab, don't refresh yet - wait for finishInit()
-				this.activeTab = 'history';
+				this.activeTab = HISTORY_VIEWS.history;
 				this.title.textContent = 'History';
 				this.historyContent.style.display = 'block';
 				this.aiContent.style.display = 'none';
@@ -656,7 +657,7 @@ export class Sidebar {
 
 	async refreshHistory() {
 		this.historyGrid.innerHTML = '';
-		if (this.historyView === 'session') return this._renderSessionView();
+		if (this.historyView === HISTORY_VIEWS.session) return this._renderSessionView();
 		const sessions = await this.globalHistory.getSessions();
 		if (sessions.length === 0) {
 			const message = this.globalHistory.historyEnabled ? 'No history found' : 'History saving is off';

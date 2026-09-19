@@ -56,10 +56,10 @@ export const createSettingsDialog = ({
     tabList.forEach((tab) => {
       tab.addEventListener('click', () => setTab(tab.dataset.settingsTab));
       tab.addEventListener('keydown', (event) => {
-        if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) return;
+        if (!KEYBOARD_KEYS.arrows.includes(event.key)) return;
         event.preventDefault();
         const index = tabList.indexOf(tab);
-        const forward = event.key === 'ArrowDown' || event.key === 'ArrowRight';
+        const forward = event.key === KEYBOARD_KEYS.arrowDown || event.key === KEYBOARD_KEYS.arrowRight;
         const nextIndex = forward
           ? (index + 1) % tabList.length
           : (index - 1 + tabList.length) % tabList.length;
@@ -78,3 +78,4 @@ export const createSettingsDialog = ({
 
   return Object.freeze({ bind, open, close, setTab, sync, getTab: () => activeTab });
 };
+import { KEYBOARD_KEYS } from '../core/constants.js';

@@ -37,6 +37,27 @@ export const EVENTS = Object.freeze({
 	storageError: 'paint:storage-error',
 });
 
+export const KEYBOARD_KEYS = Object.freeze({
+	arrowUp: 'ArrowUp',
+	arrowDown: 'ArrowDown',
+	arrowLeft: 'ArrowLeft',
+	arrowRight: 'ArrowRight',
+	arrows: Object.freeze(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight']),
+	horizontalArrows: Object.freeze(['ArrowLeft', 'ArrowRight']),
+});
+
+export const HISTORY_VIEWS = Object.freeze({
+	history: 'history',
+	session: 'session',
+});
+
+export const RIBBON_POSITIONS = Object.freeze({
+	top: 'top',
+	left: 'left',
+	bottom: 'bottom',
+	float: 'float',
+});
+
 export const LIMITS = Object.freeze({
 	maxHistoryEntries: 20,
 	maxTextHistoryEntries: 20,

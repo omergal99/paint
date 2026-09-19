@@ -5,6 +5,7 @@
 // dependent magic numbers in several different places.
 
 import { hexToRgb } from '../utils/color.js';
+import { KEYBOARD_KEYS } from '../core/constants.js';
 
 export const TEXT_EDITOR_LAYOUT = Object.freeze({
   // Position of the editor top edge relative to the click/caret anchor.
@@ -160,7 +161,9 @@ export const createTextTool = () => {
       canvasContext.shadowBlur = Math.max(6, fontSize * .25);
     }
 
-    text.split('\n').forEach((line, index) => {
+    const lines = text.split('\n');
+    const lineWidths = lines.map((line) => canvasContext.measureText(line).width);
+    lines.forEach((line, index) => {
       const lineX = anchor.x + 1;
       const lineY = anchor.y + canvasTextOffset + index * lineHeight;
       if (styles.has('outline') || styles.has('black-outline')) {
@@ -179,7 +182,6 @@ export const createTextTool = () => {
       }
     });
     canvasContext.restore();
-    const lineWidths = text.split('\n').map((line) => canvasContext.measureText(line).width);
     const rgb = hexToRgb(ctx.canvasManager.primaryColor) || { r: 0, g: 0, b: 0 };
     const textObject = ctx.textDocumentStore?.add({
       text,
@@ -294,7 +296,12 @@ export const createTextTool = () => {
     toolbar.addEventListener('pointercancel', endDrag);
     toolbar.addEventListener('keydown', (event) => {
       const step = event.shiftKey ? 10 : 1;
-      const deltas = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] };
+      const deltas = {
+        [KEYBOARD_KEYS.arrowLeft]: [-step, 0],
+        [KEYBOARD_KEYS.arrowRight]: [step, 0],
+        [KEYBOARD_KEYS.arrowUp]: [0, -step],
+        [KEYBOARD_KEYS.arrowDown]: [0, step],
+      };
       const delta = deltas[event.key];
       if (!delta || !origin) return;
       event.preventDefault();
@@ -331,7 +338,7 @@ export const createTextTool = () => {
         // that made the committed text appear missing and left the tool in
         // Text mode forever after the first blur.
         commit();
-        ctx.setActiveTool?.('select');
+        if (ctx.getTextSelectAfterDraw?.() === true) ctx.setActiveTool?.('select');
         return;
       }
       open(point, ctx);

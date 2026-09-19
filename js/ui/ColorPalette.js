@@ -6,6 +6,20 @@ import { colorStateToCss } from '../utils/colorContract.js';
 const COLOR_RE = /^#[0-9a-f]{6}$/i;
 const COLOR_SCHEMA_VERSION = 2;
 
+const openColorPicker = (input) => {
+  if (!input) return;
+  try {
+    if (typeof input.showPicker === 'function') {
+      input.showPicker();
+      return;
+    }
+  } catch {
+    // Browsers may reject showPicker outside a trusted activation. The click
+    // fallback keeps older engines and hidden inputs working.
+  }
+  input.click();
+};
+
 export const createColorPalette = ({
   gridEl,
   primarySwatchEl,
@@ -75,20 +89,21 @@ export const createColorPalette = ({
     });
   }
 
-  const closePaletteMenu = () => {
+  const closePaletteMenu = ({ preserveEditing = false } = {}) => {
     if (!paletteMenu) return;
     paletteMenu.hidden = true;
     paletteMenu.classList.remove('open');
-    editingPaletteIndex = null;
+    if (!preserveEditing) editingPaletteIndex = null;
   };
 
   const editPaletteSlot = (index) => {
     const hex = palette[index];
     if (!COLOR_RE.test(hex)) return;
     editingPaletteIndex = index;
+    editing = 'palette';
     colorPickerInput.value = hex;
-    colorPickerInput.click();
-    closePaletteMenu();
+    openColorPicker(colorPickerInput);
+    closePaletteMenu({ preserveEditing: true });
   };
 
   const updatePaletteSlot = (index, hex) => {
@@ -150,7 +165,7 @@ export const createColorPalette = ({
     editing = which;
     editingPaletteIndex = null;
     colorPickerInput.value = which === 'secondary' ? secondary : primary;
-    colorPickerInput.click();
+    openColorPicker(colorPickerInput);
   }
 
   const bindSwatches = () => {

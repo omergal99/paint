@@ -640,10 +640,10 @@
 						<span>AI Chat</span></button>
 					<button class="rbtn" id="btn-settings" data-tag="btn-settings" title="Settings">
 						<svg class="icon size4" viewBox="0 0 20 20">
-							<circle cx="10" cy="10" r="3" fill="none" />
 							<path
-								d="M10 2v2m0 12v2m8-8h-2M4 10H2m13.657-5.657l-1.414 1.414M5.757 14.243l-1.414 1.414m11.314 0l-1.414-1.414M5.757 5.757L4.343 4.343"
-								stroke-linecap="round" fill="none" />
+								d="M8.2 2.4h3.6l.5 2a6.1 6.1 0 0 1 1.4.8l1.9-.8 1.8 3.1-1.5 1.4c.1.5.2 1 .2 1.5s-.1 1-.2 1.5l1.5 1.4-1.8 3.1-1.9-.8a6.1 6.1 0 0 1-1.4.8l-.5 2H8.2l-.5-2a6.1 6.1 0 0 1-1.4-.8l-1.9.8-1.8-3.1 1.5-1.4a6.1 6.1 0 0 1-.2-1.5c0-.5.1-1 .2-1.5L2.6 7.5l1.8-3.1 1.9.8a6.1 6.1 0 0 1 1.4-.8l.5-2Z"
+								fill="none" stroke="currentColor" stroke-linejoin="round" />
+							<circle cx="10" cy="10.4" r="2.1" fill="none" />
 						</svg>
 						<span>Settings</span></button>
 				</div>
@@ -986,14 +986,15 @@
 				<h3>Ribbon</h3>
 				<p>Choose which ribbon groups are visible. Detailed group options open in the sidebar.</p>
 				<label class="checkbox-row"><input type="checkbox" id="setting-show-ribbon" checked /> Show ribbon</label>
-				<label class="settings-field ribbon-position-row">Ribbon position
-					<select id="setting-ribbon-position">
-						<option value="top">Top</option>
-						<option value="left">Left</option>
-						<option value="bottom">Bottom</option>
-						<option value="float">Floating</option>
-					</select>
-				</label>
+				<div class="settings-field ribbon-position-row">
+					<span id="ribbon-position-label">Ribbon position</span>
+					<div class="ribbon-position-options" role="radiogroup" aria-labelledby="ribbon-position-label">
+						<button type="button" data-ribbon-position="top" role="radio">Top</button>
+						<button type="button" data-ribbon-position="left" role="radio">Left</button>
+						<button type="button" data-ribbon-position="bottom" role="radio">Bottom</button>
+						<button type="button" data-ribbon-position="float" role="radio">Floating</button>
+					</div>
+				</div>
 				<div id="ribbon-settings-list" class="ribbon-settings-list"></div>
 			</section>
 			<section class="settings-panel settings-body" data-settings-panel="about" hidden>

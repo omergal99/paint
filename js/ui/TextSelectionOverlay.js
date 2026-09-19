@@ -1,6 +1,9 @@
 // Safe text-object focus affordance. The committed pixels remain untouched;
 // this layer only exposes the metadata bounds as keyboard/mouse targets.
 
+const TEXT_TARGET_PADDING = 4;
+const MIN_TEXT_TARGET_WIDTH = 24;
+
 const labelFor = (object) => {
   const text = String(object.text || '').replace(/\s+/g, ' ').trim();
   return text ? `Focus text: ${text.slice(0, 60)}` : 'Focus text object';
@@ -36,10 +39,10 @@ export const createTextSelectionOverlay = ({ root, store }) => {
         : 'Focus text object (safe pixel editing is not enabled yet)';
       target.classList.toggle('selected', object.id === selectedId);
       target.setAttribute('aria-pressed', String(object.id === selectedId));
-      target.style.left = `${object.x}px`;
-      target.style.top = `${object.y}px`;
-      target.style.width = `${Math.max(4, object.width)}px`;
-      target.style.height = `${Math.max(4, object.height)}px`;
+      target.style.left = `${Math.max(0, object.x - TEXT_TARGET_PADDING)}px`;
+      target.style.top = `${Math.max(0, object.y - TEXT_TARGET_PADDING)}px`;
+      target.style.width = `${Math.max(MIN_TEXT_TARGET_WIDTH, object.width + TEXT_TARGET_PADDING * 2)}px`;
+      target.style.height = `${Math.max(24, object.height + TEXT_TARGET_PADDING * 2)}px`;
       target.addEventListener('click', (event) => {
         event.preventDefault();
         event.stopPropagation();

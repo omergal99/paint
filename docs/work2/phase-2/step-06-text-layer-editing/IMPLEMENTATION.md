@@ -12,20 +12,22 @@
 - Added a compact Recent text control inside the active textarea editor. It can
   restore or clear entry history without introducing text-object editing.
 - Added a persisted Text options checkbox for Select text after draw. When
-  enabled, a committed text object is selected through a metadata-bound focus
-  target with a text cursor; clicking it never rewrites canvas pixels.
+  enabled, a committed text object is selected through an accurate,
+  metadata-bound focus target and handed to the normal pixel-selection handles;
+  the target remains visible and follows a committed raster move.
 - Kept shape select-after-draw behavior covered by the existing shape-layer
   tests.
 
 ## Safety boundary
 
-This is intentionally not the full editable compositor. Move/resize/edit-after-
-blur, range formatting, right-click Edit, and reveal mode remain postponed. The
-focus overlay is safe because it only exposes stored bounds and never paints or
-erases. The non-negotiable overlap acceptance case is still open: editing a
-text object after partial paint overlap must not erase unrelated pixels,
-duplicate text, or make the text vanish. The metadata store must not be treated
-as proof of that behavior.
+This is intentionally not the full editable compositor. Text-only
+move/resize/edit-after-blur, range formatting, right-click Edit, and reveal mode
+remain postponed. The current handoff uses the ordinary raster selection path;
+it does not claim that only text pixels are isolated from paint underneath.
+The non-negotiable overlap acceptance case is still open: editing a text object
+after partial paint overlap must not erase unrelated pixels, duplicate text, or
+make the text vanish. The metadata store must not be treated as proof of that
+behavior.
 
 ## Verification
 

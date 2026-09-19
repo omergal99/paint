@@ -78,6 +78,10 @@ Round 2 results and visual status are maintained in
 is HistoryPanel extraction, SettingsDialog extraction, direct alpha/browser
 fixtures, and the full keyboard/layout accessibility matrix.
 
+The Phase 3 follow-on plan is maintained in [`../phase-3/README.md`](../phase-3/README.md).
+It covers catalog-based localization, explicit LTR/RTL direction state, and a
+bounded persistent right-panel notepad with tabs.
+
 ## Scope adjustments from review
 
 - Editable text compositing remains a design and proof obligation. If overlap,

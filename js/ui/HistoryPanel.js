@@ -2,16 +2,18 @@
 // with Sidebar; this module owns the panel's view state, tab semantics, and
 // action labels so those UI rules do not spread through the history renderer.
 
+import { HISTORY_VIEWS, KEYBOARD_KEYS } from '../core/constants.js';
+
 export const createHistoryPanel = ({ root = document, onViewChange = () => {} } = {}) => {
   const tabs = [...root.querySelectorAll('[data-history-view]')];
   const actionLabel = root.querySelector('#history-actions-label');
   const saveButton = root.querySelector('#history-save-current-btn');
   const exportButton = root.querySelector('#history-export-all-btn');
   const clearButton = root.querySelector('#history-clear-btn');
-  let activeView = 'history';
+  let activeView = HISTORY_VIEWS.history;
 
   const sync = () => {
-    const session = activeView === 'session';
+    const session = activeView === HISTORY_VIEWS.session;
     tabs.forEach((tab) => {
       const selected = tab.dataset.historyView === activeView;
       tab.classList.toggle('active', selected);
@@ -38,7 +40,7 @@ export const createHistoryPanel = ({ root = document, onViewChange = () => {} } 
   };
 
   const setView = (view) => {
-    activeView = view === 'session' ? 'session' : 'history';
+    activeView = view === HISTORY_VIEWS.session ? HISTORY_VIEWS.session : HISTORY_VIEWS.history;
     sync();
     onViewChange(activeView);
   };
@@ -48,10 +50,10 @@ export const createHistoryPanel = ({ root = document, onViewChange = () => {} } 
       tab.setAttribute('role', 'tab');
       tab.addEventListener('click', () => setView(tab.dataset.historyView));
       tab.addEventListener('keydown', (event) => {
-        if (!['ArrowLeft', 'ArrowRight'].includes(event.key)) return;
+        if (!KEYBOARD_KEYS.horizontalArrows.includes(event.key)) return;
         event.preventDefault();
         const index = tabs.indexOf(tab);
-        const nextIndex = event.key === 'ArrowLeft'
+        const nextIndex = event.key === KEYBOARD_KEYS.arrowLeft
           ? (index - 1 + tabs.length) % tabs.length
           : (index + 1) % tabs.length;
         tabs[nextIndex]?.focus();

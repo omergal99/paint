@@ -1,6 +1,7 @@
 // Functional controller for every ribbon action menu. Keeping open/close,
 // direction, outside-click, Escape, and aria state in one seam prevents new
 // menus (including dynamically-created palette menus) from drifting.
+import { KEYBOARD_KEYS } from '../core/constants.js';
 
 const closeMenu = (menu) => {
   menu.classList.remove('open');
@@ -27,20 +28,55 @@ export const createActionMenuController = ({ root = document } = {}) => {
     if (!keep.includes(menu)) closeMenu(menu);
   });
 
-  const positionMenu = (menu, menuItems, { x, y } = {}) => {
+  const measureMenu = (menuItems) => {
     menuItems.style.visibility = 'hidden';
     menuItems.style.display = 'grid';
-    const menuHeight = menuItems.getBoundingClientRect().height || 80;
-    const menuWidth = menuItems.getBoundingClientRect().width || 180;
+    const { width = 180, height = 80 } = menuItems.getBoundingClientRect();
     menuItems.style.display = '';
     menuItems.style.visibility = '';
+    return { width, height };
+  };
 
-    const requestedX = Number.isFinite(x) ? x : 0;
-    const requestedY = Number.isFinite(y) ? y : 0;
-    const maxX = Math.max(8, window.innerWidth - menuWidth - 8);
-    const maxY = Math.max(8, window.innerHeight - menuHeight - 8);
-    menuItems.style.left = `${Math.round(Math.min(Math.max(8, requestedX), maxX))}px`;
-    menuItems.style.top = `${Math.round(Math.min(Math.max(8, requestedY), maxY))}px`;
+  const clamp = (value, min, max) => Math.min(Math.max(min, value), Math.max(min, max));
+
+  const positionMenu = (menu, menuItems, {
+    x,
+    y,
+    anchor = null,
+    placement = 'below',
+  } = {}) => {
+    const { width: menuWidth, height: menuHeight } = measureMenu(menuItems);
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    const margin = 8;
+    let requestedX = Number.isFinite(x) ? x : 0;
+    let requestedY = Number.isFinite(y) ? y : 0;
+    let direction = placement;
+
+    if (anchor) {
+      const anchorBounds = typeof anchor.getBoundingClientRect === 'function'
+        ? anchor.getBoundingClientRect()
+        : anchor;
+      const parentBounds = anchor.closest?.('.action-menu-items')?.getBoundingClientRect();
+      if (placement === 'submenu') {
+        const openLeft = anchorBounds.right + 2 + menuWidth > viewportWidth - margin;
+        requestedX = openLeft ? anchorBounds.left - menuWidth - 2 : anchorBounds.right + 2;
+        requestedY = parentBounds?.top ? Math.max(parentBounds.top, anchorBounds.top) : anchorBounds.top;
+        direction = openLeft ? 'left' : 'right';
+      } else {
+        const openAbove = viewportHeight - anchorBounds.bottom < menuHeight + margin
+          && anchorBounds.top >= menuHeight + margin;
+        requestedX = anchorBounds.left;
+        requestedY = openAbove ? anchorBounds.top - menuHeight - 2 : anchorBounds.bottom + 2;
+        direction = openAbove ? 'up' : 'down';
+      }
+    }
+
+    const maxX = viewportWidth - menuWidth - margin;
+    const maxY = viewportHeight - menuHeight - margin;
+    menuItems.style.left = `${Math.round(clamp(requestedX, margin, maxX))}px`;
+    menuItems.style.top = `${Math.round(clamp(requestedY, margin, maxY))}px`;
+    menuItems.dataset.direction = direction;
   };
 
   const openMenuAt = (menu, point = {}) => {
@@ -49,7 +85,7 @@ export const createActionMenuController = ({ root = document } = {}) => {
     closeAll([menu]);
     menu.hidden = false;
     menu.classList.add('open');
-    positionMenu(menu, menuItems, point);
+    positionMenu(menu, menuItems, { ...point, placement: 'context' });
     return true;
   };
 
@@ -63,28 +99,12 @@ export const createActionMenuController = ({ root = document } = {}) => {
     trigger.setAttribute('aria-expanded', String(shouldOpen));
     if (!shouldOpen) return;
 
-    const bounds = trigger.getBoundingClientRect();
-    menuItems.style.visibility = 'hidden';
-    menuItems.style.display = 'grid';
-    const menuHeight = menuItems.getBoundingClientRect().height || 80;
-    const menuWidth = menuItems.getBoundingClientRect().width || 180;
-    menuItems.style.display = '';
-    menuItems.style.visibility = '';
     const isSubmenu = menu.classList.contains('action-submenu');
-    if (isSubmenu) {
-      const parentBounds = trigger.closest('.action-menu-items')?.getBoundingClientRect();
-      const right = bounds.right + 2;
-      const openLeft = right + menuWidth > window.innerWidth - 8;
-      menuItems.style.left = `${Math.round(openLeft ? bounds.left - menuWidth - 2 : right)}px`;
-      menuItems.style.top = `${Math.round(parentBounds?.top ? Math.max(parentBounds.top, bounds.top) : bounds.top)}px`;
-      menuItems.dataset.direction = openLeft ? 'left' : 'right';
-    } else {
-      const spaceBelow = window.innerHeight - bounds.bottom;
-      const openAbove = spaceBelow < menuHeight + 8 && bounds.top >= menuHeight + 8;
-      menuItems.style.top = `${Math.round(openAbove ? bounds.top - menuHeight - 2 : bounds.bottom + 2)}px`;
-      menuItems.dataset.direction = openAbove ? 'up' : 'down';
-    }
     menu.classList.add('open');
+    positionMenu(menu, menuItems, {
+      anchor: trigger,
+      placement: isSubmenu ? 'submenu' : 'below',
+    });
   };
 
   const toggle = (event) => {
@@ -113,16 +133,16 @@ export const createActionMenuController = ({ root = document } = {}) => {
     const menu = trigger.closest('.action-menu');
     if (!menu) return;
 
-    if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+    if (event.key === KEYBOARD_KEYS.arrowRight || event.key === KEYBOARD_KEYS.arrowDown) {
       const isSubmenu = menu.classList.contains('action-submenu');
-      if (event.key === 'ArrowRight' && !isSubmenu) return;
+      if (event.key === KEYBOARD_KEYS.arrowRight && !isSubmenu) return;
       event.preventDefault();
       if (!menu.classList.contains('open')) toggleMenu(trigger);
       firstMenuItem(menu)?.focus();
       return;
     }
 
-    if (event.key === 'ArrowLeft' && menu.classList.contains('action-submenu')) {
+    if (event.key === KEYBOARD_KEYS.arrowLeft && menu.classList.contains('action-submenu')) {
       event.preventDefault();
       const submenuTrigger = directTrigger(menu);
       closeMenu(menu);

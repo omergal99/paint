@@ -1,0 +1,36 @@
+{
+  "round": 4,
+  "date": "2026-09-19",
+  "browser": "Chromium via Playwright CLI",
+  "desktopViewport": { "width": 1280, "height": 720 },
+  "narrowViewport": { "width": 320, "height": 720 },
+  "menus": [
+    { "name": "size", "rect": { "left": 485, "top": 55, "right": 723, "bottom": 232 }, "direction": "down", "overflow": false },
+    { "name": "text-options", "rect": { "left": 385, "top": 31, "right": 705.375, "bottom": 292.296875 }, "direction": "down", "overflow": false },
+    { "name": "image-more", "rect": { "left": 259, "top": 56, "right": 407, "bottom": 142 }, "direction": "down", "overflow": false },
+    { "name": "rotate-submenu", "rect": { "left": 404, "top": 87, "right": 586.078125, "bottom": 217 }, "direction": "right", "overflow": false },
+    { "name": "image-more-narrow", "rect": { "left": 164, "top": 589, "right": 312, "bottom": 675 }, "direction": "up", "overflow": false }
+  ],
+  "palette": {
+    "editAction": { "menuHidden": true, "menuOpen": false, "pickerValue": "#000000" },
+    "outsideClick": { "hidden": true, "open": false }
+  },
+  "settings": {
+    "ribbonPositionRole": "radiogroup",
+    "options": ["top", "left", "bottom", "float"],
+    "initialChecked": "top"
+  },
+  "text": {
+    "off": { "activeTool": "text", "selectedTarget": false, "targetRect": { "width": 110.296875, "height": 56 } },
+    "on": { "activeTool": "select", "selectedTarget": true, "visibleSelectionHandles": 8 },
+    "move": { "deltaX": 24, "deltaY": 12, "targetFollowed": true }
+  },
+  "consoleErrors": 0,
+  "verification": {
+    "npmTest": "4/4",
+    "syntax": "pass",
+    "gitDiffCheck": "pass",
+    "webQualityAnalyzer": { "issues": 0, "warnings": 0 }
+  },
+  "openGates": ["PWA PNG icons", "offline/update", "Lighthouse", "200% zoom", "reduced motion", "full mobile journey"]
+}

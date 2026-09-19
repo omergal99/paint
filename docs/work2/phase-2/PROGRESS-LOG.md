@@ -233,3 +233,29 @@ that changed from `DECISIONS.md`.
   syntax checks, live Playwright UI journeys, direct alpha pixel match, and
   keyboard/layout matrix passed. Remaining quality gates are analyzer output,
   `git diff --check`, checkJs/coverage, Lighthouse, and offline update checks.
+
+## 2026-09-19 — Round 4 shared contracts, text handoff, and release planning
+
+- Unified normal, submenu, and pointer-positioned menus behind one measured,
+  viewport-clamped placement contract. Representative Size, Text, Image More,
+  Rotate, and narrow-viewport checks stayed inside the viewport; outside click
+  and Escape still close the complete menu tree.
+- Fixed palette Edit color losing its slot context when the menu closed. The
+  selected index now survives until the native color input emits its change;
+  `showPicker()` is used when supported with a click fallback.
+- Replaced the Ribbon position select with native radio buttons and arrow-key
+  activation while keeping `PanelLayoutManager` as the state owner. Replaced
+  the settings light-like icon with an explicit gear.
+- Measured text bounds while the active font is still applied, added minimum
+  interactive padding, and handed an enabled text target to normal pixel
+  selection handles. A live drag moved the selection by `+24,+12` and the
+  metadata target followed. This remains raster selection, not safe text-only
+  editing.
+- Added shared keyboard/history constants and the project `paint-architecture`
+  skill with SSOT, functional-seam, and destructured-options guidance.
+- Added Phase 2 Round 4 Markdown/white HTML status, Settings release-note
+  highlights, and the Phase 3 plan for localization/RTL plus a persistent
+  tabbed notepad. Step 11 is explicitly partial until PWA icons, offline,
+  Lighthouse, zoom, reduced-motion, and mobile evidence close.
+- Verification: `npm test` 4/4, changed-module syntax, `git diff --check`,
+  analyzer 0 issues/0 warnings, live browser console errors 0.
