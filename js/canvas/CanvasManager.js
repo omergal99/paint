@@ -12,6 +12,19 @@ const STORAGE_KEY = 'omerpaint:last-canvas';
 // low-memory devices, so the re-measure loop stops growing instead.
 const MAX_MEASURE_PIXELS = 16 * 1024 * 1024;
 
+// Floating layers already contain their intended alpha. Always place them
+// with an opaque source-over operation so a drawing tool's stale globalAlpha
+// cannot compound the layer opacity during Select-after-draw placement.
+export const commitLayerWithSourceOver = (context, layer, region) => {
+	if (!context || !layer || !region) return false;
+	context.save();
+	context.globalAlpha = 1;
+	context.globalCompositeOperation = 'source-over';
+	context.drawImage(layer, region.x, region.y);
+	context.restore();
+	return true;
+};
+
 /** Clamp a {x,y,w,h} region so it stays fully inside a w×h canvas (min 1×1). */
 const clampRegionToBounds = (region, maxW, maxH) => {
   const w = Math.min(Math.max(1, Math.round(region.w)), maxW);

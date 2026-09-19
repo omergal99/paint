@@ -144,6 +144,11 @@ metadata-bound regions. “Select text after draw” is persisted and can always
 turned off. It selects the committed focus target only; the edit/reveal route
 stays gated until compositor and overlap proofs are complete.
 
+Round 2 also requires a canvas click outside the textarea to commit the current
+entry and leave Text mode. The Recent text toolbar toggle must use both semantic
+`hidden` state and a CSS `[hidden]` rule so author layout styles cannot make a
+disabled toolbar remain visible.
+
 ## Step 07 — Performance and event hygiene
 
 - Combine ToolManager pointermove work into one listener and one rAF pipeline.
@@ -158,6 +163,25 @@ stays gated until compositor and overlap proofs are complete.
 
 Measure before/after with a repeatable draw trace. The target is fewer handlers
 and less per-move work, not a cosmetic listener count.
+
+### Step 08.1 — composition and alpha quick wins
+
+Before deeper memory work, keep floating-layer placement in one source-over
+seam. A layer already contains its intended alpha; committing it with a stale
+drawing-tool `globalAlpha` compounds opacity. The placement contract therefore
+forces `globalAlpha = 1` and `globalCompositeOperation = 'source-over'`.
+
+The shared ActionMenuController is the first low-risk Step 09 seam and is also
+an 8.1 integration fixture: nested menus must keep their ancestors open while
+opening, and outside click/Escape must close the complete menu tree.
+
+### Step 08.2 — recovery and budget proof
+
+The remaining memory work is intentionally separate from browser storage quota:
+measure decoded canvases, scratch surfaces, Blobs, object URLs, and history
+bytes; then add release, quota-error, and reload/recovery fixtures. Do not raise
+the 64 MiB in-memory cap merely because `navigator.storage.estimate()` reports
+more disk quota.
 
 ## Step 08 — Storage, memory, and recovery
 
@@ -188,6 +212,10 @@ Extract in low-risk seams (the shared ActionMenuController is the first slice):
 
 At each extraction, keep `main.js` as composition root and add a public API
 instead of reaching into underscored fields.
+
+The delivered first slice is the functional `ActionMenuController`. The next
+recommended slices are `HistoryPanel` and `SettingsDialog`; each must add a
+behavior contract and a browser journey before the next extraction.
 
 ## Step 10 — Tests, types, and quality
 

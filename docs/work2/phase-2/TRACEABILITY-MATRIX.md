@@ -8,7 +8,7 @@
 | Ribbon settings | Stable group order, compact rows, no duplicated/default drift | 02, 03, 09 | SettingsStore and DOM tests |
 | General settings | Canvas background/default size/default zoom use clearer choice controls | 03, 11 | Keyboard and narrow-layout check |
 | Remove unnecessary Close buttons | General and About do not duplicate the footer/header close action | 03 | DOM assertion |
-| Image More menu | Crop, resize, rotate, flip, and background actions are grouped into one space-saving menu | 03 | Menu interaction test |
+| Image More menu | Resize remains direct while Crop, Rotate, Flip, and background actions live under one nested More menu | 03, 09, 11 | Playwright nested-menu snapshot, outside/Escape close check, keyboard/layout matrix |
 | Ribbon group alignment | Fixed control/title bands align all group titles; total ribbon height stays within budget | 03 | Layout measurement at top/left/bottom/float |
 | Shape gallery stays open | Shape-gallery descendants stop internal close propagation; outside click closes | 03 | Browser interaction test |
 | Resize percentage/ratio | Percent control, default ratio lock, absolute values, validation | 04 | Unit + browser test |
@@ -17,6 +17,7 @@
 | Python background removal | Optional advanced provider behind adapter; default app stays lightweight and local-first | 12 | Provider contract and failure-path test |
 | Palette right-click editing | Context menu edits a palette slot without accidental secondary-color mutation | 05 | DOM/keyboard/context-menu test |
 | Alpha/transparent colors | Compact checkerboard opacity menu, foreground/background alpha persisted and applied by drawing/composition | 05 | RGBA migration + pixel test + browser menu/close trace |
+| Floating alpha placement | Select-after-draw shape layers retain their encoded alpha when committed | 05, 10 | Source-over commit contract plus direct lift/place pixel-ratio fixture |
 | Text select-after-draw | Committed text can opt into a non-destructive metadata-bound focus target; text editing still needs overlap-safe compositing proof and focus/reveal affordance | 06 | Browser focus-target trace now; deferred overlap, undo/redo, reload, and edit acceptance suite |
 | Movable text | Text can remain selected/movable after creation via Tools More setting | 06 | Text object gesture test |
 | Text toolbar | Selected ranges support a scoped formatting toolbar with sanitized style runs | 06 | Editor model test |

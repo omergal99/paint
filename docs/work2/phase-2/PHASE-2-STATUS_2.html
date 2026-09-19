@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Paint Phase 2 — Round 2 Status</title>
+  <style>
+    :root { color-scheme: light dark; --bg: #101418; --panel: #1b2229; --line: #46515b; --text: #eef3f7; --muted: #b6c0c8; --good: #72d39a; --warn: #ffd166; --accent: #75b9ff; }
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 24px; background: var(--bg); color: var(--text); font: 15px/1.5 system-ui, sans-serif; }
+    main { max-width: 1440px; margin: 0 auto; }
+    h1, h2 { line-height: 1.2; }
+    h1 { margin-top: 0; }
+    .lede, .note { color: var(--muted); }
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; margin: 20px 0; }
+    .card, section { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+    .card { padding: 14px; }
+    .card strong { display: block; font-size: 1.55rem; color: var(--accent); }
+    section { margin: 18px 0; padding: 16px; overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; min-width: 850px; }
+    caption { text-align: left; font-weight: 700; padding-bottom: 8px; }
+    th, td { padding: 9px 10px; border-bottom: 1px solid var(--line); vertical-align: top; text-align: left; }
+    th { color: var(--accent); }
+    meter { width: 120px; height: 1em; vertical-align: middle; }
+    a { color: var(--accent); }
+    .flow { display: grid; grid-template-columns: repeat(auto-fit, minmax(145px, 1fr)); gap: 8px; padding: 0; list-style: none; }
+    .flow li { padding: 12px; border: 1px solid var(--line); border-radius: 6px; }
+    .flow li::after { content: ' →'; color: var(--good); }
+    .flow li:last-child::after { content: ''; }
+    code { color: var(--good); }
+    @media (max-width: 640px) { body { padding: 12px; } section { padding: 10px; } }
+  </style>
+</head>
+<body>
+<main>
+  <p><a href="PHASE-2-STATUS.md">← Markdown status</a></p>
+  <h1>Paint Phase 2 — Round 2 Stabilization</h1>
+  <p class="lede">2026-09-19 · A focused UI, alpha-composition, text-commit, and Steps 09–11 quick-win round.</p>
+
+  <div class="cards" aria-label="Round summary">
+    <div class="card"><strong>4/4</strong>test files green</div>
+    <div class="card"><strong>7.5/10</strong>overall professional readiness</div>
+    <div class="card"><strong>5</strong>Playwright evidence snapshots</div>
+    <div class="card"><strong>0</strong>console errors in final menu/toggle checks</div>
+  </div>
+
+  <section>
+    <h2>Round results</h2>
+    <table>
+      <caption>Delivered behavior and how to verify it in Paint</caption>
+      <thead><tr><th>Area</th><th>Score</th><th>UI experience</th><th>Evidence</th><th>Next gate</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">Alpha control</th><td><meter min="0" max="10" value="10">10/10</meter> 10/10</td><td>Colors → checkerboard arrow; compact 30×16 trigger and 32×32 swatch stack.</td><td>Tests and CSS contract.</td><td>File/eyedropper fixtures.</td></tr>
+        <tr><th scope="row">Shape opacity</th><td><meter min="0" max="10" value="9">9/10</meter> 9/10</td><td>Low-alpha shape → Select after draw → place once.</td><td>Fake-context behavior test records source-over alpha.</td><td>Direct pixel-ratio browser fixture.</td></tr>
+        <tr><th scope="row">Text workflow</th><td><meter min="0" max="10" value="9">9/10</meter> 9/10</td><td>Text → type → click outside; current tool becomes Select.</td><td>Focus target appears when the option is enabled.</td><td>Overlap-safe editing remains deferred.</td></tr>
+        <tr><th scope="row">Image More</th><td><meter min="0" max="10" value="8">8/10</meter> 8/10</td><td>More → Crop/Rotate/Flip nested menus; outside/Escape closes all.</td><td>Accessible snapshots in output/playwright.</td><td>Keyboard/layout matrix.</td></tr>
+        <tr><th scope="row">Steps 09–11</th><td><meter min="0" max="10" value="4">4/10</meter> 4/10</td><td>Shared action-menu seam and focused accessibility/PWA contracts.</td><td>Tests, syntax, diff, source-over behavior, snapshots.</td><td>Panel extraction, traces, Lighthouse/offline.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>Professional quality score</h2>
+    <table>
+      <thead><tr><th>Dimension</th><th>Score</th><th>Reason</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">Code design</th><td><meter min="0" max="10" value="7.5">7.5/10</meter></td><td>Functional seams are improving; legacy class owners and the large composition root remain.</td></tr>
+        <tr><th scope="row">UI design</th><td><meter min="0" max="10" value="8">8/10</meter></td><td>Requested controls are compact and understandable; alternate layouts still need measurement.</td></tr>
+        <tr><th scope="row">Logic/data safety</th><td><meter min="0" max="10" value="7.5">7.5/10</meter></td><td>Alpha and text focus are bounded; full text editing and recovery are not complete.</td></tr>
+        <tr><th scope="row">Verification</th><td><meter min="0" max="10" value="7">7/10</meter></td><td>Unit/contract and focused browser checks pass; performance and Lighthouse gates are pending.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>Next path</h2>
+    <ol class="flow" aria-label="Recommended next sequence">
+      <li>09.1 HistoryPanel seam</li>
+      <li>09.2 SettingsDialog seam</li>
+      <li>10.1 direct alpha/browser fixtures</li>
+      <li>11.1 keyboard and layout matrix</li>
+    </ol>
+    <p class="note">Text compositing, optional Python/background removal, service-worker synchronization, and multi-document recovery stay behind their explicit proof gates.</p>
+  </section>
+
+  <section>
+    <h2>Evidence</h2>
+    <ul>
+      <li><a href="../../../output/playwright/phase-2/playwright-cli/round2-image-crop-submenu.yml">Image Crop submenu snapshot</a></li>
+      <li><a href="../../../output/playwright/phase-2/playwright-cli/round2-image-keyboard-submenu.yml">Image keyboard submenu snapshot</a></li>
+      <li><a href="../../../output/playwright/phase-2/playwright-cli/round2-image-outside-closed.yml">Image outside-click closed snapshot</a></li>
+      <li><a href="../../../output/playwright/phase-2/playwright-cli/round2-text-toolbar-hidden.yml">Text toolbar hidden snapshot</a></li>
+      <li><a href="../../../output/playwright/phase-2/playwright-cli/round2-text-select-option.yml">Text options snapshot</a></li>
+    </ul>
+  </section>
+</main>
+</body>
+</html>

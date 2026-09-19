@@ -24,6 +24,14 @@ Processed from the Phase 2 review on 2026-09-19.
 - Palette context actions and opacity controls now use the shared functional
   `ActionMenuController`; outside click and Escape close behavior is no longer
   implemented as a private palette listener.
+- Image actions now follow the original requested grouping: Resize remains a
+  direct control and More owns Crop, Rotate, and Flip nested submenus. Existing
+  leaf IDs are preserved so behavior does not move with the visual grouping.
+- Floating shape placement explicitly resets compositing to source-over so a
+  selected shape's existing alpha is not multiplied a second time.
+- The live text editor now commits and switches to Select on an outside canvas
+  click. Recent text visibility uses an explicit hidden CSS rule because the
+  toolbar's grid display previously defeated the native hidden attribute.
 
 ## Remaining gates before a full Step 05 score
 
@@ -44,3 +52,11 @@ Processed from the Phase 2 review on 2026-09-19.
    PWA/SW and icons, CSS organization, then Lighthouse and repeatable budgets.
 5. Keep Step 12 background removal and Step 13 multi-document workspace after
    these launch-quality gates unless a new requirement changes the priority.
+
+## Round 2 checkpoint
+
+The focused Round 2 status, scores, gaps, UI walkthrough, and browser evidence
+are recorded in [`../../PHASE-2-STATUS_2.md`](../../PHASE-2-STATUS_2.md) and its
+HTML companion. The next quick-win gate is the direct selected-shape pixel
+fixture, followed by HistoryPanel/SettingsDialog extraction and the full
+keyboard/layout accessibility matrix.

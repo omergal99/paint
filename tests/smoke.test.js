@@ -468,6 +468,35 @@ test('Round-2 fixes: V glyph, session persistence, view-aware actions, storage m
 	assert.match(main, /Math\.min\(100, Math\.max\(1, Math\.ceil/);
 });
 
+test('Round-2 stabilization: alpha, text commit, and nested image actions', () => {
+	const css = read('css/styles.css');
+	const textTool = read('js/tools/TextTool.js');
+	const canvas = read('js/canvas/CanvasManager.js');
+	const actionMenu = read('js/ui/ActionMenuController.js');
+	const controller = read('js/ui/ActionMenuController.js');
+	assert.match(css, /\.swatch-stack\s*\{[^}]*width:\s*32px[^}]*height:\s*32px/s);
+	assert.match(css, /\.swatch-alpha-trigger\s*\{[^}]*flex-direction:\s*row/s);
+	assert.match(css, /\.swatch-alpha-trigger\s*\{[^}]*width:\s*30px[^}]*height:\s*16px/s);
+	assert.doesNotMatch(html, /swatch-alpha-transparent/);
+	assert.doesNotMatch(css, /swatch-alpha-transparent/);
+	assert.match(html, /id="btn-image-more"/);
+	assert.match(html, /class="action-menu-trigger action-submenu-trigger"[^>]*id="btn-crop-menu"/);
+	assert.match(html, /class="action-menu-trigger action-submenu-trigger"[^>]*id="btn-rotate"/);
+	assert.match(html, /class="action-menu-trigger action-submenu-trigger"[^>]*id="btn-flip"/);
+	assert.match(actionMenu, /root\.addEventListener\('click', \(\) => closeAll\(\)\)/);
+	assert.match(main, /const commitFloatingPixels = \(region\) =>/);
+	assert.match(canvas, /export const commitLayerWithSourceOver = \(context, layer, region\) =>/);
+	assert.match(canvas, /globalAlpha = 1;[\s\S]*globalCompositeOperation = 'source-over'/);
+	assert.match(main, /commitLayerWithSourceOver\(canvasManager\.ctx/);
+	assert.match(textTool, /commit\(\);\s*ctx\.setActiveTool\?\.\('select'\)/);
+	assert.match(css, /\.text-editor-toolbar\[hidden\]\s*\{[^}]*display:\s*none\s*!important/s);
+	assert.match(textTool, /toolbar\.setAttribute\('aria-hidden', String\(visible === false\)\)/);
+	assert.match(controller, /const ancestorsOf = \(menu\) =>/);
+	assert.match(controller, /const handleKeyboard = \(event\) =>/);
+	assert.match(controller, /event\.key === 'ArrowLeft'/);
+	assert.match(controller, /submenuTrigger\?\.focus\(\)/);
+});
+
 test('Phase 2 Steps 02–04 contracts and UX hooks are wired', () => {
   const history = read('js/history/HistoryManager.js');
   const canvas = read('js/canvas/CanvasManager.js');

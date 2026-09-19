@@ -30,6 +30,15 @@
 12. Ribbon action menus use one functional controller for positioning,
     outside-click/Escape close, and `aria-expanded`; new menus must use that
     seam rather than adding a private document listener.
+13. Floating shape layers are committed with an explicit opaque source-over
+    operation because their intended alpha is already encoded in the layer;
+    reusing a stale drawing-tool alpha would compound opacity.
+14. Image actions use one Resize control plus a More menu with Crop, Rotate,
+    and Flip nested submenus. This keeps the compact Ribbon readable while
+    preserving the existing action IDs and leaf behavior.
+15. “Select text after draw” is enabled as a reversible metadata focus action.
+    A canvas click commits the textarea and switches to Select; object editing
+    still requires overlap-safe compositor, undo/redo, and reload evidence.
 
 ## Owner decisions required before implementation
 

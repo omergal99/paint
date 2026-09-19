@@ -1,24 +1,52 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { CanvasManager } from '../js/canvas/CanvasManager.js';
+import { CanvasManager, commitLayerWithSourceOver } from '../js/canvas/CanvasManager.js';
 
 class FakeContext {
 	constructor() {
 		this.fillRectCalls = 0;
 		this.clearRectCalls = 0;
 		this.fillStyle = '';
+		this.globalAlpha = 0.2;
+		this.globalCompositeOperation = 'multiply';
+		this.drawImageCalls = [];
+		this.savedState = null;
 	}
 
-	save() {}
-	restore() {}
+	save() {
+		this.savedState = { alpha: this.globalAlpha, composite: this.globalCompositeOperation };
+	}
+	restore() {
+		if (this.savedState) {
+			this.globalAlpha = this.savedState.alpha;
+			this.globalCompositeOperation = this.savedState.composite;
+		}
+	}
 	fillRect() { this.fillRectCalls += 1; }
 	clearRect() { this.clearRectCalls += 1; }
-	drawImage() {}
+	drawImage(...args) {
+		this.drawImageCalls.push({ args, alpha: this.globalAlpha, composite: this.globalCompositeOperation });
+	}
 	getImageData(_x, _y, width, height) {
 		return { data: new Uint8ClampedArray(width * height * 4) };
 	}
 }
+
+test('floating layers commit once with source-over alpha', () => {
+	const context = new FakeContext();
+	const layer = { width: 4, height: 4 };
+	const region = { x: 3, y: 5, w: 4, h: 4 };
+
+	assert.equal(commitLayerWithSourceOver(context, layer, region), true);
+	assert.deepEqual(context.drawImageCalls[0], {
+		args: [layer, 3, 5],
+		alpha: 1,
+		composite: 'source-over',
+	});
+	assert.equal(context.globalAlpha, 0.2, 'the caller context state is restored');
+	assert.equal(context.globalCompositeOperation, 'multiply', 'the caller composite mode is restored');
+});
 
 class FakeCanvas {
 	constructor() {

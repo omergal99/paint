@@ -24,6 +24,12 @@ Step 11. The first gate now covers the extracted ActionMenuController,
 opacity/palette behavior, stable storage display, and safe text focus. A
 failing type or behavior gate blocks the next extraction slice.
 
+Round 2 adds contracts for the 32×32/30×16 alpha layout, removed transparent
+class, source-over floating placement, Text → Select commit, hidden toolbar,
+and nested Image menu wiring. The permanent gap is a direct browser pixel
+fixture for selected-shape placement plus `checkJs`, coverage, and teardown
+behavior tests.
+
 ## Done when
 
 CI is green, coverage is measured, and the highest-risk workflows have direct

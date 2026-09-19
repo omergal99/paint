@@ -211,6 +211,7 @@ export const createTextTool = () => {
     toolbar.tabIndex = 0;
     const setHistoryToolbarVisibility = (visible) => {
       toolbar.hidden = visible === false;
+      toolbar.setAttribute('aria-hidden', String(visible === false));
     };
     setHistoryToolbarVisibility(ctx.getTextHistoryToolbarVisible?.() !== false);
     const historyLabel = document.createElement('span');
@@ -316,7 +317,15 @@ export const createTextTool = () => {
     name: 'text',
     cursor: 'text',
     onDown(point, ctx) {
-      if (editor) commit();
+      if (editor) {
+        // A canvas click is the explicit “apply and leave text mode” action.
+        // Do not immediately open a second textarea at the click position;
+        // that made the committed text appear missing and left the tool in
+        // Text mode forever after the first blur.
+        commit();
+        ctx.setActiveTool?.('select');
+        return;
+      }
       open(point, ctx);
     },
     onMove() {},

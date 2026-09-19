@@ -72,6 +72,12 @@ The scorecard and UI verification paths are maintained in
 `PHASE-2-STATUS.md`; the processed review decisions are in
 `init/processedData/06-current-gaps-and-next-plan.md`.
 
+Round 2 results and visual status are maintained in
+[`PHASE-2-STATUS_2.md`](PHASE-2-STATUS_2.md) and
+[`PHASE-2-STATUS_2.html`](PHASE-2-STATUS_2.html). The next incremental order
+is HistoryPanel extraction, SettingsDialog extraction, direct alpha/browser
+fixtures, and the full keyboard/layout accessibility matrix.
+
 ## Scope adjustments from review
 
 - Editable text compositing remains a design and proof obligation. If overlap,

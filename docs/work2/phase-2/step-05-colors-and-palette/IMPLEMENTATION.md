@@ -37,3 +37,18 @@ hid live, Ribbon settings used two columns, storage free-space text used the
 stable quota, and the drawn pixel measured alpha `26/255` on a transparent
 canvas. A follow-up layout check confirmed the Ribbon remained exactly `74px`
 high with the compact opacity affordance.
+
+## Round 2 stabilization
+
+- The checkerboard trigger is now explicitly horizontal at `30px × 16px`; the
+  swatch stack is `32px × 32px`.
+- The obsolete `swatch-alpha-transparent` class was removed; transparent
+  actions use the shared opacity data attribute and menu styling.
+- Shape select-after-draw placement now commits the already-alpha-bearing
+  floating layer with `globalAlpha = 1` and `source-over`, preventing a 20%
+  shape from becoming 4% when it is placed.
+- `transparency.test.js` now records the actual alpha/composite values used by
+  the source-over commit helper and verifies the caller context is restored.
+- The remaining browser gate is a direct pixel-ratio fixture for the complete
+  lift and placement journey, in addition to the broader file/import/export
+  fixtures.

@@ -173,3 +173,34 @@ that changed from `DECISIONS.md`.
   accessibility pass. Added both new modules to the service-worker shell so
   the offline app can boot the same path. Unit tests and browser verification
   passed.
+
+## 2026-09-19 — Round 2 stabilization and Steps 09–11 continuation
+
+- Applied the requested alpha sizing: `.swatch-alpha-trigger` is horizontal at
+  `30px × 16px`, `.swatch-stack` is `32px × 32px`, and the unused
+  `swatch-alpha-transparent` class was removed.
+- Fixed double-composited shape opacity during Select after draw. Floating
+  layers now commit with `globalAlpha = 1` and `source-over`, preserving the
+  alpha already stored in the layer.
+- Fixed Text canvas-click commit: clicking a real point outside the textarea
+  commits the entry, leaves Text mode, and enters Select. Enabled Select text
+  after draw remains metadata-only and exposes the labeled focus target.
+- Fixed the Recent text toolbar toggle’s visible state. Author CSS previously
+  overrode the native hidden behavior; the live toolbar now uses `hidden`,
+  `aria-hidden`, and `.text-editor-toolbar[hidden] { display: none !important; }`.
+- Reworked Image actions into Resize plus More → Crop/Rotate/Flip nested
+  submenus. The shared functional menu controller keeps ancestors open while a
+  child opens and closes the entire tree on outside click or Escape. A bug in
+  the shared document listener was found by the browser check and corrected.
+- Added Round 2 Markdown/HTML status, professional quality scores, a missing-
+  point table, UI walkthrough, and Playwright evidence under the Phase 2
+  workspace.
+- Verification: `npm test` passed all 4 top-level files; changed-file
+  `node --check` passed; `git diff --check` passed; focused Playwright checks
+  passed with clean final console output.
+- Step 11 quick win: nested action menus now support ArrowDown/Enter/ArrowLeft
+  movement and Escape/outside closure through the same controller. The full
+  focus-restoration and alternate-layout matrix remains a later gate.
+- Step 10 quick win: extracted `commitLayerWithSourceOver()` into the canvas
+  seam and added a fake-context behavior test proving a floating layer is drawn
+  at alpha `1` with `source-over`, then the caller state is restored.

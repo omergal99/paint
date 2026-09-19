@@ -1,5 +1,5 @@
 // js/main.js
-import { CanvasManager } from './canvas/CanvasManager.js';
+import { CanvasManager, commitLayerWithSourceOver } from './canvas/CanvasManager.js';
 import { ViewportManager } from './canvas/ViewportManager.js';
 import { CanvasResizer } from './canvas/CanvasResizer.js';
 import { HistoryManager } from './history/HistoryManager.js';
@@ -187,7 +187,12 @@ const setSelection = (region, opts = {}) => {
 	canvasManager.clearOverlay();
 	if (region && region.w && region.h) {
 		if (canvasManager.floatingCanvas) {
-			canvasManager.octx.drawImage(canvasManager.floatingCanvas, region.x, region.y);
+			const overlayContext = canvasManager.octx;
+			overlayContext.save();
+			overlayContext.globalAlpha = 1;
+			overlayContext.globalCompositeOperation = 'source-over';
+			overlayContext.drawImage(canvasManager.floatingCanvas, region.x, region.y);
+			overlayContext.restore();
 		}
 		drawSelectionOutline(region);
 	}
@@ -277,9 +282,13 @@ const bindSelectionHandles = () => {
 	});
 }
 
+const commitFloatingPixels = (region) => {
+	return commitLayerWithSourceOver(canvasManager.ctx, canvasManager.floatingCanvas, region);
+}
+
 const commitFloatingSelection = () => {
 	if (canvasManager.floatingCanvas && canvasManager.selection) {
-		canvasManager.ctx.drawImage(canvasManager.floatingCanvas, canvasManager.selection.x, canvasManager.selection.y);
+		commitFloatingPixels(canvasManager.selection);
 		canvasManager.floatingCanvas = null;
 		selectionRotation = null;
 		setSelection(null);
@@ -635,7 +644,7 @@ const crop = () => {
 		return;
 	}
 	if (canvasManager.floatingCanvas) {
-		canvasManager.ctx.drawImage(canvasManager.floatingCanvas, sel.x, sel.y);
+		commitFloatingPixels(sel);
 		canvasManager.floatingCanvas = null;
 	}
 	historyManager.snapshot();

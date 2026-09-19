@@ -6,6 +6,9 @@ This is the short, updateable handoff for what is usable now, what is only a
 foundation, and how to experience each delivered improvement in Paint. The
 detailed evidence remains in each step workspace and `PROGRESS-LOG.md`.
 
+Latest round: [`PHASE-2-STATUS_2.md`](PHASE-2-STATUS_2.md) ·
+[visual HTML status](PHASE-2-STATUS_2.html)
+
 ## Status at a glance
 
 | Step | Status | Score* | What is available now | Measurement / verification | Missing points / next gate | Quick UI/check path |
@@ -14,13 +17,13 @@ detailed evidence remains in each step workspace and `PROGRESS-LOG.md`.
 | 02 | Done | 8/10 | Shared contracts, settings persistence, functional EventBus | Contract tests plus Settings reload check; remaining legacy owners are inventoried | Finish remaining legacy class/event owners and teardown assertions | Open Settings, change a preference, reload, and confirm it persists |
 | 03 | Done | 8/10 | History/session UX, settings summaries, Ribbon/menu behavior, compact Settings layout | Smoke tests plus 1280px browser evidence; alternate Ribbon matrix remains | Complete alternate-layout browser matrix and keyboard menu audit | Open Settings and History; inspect Current-first history, two-column General choices, and the grid Ribbon tab |
 | 04 | Done with follow-up | 8/10 | Resize percentage/ratio/selection behavior and transparent canvas foundation | `transparency.test.js` plus browser checkerboard check; file round trips remain | Add transparent PNG/import/export and resize regression fixtures | Open Resize; try 50% with ratio lock; choose General → Transparent and inspect the checkerboard viewport |
-| 05 | Stabilized with follow-up | 9/10 | Compact checkerboard opacity menu, visible palette context menu, shared outside-click lifecycle, persisted alpha, and alpha-aware drawing paths | `npm test` 4/4; two headless browser passes; shape alpha carry-over and storage display verified | Broaden file/import/eyedropper alpha fixtures and add a final palette keyboard matrix | Open Colors: click the checkerboard/arrow, adjust FG/BG, right-click a palette slot, click outside, then draw and inspect the swatch/pixel result |
-| 06 | Safe slice done; text-object selection gated | 7/10 | Textarea Recent text history, restore/clear, max 20; split Text options menu; shape select-after-draw remains tested | Store/shape/smoke tests plus browser history restore and live toolbar toggle; overlap-safe text proof is still required | Choose Text, open its arrow, type text, blur to commit, restore from Recent text; text “Select after draw” stays disabled until the proof gate |
+| 05 | Stabilized with follow-up | 9/10 | Compact checkerboard opacity menu, visible palette context menu, shared outside-click lifecycle, persisted alpha, alpha-aware drawing, and source-over floating placement | `npm test` 4/4; focused Playwright menu/toggle checks; shape alpha carry-over and storage display verified | Broaden file/import/eyedropper alpha fixtures, add a direct selected-shape pixel-ratio fixture, and finish the palette keyboard matrix | Open Colors: click the checkerboard/arrow, adjust FG/BG, right-click a palette slot, click outside, then draw/select/place and inspect the swatch/pixel result |
+| 06 | Safe focus slice done; editing gated | 8/10 | Textarea Recent text history, restore/clear, max 20; working toolbar visibility toggle; text commit exits to Select; metadata focus target is optional and reversible | Store/shape/smoke tests plus Playwright checks for hidden toolbar, outside commit, Select mode, and focus targets; overlap-safe text proof is still required | Keep move/resize/edit-after-blur, compositor, hit-testing, reveal, and range formatting behind overlap/undo/reload proof |
 | 07 | Foundation | 4/10 | Functional seams and EventBus groundwork | Static listener inventory and contract tests; repeatable pointer trace, coalescing, and teardown measurements are still missing | No new visible performance claim yet; browser trace and listener audit remain |
 | 08 | Foundation | 4/10 | Memory-budget report and 64 MiB in-memory history cap | Memory contract tests; browser Blob/object-URL, quota-error, and IndexedDB recovery fixtures remain | Open About to see cached storage quota separately from memory; recovery flows are not complete |
-| 09 | Planned; re-sequenced | 0/10 | Incremental `main.js`/`Sidebar.js` modularization | Not measured yet; begins after Step 07 listener seams and Step 08 recovery contracts are locked | Not available yet |
-| 10 | Planned; follows Step 09 slices | 0/10 | Behavioral tests, `checkJs`, coverage, and quality gates | Not measured yet; each Step 09 slice must add its behavior gate | Not available yet |
-| 11 | Planned; follows Step 10 gates | 0/10 | PWA, accessibility, CSS organization, and Lighthouse matrix | Not measured yet; use representative editor journeys and all Ribbon layouts | Not available yet |
+| 09 | First slice delivered | 3/10 | Functional `ActionMenuController` owns top-level and nested menu positioning, ancestry, outside-click, Escape, and `aria-expanded` | Nested Image menu Playwright snapshots plus controller contract; further panel extraction not measured | Extract HistoryPanel, SettingsDialog, and low-risk composition-root services |
+| 10 | Quick-win contracts delivered | 4/10 | Alpha composition, text commit, hidden toolbar, nested menu, and CSS contracts | `npm test` 4/4; syntax checks; `git diff --check`; direct source-over behavior test; focused browser checks | Add direct pixel browser fixture, `checkJs`, coverage, and teardown tests |
+| 11 | Focused accessibility slice delivered | 3/10 | Nested menu roles/labels, hidden toolbar semantics, and precached new modules | Accessible Playwright snapshots and clean console; full layout matrix not measured | Keyboard traversal/focus restore, PWA icons/offline, Lighthouse, and deferred SW-list automation |
 | 12 | Planned | 0/10 | Optional lazy background-removal provider | Not available yet | Not available yet |
 | 13 | Planned | 0/10 | Tabs, split panes, session/recovery | Not available yet | Not available yet |
 
@@ -33,8 +36,9 @@ behavior and its relevant browser or contract evidence are both complete.
 - Text is still rasterized on commit. The metadata `TextDocumentStore` is a
   future ownership boundary, not proof that text objects can be edited safely.
 - Text-object compositor, hit-testing, move/resize/edit-after-blur, range
-  formatting, right-click Edit, reveal mode, and the text select-after-draw
-  behavior remain deferred.
+  formatting, right-click Edit, and reveal mode remain deferred. “Select text
+  after draw” is now enabled only as a metadata-bound focus affordance; it does
+  not edit or repaint pixels.
 - Before enabling those features, tests must prove that editing after partial
   paint overlap does not erase unrelated pixels, duplicate text, or make text
   vanish; undo/redo and reload must be included.
@@ -42,16 +46,26 @@ behavior and its relevant browser or contract evidence are both complete.
   Step 05 work, not Step 04 canvas-background work. The control and core alpha
   drawing path are now implemented; Step 05 still has broader file/fixture
   follow-up before its score can reach 10.
-- “Select text after draw” is intentionally tracked in Step 06. The checkbox
-  must remain disabled until text hit-testing/compositing proves safe editing
-  after partial overlap; its future cursor/reveal affordance is recorded in the
-  Step 06 plan.
+- “Select text after draw” is intentionally tracked in Step 06 and can be
+  turned on or off. It focuses the committed metadata target and leaves the
+  current tool in Select after the editor commits; it must not be confused with
+  unsafe text-object editing.
 - About storage uses the browser estimate API once per 24-hour cache window,
   stores raw validated bytes in local storage, and calculates free space as
   `max(0, quota - usage)` before formatting. Browser memory remains a separate
   budget.
 - The full Steps 01–08 completeness audit is recorded in
   [`STEP-01-08-AUDIT.md`](STEP-01-08-AUDIT.md).
+
+## Professional quality snapshot
+
+| Dimension | Score | Current gap |
+|---|---:|---|
+| Code design | 7.5/10 | Legacy class owners and the large composition root remain |
+| UI design | 8/10 | Alternate Ribbon layouts and keyboard traversal need a matrix |
+| Logic/data safety | 7.5/10 | Text editing and storage recovery are still gated |
+| Verification | 7/10 | Trace, coverage, Lighthouse, and full browser matrix remain |
+| Overall | **7.5/10** | Stabilized but not yet a complete Step 09–11 release gate |
 
 ## Updating this file
 

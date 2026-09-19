@@ -163,106 +163,53 @@
 						</svg>
 						<span>Select</span></button>
 					<div class="rbtn-stack">
-						<div class="action-menu">
-							<button class="rbtn small action-menu-trigger" id="btn-crop-menu" title="Crop options">
-								<svg class="icon size5" viewBox="0 0 20 20">
-									<path d="M5 1v14a1 1 0 0 0 1 1h13M1 5h14a1 1 0 0 1 1 1v13" stroke-linecap="round" />
-								</svg>
-								<span>Crop <span class="menu-arrow" aria-hidden="true">▾</span></span></button>
-							<div class="action-menu-items" role="menu" aria-label="Crop options">
-								<button type="button" id="btn-crop" role="menuitem" title="Crop to selection">
-									<svg class="icon" viewBox="0 0 20 20">
-										<path fill="none" stroke="currentColor" stroke-linecap="round"
-											d="M5 1v14a1 1 0 0 0 1 1h13M1 5h14a1 1 0 0 1 1 1v13" />
-									</svg>
-									<span>Crop to selection</span>
-								</button>
-								<button type="button" id="btn-remove-bg" role="menuitem" title="Remove background by color key">
-									<svg class="icon" viewBox="0 0 20 20">
-										<path fill="currentColor" d="M16.4 2.2l.5 1.2 1.2.5-1.2.5-.5 1.2-.5-1.2-1.2-.5 1.2-.5z" />
-										<path fill="currentColor" d="M12.1 6.3l.5 1.1 1.1.5-1.1.5-.5 1.1-.5-1.1-1.1-.5 1.1-.5z" />
-										<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-											d="M4.5 16.5 11 10M4.5 16.5l1.5-1.2" />
-									</svg>
-									<span>Remove Background (Color Key)</span>
-								</button>
-							</div>
-						</div>
 						<button class="rbtn small" id="btn-canvas-size" data-tag="btn-canvas-size" title="Resize canvas">
 							<svg class="icon size5" viewBox="0 0 20 20">
 								<rect x="2" y="6" width="9" height="9" />
 								<path d="M14 2l4 4M18 2v4h-4" stroke-linecap="round" />
 							</svg>
 							<span>Resize</span></button>
-					</div>
-					<div class="rbtn-stack">
-						<div class="action-menu">
-							<button class="rbtn small action-menu-trigger" id="btn-rotate" data-tag="btn-rotate" title="Rotate 90°">
-								<svg class="icon size4" viewBox="0 0 20 20">
-									<path fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
-										stroke-linejoin="round"
-										d="M14.14 5.86A6 6 0 1 0 18 10h-2a4 4 0 1 1-1.17-2.83L11.8 9.2V3h6l-1.66 1.66z" />
+						<div class="action-menu image-more-menu">
+							<button class="rbtn small action-menu-trigger" id="btn-image-more" data-tag="btn-image-more"
+								title="More image actions" aria-haspopup="menu" aria-label="More image actions">
+								<svg class="icon size4" viewBox="0 0 20 20" aria-hidden="true">
+									<circle cx="4" cy="10" r="1.5" fill="currentColor" /><circle cx="10" cy="10" r="1.5" fill="currentColor" /><circle cx="16" cy="10" r="1.5" fill="currentColor" />
 								</svg>
-								<span>Rotate <span class="menu-arrow" aria-hidden="true">▾</span></span></button>
-							<div class="action-menu-items" role="menu" aria-label="Rotate options">
-								<button type="button" id="btn-rotate-90" role="menuitem" title="Rotate 90°">
-									<svg class="icon" viewBox="0 0 20 20">
-										<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-											d="M14.14 5.86A6 6 0 1 0 18 10h-2a4 4 0 1 1-1.17-2.83L11.8 9.2V3h6l-1.66 1.66z" />
-									</svg>
-									<span>Rotate 90</span>
-								</button>
-								<button type="button" id="btn-rotate-180" role="menuitem" title="Rotate 180°">
-									<svg class="icon" viewBox="0 0 20 20">
-										<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-											d="M6.5 6.5 10 3.5l3.5 3M6.5 13.5 10 16.5l3.5-3M10 3.5v4M10 12.5v4" />
-									</svg>
-									<span>Rotate 180</span>
-								</button>
-								<button type="button" id="btn-rotate-270" role="menuitem" title="Rotate 270°">
-									<svg class="icon" viewBox="0 0 20 20">
-										<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-											d="M5.86 5.86A6 6 0 1 1 2 10h2a4 4 0 1 0 1.17-2.83L8.2 9.2V3h-6l1.66 1.66z" />
-									</svg>
-									<span>Rotate 270</span>
-								</button>
-								<button type="button" id="btn-rotate-free" role="menuitem" title="Free rotate by angle">
-									<svg class="icon" viewBox="0 0 20 20">
-										<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-											d="M14.14 5.86A6 6 0 1 0 18 10h-2a4 4 0 1 1-1.17-2.83L11.8 9.2V3h6l-1.66 1.66z" />
-										<circle cx="8.2" cy="12.8" r="1.1" fill="currentColor" />
-									</svg>
-									<span>Free Rotate</span>
-								</button>
-								<label class="menu-checkbox"><input type="checkbox" id="rotate-selection-toggle" checked> Show Rotate in
-									selection</label>
+								<span>More <span class="menu-arrow" aria-hidden="true">▾</span></span></button>
+							<div class="action-menu-items image-more-menu-items" role="menu" aria-label="More image actions">
+								<div class="action-menu action-submenu">
+									<button class="action-menu-trigger action-submenu-trigger" id="btn-crop-menu" type="button" role="menuitem" aria-haspopup="menu" aria-expanded="false" aria-label="Crop options">
+										<span>Crop</span><span class="submenu-arrow" aria-hidden="true">›</span>
+									</button>
+									<div class="action-menu-items action-submenu-items" role="menu" aria-label="Crop options">
+										<button type="button" id="btn-crop" role="menuitem" title="Crop to selection"><span>Crop to selection</span></button>
+										<button type="button" id="btn-remove-bg" role="menuitem" title="Remove background by color key"><span>Remove Background (Color Key)</span></button>
+									</div>
+								</div>
+								<div class="action-menu action-submenu">
+									<button class="action-menu-trigger action-submenu-trigger" id="btn-rotate" data-tag="btn-rotate" type="button" role="menuitem" aria-haspopup="menu" aria-expanded="false" aria-label="Rotate options">
+										<span>Rotate</span><span class="submenu-arrow" aria-hidden="true">›</span>
+									</button>
+									<div class="action-menu-items action-submenu-items" role="menu" aria-label="Rotate options">
+										<button type="button" id="btn-rotate-90" role="menuitem" title="Rotate 90°"><span>Rotate 90</span></button>
+										<button type="button" id="btn-rotate-180" role="menuitem" title="Rotate 180°"><span>Rotate 180</span></button>
+										<button type="button" id="btn-rotate-270" role="menuitem" title="Rotate 270°"><span>Rotate 270</span></button>
+										<button type="button" id="btn-rotate-free" role="menuitem" title="Free rotate by angle"><span>Free Rotate</span></button>
+										<label class="menu-checkbox"><input type="checkbox" id="rotate-selection-toggle" checked> Show Rotate in selection</label>
+									</div>
+								</div>
+								<div class="action-menu action-submenu">
+									<button class="action-menu-trigger action-submenu-trigger" id="btn-flip" data-tag="btn-flip" type="button" role="menuitem" aria-haspopup="menu" aria-expanded="false" aria-label="Flip options">
+										<span>Flip</span><span class="submenu-arrow" aria-hidden="true">›</span>
+									</button>
+									<div class="action-menu-items action-submenu-items" role="menu" aria-label="Flip options">
+										<button type="button" id="btn-flip-horizontal" role="menuitem" title="Flip horizontal"><span>Flip Horizontal</span></button>
+										<button type="button" id="btn-flip-vertical" role="menuitem" title="Flip vertical"><span>Flip Vertical</span></button>
+									</div>
+								</div>
 							</div>
 						</div>
-						<div class="action-menu">
-							<button class="rbtn small action-menu-trigger" id="btn-flip" data-tag="btn-flip" title="Flip">
-								<svg class="icon size4" viewBox="0 0 20 20">
-									<path fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"
-										d="M10 2v16M4 5l6 5-6 5V5zm12 0l-6 5 6 5V5z" />
-								</svg>
-								<span>Flip <span class="menu-arrow" aria-hidden="true">▾</span></span></button>
-							<div class="action-menu-items" role="menu" aria-label="Flip options">
-								<button type="button" id="btn-flip-horizontal" role="menuitem" title="Flip horizontal">
-									<svg class="icon" viewBox="0 0 20 20">
-										<path fill="none" stroke="currentColor" stroke-linejoin="round"
-											d="M10 2v16M4 5l6 5-6 5V5zm12 0l-6 5 6 5V5z" />
-									</svg>
-									<span>Flip Horizontal</span>
-								</button>
-								<button type="button" id="btn-flip-vertical" role="menuitem" title="Flip vertical">
-									<svg class="icon" viewBox="0 0 20 20">
-										<path fill="none" stroke="currentColor" stroke-linejoin="round"
-											d="M2 10h16M5 4l5 6-5 6V4zm10 0l-5 6 5 6V4z" />
-									</svg>
-									<span>Flip Vertical</span>
-								</button>
-							</div>
-						</div>
-					</div>
+				</div>
 				</div>
 				<div class="ribbon-group-title">Image</div>
 			</section>
@@ -634,13 +581,13 @@
 									<label for="primary-alpha">Foreground</label>
 									<input type="range" id="primary-alpha" min="0" max="100" step="1" value="100" aria-label="Foreground opacity" />
 									<output id="primary-alpha-output" for="primary-alpha">100%</output>
-									<button type="button" class="swatch-alpha-transparent" id="primary-alpha-transparent" aria-label="Make foreground transparent" title="Make foreground transparent">0%</button>
+									<button type="button" data-opacity-action="transparent" id="primary-alpha-transparent" aria-label="Make foreground transparent" title="Make foreground transparent">0%</button>
 								</div>
 								<div class="swatch-alpha-control" title="Background opacity; 0% is transparent">
 									<label for="secondary-alpha">Background</label>
 									<input type="range" id="secondary-alpha" min="0" max="100" step="1" value="100" aria-label="Background opacity" />
 									<output id="secondary-alpha-output" for="secondary-alpha">100%</output>
-									<button type="button" class="swatch-alpha-transparent" id="secondary-alpha-transparent" aria-label="Make background transparent" title="Make background transparent">0%</button>
+									<button type="button" data-opacity-action="transparent" id="secondary-alpha-transparent" aria-label="Make background transparent" title="Make background transparent">0%</button>
 								</div>
 							</div>
 						</div>

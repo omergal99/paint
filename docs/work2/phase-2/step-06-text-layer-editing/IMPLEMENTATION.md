@@ -38,3 +38,17 @@ as proof of that behavior.
   textarea stayed open. A second browser pass verified the enabled checkbox,
   selected focus target, and no-raster-edit boundary. No object-editing claim
   was made by this check.
+
+## Round 2 stabilization
+
+- Clicking a real canvas point outside the textarea commits the text and
+  switches the active tool to Select, so the editor does not reopen another
+  textarea or leave Text mode active.
+- “Show Recent text toolbar” now hides the live toolbar visually and
+  semantically when false (`hidden`, `aria-hidden`, and `display: none`).
+- “Select text after draw” remains deliberately safe: after commit it exposes
+  a labeled metadata focus target with a text cursor, but does not repaint or
+  edit existing pixels. It can always be turned off.
+- Playwright evidence includes the hidden-toolbar state, outside commit/tool
+  exit, and the focus-target option. Full object editing remains gated by the
+  overlap/duplicate/vanish plus undo/redo/reload proof.

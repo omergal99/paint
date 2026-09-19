@@ -29,6 +29,13 @@ menus, palette actions are keyboard reachable, and text focus targets expose
 labels and a visible keyboard focus state. Full audits, Lighthouse, offline
 update checks, and the complete Ribbon layout matrix remain pending.
 
+Round 2 adds an accessible Image → More → Crop/Rotate/Flip journey: nested
+menus expose labels and expanded state, and the shared controller closes the
+whole tree on outside click or Escape. The text editor’s disabled Recent text
+toolbar is removed from the visual and accessibility surface. These are focused
+representative checks, with ArrowDown/Enter/ArrowLeft keyboard movement, not
+the final all-layout audit.
+
 ## Done when
 
 Scores and failures are recorded, targets are met or explicitly waived, and the

@@ -1,0 +1,131 @@
+- generic [ref=f2e2]:
+  - banner [ref=f2e3]:
+    - generic [ref=f2e4]:
+      - generic [ref=f2e5]:
+        - button "New" [ref=f2e6] [cursor=pointer]
+        - generic [ref=f2e11]:
+          - button [ref=f2e13] [cursor=pointer]:
+            - generic [ref=f2e16]:
+              - text: Open
+              - generic [aria-hidden] [ref=f2e17]: ▾
+          - button "Save" [ref=f2e18] [cursor=pointer]
+      - generic [ref=f2e24] [cursor=pointer]: File
+    - generic [ref=f2e26]:
+      - generic [ref=f2e27]:
+        - button "Paste" [ref=f2e28] [cursor=pointer]
+        - generic [ref=f2e34]:
+          - button "Cut" [ref=f2e35] [cursor=pointer]
+          - button "Copy" [ref=f2e41] [cursor=pointer]
+      - generic [ref=f2e46] [cursor=pointer]: Clipboard
+    - generic [ref=f2e48]:
+      - generic [ref=f2e49]:
+        - button "Select" [active] [ref=f2e50] [cursor=pointer]
+        - generic [ref=f2e54]:
+          - button "Resize" [ref=f2e55] [cursor=pointer]
+          - button "More image actions" [ref=f2e61] [cursor=pointer]:
+            - generic [ref=f2e66]:
+              - text: More
+              - generic [aria-hidden] [ref=f2e67]: ▾
+      - generic [ref=f2e68] [cursor=pointer]: Image
+    - generic [ref=f2e70]:
+      - generic [ref=f2e71]:
+        - generic [ref=f2e73]:
+          - button "Brush (B)" [ref=f2e74] [cursor=pointer]
+          - generic [ref=f2e78]:
+            - button "Text (T)" [ref=f2e79] [cursor=pointer]
+            - button "Text options" [ref=f2e82] [cursor=pointer]:
+              - generic [aria-hidden] [ref=f2e83]: ▾
+        - generic [ref=f2e84]:
+          - 'button "Current tool: Select" [ref=f2e85] [cursor=pointer]'
+          - button "More ▾" [ref=f2e88] [cursor=pointer]:
+            - generic [ref=f2e89]: More
+            - generic [ref=f2e90]: ▾
+      - generic [ref=f2e91] [cursor=pointer]: Tools
+    - generic [ref=f2e93]:
+      - generic [ref=f2e94]:
+        - generic [ref=f2e95]:
+          - button "Use current shape" [ref=f2e96] [cursor=pointer]
+          - button "Choose another shape" [ref=f2e99] [cursor=pointer]:
+            - generic [aria-hidden] [ref=f2e100]: ▾
+        - generic [ref=f2e101]:
+          - button "Rectangle" [ref=f2e102] [cursor=pointer]
+          - button "Arrow" [ref=f2e105] [cursor=pointer]
+        - generic "Current drawing or text size" [ref=f2e108]:
+          - generic [ref=f2e109]:
+            - spinbutton "Custom Size (brush stroke / text font)" [ref=f2e110]: "3"
+            - button "3px" [ref=f2e112] [cursor=pointer]:
+              - generic [aria-hidden] [ref=f2e114]: ▾
+      - generic [ref=f2e115] [cursor=pointer]: Shapes
+    - generic [ref=f2e117]:
+      - generic [ref=f2e118]:
+        - generic [ref=f2e119]:
+          - generic "Click to edit colors" [ref=f2e120]:
+            - button "Edit foreground color" [ref=f2e121] [cursor=pointer]
+            - button "Edit background color" [ref=f2e122] [cursor=pointer]
+          - button "Color opacity options" [ref=f2e124] [cursor=pointer]:
+            - generic [aria-hidden] [ref=f2e126]: ▾
+          - textbox: "#000000"
+        - generic [ref=f2e127]:
+          - 'button "Palette color #000000" [ref=f2e128] [cursor=pointer]'
+          - 'button "Palette color #7f7f7f" [ref=f2e129] [cursor=pointer]'
+          - 'button "Palette color #880015" [ref=f2e130] [cursor=pointer]'
+          - 'button "Palette color #ed1c24" [ref=f2e131] [cursor=pointer]'
+          - 'button "Palette color #ff7f27" [ref=f2e132] [cursor=pointer]'
+          - 'button "Palette color #fff200" [ref=f2e133] [cursor=pointer]'
+          - 'button "Palette color #22b14c" [ref=f2e134] [cursor=pointer]'
+          - 'button "Palette color #00a2e8" [ref=f2e135] [cursor=pointer]'
+          - 'button "Palette color #3f48cc" [ref=f2e136] [cursor=pointer]'
+          - 'button "Palette color #a349a4" [ref=f2e137] [cursor=pointer]'
+          - 'button "Palette color #ffffff" [ref=f2e138] [cursor=pointer]'
+          - 'button "Palette color #c3c3c3" [ref=f2e139] [cursor=pointer]'
+          - 'button "Palette color #b97a57" [ref=f2e140] [cursor=pointer]'
+          - 'button "Palette color #ffc90e" [ref=f2e141] [cursor=pointer]'
+          - 'button "Palette color #efe4b0" [ref=f2e142] [cursor=pointer]'
+          - 'button "Palette color #b5e61d" [ref=f2e143] [cursor=pointer]'
+          - 'button "Palette color #99d9ea" [ref=f2e144] [cursor=pointer]'
+          - 'button "Palette color #7092be" [ref=f2e145] [cursor=pointer]'
+          - 'button "Palette color #c8bfe7" [ref=f2e146] [cursor=pointer]'
+          - 'button "Palette color #ffaec9" [ref=f2e147] [cursor=pointer]'
+          - 'button "Palette color #ffd700" [ref=f2e148] [cursor=pointer]'
+          - 'button "Palette color #80ff80" [ref=f2e149] [cursor=pointer]'
+          - 'button "Palette color #80ffff" [ref=f2e150] [cursor=pointer]'
+          - 'button "Palette color #8080ff" [ref=f2e151] [cursor=pointer]'
+          - 'button "Palette color #ff80ff" [ref=f2e152] [cursor=pointer]'
+          - 'button "Palette color #d2691e" [ref=f2e153] [cursor=pointer]'
+          - 'button "Palette color #708090" [ref=f2e154] [cursor=pointer]'
+          - 'button "Palette color #deb887" [ref=f2e155] [cursor=pointer]'
+      - generic [ref=f2e156] [cursor=pointer]: Colors
+    - generic [ref=f2e159]:
+      - generic [ref=f2e160]:
+        - button "Undo" [disabled] [ref=f2e161]
+        - button "Redo" [disabled] [ref=f2e166]
+      - button "History" [ref=f2e171] [cursor=pointer]
+    - generic [ref=f2e177]:
+      - button "Settings" [ref=f2e179] [cursor=pointer]
+      - generic [ref=f2e184] [cursor=pointer]: Extras
+    - generic [ref=f2e186]:
+      - generic [ref=f2e187]:
+        - button "Color picker (K)" [ref=f2e189] [cursor=pointer]
+        - generic [ref=f2e192]:
+          - code [ref=f2e193]: "#a349a4"
+          - button "⧉" [ref=f2e194] [cursor=pointer]
+        - button "Collapse color inspector" [expanded] [ref=f2e195] [cursor=pointer]
+      - generic [ref=f2e198]:
+        - code [ref=f2e199]: rgb(163, 73, 164)
+        - button "⧉" [ref=f2e200] [cursor=pointer]
+  - main [ref=f2e203]:
+    - generic [ref=f2e205]:
+      - generic "Committed text objects"
+  - contentinfo [ref=f2e211]:
+    - generic [ref=f2e212]: "Pointer: —"
+    - generic [ref=f2e214]:
+      - img "Paint icon" [ref=f2e215] [cursor=pointer]
+      - generic [ref=f2e216]: paint
+    - generic [ref=f2e217]:
+      - generic [ref=f2e218]: 800 × 600px
+      - generic [ref=f2e219]:
+        - button "−" [ref=f2e220] [cursor=pointer]
+        - slider [ref=f2e221]: "100"
+        - spinbutton [ref=f2e222]: "100"
+        - generic [ref=f2e223]: "%"
+        - button "+" [ref=f2e224] [cursor=pointer]

@@ -26,3 +26,11 @@ Do not perform a broad rewrite or combine the Step 09 slices into one change.
 
 New settings, actions, and panels can be added through explicit contracts rather
 than editing unrelated private fields in the god files.
+
+## Round 2 progress
+
+The first slice is delivered: `ActionMenuController` now supports top-level
+and nested menus through one functional seam. Image → More owns Crop, Rotate,
+and Flip submenus; ancestor menus remain open while a child opens, while one
+document-level outside-click/Escape lifecycle closes all levels. The next
+slice is HistoryPanel extraction.

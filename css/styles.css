@@ -576,8 +576,8 @@ body {
 /* Color group */
 .swatch-stack {
 	position: relative;
-	width: 34px;
-	height: 34px;
+	width: 32px;
+	height: 32px;
 	margin-right: 4px;
 }
 .color-swatches-column {
@@ -621,13 +621,14 @@ body {
 }
 .swatch-alpha-trigger {
 	box-sizing: border-box;
-	width: 24px;
-	min-width: 24px;
-	height: 22px;
+	width: 30px;
+	min-width: 30px;
+	height: 16px;
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	gap: 1px;
+	flex-direction: row;
+	gap: 2px;
 	padding: 2px;
 	border: 1px solid var(--w10-border-strong);
 	background: var(--w10-ribbon-bg);
@@ -640,13 +641,13 @@ body {
 	outline: none;
 }
 .transparency-icon {
-	width: 11px;
-	height: 11px;
+	width: 10px;
+	height: 10px;
 	display: inline-block;
 	background-color: #fff;
 	background-image: linear-gradient(45deg, #d7d7d7 25%, transparent 25%, transparent 75%, #d7d7d7 75%), linear-gradient(45deg, #d7d7d7 25%, transparent 25%, transparent 75%, #d7d7d7 75%);
-	background-position: 0 0, 5.5px 5.5px;
-	background-size: 11px 11px;
+	background-position: 0 0, 4.25px 4.25px;
+	background-size: 10px 10px;
 	border: 1px solid rgba(0, 0, 0, .28);
 }
 .swatch-alpha-menu-items {
@@ -680,7 +681,7 @@ body {
 	font-variant-numeric: tabular-nums;
 	color: var(--w10-text);
 }
-.swatch-alpha-transparent {
+.swatch-alpha-menu-items [data-opacity-action="transparent"] {
 	min-width: 0;
 	padding: 1px 4px;
 	border: 1px solid var(--w10-border);
@@ -690,7 +691,7 @@ body {
 	line-height: 15px;
 	cursor: pointer;
 }
-.swatch-alpha-transparent:hover {
+.swatch-alpha-menu-items [data-opacity-action="transparent"]:hover {
 	border-color: var(--w10-accent);
 	color: var(--w10-text);
 }
@@ -1764,6 +1765,9 @@ body.dark-mode #history-clear-btn {
 	color: var(--w10-text-dim);
 	cursor: move;
 }
+.text-editor-toolbar[hidden] {
+	display: none !important;
+}
 .text-editor-toolbar-label {
 	padding: 0 2px;
 	white-space: nowrap;
@@ -2347,7 +2351,7 @@ dialog h3 {
 	font-size: 10px;
 	line-height: 1;
 }
-.action-menu.open .action-menu-items {
+.action-menu.open > .action-menu-items {
 	display: grid;
 }
 .action-menu-items button {
@@ -2379,6 +2383,44 @@ dialog h3 {
 	margin-left: 14px;
 	color: var(--w10-text-dim);
 	font-size: 11px;
+}
+.image-more-menu-items {
+	grid-template-columns: minmax(130px, 1fr);
+	min-width: 148px;
+}
+.action-submenu {
+	position: static;
+}
+.action-submenu-trigger {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	width: 100%;
+	min-height: 24px;
+	padding: 3px 6px;
+	border: 1px solid transparent;
+	background: transparent;
+	color: var(--w10-text);
+	font: inherit;
+	font-size: 13px;
+	text-align: left;
+	cursor: pointer;
+}
+.action-submenu-trigger:hover,
+.action-submenu-trigger:focus-visible {
+	border-color: var(--w10-hover-border);
+	background: var(--w10-hover);
+	outline: none;
+}
+.submenu-arrow {
+	color: var(--w10-text-dim);
+	font-size: 16px;
+	line-height: 1;
+}
+.action-submenu-items {
+	grid-template-columns: minmax(160px, 1fr);
+	min-width: 170px;
 }
 
 /* Shapes gallery (Word/Office style) */
