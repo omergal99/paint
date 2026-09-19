@@ -41,10 +41,10 @@ that changed from `DECISIONS.md`.
 
 ## 2026-09-19 — Steps 01–04 implementation
 
-- Step 01: corrected standards and code-of-conduct references, fixed the
-  intended 560px settings height, captured `step-01-baseline-and-safety/BASELINE.md`,
+- Step 01: corrected standards and code-of-conduct references, captured
+  `step-01-baseline-and-safety/BASELINE.md`,
   and reached a green test gate.
-- Step 02: added shared constants, EventBus, document contract, SettingsStore,
+- Step 02: added shared constants, functional EventBus, document contract, SettingsStore,
   service-worker entries, and contract tests.
 - Step 03: added current/newest-first session history with stable deletion IDs,
   accessible tabs, choice summaries, stable Ribbon group ordering, and shape
@@ -56,3 +56,41 @@ that changed from `DECISIONS.md`.
 - Final Step 01–04 gate: `npm test` passed all 4 top-level test files; changed-file
   syntax checks and `git diff --check` passed. Full alpha file round trips and
   all Ribbon layout measurements remain later browser-matrix work.
+
+## 2026-09-19 — UI refinement and Steps 05–08 foundations
+
+- Settings refinement: reduced `.settings-shell` height/max-height to 470px,
+  set `#settings-dialog` padding to 10px, added the requested area dividers,
+  removed obsolete plan wording, and removed `.history-preferences` padding.
+- Resize refinement: added vertically aligned Scale controls, closer/wider
+  dimension inputs, and visible pixel dimensions under every quick preset.
+- General settings: added persisted custom default canvas dimensions, custom
+  initial zoom, and a persisted initial solid-background color.
+- Functional style: converted `EventBus` to a closure factory and documented
+  the incremental no-new-class rule in the project architecture skill. Existing
+  class owners are being migrated at dependency seams, not rewritten blindly;
+  low-risk UI/tool controllers now use closure factories too. The inventory is
+  recorded in `FUNCTIONAL-MIGRATION.md`.
+- Step 05 foundation: added a normalized RGBA contract and migration-compatible
+  color helpers.
+- Step 06 foundation: added a bounded `TextDocumentStore`; TextTool commits now
+  register normalized editable metadata while raster behavior remains unchanged.
+  Full overlap-safe editing stays gated until compositor/hit-test proofs exist.
+- Step 08 foundation: added explicit memory-budget reporting and a 64 MiB
+  byte cap for in-memory undo/redo data URLs, separate from storage quota.
+- Added contract tests and service-worker entries for the new modules.
+
+## 2026-09-19 — Step 06 narrowed to the safe text slice
+
+- Kept select-after-draw within the verified shape-layer boundary.
+- Added a bounded, closure-based `TextHistoryStore` with newest-first
+  persistence, de-duplication, clear support, and a 20-entry maximum.
+- Added Recent text restore/clear controls inside the active text textarea;
+  restoring history changes only the textarea value and preserves the existing
+  raster commit path.
+- Explicitly postponed text-object move/resize/edit-after-blur, compositor,
+  hit-testing, range formatting, right-click Edit, reveal mode, and the
+  T/chevron split until the partial-overlap acceptance case has dedicated
+  tests proving no unrelated pixel loss, duplicate text, or vanished text.
+- Verification: `npm test`, changed-file `node --check`, `git diff --check`,
+  and a local headless Chrome smoke flow all passed.

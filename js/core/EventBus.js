@@ -1,50 +1,49 @@
 // Small lifecycle-safe event contract for cross-feature application events.
+// This is intentionally a closure-based factory: event state is private and
+// the public surface is a plain object of functions, not a class instance.
 
-export class EventBus {
-	constructor() {
-		this._listeners = new Map();
-		this._destroyed = false;
-	}
+export function createEventBus() {
+	const listenersByEvent = new Map();
+	let destroyed = false;
 
-	on(eventName, listener) {
-		if (this._destroyed || typeof listener !== 'function') return () => {};
-		if (!this._listeners.has(eventName)) this._listeners.set(eventName, new Set());
-		const listeners = this._listeners.get(eventName);
+	function on(eventName, listener) {
+		if (destroyed || typeof listener !== 'function') return () => {};
+		if (!listenersByEvent.has(eventName)) listenersByEvent.set(eventName, new Set());
+		const listeners = listenersByEvent.get(eventName);
 		listeners.add(listener);
-		return () => this.off(eventName, listener);
+		return () => off(eventName, listener);
 	}
 
-	off(eventName, listener) {
-		const listeners = this._listeners.get(eventName);
+	function off(eventName, listener) {
+		const listeners = listenersByEvent.get(eventName);
 		if (!listeners) return false;
 		const removed = listeners.delete(listener);
-		if (!listeners.size) this._listeners.delete(eventName);
+		if (!listeners.size) listenersByEvent.delete(eventName);
 		return removed;
 	}
 
-	once(eventName, listener) {
+	function once(eventName, listener) {
 		if (typeof listener !== 'function') return () => {};
-		const unsubscribe = this.on(eventName, (payload) => {
+		let unsubscribe = () => {};
+		unsubscribe = on(eventName, (payload) => {
 			unsubscribe();
 			listener(payload);
 		});
 		return unsubscribe;
 	}
 
-	emit(eventName, payload) {
-		if (this._destroyed) return 0;
-		const listeners = this._listeners.get(eventName);
+	function emit(eventName, payload) {
+		if (destroyed) return 0;
+		const listeners = listenersByEvent.get(eventName);
 		if (!listeners) return 0;
 		[...listeners].forEach((listener) => listener(payload));
 		return listeners.size;
 	}
 
-	destroy() {
-		this._listeners.clear();
-		this._destroyed = true;
+	function destroy() {
+		listenersByEvent.clear();
+		destroyed = true;
 	}
-}
 
-export function createEventBus() {
-	return new EventBus();
+	return Object.freeze({ on, off, once, emit, destroy });
 }

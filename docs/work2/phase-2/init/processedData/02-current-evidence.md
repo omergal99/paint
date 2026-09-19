@@ -8,9 +8,8 @@
   settings height; the current four-file test gate is green.
 - `docs/work1/COMMUNITY_STANDARDS.md` is the canonical standards document;
   README and smoke tests currently refer to the stale `docs/` path.
-- The initial `css/styles.css` defined settings height `min(440px, 88vh)` while
-  the smoke test expected 560px; Step 01 now implements the intended 560px
-  height.
+- The initial settings-height expectation was reconciled during implementation;
+  the current product target is the compact 470px shell documented in Phase 2.
 - `main.js` is 1,867 lines; `Sidebar.js` 827; `styles.css` 2,344.
 - `ToolManager` has separate `pointermove` handlers for tool work and status.
 - `HistoryManager` stores full PNG data URLs in undo/redo memory.

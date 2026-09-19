@@ -6,9 +6,7 @@ should become small tasks with its own tests and browser checks.
 ## Step 01 — Baseline and safety gate
 
 Fix the current red gate first. The smoke test references the wrong location
-for the existing canonical standards document (`docs/work1/COMMUNITY_STANDARDS.md`)
-and initially expected a 560px settings height while the initial stylesheet
-said 440px.
+for the existing canonical standards document (`docs/work1/COMMUNITY_STANDARDS.md`).
 Resolve the intended behavior, do not merely weaken assertions. Record the
 remaining docs/tests path drift as low-priority maintenance once corrected. Add
 a baseline report with line counts, listener census, storage paths, and a real
@@ -62,6 +60,11 @@ schema owner and migration note.
 - Turn General choices into compact, consistent fields with a visible selected
   summary while preserving native keyboard/select semantics.
 - Define a stable `RIBBON_GROUP_ORDER` and use it to render Ribbon settings.
+- Keep the settings shell at 470px height/max-height with 10px dialog padding;
+  divide the navigation/body/footer using the shared border token.
+- Let users enter custom default canvas width/height and initial zoom values;
+  show A4 dimensions in the preset labels and persist the chosen solid
+  background color for future New images.
 
 ### Ribbon and menus
 
@@ -69,10 +72,12 @@ schema owner and migration note.
   background actions. Keep the main Select control prominent.
 - Set one control band and one title band. Target 50px controls + 12px title +
   padding/border, with a measured maximum of 74px.
+- Keep quick resize buttons compact while showing exact pixel dimensions below
+  each label; align Scale and dimension fields to their labels.
 - Stop propagation for events inside `.shape-gallery`; outside click closes the
   menu. The gallery remains open while choosing shape/fill controls.
-- Split the text button and text-settings chevron later in Step 06, using the
-  same menu infrastructure.
+- Keep the text button/chevron split as a future-gated follow-up after Step 06;
+  it depends on the postponed editable-text proof.
 
 ## Step 04 — Resize, selection, and transparent canvas
 
@@ -107,29 +112,29 @@ readable migration from existing `paint:colors` data.
 - Keep eyedropper results, text colors, shape fill, brush, eraser, and export on
   the same color contract.
 
-## Step 06 — Editable text layer
+## Step 06 — Safe text entry history
 
-This is the largest product feature and must be staged.
+This step takes only the impact that can be delivered without weakening the
+canvas-pixel source of truth.
 
-1. Define `TextObject` and `TextRun` schemas, IDs, revisions, z-order, bounds,
-   styles, and serialization.
-2. Add a `TextDocumentStore` and a compositor/hit-test service. Text objects must
-   remain discoverable after later paint; an ad hoc coordinate list is not
-   sufficient.
-3. Add “Select text after draw” to the Tools More menu. After blur, text can be
-   selected, moved, resized, and edited without recreating it.
-4. Replace the plain textarea-only editing surface with a controlled editor that
-   can normalize selected-range styles into safe text runs. Start with bold,
-   italic, underline, color, and a small set of existing effects.
-5. Add `TextHistoryStore`: de-duplicate entries, show 5 by default, expand to a
-   maximum of 30, persist locally, and restore text into the editor.
-6. Add a text context menu with Edit. Hit-test the topmost visible text object;
-   painted regions must not create false text hits.
-7. Add a two-second “reveal editable text” overlay for review/debugging and a
-   separate T/chevron split button.
+1. Keep the metadata-only `TextDocumentStore` as a future ownership boundary;
+   it is not an editable compositor and must not be used as proof of one.
+2. Keep select-after-draw behavior for supported shape-like objects covered by
+   the existing layer tests.
+3. Add a bounded `TextHistoryStore`: de-duplicate committed textarea entries,
+   show recent text inside the active editor, persist locally, restore text into
+   the textarea, and clear the history. Store at most 20 entries.
+4. Preserve the current raster commit path and verify that restoring history
+   does not change the anchor or create an additional canvas commit.
 
-**Non-negotiable acceptance:** editing a text object after partial overlap with
-paint does not erase unrelated pixels, duplicate text, or make the text vanish.
+The following remain explicitly postponed: text-object compositor and
+hit-testing, move/resize/edit-after-blur, range formatting, right-click Edit,
+reveal mode, and the T/chevron split.
+
+**Future non-negotiable acceptance:** once object editing is attempted, editing
+a text object after partial overlap with paint must not erase unrelated pixels,
+duplicate text, or make the text vanish. It requires dedicated overlap,
+undo/redo, and reload tests before the postponed UI can be enabled.
 
 ## Step 07 — Performance and event hygiene
 

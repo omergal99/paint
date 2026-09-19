@@ -12,6 +12,7 @@ export const DEFAULT_SETTING_STORAGE_KEYS = Object.freeze([
   'paint:font-size',
   'paint:text-styles',
   'paint:text-style',
+  'paint:text-history',
   'paint:tool-styles',
   'paint:style-history',
   'paint:show-current-tool',

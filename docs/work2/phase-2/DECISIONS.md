@@ -14,9 +14,12 @@
    rasterized pixels is rejected as the primary design.
 6. Text compositing may be postponed if overlap, selection, and edit behavior
    cannot be proven without damaging unrelated pixels.
-7. Browser memory is a separate budget from storage quota and must be measured
+7. Step 06 currently ships only textarea recent-text history and the verified
+   select-after-draw slice; text-object editing stays behind the overlap proof
+   until dedicated tests cover partial paint overlap, undo/redo, and reload.
+8. Browser memory is a separate budget from storage quota and must be measured
    for decoded images, scratch surfaces, Blobs, object URLs, and undo entries.
-8. Service-worker asset-list synchronization is deferred maintenance for Step
+9. Service-worker asset-list synchronization is deferred maintenance for Step
    11, not a blocker for the first PWA/accessibility pass.
 
 ## Owner decisions required before implementation
@@ -25,7 +28,7 @@
 |---|---|---|
 | Default new canvas | Solid white or transparent | Keep current solid default for compatibility; add explicit transparent mode and make it user-selectable. |
 | Palette right-click | Preserve secondary-color shortcut or open editor | Open editor; provide an explicit “set as secondary” action to remove ambiguity. |
-| Text persistence | localStorage metadata or IndexedDB document record | IndexedDB for document text objects; localStorage only for the 30-entry text clipboard/history. |
+| Text persistence | localStorage metadata or IndexedDB document record | IndexedDB for document text objects; localStorage only for the 20-entry text clipboard/history. |
 | Advanced background removal | Pyodide/WebAssembly in browser, optional local Python service, or remote API | Optional lazy provider behind a dynamic import and Worker; self-host/version assets, do not inflate the default bundle or upload images silently. Keep the JS fallback and postpone Python if budgets fail. |
 | Lighthouse target | 90+ all categories or category-specific targets | Use 90+ as the initial launch gate after a real baseline; document editor-specific exceptions. |
 | Current session card deletion | Allow hiding synthetic current card, or mark it non-deletable | Prefer stable `kind` semantics: delete saved/session snapshots; current is a live preview and is clearly marked. Revisit after UI review. |

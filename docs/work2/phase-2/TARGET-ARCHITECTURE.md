@@ -10,6 +10,9 @@
 - Settings keys, storage keys, event names, defaults, and migration versions
   each have one owner.
 - Every long-lived listener has a teardown path.
+- New JavaScript modules prefer closure factories and pure functions; legacy
+  class boundaries are migrated one seam at a time with contract-preserving
+  adapters and no broad rewrite during feature work.
 
 ## Proposed boundaries
 
@@ -67,4 +70,3 @@ occlusion mask, so right-click editing remains correct after partial overlap.
 dirty state, and document metadata. `SessionService` should own the map of
 document IDs, tab order, panes, recovery, and inactive-document memory policy.
 This is the seam required for Phase 1's deferred tabs/split work.
-

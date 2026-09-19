@@ -2,13 +2,8 @@
 // Classic 4-directional flood fill using a typed-array stack (no recursion,
 // so it won't blow the call stack on large canvases).
 
-export class FillTool {
-  constructor() {
-    this.name = 'fill';
-    this.cursor = 'crosshair';
-  }
-
-  onDown(pt, ctx) {
+export function createFillTool() {
+  function onDown(pt, ctx) {
     const cm = ctx.canvasManager;
     const x0 = Math.floor(pt.x);
     const y0 = Math.floor(pt.y);
@@ -52,8 +47,7 @@ export class FillTool {
     cm.persistToStorage();
   }
 
-  onMove() {}
-  onUp() {}
+  return { name: 'fill', cursor: 'crosshair', onDown, onMove() {}, onUp() {} };
 }
 
 function hexToRgba(hex) {

@@ -4,6 +4,8 @@
 // the editor and the committed text can be tuned without changing font-size
 // dependent magic numbers in several different places.
 
+import { hexToRgb } from '../utils/color.js';
+
 export const TEXT_EDITOR_LAYOUT = Object.freeze({
   // Position of the editor top edge relative to the click/caret anchor.
   // Negative values place the editor above the pointer.
@@ -43,8 +45,11 @@ function getCanvasTextOffset(fontSize) {
 
 export function createTextTool() {
   let editor = null;
+  let editorShell = null;
+  let historySelect = null;
   let context = null;
   let origin = null;
+  let historyUnsubscribe = null;
 
   const getEditorParent = (ctx) => ctx.scaleEl || ctx.stage;
 
@@ -67,39 +72,71 @@ export function createTextTool() {
       : styles.has('outline') ? `${Math.max(1, fontSize * .06)}px ${ctx.canvasManager.primaryColor}` : 'unset';
     editor.style.color = ctx.canvasManager.primaryColor;
 
-    if (origin) {
-      editor.style.top = `${origin.y + fontSize * TEXT_EDITOR_LAYOUT.topOffsetPercent / 100}px`;
+    if (origin && editorShell) {
+      editorShell.style.top = `${origin.y + fontSize * TEXT_EDITOR_LAYOUT.topOffsetPercent / 100}px`;
     }
+  };
+
+  const renderHistoryOptions = () => {
+    if (!historySelect || !context?.textHistoryStore) return;
+    const currentValue = historySelect.value;
+    historySelect.replaceChildren();
+    const placeholder = document.createElement('option');
+    placeholder.value = '';
+    placeholder.textContent = 'Recent text…';
+    historySelect.appendChild(placeholder);
+    context.textHistoryStore.getAll().forEach((entry) => {
+      const option = document.createElement('option');
+      option.value = entry.id;
+      option.textContent = entry.text.replace(/\s+/g, ' ').slice(0, 48) || 'Untitled text';
+      historySelect.appendChild(option);
+    });
+    if ([...historySelect.options].some((option) => option.value === currentValue)) {
+      historySelect.value = currentValue;
+    }
+  };
+
+  const clearEditorReferences = () => {
+    historyUnsubscribe?.();
+    historyUnsubscribe = null;
+    editor = null;
+    editorShell = null;
+    historySelect = null;
+    context = null;
+    origin = null;
   };
 
   const cancel = () => {
     if (!editor) return;
-    const activeEditor = editor;
-    editor = null;
-    context = null;
-    origin = null;
-    activeEditor.remove();
+    const activeShell = editorShell;
+    clearEditorReferences();
+    activeShell?.remove();
   };
 
   const commit = () => {
     if (!editor) return;
 
     const activeEditor = editor;
+    const activeShell = editorShell;
     const ctx = context;
     const anchor = origin;
-    // Clear references before remove(): remove() can synchronously emit blur.
-    editor = null;
-    context = null;
-    origin = null;
-    activeEditor.remove();
-
     const text = activeEditor.value;
-    if (text.trim().length === 0) return;
-
-    ctx.historyManager.snapshot();
-    const canvasContext = ctx.canvasManager.ctx;
     const fontSize = getRenderSize(ctx);
     const styles = getStyleSet(ctx);
+    // Clear references before remove(): remove() can synchronously emit blur.
+    clearEditorReferences();
+    activeShell?.remove();
+
+    if (text.trim().length === 0) return;
+
+    ctx.textHistoryStore?.record({
+      text,
+      styles: [...styles],
+      fontSize: ctx.getFontSize(),
+      fontFamily: ctx.getFontFamily(),
+    });
+    ctx.historyManager.snapshot();
+    const canvasContext = ctx.canvasManager.ctx;
     const lineHeight = getLineHeight(fontSize);
     const canvasTextOffset = getCanvasTextOffset(fontSize);
 
@@ -137,21 +174,71 @@ export function createTextTool() {
       }
     });
     canvasContext.restore();
+    const lineWidths = text.split('\n').map((line) => canvasContext.measureText(line).width);
+    const rgb = hexToRgb(ctx.canvasManager.primaryColor) || { r: 0, g: 0, b: 0 };
+    ctx.textDocumentStore?.add({
+      text,
+      x: anchor.x,
+      y: anchor.y + canvasTextOffset,
+      width: Math.max(0, ...lineWidths),
+      height: Math.max(lineHeight, text.split('\n').length * lineHeight),
+      fontSize,
+      fontFamily: ctx.getFontFamily(),
+      color: { ...rgb, a: Number(ctx.canvasManager.primaryAlpha ?? 1) },
+      styles: [...styles],
+      zIndex: Date.now(),
+    });
     ctx.canvasManager.persistToStorage();
   };
 
   const open = (point, ctx) => {
+    const shell = document.createElement('div');
+    shell.className = 'text-editor-shell';
+    shell.style.left = `${point.x}px`;
+
+    const toolbar = document.createElement('div');
+    toolbar.className = 'text-editor-toolbar';
+    const historyLabel = document.createElement('span');
+    historyLabel.className = 'text-editor-toolbar-label';
+    historyLabel.textContent = 'Recent text';
+    const nextHistorySelect = document.createElement('select');
+    nextHistorySelect.className = 'text-history-select';
+    nextHistorySelect.setAttribute('aria-label', 'Restore recent text');
+    const clearHistoryButton = document.createElement('button');
+    clearHistoryButton.type = 'button';
+    clearHistoryButton.className = 'text-history-clear';
+    clearHistoryButton.textContent = 'Clear';
+    clearHistoryButton.setAttribute('aria-label', 'Clear recent text history');
+    toolbar.append(historyLabel, nextHistorySelect, clearHistoryButton);
+
     const nextEditor = document.createElement('textarea');
     nextEditor.className = 'op-text-box';
-    nextEditor.style.left = `${point.x}px`;
+    nextEditor.setAttribute('aria-label', 'Text to draw');
     nextEditor.style.color = ctx.canvasManager.primaryColor;
 
+    shell.append(toolbar, nextEditor);
     editor = nextEditor;
+    editorShell = shell;
+    historySelect = nextHistorySelect;
     context = ctx;
     origin = point;
     applyEditorStyle(ctx);
+    renderHistoryOptions();
 
-    getEditorParent(ctx).appendChild(nextEditor);
+    nextHistorySelect.addEventListener('change', () => {
+      const entry = ctx.textHistoryStore?.getAll().find((item) => item.id === nextHistorySelect.value);
+      if (!entry) return;
+      nextEditor.value = entry.text;
+      nextEditor.focus();
+      nextEditor.setSelectionRange(nextEditor.value.length, nextEditor.value.length);
+    });
+    clearHistoryButton.addEventListener('click', () => {
+      ctx.textHistoryStore?.clear();
+      nextEditor.focus();
+    });
+    historyUnsubscribe = ctx.textHistoryStore?.subscribe(renderHistoryOptions) || null;
+
+    getEditorParent(ctx).appendChild(shell);
     nextEditor.focus();
     nextEditor.addEventListener('keydown', (event) => {
       event.stopPropagation();
@@ -160,7 +247,14 @@ export function createTextTool() {
         cancel();
       }
     });
-    nextEditor.addEventListener('blur', commit);
+    nextEditor.addEventListener('blur', () => {
+      // Toolbar controls belong to this editing session. Defer the decision
+      // until focus has moved so selecting/restoring text does not commit it.
+      setTimeout(() => {
+        if (!editor || editorShell?.contains(document.activeElement)) return;
+        commit();
+      }, 0);
+    });
   };
 
   return {

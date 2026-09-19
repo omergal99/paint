@@ -37,7 +37,9 @@ export class CanvasManager {
     this.backgroundMode = backgroundMode === 'transparent' ? 'transparent' : 'solid';
 
     this.primaryColor = '#000000';
+    this.primaryAlpha = 1;
     this.secondaryColor = '#ffffff';
+    this.secondaryAlpha = 1;
     this.lineWidth = 3;
 
     this.selection = null; // {x,y,w,h} in image pixels, or null
@@ -139,6 +141,12 @@ export class CanvasManager {
   setBackgroundMode(mode) {
     this.backgroundMode = mode === 'transparent' ? 'transparent' : 'solid';
     return this.backgroundMode;
+  }
+
+  setBackgroundColor(color) {
+    if (typeof color !== 'string' || !/^#[0-9a-f]{6}$/i.test(color)) return this.backgroundColor;
+    this.backgroundColor = color.toLowerCase();
+    return this.backgroundColor;
   }
 
   _paintBackground(context, x, y, width, height, color = this.backgroundColor) {

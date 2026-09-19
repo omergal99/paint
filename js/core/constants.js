@@ -10,6 +10,7 @@ export const STORAGE_KEYS = Object.freeze({
 	fontSize: 'paint:font-size',
 	textStyles: 'paint:text-styles',
 	textStyle: 'paint:text-style',
+	textHistory: 'paint:text-history',
 	toolStyles: 'paint:tool-styles',
 	styleHistory: 'paint:style-history',
 	showCurrentTool: 'paint:show-current-tool',
@@ -35,7 +36,7 @@ export const EVENTS = Object.freeze({
 
 export const LIMITS = Object.freeze({
 	maxHistoryEntries: 20,
-	maxTextHistoryEntries: 30,
+	maxTextHistoryEntries: 20,
 	maxCanvasDimension: 10000,
 	maxImportPixels: 32 * 1024 * 1024,
 });
@@ -52,6 +53,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
 	showColorInspector: true,
 	showAiChat: false,
 	canvasBackground: 'none',
+	solidBackgroundColor: '#ffffff',
 	defaultCanvasSize: '800x600',
 	defaultZoom: 100,
 	historyAutoSave: true,

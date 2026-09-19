@@ -90,6 +90,7 @@ body {
 	flex-direction: column;
 	align-items: center;
 	justify-content: space-between;
+	gap: 3px;
 	padding: 2px 2px 2px;
 	min-width: max-content;
 	min-height: var(--ribbon-control-band);
@@ -1022,7 +1023,6 @@ body {
 .history-preferences {
 	display: grid;
 	gap: 6px;
-	padding: 2px 0 8px;
 	font-size: 12px;
 }
 .history-preferences strong {
@@ -1541,8 +1541,55 @@ body.dark-mode #history-clear-btn {
 	z-index: 4;
 }
 
-.op-text-box {
+.text-editor-shell {
 	position: absolute;
+	display: grid;
+	gap: 3px;
+	min-width: 190px;
+	padding: 3px;
+	background: color-mix(in srgb, var(--w10-panel-bg, var(--w10-ribbon-bg)) 92%, transparent);
+	border: 1px solid var(--w10-border-strong);
+	border-radius: 3px;
+	z-index: 6;
+	user-select: text;
+}
+.text-editor-toolbar {
+	display: grid;
+	grid-template-columns: max-content minmax(0, 1fr) max-content;
+	align-items: center;
+	gap: 3px;
+	min-height: 24px;
+	font-size: 11px;
+	color: var(--w10-text-dim);
+}
+.text-editor-toolbar-label {
+	padding: 0 2px;
+	white-space: nowrap;
+}
+.text-history-select,
+.text-history-clear {
+	min-height: 24px;
+	font: inherit;
+}
+.text-history-select {
+	min-width: 0;
+	max-width: 190px;
+	border: 1px solid var(--w10-border);
+	background: var(--w10-input-bg, var(--w10-ribbon-bg));
+	color: var(--w10-text);
+}
+.text-history-clear {
+	padding: 2px 5px;
+	border: 1px solid var(--w10-border);
+	background: var(--w10-ribbon-bg);
+	color: var(--w10-text);
+	cursor: pointer;
+}
+.text-history-clear:hover,
+.text-history-clear:focus-visible {
+	background: var(--w10-hover);
+}
+.op-text-box {
 	min-width: 80px;
 	min-height: 1.4em;
 	background: rgba(255, 255, 255, 0.34);
@@ -1555,7 +1602,7 @@ body.dark-mode #history-clear-btn {
 	text-indent: 0;
 	overflow: hidden;
 	appearance: none;
-	z-index: 6;
+	z-index: 1;
 }
 .selection-rotate {
 	position: absolute;
@@ -1714,9 +1761,9 @@ dialog h3 {
 	display: grid;
 	grid-template-columns: 112px minmax(260px, 1fr);
 	width: 560px;
-	height: min(560px, 88vh);
+	height: min(470px, 88vh);
 	max-width: min(560px, 80vw);
-	max-height: min(560px, 88vh);
+	max-height: min(470px, 88vh);
 	position: relative;
 }
 .settings-shell {
@@ -1741,6 +1788,7 @@ dialog h3 {
 	display: flex;
 	justify-content: flex-end;
 	align-items: center;
+	border-top: 1px solid var(--w10-border);
 }
 .settings-footer button {
 	padding: 5px 14px;
@@ -1774,6 +1822,7 @@ dialog h3 {
 	flex-direction: column;
 	gap: 2px;
 	padding-right: 14px;
+	border-top: 1px solid var(--w10-border);
 	border-right: 1px solid var(--w10-border);
 }
 .settings-tab {
@@ -1874,6 +1923,27 @@ dialog h3 {
 	font-size: 11px;
 	color: var(--w10-text-dim);
 }
+.choice-custom-inputs {
+	display: inline-flex;
+	align-items: center;
+	gap: 3px;
+	margin-left: 4px;
+}
+.choice-custom-inputs input {
+	width: 58px;
+	min-width: 0;
+	padding: 2px 4px;
+	font: inherit;
+	font-size: 11px;
+}
+.choice-custom-inputs input[type="color"] {
+	width: 28px;
+	height: 22px;
+	padding: 1px;
+}
+.choice-custom-inputs .choice-custom-separator {
+	color: var(--w10-text-dim);
+}
 .segmented-choice-option {
 	flex: 1 1 auto;
 	min-height: 29px;
@@ -1909,12 +1979,25 @@ dialog h3 {
 	color: var(--w10-text-dim);
 }
 .resize-presets button {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
 	min-height: 36px;
 	padding: 5px;
 	border: 1px solid var(--w10-border);
 	background: var(--w10-ribbon-bg);
 	color: var(--w10-text);
 	cursor: pointer;
+}
+.resize-preset-name,
+.resize-preset-size {
+	display: block;
+	line-height: 1.2;
+}
+.resize-preset-size {
+	color: var(--w10-text-dim);
+	font-size: 10px;
 }
 .resize-presets button:hover,
 .resize-presets button.selected {
@@ -1928,6 +2011,12 @@ dialog h3 {
 	gap: 8px;
 	margin: 10px 0;
 }
+.resize-scale-row > label {
+	display: flex;
+	align-items: center;
+	margin: 0;
+	line-height: 1.2;
+}
 .resize-scale-row input {
 	width: 92px;
 }
@@ -1938,6 +2027,19 @@ dialog h3 {
 #resize-dialog {
 	width: min(480px, calc(100vw - 32px));
 	min-height: 330px;
+}
+#settings-dialog {
+	padding: 10px;
+}
+.resize-dimension-row {
+	display: grid;
+	grid-template-columns: max-content 120px;
+	justify-content: start;
+	align-items: center;
+	gap: 6px;
+}
+.resize-dimension-row input {
+	width: 120px;
 }
 .settings-panel .dialog-actions {
 	margin-top: 14px;

@@ -4,8 +4,8 @@
 
 - Added `js/core/constants.js` for storage keys, event names, limits, schema
   versions, and default settings.
-- Added lifecycle-safe `EventBus` with `on`, `off`, `once`, `emit`, and
-  `destroy`.
+- Added a lifecycle-safe closure-based `createEventBus` with `on`, `off`,
+  `once`, `emit`, and `destroy`; no class instance is required.
 - Added `DocumentContract` with a versioned future document shape for pixels,
   selection, text objects, history, dirty state, and metadata.
 - Added `SettingsStore` with defaults, validation, migration hook, persistence,

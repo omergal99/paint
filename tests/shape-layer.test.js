@@ -14,7 +14,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import { CanvasManager } from '../js/canvas/CanvasManager.js';
-import { ShapeTool } from '../js/tools/ShapeTool.js';
+import { createShapeTool } from '../js/tools/ShapeTool.js';
 
 /** Alpha mask source: (w, h) => Uint8ClampedArray RGBA, or null for empty. */
 let mask = () => null;
@@ -116,7 +116,7 @@ test('select after draw: layer carries the shape ink only, never the background'
   const ctx = makeToolContext(cm, history);
   // The constructor paints/reads the main canvas; measure only what the lift does.
   const base = { fillRect: cm.ctx.calls.fillRect, drawImage: cm.ctx.calls.drawImage.length, imageData: imageDataCalls };
-  const lifted = new ShapeTool()._liftAsSelection(ctx, drag.start, drag.end, 0);
+  const lifted = createShapeTool()._liftAsSelection(ctx, drag.start, drag.end, 0);
 
   assert.equal(lifted, true, 'the shape should lift as a floating layer');
   const sel = ctx.getSelection();
@@ -153,7 +153,7 @@ test('select after draw: clipped ink triggers a wider re-measure', () => {
   imageDataCalls = 0;
 
   const cmContext = makeToolContext(cm);
-  const lifted = new ShapeTool()._liftAsSelection(cmContext, { x: 500, y: 500 }, { x: 600, y: 600 }, 0);
+  const lifted = createShapeTool()._liftAsSelection(cmContext, { x: 500, y: 500 }, { x: 600, y: 600 }, 0);
 
   assert.equal(lifted, true);
   const sel = cmContext.getSelection();
@@ -198,8 +198,8 @@ test('select after draw: a click (no drag) or empty render falls back to baking'
   assert.equal(cm.renderShapeLayer({ x: 100, y: 100, w: 50, h: 50 }, () => {}), null);
 
   const ctx = makeToolContext(cm);
-  assert.equal(new ShapeTool()._liftAsSelection(ctx, drag.start, drag.end, 0), false);
-  assert.equal(new ShapeTool()._liftAsSelection(ctx, { x: 10, y: 10 }, { x: 10, y: 10 }, 0), false,
+  assert.equal(createShapeTool()._liftAsSelection(ctx, drag.start, drag.end, 0), false);
+  assert.equal(createShapeTool()._liftAsSelection(ctx, { x: 10, y: 10 }, { x: 10, y: 10 }, 0), false,
     'a click with no drag is not a shape');
 });
 

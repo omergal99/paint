@@ -1,130 +1,155 @@
-// js/ui/ColorPalette.js
+// Functional palette controller. State stays private in this factory and the
+// returned API preserves the small contract used by Sidebar and main.js.
 import { DEFAULT_PALETTE } from '../utils/color.js';
 
-export class ColorPalette {
-  constructor({ gridEl, primarySwatchEl, secondarySwatchEl, colorPickerInput, onPrimaryChange, onSecondaryChange }) {
-    this.gridEl = gridEl;
-    this.primarySwatchEl = primarySwatchEl;
-    this.secondarySwatchEl = secondarySwatchEl;
-    this.colorPickerInput = colorPickerInput;
-    this.onPrimaryChange = onPrimaryChange;
-    this.onSecondaryChange = onSecondaryChange;
-    
-    // Load saved colors from localStorage or use defaults
-    const savedColors = this._loadSavedColors();
-    this.palette = this._normalizePalette(savedColors.palette || DEFAULT_PALETTE);
-    this.defaultPrimary = savedColors.defaultPrimary || '#a349a4';
-    this.primary = savedColors.primary || this.defaultPrimary;
-    this.secondary = savedColors.secondary || '#ffffff';
+const COLOR_RE = /^#[0-9a-f]{6}$/i;
 
-    this._renderGrid();
-    this._bindSwatches();
-    this.setPrimary(this.primary);
-    this.setSecondary(this.secondary);
-  }
+export function createColorPalette({ gridEl, primarySwatchEl, secondarySwatchEl, colorPickerInput, onPrimaryChange, onSecondaryChange }) {
+  const savedColors = loadSavedColors();
+  let palette = normalizePalette(savedColors.palette || DEFAULT_PALETTE);
+  let defaultPrimary = COLOR_RE.test(savedColors.defaultPrimary || '') ? savedColors.defaultPrimary.toLowerCase() : '#a349a4';
+  let primary = COLOR_RE.test(savedColors.primary || '') ? savedColors.primary.toLowerCase() : defaultPrimary;
+  let secondary = COLOR_RE.test(savedColors.secondary || '') ? savedColors.secondary.toLowerCase() : '#ffffff';
+  let primaryAlpha = normalizeAlpha(savedColors.primaryAlpha);
+  let secondaryAlpha = normalizeAlpha(savedColors.secondaryAlpha);
+  let editing = 'primary';
 
-  _renderGrid() {
-    this.gridEl.innerHTML = '';
-    this.palette.forEach((hex) => {
-      const btn = document.createElement('button');
-      btn.style.background = hex;
-      btn.title = hex;
-      btn.addEventListener('click', () => this.setPrimary(hex));
-      btn.addEventListener('contextmenu', (e) => {
-        e.preventDefault();
-        this.setSecondary(hex);
+  function renderGrid() {
+    gridEl.innerHTML = '';
+    palette.forEach((hex) => {
+      const button = document.createElement('button');
+      button.style.background = hex;
+      button.title = hex;
+      button.addEventListener('click', () => setPrimary(hex));
+      button.addEventListener('contextmenu', (event) => {
+        event.preventDefault();
+        setSecondary(hex);
       });
-      this.gridEl.appendChild(btn);
+      gridEl.appendChild(button);
     });
   }
 
-  _bindSwatches() {
-    this.primarySwatchEl.addEventListener('click', () => this._openPicker('primary'));
-    this.secondarySwatchEl.addEventListener('click', () => this._openPicker('secondary'));
-    this.colorPickerInput.addEventListener('input', () => {
-      const hex = this.colorPickerInput.value;
-      if (this._editing === 'secondary') this.setSecondary(hex);
-      else this.setPrimary(hex);
+  function openPicker(which) {
+    editing = which;
+    colorPickerInput.value = which === 'secondary' ? secondary : primary;
+    colorPickerInput.click();
+  }
+
+  function bindSwatches() {
+    primarySwatchEl.addEventListener('click', () => openPicker('primary'));
+    secondarySwatchEl.addEventListener('click', () => openPicker('secondary'));
+    colorPickerInput.addEventListener('input', () => {
+      if (editing === 'secondary') setSecondary(colorPickerInput.value);
+      else setPrimary(colorPickerInput.value);
     });
   }
 
-  _openPicker(which) {
-    this._editing = which;
-    this.colorPickerInput.value = which === 'secondary' ? this.secondary : this.primary;
-    this.colorPickerInput.click();
+  function setPrimary(hex, alpha = primaryAlpha) {
+    if (!COLOR_RE.test(hex)) return false;
+    primary = hex.toLowerCase();
+    primaryAlpha = normalizeAlpha(alpha);
+    primarySwatchEl.style.background = primary;
+    saveColors();
+    onPrimaryChange?.(primary, primaryAlpha);
+    return true;
   }
 
-  setPrimary(hex) {
-    this.primary = hex;
-    this.primarySwatchEl.style.background = hex;
-    this._saveColors();
-    this.onPrimaryChange?.(hex);
+  function setSecondary(hex, alpha = secondaryAlpha) {
+    if (!COLOR_RE.test(hex)) return false;
+    secondary = hex.toLowerCase();
+    secondaryAlpha = normalizeAlpha(alpha);
+    secondarySwatchEl.style.background = secondary;
+    saveColors();
+    onSecondaryChange?.(secondary, secondaryAlpha);
+    return true;
   }
 
-  setSecondary(hex) {
-    this.secondary = hex;
-    this.secondarySwatchEl.style.background = hex;
-    this._saveColors();
-    this.onSecondaryChange?.(hex);
+  function getPalette() { return [...palette]; }
+
+  function setPalette(colors) {
+    const next = normalizePalette(colors);
+    if (!next.length) return false;
+    palette = next;
+    renderGrid();
+    saveColors();
+    return true;
   }
 
-  getPalette() {
-    return [...this.palette];
+  function setDefaultPrimary(hex) {
+    if (!COLOR_RE.test(hex)) return false;
+    defaultPrimary = hex.toLowerCase();
+    saveColors();
+    return true;
   }
 
-  setPalette(colors) {
-    const next = this._normalizePalette(colors);
-    if (!next.length) return;
-    this.palette = next;
-    this._renderGrid();
-    this._saveColors();
+  function resetToDefaults() {
+    palette = [...DEFAULT_PALETTE];
+    defaultPrimary = '#a349a4';
+    primary = defaultPrimary;
+    secondary = '#ffffff';
+    primaryAlpha = 1;
+    secondaryAlpha = 1;
+    renderGrid();
+    primarySwatchEl.style.background = primary;
+    secondarySwatchEl.style.background = secondary;
+    saveColors();
+    onPrimaryChange?.(primary, primaryAlpha);
+    onSecondaryChange?.(secondary, secondaryAlpha);
   }
 
-  setDefaultPrimary(hex) {
-    if (!/^#[0-9a-f]{6}$/i.test(hex)) return;
-    this.defaultPrimary = hex.toLowerCase();
-    this._saveColors();
-  }
-
-  resetToDefaults() {
-    this.palette = [...DEFAULT_PALETTE];
-    this.defaultPrimary = '#a349a4';
-    this.primary = this.defaultPrimary;
-    this.secondary = '#ffffff';
-    this._renderGrid();
-    this.primarySwatchEl.style.background = this.primary;
-    this.secondarySwatchEl.style.background = this.secondary;
-    this._saveColors();
-    this.onPrimaryChange?.(this.primary);
-    this.onSecondaryChange?.(this.secondary);
-  }
-
-  _normalizePalette(colors) {
-    if (!Array.isArray(colors)) return [...DEFAULT_PALETTE];
-    const valid = colors.filter((hex) => typeof hex === 'string' && /^#[0-9a-f]{6}$/i.test(hex));
-    return valid.length ? valid.map((hex) => hex.toLowerCase()) : [...DEFAULT_PALETTE];
-  }
-
-  _saveColors() {
+  function saveColors() {
     try {
       localStorage.setItem('paint:colors', JSON.stringify({
-        primary: this.primary,
-        secondary: this.secondary,
-        defaultPrimary: this.defaultPrimary,
-        palette: this.palette,
+        primary,
+        secondary,
+        primaryAlpha,
+        secondaryAlpha,
+        defaultPrimary,
+        palette,
       }));
-    } catch (err) {
-      console.warn('Unable to save colors:', err);
+    } catch (error) {
+      console.warn('Unable to save colors:', error);
     }
   }
 
-  _loadSavedColors() {
-    try {
-      const saved = localStorage.getItem('paint:colors');
-      return saved ? JSON.parse(saved) : {};
-    } catch (err) {
-      console.warn('Unable to load colors:', err);
-      return {};
-    }
+  renderGrid();
+  bindSwatches();
+  setPrimary(primary, primaryAlpha);
+  setSecondary(secondary, secondaryAlpha);
+
+  return Object.freeze({
+    get palette() { return palette; },
+    get primary() { return primary; },
+    get secondary() { return secondary; },
+    get primaryAlpha() { return primaryAlpha; },
+    get secondaryAlpha() { return secondaryAlpha; },
+    get defaultPrimary() { return defaultPrimary; },
+    setPrimary,
+    setSecondary,
+    getPalette,
+    setPalette,
+    setDefaultPrimary,
+    resetToDefaults,
+  });
+}
+
+function normalizeAlpha(value) {
+  const alpha = Number(value);
+  return Number.isFinite(alpha) ? Math.max(0, Math.min(1, alpha)) : 1;
+}
+
+function normalizePalette(colors) {
+  if (!Array.isArray(colors)) return [...DEFAULT_PALETTE];
+  const valid = colors.filter((hex) => typeof hex === 'string' && COLOR_RE.test(hex));
+  return valid.length ? valid.map((hex) => hex.toLowerCase()) : [...DEFAULT_PALETTE];
+}
+
+function loadSavedColors() {
+  try {
+    const saved = localStorage.getItem('paint:colors');
+    return saved ? JSON.parse(saved) : {};
+  } catch (error) {
+    console.warn('Unable to load colors:', error);
+    return {};
   }
 }

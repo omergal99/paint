@@ -1,31 +1,34 @@
 // js/ui/StatusBar.js
-export class StatusBar {
-  constructor({ pointerEl, selectionEl, canvasSizeEl, flashEl }) {
-    this.pointerEl = pointerEl;
-    this.selectionEl = selectionEl;
-    this.canvasSizeEl = canvasSizeEl;
-    this.flashEl = flashEl;
-    this._flashTimer = null;
+export function createStatusBar({ pointerEl, selectionEl, canvasSizeEl, flashEl }) {
+  let currentPointer = null;
+  let flashTimer = null;
+
+  function setPointer(pt) {
+    currentPointer = pt;
+    pointerEl.textContent = pt ? `Pointer: ${Math.round(pt.x)}, ${Math.round(pt.y)}px` : 'Pointer: —';
   }
 
-  setPointer(pt) {
-    this.currentPointer = pt;
-    this.pointerEl.textContent = pt ? `Pointer: ${Math.round(pt.x)}, ${Math.round(pt.y)}px` : 'Pointer: —';
+  function setSelection(region) {
+    selectionEl.textContent = region && region.w && region.h ? `Selection: ${region.w} × ${region.h}px` : '';
   }
 
-  setSelection(region) {
-    this.selectionEl.textContent = region && region.w && region.h ? `Selection: ${region.w} × ${region.h}px` : '';
+  function setCanvasSize(w, h) {
+    canvasSizeEl.textContent = `${w} × ${h}px`;
   }
 
-  setCanvasSize(w, h) {
-    this.canvasSizeEl.textContent = `${w} × ${h}px`;
-  }
-
-  flash(message, ms = 2200) {
-    this.flashEl.textContent = message;
-    if (this._flashTimer) clearTimeout(this._flashTimer);
-    this._flashTimer = setTimeout(() => {
-      this.flashEl.textContent = '';
+  function flash(message, ms = 2200) {
+    flashEl.textContent = message;
+    if (flashTimer) clearTimeout(flashTimer);
+    flashTimer = setTimeout(() => {
+      flashEl.textContent = '';
     }, ms);
   }
+
+  return Object.freeze({
+    setPointer,
+    setSelection,
+    setCanvasSize,
+    flash,
+    get currentPointer() { return currentPointer; },
+  });
 }

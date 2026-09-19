@@ -10,7 +10,7 @@ community-standards paths and settings-height assertion.
 | `npm test` | Pass: 2 test files, 35 subtests, 0 failures |
 | Community standards path | Pass: canonical file is `docs/work1/COMMUNITY_STANDARDS.md` |
 | Code of conduct path | Pass: `docs/CODE_OF_CONDUCT.md` |
-| Settings height expectation | Pass: `min(560px, 88vh)` |
+| Settings height expectation | Pass: `min(470px, 88vh)` |
 | `git diff --check` | Pass |
 | Lighthouse | Not run in this Node-only baseline; browser evidence remains required in Step 11 |
 

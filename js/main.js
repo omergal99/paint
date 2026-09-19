@@ -5,20 +5,20 @@ import { CanvasResizer } from './canvas/CanvasResizer.js';
 import { HistoryManager } from './history/HistoryManager.js';
 import { ClipboardManager } from './clipboard/ClipboardManager.js';
 import { ToolManager } from './tools/ToolManager.js';
-import { SelectTool } from './tools/SelectTool.js';
+import { createSelectTool } from './tools/SelectTool.js';
 import { createPencilTool, createBrushTool, createEraserTool } from './tools/FreehandTools.js';
-import { FillTool } from './tools/FillTool.js';
-import { ShapeTool } from './tools/ShapeTool.js';
+import { createFillTool } from './tools/FillTool.js';
+import { createShapeTool } from './tools/ShapeTool.js';
 import { createTextTool } from './tools/TextTool.js';
-import { EyedropperTool } from './tools/EyedropperTool.js';
-import { ZoomTool } from './tools/ZoomTool.js';
-import { ColorPalette } from './ui/ColorPalette.js';
-import { ColorInspector } from './ui/ColorInspector.js';
-import { StatusBar } from './ui/StatusBar.js';
+import { createEyedropperTool } from './tools/EyedropperTool.js';
+import { createZoomTool } from './tools/ZoomTool.js';
+import { createColorPalette } from './ui/ColorPalette.js';
+import { createColorInspector } from './ui/ColorInspector.js';
+import { createStatusBar } from './ui/StatusBar.js';
 import { Toolbar } from './ui/Toolbar.js';
 import { Sidebar } from './ui/Sidebar.js';
 import { PanelLayoutManager } from './ui/PanelLayoutManager.js';
-import { SegmentedChoice } from './ui/SegmentedChoice.js';
+import { createSegmentedChoice } from './ui/SegmentedChoice.js';
 import { createDialogService } from './ui/DialogService.js';
 import { createSettingsRegistry } from './settings/SettingsRegistry.js';
 import { createDeterministicCommandService } from './ai/DeterministicCommandService.js';
@@ -29,6 +29,8 @@ import { rotateCanvas, rotateCanvasByAngle, flipCanvas, scaleCanvas, removeBackg
 import { APP_VERSION } from './version.js';
 import { DEFAULT_SETTINGS, STORAGE_KEYS } from './core/constants.js';
 import { createSettingsStore } from './settings/SettingsStore.js';
+import { createTextDocumentStore } from './document/TextDocumentStore.js';
+import { createTextHistoryStore } from './document/TextHistoryStore.js';
 
 // ---------- DOM refs ----------
 const stage = document.getElementById('canvas-stage');
@@ -48,8 +50,10 @@ const dialogService = createDialogService({
 // ---------- Core managers ----------
 const canvasManager = new CanvasManager({ canvas: canvasEl, overlay: overlayEl, width: 800, height: 600 });
 const historyManager = new HistoryManager(canvasManager);
+const textDocumentStore = createTextDocumentStore();
+const textHistoryStore = createTextHistoryStore();
 
-const statusBar = new StatusBar({
+const statusBar = createStatusBar({
 	pointerEl: document.getElementById('status-pointer'),
 	selectionEl: document.getElementById('status-selection'),
 	canvasSizeEl: document.getElementById('status-canvas-size'),
@@ -87,7 +91,7 @@ canvasManager.onSizeChange = (w, h) => {
 	setSelection(canvasManager.selection);
 };
 
-const colorInspector = new ColorInspector({
+const colorInspector = createColorInspector({
 	swatchEl: document.getElementById('ci-swatch'),
 	rgbEl: document.getElementById('ci-rgb'),
 	hexEl: document.getElementById('ci-hex'),
@@ -111,16 +115,20 @@ colorInspectorToggle?.addEventListener('click', () => {
 	setColorInspectorCollapsed(!colorInspectorEl.classList.contains('collapsed'));
 });
 
-const colorPalette = new ColorPalette({
+const colorPalette = createColorPalette({
 	gridEl: document.getElementById('palette-grid'),
 	primarySwatchEl: document.getElementById('primary-swatch'),
 	secondarySwatchEl: document.getElementById('secondary-swatch'),
 	colorPickerInput: document.getElementById('color-picker'),
-	onPrimaryChange: (hex) => {
+	onPrimaryChange: (hex, alpha = 1) => {
 		canvasManager.primaryColor = hex;
+		canvasManager.primaryAlpha = alpha;
 		window.dispatchEvent(new CustomEvent('paint:primary-color-change', { detail: hex }));
 	},
-	onSecondaryChange: (hex) => (canvasManager.secondaryColor = hex),
+	onSecondaryChange: (hex, alpha = 1) => {
+		canvasManager.secondaryColor = hex;
+		canvasManager.secondaryAlpha = alpha;
+	},
 });
 const primaryRgb = hexToRgb(colorPalette.primary);
 if (primaryRgb) {
@@ -362,6 +370,8 @@ function saveTextStyles() {
 const toolContext = {
 	canvasManager,
 	historyManager,
+	textDocumentStore,
+	textHistoryStore,
 	viewportManager,
 	stage,
 	scaleEl,
@@ -395,15 +405,15 @@ const toolContext = {
 // ---------- Tools ----------
 const toolManager = new ToolManager({ surface: overlayEl, viewportManager, toolContext, statusBar });
 [
-	new SelectTool(),
+	createSelectTool(),
 	createPencilTool(),
 	createBrushTool(),
 	createEraserTool(),
-	new FillTool(),
-	new ShapeTool(),
+	createFillTool(),
+	createShapeTool(),
 	createTextTool(),
-	new EyedropperTool(),
-	new ZoomTool(),
+	createEyedropperTool(),
+	createZoomTool(),
 ].forEach((t) => toolManager.register(t));
 
 viewportManager.onZoomChange = () => {
@@ -499,7 +509,12 @@ function makeBlankSource(w, h) {
 
 function getDefaultCanvasSize() {
 	const value = document.getElementById('setting-default-canvas-size')?.value || '800x600';
-	const [width, height] = value.split('x').map(Number);
+	const customWidth = Number(document.getElementById('setting-default-canvas-width')?.value);
+	const customHeight = Number(document.getElementById('setting-default-canvas-height')?.value);
+	const source = value === 'custom' && customWidth > 0 && customHeight > 0
+		? `${customWidth}x${customHeight}`
+		: value;
+	const [width, height] = source.split('x').map(Number);
 	return Number.isFinite(width) && Number.isFinite(height) && width > 0 && height > 0
 		? { width, height }
 		: { width: 800, height: 600 };
@@ -953,8 +968,12 @@ const sbCheckbox = document.getElementById('setting-show-status-bar');
 const ciCheckbox = document.getElementById('setting-show-color-inspector');
 const aiCheckbox = document.getElementById('setting-show-ai-chat');
 const bgSelect = document.getElementById('setting-canvas-bg');
+const solidBackgroundColorInput = document.getElementById('setting-solid-background-color');
 const defaultCanvasSizeSelect = document.getElementById('setting-default-canvas-size');
+const defaultCanvasWidthInput = document.getElementById('setting-default-canvas-width');
+const defaultCanvasHeightInput = document.getElementById('setting-default-canvas-height');
 const defaultZoomSelect = document.getElementById('setting-default-zoom');
+const defaultZoomCustomInput = document.getElementById('setting-default-zoom-custom');
 const SETTINGS_KEY = STORAGE_KEYS.settings;
 const settingsStore = createSettingsStore({
 	storage: globalThis.localStorage,
@@ -962,11 +981,13 @@ const settingsStore = createSettingsStore({
 	defaults: DEFAULT_SETTINGS,
 	validators: {
 		canvasBackground: (value) => ['none', 'solid', 'transparent', 'checkerboard', 'grid'].includes(value),
+		solidBackgroundColor: (value) => typeof value === 'string' && /^#[0-9a-f]{6}$/i.test(value),
 		defaultZoom: (value) => Number.isFinite(Number(value)) && Number(value) > 0,
 		historyAutoSaveMode: (value) => ['all', 'close', 'lifecycle'].includes(value),
 	},
 });
 const settingsRegistry = createSettingsRegistry();
+settingsRegistry.registerStorageKey(STORAGE_KEYS.textHistory);
 settingsRegistry.registerResetHandler(() => colorPalette.resetToDefaults());
 settingsRegistry.registerResetHandler(() => sidebar.resetSettings());
 const deterministicAi = createDeterministicCommandService({
@@ -1051,7 +1072,7 @@ settingsRibbonPosition?.addEventListener('change', () => {
 	saveSettings();
 });
 
-const segmentedChoices = [...document.querySelectorAll('.choice-summary')].map((root) => new SegmentedChoice({
+const segmentedChoices = [...document.querySelectorAll('.choice-summary')].map((root) => createSegmentedChoice({
 	root,
 	select: document.getElementById(root.dataset.selectId),
 }));
@@ -1084,8 +1105,11 @@ function saveSettings() {
 			showColorInspector: ciCheckbox.checked,
 			showAiChat: aiCheckbox?.checked === true,
 			canvasBackground: bgSelect.value,
+			solidBackgroundColor: solidBackgroundColorInput?.value || DEFAULT_SETTINGS.solidBackgroundColor,
 			defaultCanvasSize: defaultCanvasSizeSelect?.value || '800x600',
-			defaultZoom: Number(defaultZoomSelect?.value || 100),
+			defaultCanvasWidth: Number(defaultCanvasWidthInput?.value) || 800,
+			defaultCanvasHeight: Number(defaultCanvasHeightInput?.value) || 600,
+			defaultZoom: getDefaultZoom(),
 			historyAutoSave,
 			historyAutoSaveMode,
 			ribbonLayout: { ...ribbonLayoutManager.state },
@@ -1237,11 +1261,32 @@ function applyHistoryState() {
 function applyCanvasBackgroundMode(mode) {
 	const value = mode || 'none';
 	canvasManager.setBackgroundMode(value === 'transparent' ? 'transparent' : 'solid');
+	const solidColorControl = document.querySelector('[data-solid-color-control]');
+	if (solidColorControl) solidColorControl.hidden = !['none', 'solid'].includes(value);
 	const viewport = document.getElementById('canvas-viewport');
 	viewport.classList.remove('bg-checkerboard', 'bg-grid', 'bg-transparent');
 	if (value === 'transparent') viewport.classList.add('bg-transparent');
 	else if (value === 'checkerboard') viewport.classList.add('bg-checkerboard');
 	else if (value === 'grid') viewport.classList.add('bg-grid');
+}
+
+function getDefaultZoom() {
+	const raw = defaultZoomSelect?.value === 'custom'
+		? defaultZoomCustomInput?.value
+		: defaultZoomSelect?.value;
+	const value = Number(raw);
+	return Number.isFinite(value) ? Math.min(800, Math.max(10, Math.round(value))) : 100;
+}
+
+function syncDefaultCanvasInputsFromSelect() {
+	const [width, height] = String(defaultCanvasSizeSelect?.value || '800x600').split('x').map(Number);
+	if (Number.isFinite(width) && width > 0 && defaultCanvasWidthInput) defaultCanvasWidthInput.value = width;
+	if (Number.isFinite(height) && height > 0 && defaultCanvasHeightInput) defaultCanvasHeightInput.value = height;
+}
+
+function syncDefaultZoomInputFromSelect() {
+	const value = Number(defaultZoomSelect?.value);
+	if (Number.isFinite(value) && value > 0 && defaultZoomCustomInput) defaultZoomCustomInput.value = value;
 }
 
 // ---------- Settings dialog ----------
@@ -1252,11 +1297,30 @@ function applySavedSettings() {
 	ciCheckbox.checked = saved.showColorInspector !== false;
 	if (aiCheckbox) aiCheckbox.checked = saved.showAiChat === true;
 	bgSelect.value = saved.canvasBackground || 'none';
+	const solidColor = /^#[0-9a-f]{6}$/i.test(saved.solidBackgroundColor || '')
+		? saved.solidBackgroundColor.toLowerCase()
+		: DEFAULT_SETTINGS.solidBackgroundColor;
+	if (solidBackgroundColorInput) solidBackgroundColorInput.value = solidColor;
+	canvasManager.setBackgroundColor(solidColor);
 	defaultCanvasSizeSelect.value = saved.defaultCanvasSize || '800x600';
-	defaultZoomSelect.value = String(saved.defaultZoom || 100);
+	if (![...defaultCanvasSizeSelect.options].some((option) => option.value === defaultCanvasSizeSelect.value)) {
+		defaultCanvasSizeSelect.value = 'custom';
+	}
+	if (Number.isFinite(Number(saved.defaultCanvasWidth)) && Number(saved.defaultCanvasWidth) > 0) {
+		defaultCanvasWidthInput.value = saved.defaultCanvasWidth;
+	}
+	if (Number.isFinite(Number(saved.defaultCanvasHeight)) && Number(saved.defaultCanvasHeight) > 0) {
+		defaultCanvasHeightInput.value = saved.defaultCanvasHeight;
+	}
+	if (defaultCanvasSizeSelect.value !== 'custom') syncDefaultCanvasInputsFromSelect();
+	const savedZoom = Number(saved.defaultZoom || 100);
+	defaultZoomSelect.value = [...defaultZoomSelect.options].some((option) => option.value === String(savedZoom))
+		? String(savedZoom)
+		: 'custom';
+	if (defaultZoomCustomInput) defaultZoomCustomInput.value = Math.min(800, Math.max(10, Math.round(savedZoom)));
 	applyCanvasBackgroundMode(bgSelect.value);
-	viewportManager.setInitialZoom(defaultZoomSelect.value);
-	if (!localStorage.getItem('paint:zoom')) viewportManager.setZoom(defaultZoomSelect.value);
+	viewportManager.setInitialZoom(getDefaultZoom());
+	if (!localStorage.getItem('paint:zoom')) viewportManager.setZoom(getDefaultZoom());
 	if (!localStorage.getItem('omerpaint:last-canvas')) {
 		const { width, height } = getDefaultCanvasSize();
 		if (width !== canvasManager.width || height !== canvasManager.height) canvasManager.resize(width, height);
@@ -1548,11 +1612,34 @@ historyLimitSel?.addEventListener('change', (e) => applyHistoryLimit(e.target.va
 settingLimit?.addEventListener('change', (e) => applyHistoryLimit(e.target.value));
 
 defaultZoomSelect?.addEventListener('change', () => {
-	viewportManager.setInitialZoom(defaultZoomSelect.value);
-	viewportManager.setZoom(defaultZoomSelect.value);
+	syncDefaultZoomInputFromSelect();
+	const zoom = getDefaultZoom();
+	viewportManager.setInitialZoom(zoom);
+	viewportManager.setZoom(zoom);
 	saveSettings();
 });
-defaultCanvasSizeSelect?.addEventListener('change', saveSettings);
+defaultZoomCustomInput?.addEventListener('input', () => {
+	defaultZoomSelect.value = 'custom';
+	const zoom = getDefaultZoom();
+	viewportManager.setInitialZoom(zoom);
+	viewportManager.setZoom(zoom);
+	renderSegmentedChoices();
+	saveSettings();
+});
+defaultCanvasSizeSelect?.addEventListener('change', () => {
+	if (defaultCanvasSizeSelect.value !== 'custom') syncDefaultCanvasInputsFromSelect();
+	saveSettings();
+});
+defaultCanvasWidthInput?.addEventListener('input', () => {
+	defaultCanvasSizeSelect.value = 'custom';
+	renderSegmentedChoices();
+	saveSettings();
+});
+defaultCanvasHeightInput?.addEventListener('input', () => {
+	defaultCanvasSizeSelect.value = 'custom';
+	renderSegmentedChoices();
+	saveSettings();
+});
 
 document.getElementById('history-export-all-btn')?.addEventListener('click', () => exportAllHistory());
 window.addEventListener('paint:history-export-item', (e) => {
@@ -1614,6 +1701,10 @@ window.addEventListener('paint:ai-chat-visibility-change', (event) => {
 });
 bgSelect.addEventListener('change', (e) => {
 	applyCanvasBackgroundMode(e.target.value);
+	saveSettings();
+});
+solidBackgroundColorInput?.addEventListener('input', (event) => {
+	canvasManager.setBackgroundColor(event.target.value);
 	saveSettings();
 });
 

@@ -71,6 +71,19 @@ test('Text font size is driven by the shared Shapes size-select (no separate dro
   assert.match(main, /getFontSize:\s*\(\)\s*=>\s*currentFontSize/);
 });
 
+test('Text editing keeps recent textarea history separate from deferred object editing', () => {
+	const textTool = read('js/tools/TextTool.js');
+	const historyStore = read('js/document/TextHistoryStore.js');
+	assert.match(historyStore, /export function createTextHistoryStore/);
+	assert.match(historyStore, /maxTextHistoryEntries/);
+	assert.match(textTool, /className = 'text-editor-shell'/);
+	assert.match(textTool, /className = 'text-history-select'/);
+	assert.match(textTool, /Restore recent text/);
+	assert.match(textTool, /textHistoryStore\?\.record/);
+	assert.match(textTool, /textHistoryStore\?\.clear/);
+	assert.match(main, /textHistoryStore/);
+});
+
 test('Keyboard paste defers to the native paste event for macOS support', () => {
   assert.match(read('js/main.js'), /document\.addEventListener\('paste'/);
   const shortcutBlock = main.match(/window\.addEventListener\('keydown'[\s\S]*?\n\}\);\n/)?.[0] || '';
@@ -259,7 +272,7 @@ test('New defaults are safe and configurable', () => {
 
 test('Ribbon layout and reusable segmented choices are wired', () => {
   assert.match(main, /new PanelLayoutManager/);
-  assert.match(main, /new SegmentedChoice/);
+  assert.match(main, /createSegmentedChoice/);
   assert.match(read('js/ui/PanelLayoutManager.js'), /ribbon-(top|left|right|bottom|float)/);
   assert.match(html, /id="ribbon-restore-toggle"/);
   assert.match(main, /paint:pending-history-save/);
@@ -392,7 +405,7 @@ test('Round-2 fixes: V glyph, session persistence, view-aware actions, storage m
   assert.match(main, /exportSessionEntry/);
   assert.match(main, /sidebar\.historyView === 'session'/);
   // 3. taller settings dialog + compact ribbon rows
-  assert.match(css, /height:\s*min\(560px,\s*88vh\)/);
+  assert.match(css, /height:\s*min\(470px,\s*88vh\)/);
   assert.match(css, /\.ribbon-setting-row:hover/);
   // 3.2 stable storage math: 2-decimal usage (0.00 only when truly empty),
   //     whole-MB capped quota, min-1% bar
@@ -458,6 +471,6 @@ test('select after draw: a lifted shape is a layer, and unload bakes it', () => 
   assert.match(toolManager, /if \(wasDragging\) this\._handle\('onUp', e\)/);
   // Both tools drop stale gesture state when activated, so a mid-gesture
   // switch can never leak a phantom drag into the new tool.
-  assert.match(read('js/tools/SelectTool.js'), /onActivate\(ctx\) \{[\s\S]*?this\._start = null;/);
-  assert.match(shapeTool, /onActivate\(\) \{[\s\S]*?this\._start = null;/);
+  assert.match(read('js/tools/SelectTool.js'), /function onActivate\(ctx\) \{[\s\S]*?state\.start = null;/);
+  assert.match(shapeTool, /function onActivate\(\) \{[\s\S]*?state\.start = null;/);
 });

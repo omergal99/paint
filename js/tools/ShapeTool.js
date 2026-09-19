@@ -3,35 +3,31 @@
 // the current ribbon selection. Drag previews live on the overlay; releasing
 // the mouse commits the final shape onto the real canvas.
 
-export class ShapeTool {
-  constructor() {
-    this.name = 'shape';
-    this.cursor = 'crosshair';
-    this._start = null;
-  }
+export function createShapeTool() {
+  const state = { start: null, button: 0 };
 
-  onActivate() {
+  function onActivate() {
     // Never resume a drag from before this tool (re)gained focus.
-    this._start = null;
+    state.start = null;
   }
 
-  onDown(pt, ctx) {
-    this._start = pt;
-    this._button = pt.button;
+  function onDown(pt) {
+    state.start = pt;
+    state.button = pt.button;
   }
 
-  onMove(pt, ctx) {
-    if (!this._start) return;
+  function onMove(pt, ctx) {
+    if (!state.start) return;
     ctx.canvasManager.clearOverlay();
-    this._draw(ctx.canvasManager.octx, ctx, this._start, pt, this._button);
+    draw(ctx.canvasManager.octx, ctx, state.start, pt, state.button);
   }
 
-  onUp(pt, ctx) {
-    if (!this._start) return;
+  function onUp(pt, ctx) {
+    if (!state.start) return;
     ctx.canvasManager.clearOverlay();
-    const start = this._start;
-    const button = this._button;
-    this._start = null;
+    const start = state.start;
+    const button = state.button;
+    state.start = null;
 
     // Optional "select after draw": lift the shape as a floating *layer* and
     // leave the main canvas untouched. The pixels behind it keep their original
@@ -40,7 +36,7 @@ export class ShapeTool {
     // click outside, via ctx.commitFloatingSelection(). After that one relocation
     // the shape is placed and the shape tool stays active so you can draw another
     // shape immediately; using Select afterward is up to the user.
-    if (ctx.getSelectAfterDraw?.() === true && this._liftAsSelection(ctx, start, pt, button)) {
+    if (ctx.getSelectAfterDraw?.() === true && liftAsSelection(ctx, start, pt, button)) {
       ctx.setActiveTool?.('select');
       // Defer re-activation of the shape tool to release, not to the lift.
       // If the user clicks away from the lifted shape, we restore the shape tool
@@ -50,7 +46,7 @@ export class ShapeTool {
     }
 
     ctx.historyManager.snapshot();
-    this._draw(ctx.canvasManager.ctx, ctx, start, pt, button);
+    draw(ctx.canvasManager.ctx, ctx, start, pt, button);
   }
 
   /**
@@ -58,7 +54,7 @@ export class ShapeTool {
    * bounds. Returns false (so the caller falls back to baking normally) when
    * nothing was painted.
    */
-  _liftAsSelection(ctx, start, end, button) {
+  function liftAsSelection(ctx, start, end, button) {
     const cm = ctx.canvasManager;
     const x = Math.min(start.x, end.x);
     const y = Math.min(start.y, end.y);
@@ -67,7 +63,7 @@ export class ShapeTool {
     if (w < 1 && h < 1) return false; // a click, not a drag
     const lifted = cm.renderShapeLayer(
       { x: Math.round(x), y: Math.round(y), w: Math.round(w), h: Math.round(h) },
-      (g) => this._draw(g, ctx, start, end, button),
+      (g) => draw(g, ctx, start, end, button),
       cm.lineWidth * 2, // stroke can overhang by lineWidth/2 on each side
     );
     if (!lifted) return false;
@@ -80,7 +76,7 @@ export class ShapeTool {
     return true;
   }
 
-  _draw(g, ctx, start, end, button) {
+  function draw(g, ctx, start, end, button) {
     const kind = ctx.getShapeKind();
     const fillMode = ctx.getShapeFillMode(); // 'outline' | 'fill' | 'outline-fill'
     const cm = ctx.canvasManager;
@@ -196,6 +192,17 @@ export class ShapeTool {
     }
     g.restore();
   }
+
+  return {
+    name: 'shape',
+    cursor: 'crosshair',
+    onActivate,
+    onDown,
+    onMove,
+    onUp,
+    _liftAsSelection: liftAsSelection,
+    _draw: draw,
+  };
 }
 
 function squareBounds(x, y, w, h, padding = 0.12) {

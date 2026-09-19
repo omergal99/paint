@@ -30,7 +30,7 @@ settings, events, storage, editable text, and future multi-document sessions.
 | P0 | 03 | History/session, settings, ribbon, menu, and alignment fixes | 02 |
 | P0 | 04 | Resize percentage/ratio/selection behavior and transparent PNG foundation | 02 |
 | P1 | 05 | Palette editing, alpha/transparent colors, migration | 02, 04 |
-| P1 | 06 | Editable/movable text, text formatting, text history, edit/reveal UX | 02, 04, 05 |
+| P1 | 06 | Safe textarea text history plus verified select-after-draw; editable text objects deferred | 02, 04, 05 |
 | P1 | 07 | Pointer performance, listener hygiene, EventBus adoption, telemetry lifecycle | 02, 03 |
 | P1 | 08 | Byte-bounded history, import limits, quota and IndexedDB recovery | 02, 03, 04 |
 | P1 | 09 | Incremental `main.js`/`Sidebar.js` modularization | 02, 03, 07, 08 |
@@ -44,7 +44,8 @@ settings, events, storage, editable text, and future multi-document sessions.
 1. **M0 — trusted baseline:** tests green, evidence captured, no hidden red gate.
 2. **M1 — daily-use UX:** history/session and ribbon/settings requests work.
 3. **M2 — safe canvas:** resize selection, alpha, PNG export, and memory limits work.
-4. **M3 — editable content:** text is a durable object, not an unrecoverable raster.
+4. **M3 — safe text workflow:** textarea history is bounded and reusable;
+   durable editable text remains gated by overlap proof.
 5. **M4 — maintainable runtime:** event/listener and module boundaries are explicit.
 6. **M5 — launch-ready:** browser QA, Lighthouse, PWA, and accessibility gates pass.
 7. **M6 — future workspace:** tabs/split/recovery can be added without another rewrite.
@@ -60,6 +61,9 @@ as a single broad rewrite.
 - Editable text compositing remains a design and proof obligation. If overlap,
   selection, and later editing cannot be made reliable, defer the full feature
   rather than ship a coordinate-only cache.
+- Step 06 is intentionally limited to textarea history and the verified
+  select-after-draw slice. Full text-object editing is a future-gated feature,
+  not a claim of the current raster path.
 - Python background removal is an optional provider, not a first-load runtime.
   Prefer tree-shakeable/lazy loading, a dedicated Worker, bounded inputs, and a
   self-hosted/versioned optional asset. Keep the JavaScript fallback usable.

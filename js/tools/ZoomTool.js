@@ -1,15 +1,9 @@
 // js/tools/ZoomTool.js
-export class ZoomTool {
-  constructor() {
-    this.name = 'zoom';
-    this.cursor = 'zoom-in';
-  }
-
-  onDown(pt, ctx) {
+export function createZoomTool() {
+  function onDown(pt, ctx) {
     const next = pt.button === 2 ? ctx.viewportManager.zoom - 50 : ctx.viewportManager.zoom + 50;
     ctx.viewportManager.setZoom(next);
   }
 
-  onMove() {}
-  onUp() {}
+  return { name: 'zoom', cursor: 'zoom-in', onDown, onMove() {}, onUp() {} };
 }

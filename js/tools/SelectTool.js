@@ -3,35 +3,29 @@
 // selection to move it (lifting the pixels and leaving a background-color hole,
 // same as classic Paint's "move selection" behavior).
 
-export class SelectTool {
-  constructor() {
-    this.name = 'select';
-    this.cursor = 'crosshair';
-    this._start = null;
-    this._moving = false;
-    this._liftedOrigin = null;
-  }
+export function createSelectTool() {
+  const state = { start: null, moving: false, liftedOrigin: null };
 
-  onActivate(ctx) {
+  function onActivate(ctx) {
     // Keep selection if it's already floating (e.g. on paste). Also drop any
     // gesture state a mid-gesture tool switch may have left behind — otherwise
     // the next plain mouse move would ghost-draw a marquee from a stale
     // pointerdown point.
-    this._start = null;
-    this._moving = false;
+    state.start = null;
+    state.moving = false;
   }
 
-  onDeactivate(ctx) {
+  function onDeactivate(ctx) {
     ctx.commitFloatingSelection();
   }
 
-  onDown(pt, ctx) {
+  function onDown(pt, ctx) {
     const sel = ctx.getSelection();
-    if (sel && this._inside(pt, sel)) {
+    if (sel && inside(pt, sel)) {
       // Begin moving the existing selection.
-      this._moving = true;
-      this._start = pt;
-      this._liftedOrigin = { x: sel.x, y: sel.y };
+      state.moving = true;
+      state.start = pt;
+      state.liftedOrigin = { x: sel.x, y: sel.y };
 
       // If it's not floating yet, lift the pixels now!
       if (!ctx.canvasManager.floatingCanvas) {
@@ -46,34 +40,34 @@ export class SelectTool {
     ctx.commitFloatingSelection();
 
     // Start drawing a new marquee box.
-    this._moving = false;
-    this._start = pt;
+    state.moving = false;
+    state.start = pt;
     ctx.setSelection({ x: Math.round(pt.x), y: Math.round(pt.y), w: 0, h: 0 });
   }
 
-  onMove(pt, ctx) {
-    if (!this._start) return;
-    if (this._moving) {
-      const dx = Math.round(pt.x - this._start.x);
-      const dy = Math.round(pt.y - this._start.y);
-      const x = this._liftedOrigin.x + dx;
-      const y = this._liftedOrigin.y + dy;
+  function onMove(pt, ctx) {
+    if (!state.start) return;
+    if (state.moving) {
+      const dx = Math.round(pt.x - state.start.x);
+      const dy = Math.round(pt.y - state.start.y);
+      const x = state.liftedOrigin.x + dx;
+      const y = state.liftedOrigin.y + dy;
       
       // Update coordinates of the selection. Since setSelection draws floatingCanvas at new coordinates on the overlay, this is all we need!
       ctx.setSelection({ x, y, w: ctx.canvasManager.floatingCanvas.width, h: ctx.canvasManager.floatingCanvas.height });
       return;
     }
-    const x = Math.min(this._start.x, pt.x);
-    const y = Math.min(this._start.y, pt.y);
-    const w = Math.abs(pt.x - this._start.x);
-    const h = Math.abs(pt.y - this._start.y);
+    const x = Math.min(state.start.x, pt.x);
+    const y = Math.min(state.start.y, pt.y);
+    const w = Math.abs(pt.x - state.start.x);
+    const h = Math.abs(pt.y - state.start.y);
     ctx.setSelection({ x: Math.round(x), y: Math.round(y), w: Math.round(w), h: Math.round(h) });
   }
 
-  onUp(pt, ctx) {
-    if (!this._start) return;
-    if (this._moving) {
-      this._moving = false;
+  function onUp(pt, ctx) {
+    if (!state.start) return;
+    if (state.moving) {
+      state.moving = false;
       ctx.canvasManager.persistToStorage();
     } else {
       // If we were drawing a marquee, check if it has 0 area.
@@ -82,10 +76,12 @@ export class SelectTool {
         ctx.setSelection(null);
       }
     }
-    this._start = null;
+    state.start = null;
   }
 
-  _inside(pt, sel) {
+  function inside(pt, sel) {
     return pt.x >= sel.x && pt.x <= sel.x + sel.w && pt.y >= sel.y && pt.y <= sel.y + sel.h;
   }
+
+  return { name: 'select', cursor: 'crosshair', onActivate, onDeactivate, onDown, onMove, onUp, _inside: inside };
 }

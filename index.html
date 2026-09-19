@@ -863,18 +863,18 @@
 			<h3>Resize canvas</h3>
 			<div class="resize-presets" id="resize-presets">
 				<span class="resize-presets-title">Quick sizes</span>
-				<button type="button" data-resize-preset="800x600">800 × 600</button>
-				<button type="button" data-resize-preset="1024x768">1024 × 768</button>
-				<button type="button" data-resize-preset="1000x1000">Square</button>
-				<button type="button" data-resize-preset="1123x794">A4 landscape</button>
-				<button type="button" data-resize-preset="794x1123">A4 portrait</button>
-				<button type="button" data-resize-preset="1600x1200">1600 × 1200</button>
-				<button type="button" data-resize-preset="1920x1080">Full HD</button>
-				<button type="button" data-resize-preset="2560x1440">2K</button>
-				<button type="button" data-resize-preset="3840x2160">4K</button>
+				<button type="button" data-resize-preset="800x600"><span class="resize-preset-name">800 × 600</span><span class="resize-preset-size">800 × 600 px</span></button>
+				<button type="button" data-resize-preset="1024x768"><span class="resize-preset-name">1024 × 768</span><span class="resize-preset-size">1024 × 768 px</span></button>
+				<button type="button" data-resize-preset="1000x1000"><span class="resize-preset-name">Square</span><span class="resize-preset-size">1000 × 1000 px</span></button>
+				<button type="button" data-resize-preset="1123x794"><span class="resize-preset-name">A4 landscape</span><span class="resize-preset-size">1123 × 794 px</span></button>
+				<button type="button" data-resize-preset="794x1123"><span class="resize-preset-name">A4 portrait</span><span class="resize-preset-size">794 × 1123 px</span></button>
+				<button type="button" data-resize-preset="1600x1200"><span class="resize-preset-name">1600 × 1200</span><span class="resize-preset-size">1600 × 1200 px</span></button>
+				<button type="button" data-resize-preset="1920x1080"><span class="resize-preset-name">Full HD</span><span class="resize-preset-size">1920 × 1080 px</span></button>
+				<button type="button" data-resize-preset="2560x1440"><span class="resize-preset-name">2K</span><span class="resize-preset-size">2560 × 1440 px</span></button>
+				<button type="button" data-resize-preset="3840x2160"><span class="resize-preset-name">4K</span><span class="resize-preset-size">3840 × 2160 px</span></button>
 			</div>
-			<label>Width (px) <input type="number" id="resize-width" data-tag="resize-width" min="1" max="10000" /></label>
-			<label>Height (px) <input type="number" id="resize-height" data-tag="resize-height" min="1" max="10000" /></label>
+			<label class="resize-dimension-row" for="resize-width"><span>Width (px)</span><input type="number" id="resize-width" data-tag="resize-width" min="1" max="10000" /></label>
+			<label class="resize-dimension-row" for="resize-height"><span>Height (px)</span><input type="number" id="resize-height" data-tag="resize-height" min="1" max="10000" /></label>
 			<div class="resize-scale-row">
 				<label for="resize-percent">Scale (%)</label>
 				<input type="number" id="resize-percent" data-tag="resize-percent" min="1" max="1000" step="1" value="100" />
@@ -918,7 +918,11 @@
 						<option value="grid">Gridlines</option>
 					</select>
 					<div class="choice-summary" id="setting-canvas-bg-choice" data-select-id="setting-canvas-bg">
-						<span class="choice-summary-label">Selected: <strong data-selected-label></strong></span>
+						<span class="choice-summary-label">Selected: <strong data-selected-label></strong>
+							<span class="choice-custom-inputs" data-solid-color-control hidden>
+								<input type="color" id="setting-solid-background-color" value="#ffffff" aria-label="Solid canvas background color" />
+							</span>
+						</span>
 					</div>
 				</div>
 				<div class="settings-field choice-field"><span>Default new image</span>
@@ -926,11 +930,18 @@
 						<option value="800x600">800 × 600</option>
 						<option value="1024x768">1024 × 768</option>
 						<option value="1000x1000">1000 × 1000 (square)</option>
-						<option value="1123x794">A4 landscape</option>
-						<option value="794x1123">A4 portrait</option>
+						<option value="1123x794">A4 landscape (1123 × 794)</option>
+						<option value="794x1123">A4 portrait (794 × 1123)</option>
+						<option value="custom">Custom</option>
 					</select>
 					<div class="choice-summary" id="setting-default-canvas-size-choice" data-select-id="setting-default-canvas-size">
-						<span class="choice-summary-label">Selected: <strong data-selected-label></strong></span>
+						<span class="choice-summary-label">Selected: <strong data-selected-label></strong>
+							<span class="choice-custom-inputs">
+								<input type="number" id="setting-default-canvas-width" min="1" max="10000" value="800" aria-label="Custom canvas width" />
+								<span class="choice-custom-separator" aria-hidden="true">×</span>
+								<input type="number" id="setting-default-canvas-height" min="1" max="10000" value="600" aria-label="Custom canvas height" />
+							</span>
+						</span>
 					</div>
 				</div>
 				<div class="settings-field choice-field"><span>Initial zoom</span>
@@ -941,9 +952,14 @@
 						<option value="125">125%</option>
 						<option value="150">150%</option>
 						<option value="200">200%</option>
+						<option value="custom">Custom</option>
 					</select>
 					<div class="choice-summary" id="setting-default-zoom-choice" data-select-id="setting-default-zoom">
-						<span class="choice-summary-label">Selected: <strong data-selected-label></strong></span>
+						<span class="choice-summary-label">Selected: <strong data-selected-label></strong>
+							<span class="choice-custom-inputs">
+								<input type="number" id="setting-default-zoom-custom" min="10" max="800" step="1" value="100" aria-label="Custom initial zoom percentage" />%
+							</span>
+						</span>
 					</div>
 				</div>
 			</form>

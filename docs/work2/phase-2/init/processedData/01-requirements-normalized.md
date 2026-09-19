@@ -18,7 +18,7 @@
 - Optional advanced Python background removal through an explicit adapter.
 - Palette right-click editing, transparent/alpha controls for both colors.
 - Text movement after creation, selection-after-draw option, range formatting,
-  local text history (5 visible, 30 maximum), right-click edit, reveal mode,
+  local text history (5 visible, 20 maximum), right-click edit, reveal mode,
   and an independent T/chevron split button.
 
 ## P1 — quality and architecture
@@ -31,4 +31,3 @@
 
 - Prepare and then implement Phase 1 tabs/split/session/recovery work only after
   document, storage, and history boundaries are stable.
-

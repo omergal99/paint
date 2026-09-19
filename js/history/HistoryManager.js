@@ -3,7 +3,10 @@
 // dimensions so resizing can also be undone. Session entries are deliberately
 // identified and ordered independently from the undo stack's implementation.
 
+import { summarizeHistoryMemory } from '../storage/MemoryBudget.js';
+
 const MAX_HISTORY = 20;
+const MAX_HISTORY_BYTES = 64 * 1024 * 1024;
 const SESSION_BACKUP_KEY = 'paint:session-backup';
 
 export class HistoryManager {
@@ -67,6 +70,7 @@ export class HistoryManager {
     this._lastSnapshotSig = sig || null;
     this.undoStack.push({ dataUrl, width, height, id: this._newId('session'), kind: 'session' });
     if (this.undoStack.length > MAX_HISTORY) this.undoStack.shift();
+    this._trimToByteBudget();
     this.redoStack = [];
     this._showCurrent = true;
     this._notify();
@@ -83,6 +87,7 @@ export class HistoryManager {
     };
     const prev = this.undoStack.pop();
     this.redoStack.push({ ...current, id: this._newId('redo'), kind: 'session' });
+    this._trimToByteBudget();
     await this.restore(prev);
     this._notify();
   }
@@ -96,6 +101,7 @@ export class HistoryManager {
     };
     const next = this.redoStack.pop();
     this.undoStack.push({ ...current, id: this._newId('session'), kind: 'session' });
+    this._trimToByteBudget();
     await this.restore(next);
     this._notify();
   }
@@ -130,6 +136,19 @@ export class HistoryManager {
   clearSession() { this.clear(); }
 
   persistSession() { this._persistSessionBackup(); }
+
+  getMemoryReport() {
+    return summarizeHistoryMemory([...this.undoStack, ...this.redoStack]);
+  }
+
+  _trimToByteBudget() {
+    while (this.getMemoryReport().undoBytes > MAX_HISTORY_BYTES && this.undoStack.length > 1) {
+      this.undoStack.shift();
+    }
+    while (this.getMemoryReport().undoBytes > MAX_HISTORY_BYTES && this.redoStack.length > 1) {
+      this.redoStack.shift();
+    }
+  }
 
   _getSnapshotEntries() {
     if (this.undoStack.length > 0) {

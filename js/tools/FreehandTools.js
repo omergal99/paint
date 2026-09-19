@@ -1,33 +1,28 @@
 // js/tools/FreehandTools.js
 // Pencil, Brush and Eraser share the same "drag to stroke a line" mechanics,
-// so they're built on one small base class and just differ in style.
+// so they're built on one small closure factory and just differ in style.
 
-class FreehandTool {
-  constructor(name, { sizeAware = true } = {}) {
-    this.name = name;
-    this.cursor = 'crosshair';
-    this.sizeAware = sizeAware;
-    this._drawing = false;
-    this._last = null;
-  }
+function createFreehandTool(name, { sizeAware = true } = {}) {
+  let drawing = false;
+  let last = null;
 
-  _strokeColorFor(button, ctx) {
+  function strokeColorFor(button, ctx) {
     return button === 2 ? ctx.canvasManager.secondaryColor : ctx.canvasManager.primaryColor;
   }
 
-  _applyStyle(pt, ctx) {
+  function applyStyle(pt, ctx) {
     const c = ctx.canvasManager.ctx;
     c.lineJoin = 'round';
     c.lineCap = 'round';
-    c.strokeStyle = this.name === 'eraser' ? ctx.canvasManager.backgroundColor : this._strokeColorFor(pt.button, ctx);
-    c.lineWidth = this.name === 'pencil' ? 1 : ctx.canvasManager.lineWidth;
+    c.strokeStyle = name === 'eraser' ? ctx.canvasManager.backgroundColor : strokeColorFor(pt.button, ctx);
+    c.lineWidth = name === 'pencil' ? 1 : ctx.canvasManager.lineWidth;
   }
 
-  onDown(pt, ctx) {
+  function onDown(pt, ctx) {
     ctx.historyManager.snapshot();
-    this._drawing = true;
-    this._last = pt;
-    this._applyStyle(pt, ctx);
+    drawing = true;
+    last = pt;
+    applyStyle(pt, ctx);
     const c = ctx.canvasManager.ctx;
     c.beginPath();
     c.moveTo(pt.x, pt.y);
@@ -35,32 +30,34 @@ class FreehandTool {
     c.stroke();
   }
 
-  onMove(pt, ctx) {
-    if (!this._drawing) return;
+  function onMove(pt, ctx) {
+    if (!drawing) return;
     const c = ctx.canvasManager.ctx;
     c.beginPath();
-    c.moveTo(this._last.x, this._last.y);
+    c.moveTo(last.x, last.y);
     c.lineTo(pt.x, pt.y);
     c.stroke();
-    this._last = pt;
+    last = pt;
   }
 
-  onUp() {
-    this._drawing = false;
-    this._last = null;
+  function onUp() {
+    drawing = false;
+    last = null;
   }
+
+  return { name, cursor: 'crosshair', sizeAware, onDown, onMove, onUp };
 }
 
 export function createPencilTool() {
-  return new FreehandTool('pencil');
+  return createFreehandTool('pencil');
 }
 
 export function createBrushTool() {
-  return new FreehandTool('brush');
+  return createFreehandTool('brush');
 }
 
 export function createEraserTool() {
-  const tool = new FreehandTool('eraser');
+  const tool = createFreehandTool('eraser');
   tool.cursor = 'cell';
   return tool;
 }
