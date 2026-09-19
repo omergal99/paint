@@ -1,6 +1,6 @@
 import { SCHEMA_VERSIONS, STORAGE_KEYS } from '../core/constants.js';
 
-function clone(value) {
+const clone = (value) => {
 	if (!value || typeof value !== 'object') return value;
 	try {
 		return typeof structuredClone === 'function'
@@ -11,7 +11,7 @@ function clone(value) {
 	}
 }
 
-function readStored(storage, key) {
+const readStored = (storage, key) => {
 	try {
 		const raw = storage?.getItem(key);
 		return raw ? JSON.parse(raw) : null;
@@ -20,17 +20,17 @@ function readStored(storage, key) {
 	}
 }
 
-export function createSettingsStore({
+export const createSettingsStore = ({
 	storage = globalThis.localStorage,
 	key = STORAGE_KEYS.settings,
 	defaults = {},
 	validators = {},
 	migrate = (value) => value,
-} = {}) {
+} = {}) => {
 	const base = clone(defaults) || {};
 	const listeners = new Set();
 
-	function normalize(value) {
+	const normalize = (value) => {
 		let migrated = value && typeof value === 'object' ? value : {};
 		try { migrated = migrate(migrated) || {}; } catch { migrated = {}; }
 		const next = { ...base, ...migrated };
@@ -42,7 +42,7 @@ export function createSettingsStore({
 
 	let state = normalize(readStored(storage, key));
 
-	function persist() {
+	const persist = () => {
 		try {
 			storage?.setItem(key, JSON.stringify({ ...state, schemaVersion: SCHEMA_VERSIONS.settings }));
 			return true;
@@ -51,7 +51,7 @@ export function createSettingsStore({
 		}
 	}
 
-	function notify() {
+	const notify = () => {
 		const snapshot = clone(state);
 		listeners.forEach((listener) => listener(snapshot));
 	}

@@ -2,15 +2,15 @@
 // Pencil, Brush and Eraser share the same "drag to stroke a line" mechanics,
 // so they're built on one small closure factory and just differ in style.
 
-function createFreehandTool(name, { sizeAware = true } = {}) {
+const createFreehandTool = (name, { sizeAware = true } = {}) => {
   let drawing = false;
   let last = null;
 
-  function strokeColorFor(button, ctx) {
+  const strokeColorFor = (button, ctx) => {
     return button === 2 ? ctx.canvasManager.secondaryColor : ctx.canvasManager.primaryColor;
   }
 
-  function applyStyle(pt, ctx) {
+  const applyStyle = (pt, ctx) => {
     const c = ctx.canvasManager.ctx;
     c.lineJoin = 'round';
     c.lineCap = 'round';
@@ -18,7 +18,7 @@ function createFreehandTool(name, { sizeAware = true } = {}) {
     c.lineWidth = name === 'pencil' ? 1 : ctx.canvasManager.lineWidth;
   }
 
-  function onDown(pt, ctx) {
+  const onDown = (pt, ctx) => {
     ctx.historyManager.snapshot();
     drawing = true;
     last = pt;
@@ -30,7 +30,7 @@ function createFreehandTool(name, { sizeAware = true } = {}) {
     c.stroke();
   }
 
-  function onMove(pt, ctx) {
+  const onMove = (pt, ctx) => {
     if (!drawing) return;
     const c = ctx.canvasManager.ctx;
     c.beginPath();
@@ -40,7 +40,7 @@ function createFreehandTool(name, { sizeAware = true } = {}) {
     last = pt;
   }
 
-  function onUp() {
+  const onUp = () => {
     drawing = false;
     last = null;
   }
@@ -48,15 +48,15 @@ function createFreehandTool(name, { sizeAware = true } = {}) {
   return { name, cursor: 'crosshair', sizeAware, onDown, onMove, onUp };
 }
 
-export function createPencilTool() {
+export const createPencilTool = () => {
   return createFreehandTool('pencil');
 }
 
-export function createBrushTool() {
+export const createBrushTool = () => {
   return createFreehandTool('brush');
 }
 
-export function createEraserTool() {
+export const createEraserTool = () => {
   const tool = createFreehandTool('eraser');
   tool.cursor = 'cell';
   return tool;

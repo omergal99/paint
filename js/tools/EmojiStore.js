@@ -9,7 +9,7 @@ export const EMOJI_CATALOG = Object.freeze([
 
 const EMOJI_KEY = 'paint:selected-emoji';
 
-export function getSelectedEmoji() {
+export const getSelectedEmoji = () => {
   try {
     const saved = localStorage.getItem(EMOJI_KEY);
     if (saved) return saved;
@@ -17,11 +17,11 @@ export function getSelectedEmoji() {
   return EMOJI_CATALOG[0];
 }
 
-export function setSelectedEmoji(emoji) {
+export const setSelectedEmoji = (emoji) => {
   try { localStorage.setItem(EMOJI_KEY, emoji); } catch {}
 }
 
-export function renderEmojiGrid({ container, onPick } = {}) {
+export const renderEmojiGrid = ({ container, onPick } = {}) => {
   if (!container) return;
   container.innerHTML = '';
   const current = getSelectedEmoji();

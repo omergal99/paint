@@ -5,7 +5,7 @@
 
 const normalize = (value) => String(value || '').trim().toLowerCase();
 
-function createCommandDefinitions(actions) {
+const createCommandDefinitions = (actions) => {
   return [
     {
       id: 'theme-dark',
@@ -119,7 +119,7 @@ function createCommandDefinitions(actions) {
   ];
 }
 
-export function createDeterministicCommandService(actions = {}) {
+export const createDeterministicCommandService = (actions = {}) => {
   const commands = createCommandDefinitions(actions);
 
   return {

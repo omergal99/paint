@@ -8,14 +8,14 @@ export const DEFAULT_MEMORY_BUDGET = Object.freeze({
 	maxScratchPixels: 16 * 1024 * 1024,
 });
 
-export function estimateDataUrlBytes(dataUrl) {
+export const estimateDataUrlBytes = (dataUrl) => {
 	if (typeof dataUrl !== 'string') return 0;
 	const comma = dataUrl.indexOf(',');
 	const payload = comma >= 0 ? dataUrl.slice(comma + 1) : dataUrl;
 	return Math.ceil(payload.replace(/\s/g, '').length * 3 / 4);
 }
 
-export function summarizeHistoryMemory(entries = []) {
+export const summarizeHistoryMemory = (entries = []) => {
 	const list = Array.isArray(entries) ? entries : [];
 	const undoBytes = list.reduce((total, entry) => total + estimateDataUrlBytes(entry?.dataUrl), 0);
 	return {
@@ -25,7 +25,7 @@ export function summarizeHistoryMemory(entries = []) {
 	};
 }
 
-export function makeMemoryReport({ historyEntries = [], decodedPixels = 0, scratchPixels = 0, objectUrlCount = 0 } = {}) {
+export const makeMemoryReport = ({ historyEntries = [], decodedPixels = 0, scratchPixels = 0, objectUrlCount = 0 } = {}) => {
 	return {
 		...summarizeHistoryMemory(historyEntries),
 		decodedPixels: Math.max(decodedPixels, summarizeHistoryMemory(historyEntries).decodedPixels),

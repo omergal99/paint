@@ -270,6 +270,51 @@ body {
 .ribbon-group-tools .tool-grid {
 	grid-template-columns: repeat(2, 1fr);
 }
+.text-tool-menu {
+	display: flex;
+	align-items: stretch;
+	gap: 0;
+}
+.text-tool-split {
+	display: flex;
+	align-items: stretch;
+}
+.text-tool-main {
+	border-radius: 2px 0 0 2px;
+}
+.text-tool-menu-arrow {
+	width: 15px;
+	min-width: 15px;
+	padding: 0 2px;
+	border: 1px solid var(--w10-border-strong);
+	border-left: 0;
+	border-radius: 0 2px 2px 0;
+	background: var(--w10-ribbon-bg);
+}
+.text-tool-menu-arrow .menu-arrow {
+	margin: 0;
+	font-size: 10px;
+}
+.text-tool-menu-items {
+	min-width: 286px;
+	max-width: min(360px, calc(100vw - 20px));
+	padding: 6px;
+}
+.text-tool-menu-items .menu-checkbox {
+	min-height: 28px;
+	padding: 5px 6px;
+}
+.menu-checkbox-disabled {
+	color: var(--w10-text-dim);
+	opacity: .82;
+}
+.menu-option-note {
+	display: block;
+	padding: 0 6px 5px;
+	color: var(--w10-text-dim);
+	font-size: 11px;
+	line-height: 1.3;
+}
 .ribbon-group-tools .tools-menu {
 	display: flex;
 	align-items: stretch;
@@ -1543,13 +1588,11 @@ body.dark-mode #history-clear-btn {
 
 .text-editor-shell {
 	position: absolute;
-	display: grid;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
 	gap: 3px;
 	min-width: 190px;
-	padding: 3px;
-	background: color-mix(in srgb, var(--w10-panel-bg, var(--w10-ribbon-bg)) 92%, transparent);
-	border: 1px solid var(--w10-border-strong);
-	border-radius: 3px;
 	z-index: 6;
 	user-select: text;
 }
@@ -1559,8 +1602,14 @@ body.dark-mode #history-clear-btn {
 	align-items: center;
 	gap: 3px;
 	min-height: 24px;
+	width: 100%;
+	padding: 2px 3px;
+	background: color-mix(in srgb, var(--w10-panel-bg, var(--w10-ribbon-bg)) 92%, transparent);
+	border: 1px solid var(--w10-border-strong);
+	border-radius: 3px;
 	font-size: 11px;
 	color: var(--w10-text-dim);
+	cursor: move;
 }
 .text-editor-toolbar-label {
 	padding: 0 2px;
@@ -1590,6 +1639,8 @@ body.dark-mode #history-clear-btn {
 	background: var(--w10-hover);
 }
 .op-text-box {
+	position: relative;
+	align-self: stretch;
 	min-width: 80px;
 	min-height: 1.4em;
 	background: rgba(255, 255, 255, 0.34);
@@ -1698,7 +1749,7 @@ dialog::backdrop {
 	background: rgba(0, 0, 0, 0.25);
 }
 dialog h3 {
-	margin: 0 0 12px;
+	margin: 0 0 6px;
 	font-size: 14px;
 }
 .app-dialog {
@@ -1785,10 +1836,25 @@ dialog h3 {
 }
 .settings-footer {
 	grid-column: 2;
+	grid-row: 3;
 	display: flex;
 	justify-content: flex-end;
 	align-items: center;
 	border-top: 1px solid var(--w10-border);
+}
+.settings-footer-nav {
+	grid-column: 1;
+	border-right: 1px solid var(--w10-border);
+}
+.settings-general-options {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 4px 10px;
+	margin-bottom: 10px;
+}
+.settings-general-options .checkbox-row {
+	min-width: 0;
+	margin-bottom: 0;
 }
 .settings-footer button {
 	padding: 5px 14px;
@@ -2051,9 +2117,9 @@ dialog h3 {
 	color: #9f1d1d;
 }
 .ribbon-setting-row {
-	display: flex;
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) max-content;
 	align-items: center;
-	justify-content: space-between;
 	gap: 8px;
 	padding: 3px 8px;
 	border: 1px solid transparent;
@@ -2065,9 +2131,17 @@ dialog h3 {
 	background: var(--w10-hover2);
 }
 .ribbon-setting-row .checkbox-row {
-	flex: 1;
 	min-width: 0;
 	margin: 0;
+}
+.ribbon-position-row {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) minmax(120px, max-content);
+	align-items: center;
+	gap: 8px;
+}
+.ribbon-position-row select {
+	width: 100%;
 }
 .ribbon-setting-details {
 	border: 1px solid var(--w10-border);

@@ -299,11 +299,48 @@
 										d="M11.197 2.43934C11.7828 1.85355 12.7326 1.85355 13.3184 2.43934L17.561 6.68198C18.1468 7.26777 18.1468 8.21751 17.561 8.8033L9.36408 17.0002H14.5001C14.7763 17.0002 15.0001 17.2241 15.0001 17.5002C15.0001 17.7764 14.7763 18.0002 14.5001 18.0002H7.81974C7.40996 18.0217 6.99303 17.876 6.68003 17.5629L2.43739 13.3203C1.8516 12.7345 1.8516 11.7848 2.43739 11.199L11.197 2.43934ZM12.6112 3.14645C12.416 2.95118 12.0994 2.95118 11.9041 3.14645L5.53846 9.51212L10.4882 14.4619L16.8539 8.09619C17.0491 7.90093 17.0491 7.58435 16.8539 7.38909L12.6112 3.14645ZM9.7811 15.169L4.83135 10.2192L3.14449 11.9061C2.94923 12.1014 2.94923 12.4179 3.14449 12.6132L7.38713 16.8558C7.5824 17.0511 7.89898 17.0511 8.09424 16.8558L9.7811 15.169Z" />
 								</svg>
 							</button>
-							<button class="rbtn cell tool-btn" data-tool="text" data-tag="tool-text" title="Text (T)">
-								<svg class="icon size5" viewBox="0 0 20 20">
-									<path d="M4 4h12M10 4v13" stroke-linecap="round" />
-								</svg>
-							</button>
+							<div class="action-menu text-tool-menu">
+								<div class="text-tool-split">
+									<button class="rbtn cell tool-btn text-tool-main" data-tool="text" data-tag="tool-text" title="Text (T)">
+										<svg class="icon size5" viewBox="0 0 20 20">
+											<path d="M4 4h12M10 4v13" stroke-linecap="round" />
+										</svg>
+									</button>
+									<button type="button" class="rbtn cell action-menu-trigger text-tool-menu-arrow" id="btn-text-menu"
+										title="Text options" aria-label="Text options"><span class="menu-arrow" aria-hidden="true">▾</span></button>
+								</div>
+								<div class="action-menu-items text-tool-menu-items" role="menu" aria-label="Text options">
+									<label class="menu-checkbox" title="Show or hide recent text controls in the editor">
+										<input type="checkbox" id="text-history-toolbar-toggle" /> Show Recent text toolbar
+									</label>
+									<label class="menu-checkbox menu-checkbox-disabled" title="Requires the future editable text layer">
+										<input type="checkbox" id="text-select-after-draw" disabled /> Select text after draw
+									</label>
+									<span class="menu-option-note" id="text-select-after-draw-note">Available after overlap-safe text editing is proven.</span>
+									<div class="text-style-picker" aria-label="Text styles">
+										<div class="text-style-picker-heading">
+											<span>Text style</span>
+											<span class="text-style-preview" id="text-style-preview">Aa</span>
+										</div>
+										<div class="text-style-options" id="text-style-options" role="group" aria-label="Toggle text styles">
+											<button type="button" class="text-style-option" data-text-style="outline"><span
+													class="style-sample">Aa</span><span>Outline</span></button>
+											<button type="button" class="text-style-option" data-text-style="black-outline"><span
+													class="style-sample">Aa</span><span>Black outline</span></button>
+											<button type="button" class="text-style-option" data-text-style="shadow"><span
+													class="style-sample">Aa</span><span>Shadow</span></button>
+											<button type="button" class="text-style-option" data-text-style="neon"><span
+													class="style-sample">Aa</span><span>Neon</span></button>
+											<button type="button" class="text-style-option" data-text-style="bold"><span
+													class="style-sample">B</span><span>Bold</span></button>
+											<button type="button" class="text-style-option" data-text-style="italic"><span
+													class="style-sample">I</span><span>Italic</span></button>
+											<button type="button" class="text-style-option" data-text-style="underline"><span
+													class="style-sample">U</span><span>Underline</span></button>
+										</div>
+									</div>
+								</div>
+							</div>
 							<button class="rbtn cell tool-btn" data-tool="eyedropper" data-tag="tool-eyedropper"
 								title="Color picker (K)">
 								<svg class="icon size5" viewBox="0 0 20 20">
@@ -340,28 +377,6 @@
 								role="menuitem">Color picker</button>
 							<button type="button" class="rbtn small tool-menu-item tool-btn" data-tool="zoom"
 								role="menuitem">Magnifier</button>
-							<div class="text-style-picker" aria-label="Text styles">
-								<div class="text-style-picker-heading">
-									<span>Text style</span>
-									<span class="text-style-preview" id="text-style-preview">Aa</span>
-								</div>
-								<div class="text-style-options" id="text-style-options" role="group" aria-label="Toggle text styles">
-									<button type="button" class="text-style-option" data-text-style="outline"><span
-											class="style-sample">Aa</span><span>Outline</span></button>
-									<button type="button" class="text-style-option" data-text-style="black-outline"><span
-											class="style-sample">Aa</span><span>Black outline</span></button>
-									<button type="button" class="text-style-option" data-text-style="shadow"><span
-											class="style-sample">Aa</span><span>Shadow</span></button>
-									<button type="button" class="text-style-option" data-text-style="neon"><span
-											class="style-sample">Aa</span><span>Neon</span></button>
-									<button type="button" class="text-style-option" data-text-style="bold"><span
-											class="style-sample">B</span><span>Bold</span></button>
-									<button type="button" class="text-style-option" data-text-style="italic"><span
-											class="style-sample">I</span><span>Italic</span></button>
-									<button type="button" class="text-style-option" data-text-style="underline"><span
-											class="style-sample">U</span><span>Underline</span></button>
-								</div>
-							</div>
 							<div class="style-history-block">
 								<span class="style-history-title">Recent styles</span>
 								<div id="style-history-list" class="style-history-list"></div>
@@ -904,12 +919,14 @@
 			</nav>
 			<form method="dialog" id="settings-form" class="settings-panel settings-body" data-settings-panel="general">
 				<h3>General</h3>
-				<label class="checkbox-row"><input type="checkbox" id="setting-dark-mode" /> Dark Mode</label>
-				<label class="checkbox-row"><input type="checkbox" id="setting-show-status-bar" checked /> Show Status
-					Bar</label>
-				<label class="checkbox-row"><input type="checkbox" id="setting-show-color-inspector" checked /> Show Color
-					Inspector</label>
-				<label class="checkbox-row"><input type="checkbox" id="setting-show-ai-chat" /> Show AI Chat</label>
+				<div class="settings-general-options" aria-label="General display options">
+					<label class="checkbox-row"><input type="checkbox" id="setting-dark-mode" /> Dark Mode</label>
+					<label class="checkbox-row"><input type="checkbox" id="setting-show-status-bar" checked /> Show Status
+						Bar</label>
+					<label class="checkbox-row"><input type="checkbox" id="setting-show-color-inspector" checked /> Show Color
+						Inspector</label>
+					<label class="checkbox-row"><input type="checkbox" id="setting-show-ai-chat" /> Show AI Chat</label>
+				</div>
 				<div class="settings-field choice-field"><span>Canvas Background</span>
 					<select id="setting-canvas-bg">
 						<option value="none">Solid Color</option>
@@ -1000,7 +1017,7 @@
 				<h3>Ribbon</h3>
 				<p>Choose which ribbon groups are visible. Detailed group options open in the sidebar.</p>
 				<label class="checkbox-row"><input type="checkbox" id="setting-show-ribbon" checked /> Show ribbon</label>
-				<label class="settings-field">Ribbon position
+				<label class="settings-field ribbon-position-row">Ribbon position
 					<select id="setting-ribbon-position">
 						<option value="top">Top</option>
 						<option value="left">Left</option>
@@ -1060,6 +1077,7 @@
 						rel="noopener noreferrer">Browse existing issues</a>
 				</div>
 			</section>
+			<div class="settings-footer settings-footer-nav" aria-hidden="true"></div>
 			<footer class="settings-footer"><button type="button" id="settings-footer-close">Close</button></footer>
 		</div>
 	</dialog>

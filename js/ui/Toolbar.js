@@ -1,8 +1,10 @@
 // js/ui/Toolbar.js
 import { createSliderControl } from './SliderControl.js';
 import { getSelectedEmoji, setSelectedEmoji, renderEmojiGrid } from '../tools/EmojiStore.js';
+import { STORAGE_KEYS } from '../core/constants.js';
 const SHAPE_STORAGE_KEY = 'paint:selected-shape';
 const SHAPE_AFTER_DRAW_KEY = 'paint:shape-select-after-draw';
+const TEXT_HISTORY_TOOLBAR_KEY = STORAGE_KEYS.textHistoryToolbar;
 const STYLE_STORAGE_KEY = 'paint:tool-styles';
 const STYLE_HISTORY_KEY = 'paint:style-history';
 
@@ -28,6 +30,7 @@ export class Toolbar {
     this._bindFillModes();
     this._bindLineSize(setLineWidth, setFontSize);
     this._bindSelectAfterDraw();
+    this._bindTextOptions();
     this._bindFileButtons();
     this._bindUndoRedo();
 
@@ -180,6 +183,24 @@ export class Toolbar {
   }
 
   getSelectAfterDraw() { return this._selectAfterDraw === true; }
+
+  getTextHistoryToolbarVisible() { return this._showTextHistoryToolbar !== false; }
+
+  _bindTextOptions() {
+    let saved = true;
+    try {
+      const value = localStorage.getItem(TEXT_HISTORY_TOOLBAR_KEY);
+      if (value !== null) saved = value === 'true';
+    } catch {}
+    this._showTextHistoryToolbar = saved;
+    const historyToolbarToggle = this.root.querySelector('#text-history-toolbar-toggle');
+    if (!historyToolbarToggle) return;
+    historyToolbarToggle.checked = saved;
+    historyToolbarToggle.addEventListener('change', () => {
+      this._showTextHistoryToolbar = historyToolbarToggle.checked === true;
+      try { localStorage.setItem(TEXT_HISTORY_TOOLBAR_KEY, String(this._showTextHistoryToolbar)); } catch {}
+    });
+  }
 
   _bindSelectAfterDraw() {
     let saved = false;

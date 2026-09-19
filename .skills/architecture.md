@@ -16,4 +16,7 @@ modules. Keep mutable state private inside a factory and return a small frozen
 or clearly documented API. Do not introduce a class merely to group methods;
 when migrating an existing class, preserve its public contract at the boundary,
 move state behind a factory, and convert one dependency seam at a time so the
-canvas/editor behavior remains testable.
+canvas/editor behavior remains testable. Use `const name = (...) => {}` for
+named standalone functions, including exported functions; this keeps the
+functional style consistent and makes declaration order explicit. Class methods
+remain methods until their owning class is migrated at a tested seam.

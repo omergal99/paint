@@ -6,7 +6,7 @@
 
 import { rgbToHex } from '../utils/color.js';
 
-export function createEyedropperTool() {
+export const createEyedropperTool = () => {
     const balloon = document.getElementById('magnifier-balloon');
     const magCanvas = document.getElementById('magnifier-canvas');
     const magCtx = magCanvas?.getContext('2d');
@@ -14,11 +14,11 @@ export function createEyedropperTool() {
       magCtx.imageSmoothingEnabled = false; // keep it pixelated
     }
 
-  function hideBalloon() {
+  const hideBalloon = () => {
     if (balloon) balloon.style.display = 'none';
   }
 
-  function onDown(pt, ctx) {
+  const onDown = (pt, ctx) => {
     const { r, g, b } = ctx.canvasManager.getPixelColor(pt.x, pt.y);
     const hex = rgbToHex(r, g, b);
     if (pt.button === 2) ctx.setSecondaryColor(hex);
@@ -27,7 +27,7 @@ export function createEyedropperTool() {
     ctx.setActiveTool?.(ctx.getPreviousTool?.() || 'select');
   }
 
-  function onMove(pt, ctx, e) {
+  const onMove = (pt, ctx, e) => {
     if (!balloon || !magCtx) return;
     
     // Position balloon

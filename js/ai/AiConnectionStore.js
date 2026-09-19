@@ -15,7 +15,7 @@ const publicState = (state) => ({
   connected: state.provider === 'local',
 });
 
-export function createAiConnectionStore({ storage = globalThis.localStorage, storageKey = 'paint:ai-connection' } = {}) {
+export const createAiConnectionStore = ({ storage = globalThis.localStorage, storageKey = 'paint:ai-connection' } = {}) => {
   let state = { ...DEFAULT_STATE };
   let shouldCleanLegacyCredentials = false;
 

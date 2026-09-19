@@ -2,7 +2,7 @@ const DATABASE_NAME = 'paint-workspace';
 const STORE_NAME = 'documents';
 const DOCUMENT_KEY = 'last-canvas';
 
-function openDatabase() {
+const openDatabase = () => {
   return new Promise((resolve, reject) => {
     if (!('indexedDB' in window)) {
       reject(new Error('IndexedDB is unavailable'));
@@ -15,7 +15,7 @@ function openDatabase() {
   });
 }
 
-function requestTransaction(mode, operation) {
+const requestTransaction = (mode, operation) => {
   return openDatabase().then((database) => new Promise((resolve, reject) => {
     const transaction = database.transaction(STORE_NAME, mode);
     const request = operation(transaction.objectStore(STORE_NAME));
@@ -26,7 +26,7 @@ function requestTransaction(mode, operation) {
   }));
 }
 
-export async function saveCanvasState(canvas, metadata = {}) {
+export const saveCanvasState = async (canvas, metadata = {}) => {
   try {
     const blob = await new Promise((resolve, reject) => {
       canvas.toBlob((value) => value ? resolve(value) : reject(new Error('Canvas encoding failed')), 'image/png');
@@ -45,7 +45,7 @@ export async function saveCanvasState(canvas, metadata = {}) {
   }
 }
 
-export async function loadCanvasState() {
+export const loadCanvasState = async () => {
   try {
     return await requestTransaction('readonly', (store) => store.get(DOCUMENT_KEY)) || null;
   } catch (error) {
@@ -54,7 +54,7 @@ export async function loadCanvasState() {
   }
 }
 
-export async function clearCanvasState() {
+export const clearCanvasState = async () => {
   try {
     await requestTransaction('readwrite', (store) => store.delete(DOCUMENT_KEY));
     return true;
@@ -64,7 +64,7 @@ export async function clearCanvasState() {
   }
 }
 
-export function installCanvasAutosave({ canvas, eventTarget = window, debounceMs = 700 }) {
+export const installCanvasAutosave = ({ canvas, eventTarget = window, debounceMs = 700 }) => {
   let timer = 0;
   const save = () => {
     window.clearTimeout(timer);

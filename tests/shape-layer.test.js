@@ -57,7 +57,7 @@ globalThis.document = globalThis.document || { createElement: () => new FakeCanv
  * (-x0, -y0) and this harness records that origin, so masks can be written in
  * the same coordinates the app draws in.
  */
-function inkMask(rect) {
+const inkMask = (rect) => {
   return (sw, sh) => {
     const ox = scratchOrigin.x;
     const oy = scratchOrigin.y;
@@ -75,11 +75,11 @@ function inkMask(rect) {
 }
 
 /** Scratch-local coordinates of a canvas-coordinate rect. */
-function toLocal(rect) {
+const toLocal = (rect) => {
   return [rect.x - scratchOrigin.x, rect.y - scratchOrigin.y, rect.w, rect.h];
 }
 
-function makeCanvasManager(width = 400, height = 300) {
+const makeCanvasManager = (width = 400, height = 300) => {
   return new CanvasManager({
     canvas: new FakeCanvas(),
     overlay: new FakeCanvas(),
@@ -89,7 +89,7 @@ function makeCanvasManager(width = 400, height = 300) {
   });
 }
 
-function makeToolContext(canvasManager, historySink = []) {
+const makeToolContext = (canvasManager, historySink = []) => {
   let selection = null;
   return {
     canvasManager,

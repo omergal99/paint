@@ -5,7 +5,8 @@
 New modules use pure functions or closure factories. State stays private and
 the returned API is small; a class is not added just to group methods. Existing
 classes migrate at dependency seams with contract tests before their callers
-change.
+change. Named standalone functions use `const name = (...) => {}` (including
+exports); class methods remain methods until the class boundary is migrated.
 
 ## Completed in this pass
 
@@ -22,6 +23,9 @@ change.
 - `tools/ShapeTool.js` → `createShapeTool`
 - `document/TextDocumentStore.js` and `storage/MemoryBudget.js` were added as
   functional modules from the start.
+- All standalone named function declarations in `js/`, `tests/`, and
+  `scripts/` were converted to arrow constants. This is a syntax/style
+  migration only; class owners remain unchanged and are still listed below.
 
 ## Remaining class owners
 

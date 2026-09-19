@@ -12,6 +12,7 @@ step that owns them and must pass the documented gates.
 - [Traceability matrix](TRACEABILITY-MATRIX.md) — every user request mapped to a step.
 - [Quality gates](QUALITY-GATES.md) — tests, performance, memory, Lighthouse, and release gates.
 - [Decisions](DECISIONS.md) — decisions and unresolved owner choices.
+- [Phase 2 status](PHASE-2-STATUS.md) — current delivery status and quick UI checks for every step.
 - [Progress log](PROGRESS-LOG.md) — planning and later implementation evidence.
 - [HTML overview](PLAN-OVERVIEW.html) — visual overview with Mermaid diagrams.
 
@@ -23,7 +24,7 @@ feature is to describe.
 
 ## Planning status
 
-- Status: **Steps 01–04 implemented and verified; Steps 05–13 remain planned**.
+- Status: **Steps 01–04 verified; Step 05/07/08 foundations delivered; Step 06 safe slice delivered; remaining gates are tracked in `PHASE-2-STATUS.md`**.
 - Existing Phase 1 is treated as historical input, not blindly repeated.
 - The referenced `paint/docs/w2/PLAN-OVERVIEW.html` does not exist in this
   checkout. Existing Phase 1 documents are used instead, and the missing-file

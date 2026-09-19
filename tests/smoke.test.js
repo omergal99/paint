@@ -74,7 +74,7 @@ test('Text font size is driven by the shared Shapes size-select (no separate dro
 test('Text editing keeps recent textarea history separate from deferred object editing', () => {
 	const textTool = read('js/tools/TextTool.js');
 	const historyStore = read('js/document/TextHistoryStore.js');
-	assert.match(historyStore, /export function createTextHistoryStore/);
+	assert.match(historyStore, /export const createTextHistoryStore/);
 	assert.match(historyStore, /maxTextHistoryEntries/);
 	assert.match(textTool, /className = 'text-editor-shell'/);
 	assert.match(textTool, /className = 'text-history-select'/);
@@ -210,7 +210,7 @@ test('Floating ribbon and side layouts remain scrollable and resizable', () => {
 test('AI chat exposes safe deterministic actions through one command service', () => {
   const ai = read('js/ai/DeterministicCommandService.js');
   assert.match(html, /id="ai-chat-actions"/);
-  assert.match(ai, /export function createDeterministicCommandService/);
+	assert.match(ai, /export const createDeterministicCommandService/);
   assert.match(ai, /theme-dark/);
   assert.match(ai, /background-checkerboard/);
   assert.match(ai, /flip-horizontal/);
@@ -286,7 +286,7 @@ test('Text editor alignment scales from one layout object', () => {
   assert.match(textTool, /canvasTextOffsetPercent/);
   assert.match(textTool, /lineHeightPercent/);
   assert.match(textTool, /fontSize \* TEXT_EDITOR_LAYOUT\.topOffsetPercent/);
-  assert.match(textTool, /export function createTextTool/);
+	assert.match(textTool, /export const createTextTool/);
   assert.doesNotMatch(textTool, /class\s+TextTool/);
 });
 
@@ -471,6 +471,6 @@ test('select after draw: a lifted shape is a layer, and unload bakes it', () => 
   assert.match(toolManager, /if \(wasDragging\) this\._handle\('onUp', e\)/);
   // Both tools drop stale gesture state when activated, so a mid-gesture
   // switch can never leak a phantom drag into the new tool.
-  assert.match(read('js/tools/SelectTool.js'), /function onActivate\(ctx\) \{[\s\S]*?state\.start = null;/);
-  assert.match(shapeTool, /function onActivate\(\) \{[\s\S]*?state\.start = null;/);
+	assert.match(read('js/tools/SelectTool.js'), /const onActivate = \(ctx\) => \{[\s\S]*?state\.start = null;/);
+	assert.match(shapeTool, /const onActivate = \(\) => \{[\s\S]*?state\.start = null;/);
 });

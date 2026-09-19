@@ -4,7 +4,7 @@ import { DEFAULT_PALETTE } from '../utils/color.js';
 
 const COLOR_RE = /^#[0-9a-f]{6}$/i;
 
-export function createColorPalette({ gridEl, primarySwatchEl, secondarySwatchEl, colorPickerInput, onPrimaryChange, onSecondaryChange }) {
+export const createColorPalette = ({ gridEl, primarySwatchEl, secondarySwatchEl, colorPickerInput, onPrimaryChange, onSecondaryChange }) => {
   const savedColors = loadSavedColors();
   let palette = normalizePalette(savedColors.palette || DEFAULT_PALETTE);
   let defaultPrimary = COLOR_RE.test(savedColors.defaultPrimary || '') ? savedColors.defaultPrimary.toLowerCase() : '#a349a4';
@@ -14,7 +14,7 @@ export function createColorPalette({ gridEl, primarySwatchEl, secondarySwatchEl,
   let secondaryAlpha = normalizeAlpha(savedColors.secondaryAlpha);
   let editing = 'primary';
 
-  function renderGrid() {
+  const renderGrid = () => {
     gridEl.innerHTML = '';
     palette.forEach((hex) => {
       const button = document.createElement('button');
@@ -29,13 +29,13 @@ export function createColorPalette({ gridEl, primarySwatchEl, secondarySwatchEl,
     });
   }
 
-  function openPicker(which) {
+  const openPicker = (which) => {
     editing = which;
     colorPickerInput.value = which === 'secondary' ? secondary : primary;
     colorPickerInput.click();
   }
 
-  function bindSwatches() {
+  const bindSwatches = () => {
     primarySwatchEl.addEventListener('click', () => openPicker('primary'));
     secondarySwatchEl.addEventListener('click', () => openPicker('secondary'));
     colorPickerInput.addEventListener('input', () => {
@@ -44,7 +44,7 @@ export function createColorPalette({ gridEl, primarySwatchEl, secondarySwatchEl,
     });
   }
 
-  function setPrimary(hex, alpha = primaryAlpha) {
+  const setPrimary = (hex, alpha = primaryAlpha) => {
     if (!COLOR_RE.test(hex)) return false;
     primary = hex.toLowerCase();
     primaryAlpha = normalizeAlpha(alpha);
@@ -54,7 +54,7 @@ export function createColorPalette({ gridEl, primarySwatchEl, secondarySwatchEl,
     return true;
   }
 
-  function setSecondary(hex, alpha = secondaryAlpha) {
+  const setSecondary = (hex, alpha = secondaryAlpha) => {
     if (!COLOR_RE.test(hex)) return false;
     secondary = hex.toLowerCase();
     secondaryAlpha = normalizeAlpha(alpha);
@@ -64,9 +64,9 @@ export function createColorPalette({ gridEl, primarySwatchEl, secondarySwatchEl,
     return true;
   }
 
-  function getPalette() { return [...palette]; }
+  const getPalette = () => { return [...palette]; }
 
-  function setPalette(colors) {
+  const setPalette = (colors) => {
     const next = normalizePalette(colors);
     if (!next.length) return false;
     palette = next;
@@ -75,14 +75,14 @@ export function createColorPalette({ gridEl, primarySwatchEl, secondarySwatchEl,
     return true;
   }
 
-  function setDefaultPrimary(hex) {
+  const setDefaultPrimary = (hex) => {
     if (!COLOR_RE.test(hex)) return false;
     defaultPrimary = hex.toLowerCase();
     saveColors();
     return true;
   }
 
-  function resetToDefaults() {
+  const resetToDefaults = () => {
     palette = [...DEFAULT_PALETTE];
     defaultPrimary = '#a349a4';
     primary = defaultPrimary;
@@ -97,7 +97,7 @@ export function createColorPalette({ gridEl, primarySwatchEl, secondarySwatchEl,
     onSecondaryChange?.(secondary, secondaryAlpha);
   }
 
-  function saveColors() {
+  const saveColors = () => {
     try {
       localStorage.setItem('paint:colors', JSON.stringify({
         primary,
@@ -133,18 +133,18 @@ export function createColorPalette({ gridEl, primarySwatchEl, secondarySwatchEl,
   });
 }
 
-function normalizeAlpha(value) {
+const normalizeAlpha = (value) => {
   const alpha = Number(value);
   return Number.isFinite(alpha) ? Math.max(0, Math.min(1, alpha)) : 1;
 }
 
-function normalizePalette(colors) {
+const normalizePalette = (colors) => {
   if (!Array.isArray(colors)) return [...DEFAULT_PALETTE];
   const valid = colors.filter((hex) => typeof hex === 'string' && COLOR_RE.test(hex));
   return valid.length ? valid.map((hex) => hex.toLowerCase()) : [...DEFAULT_PALETTE];
 }
 
-function loadSavedColors() {
+const loadSavedColors = () => {
   try {
     const saved = localStorage.getItem('paint:colors');
     return saved ? JSON.parse(saved) : {};

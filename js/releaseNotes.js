@@ -27,5 +27,5 @@ export const RELEASE_NOTES = Object.freeze([
   },
 ]);
 
-export function getReleaseNotes() { return RELEASE_NOTES; }
-export function getAppVersion() { return APP_VERSION; }
+export const getReleaseNotes = () => { return RELEASE_NOTES; }
+export const getAppVersion = () => { return APP_VERSION; }

@@ -8,17 +8,17 @@ import { LIMITS, STORAGE_KEYS } from '../core/constants.js';
 const MAX_ENTRIES = LIMITS.maxTextHistoryEntries;
 const MAX_TEXT_LENGTH = 10000;
 
-function clone(value) {
+const clone = (value) => {
 	return typeof structuredClone === 'function'
 		? structuredClone(value)
 		: JSON.parse(JSON.stringify(value));
 }
 
-function makeId() {
+const makeId = () => {
 	return `text-history-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-function normalizeEntry(value = {}) {
+const normalizeEntry = (value = {}) => {
 	const text = String(value.text ?? '').slice(0, MAX_TEXT_LENGTH);
 	if (!text.trim()) return null;
 	return {
@@ -31,7 +31,7 @@ function normalizeEntry(value = {}) {
 	};
 }
 
-function readEntries(storage, key) {
+const readEntries = (storage, key) => {
 	try {
 		const parsed = JSON.parse(storage?.getItem(key) || '[]');
 		if (!Array.isArray(parsed)) return [];
@@ -41,20 +41,20 @@ function readEntries(storage, key) {
 	}
 }
 
-export function createTextHistoryStore({
+export const createTextHistoryStore = ({
 	storage = globalThis.localStorage,
 	key = STORAGE_KEYS.textHistory,
 	maxEntries = MAX_ENTRIES,
-} = {}) {
+} = {}) => {
 	const limit = Math.max(1, Math.min(MAX_ENTRIES, Number(maxEntries) || MAX_ENTRIES));
 	let entries = readEntries(storage, key).slice(0, limit);
 	const listeners = new Set();
 
-	function getAll() {
+	const getAll = () => {
 		return clone(entries);
 	}
 
-	function persist() {
+	const persist = () => {
 		try {
 			if (entries.length) storage?.setItem(key, JSON.stringify(entries));
 			else storage?.removeItem(key);
@@ -63,12 +63,12 @@ export function createTextHistoryStore({
 		}
 	}
 
-	function notify() {
+	const notify = () => {
 		const snapshot = getAll();
 		listeners.forEach((listener) => listener(snapshot));
 	}
 
-	function record(value) {
+	const record = (value) => {
 		const next = normalizeEntry(value);
 		if (!next) return null;
 		const signature = `${next.text}\u0000${next.styles.join(',')}\u0000${next.fontSize}\u0000${next.fontFamily}`;
@@ -81,7 +81,7 @@ export function createTextHistoryStore({
 		return clone(next);
 	}
 
-	function remove(id) {
+	const remove = (id) => {
 		const next = entries.filter((entry) => entry.id !== id);
 		if (next.length === entries.length) return false;
 		entries = next;
@@ -90,7 +90,7 @@ export function createTextHistoryStore({
 		return true;
 	}
 
-	function clear() {
+	const clear = () => {
 		if (!entries.length) return false;
 		entries = [];
 		persist();
@@ -98,7 +98,7 @@ export function createTextHistoryStore({
 		return true;
 	}
 
-	function subscribe(listener) {
+	const subscribe = (listener) => {
 		if (typeof listener !== 'function') return () => {};
 		listeners.add(listener);
 		return () => listeners.delete(listener);

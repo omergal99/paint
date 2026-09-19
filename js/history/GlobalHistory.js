@@ -185,7 +185,7 @@ export class GlobalHistory {
 // Downscaled preview (max 160px, webp q0.6 → jpeg fallback) used by the
 // history grid. Full image is kept in `dataUrl` and decoded only on load,
 // so this runs once per save, never on the stroke hot path.
-export async function makeThumbnail(dataUrl, width, height) {
+export const makeThumbnail = async (dataUrl, width, height) => {
   const bitmap = await createImageBitmapFromDataUrl(dataUrl);
   const scale = Math.min(1, THUMB_MAX / Math.max(1, Math.max(bitmap.width, bitmap.height)));
   const w = Math.max(1, Math.round(bitmap.width * scale));
@@ -204,7 +204,7 @@ export async function makeThumbnail(dataUrl, width, height) {
   return null;
 }
 
-function createImageBitmapFromDataUrl(dataUrl) {
+const createImageBitmapFromDataUrl = (dataUrl) => {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.onload = () => {

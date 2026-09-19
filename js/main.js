@@ -99,7 +99,7 @@ const colorInspector = createColorInspector({
 });
 const colorInspectorEl = document.getElementById('color-inspector');
 const colorInspectorToggle = document.getElementById('ci-toggle');
-function setColorInspectorCollapsed(collapsed) {
+const setColorInspectorCollapsed = (collapsed) => {
 	if (!colorInspectorEl || !colorInspectorToggle) return;
 	colorInspectorEl.classList.toggle('collapsed', collapsed);
 	const button = colorInspectorToggle;
@@ -139,7 +139,7 @@ const aiConnectionStore = createAiConnectionStore();
 const sidebar = new Sidebar({ canvasManager, historyManager, statusBar, palette: colorPalette, dialogService, aiConnectionStore });
 
 // ---------- Selection state + overlay drawing ----------
-function drawSelectionOutline(region) {
+const drawSelectionOutline = (region) => {
 	const g = canvasManager.octx;
 	g.save();
 	g.strokeStyle = '#0078d4';
@@ -149,21 +149,21 @@ function drawSelectionOutline(region) {
 	g.restore();
 }
 
-function getSelection() {
+const getSelection = () => {
 	return canvasManager.selection;
 }
 
 let selectionRotation = null;
-function sameRegion(a, b) {
+const sameRegion = (a, b) => {
 	return a && b && ['x', 'y', 'w', 'h'].every((key) => a[key] === b[key]);
 }
-function sameRotationCenter(a, b) {
+const sameRotationCenter = (a, b) => {
 	if (!a || !b) return false;
 	return Math.abs((a.x + a.w / 2) - (b.x + b.w / 2)) < 0.5
 		&& Math.abs((a.y + a.h / 2) - (b.y + b.h / 2)) < 0.5;
 }
 
-function setSelection(region, opts = {}) {
+const setSelection = (region, opts = {}) => {
 	// Quarter-turn rotations legitimately swap the selection dimensions. Keep
 	// the original pixel snapshot while the center remains anchored, otherwise
 	// the next rotation would use an already fitted/shrunk result as its base.
@@ -185,7 +185,7 @@ const selectionHandles = [...document.querySelectorAll('[data-selection-handle]'
 const rotateSelectionHandle = document.getElementById('selection-rotate');
 let activeToolName = 'select';
 
-function updateSelectionHandles(region) {
+const updateSelectionHandles = (region) => {
 	const selectionToolActive = activeToolName === 'select';
 	selectionHandles.forEach((handle) => {
 		handle.hidden = !selectionToolActive || !region || !region.w || !region.h;
@@ -211,7 +211,7 @@ function updateSelectionHandles(region) {
 	});
 }
 
-function bindSelectionHandles() {
+const bindSelectionHandles = () => {
 	selectionHandles.forEach((handle) => {
 		handle.addEventListener('pointerdown', (event) => {
 			event.preventDefault();
@@ -264,7 +264,7 @@ function bindSelectionHandles() {
 	});
 }
 
-function commitFloatingSelection() {
+const commitFloatingSelection = () => {
 	if (canvasManager.floatingCanvas && canvasManager.selection) {
 		canvasManager.ctx.drawImage(canvasManager.floatingCanvas, canvasManager.selection.x, canvasManager.selection.y);
 		canvasManager.floatingCanvas = null;
@@ -289,7 +289,7 @@ function commitFloatingSelection() {
 	}
 }
 
-function discardFloatingSelection() {
+const discardFloatingSelection = () => {
 	if (canvasManager.floatingCanvas) {
 		canvasManager.floatingCanvas = null;
 		selectionRotation = null;
@@ -298,7 +298,7 @@ function discardFloatingSelection() {
 }
 
 // ---------- Shared tool context ----------
-function saveToolSelection(toolName) {
+const saveToolSelection = (toolName) => {
 	try {
 		localStorage.setItem('paint:selected-tool', toolName);
 	} catch (err) {
@@ -306,7 +306,7 @@ function saveToolSelection(toolName) {
 	}
 }
 
-function restoreToolSelection() {
+const restoreToolSelection = () => {
 	try {
 		const saved = localStorage.getItem('paint:selected-tool');
 		return saved || 'select';
@@ -342,11 +342,11 @@ let selectedTextStyles = (() => {
 	}
 })();
 
-function getTextStyles() {
+const getTextStyles = () => {
 	return [...selectedTextStyles];
 }
 
-function renderTextStyleControls() {
+const renderTextStyleControls = () => {
 	const color = colorPalette.primary;
 	document.querySelectorAll('.text-style-option').forEach((button) => {
 		const active = selectedTextStyles.includes(button.dataset.textStyle);
@@ -362,7 +362,7 @@ function renderTextStyleControls() {
 	}
 }
 
-function saveTextStyles() {
+const saveTextStyles = () => {
 	try { localStorage.setItem(TEXT_STYLES_KEY, JSON.stringify(selectedTextStyles)); } catch { }
 	renderTextStyleControls();
 }
@@ -392,6 +392,7 @@ const toolContext = {
 	getFontSize: () => currentFontSize,
 	getFontFamily: () => "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
 	getTextStyle: getTextStyles,
+	getTextHistoryToolbarVisible: () => toolbar.getTextHistoryToolbarVisible?.() !== false,
 	setFontSize: (size) => {
 		currentFontSize = Math.max(1, Math.min(300, parseInt(size, 10)));
 		try {
@@ -441,15 +442,15 @@ const clipboardManager = new ClipboardManager({
 let fileHandle = null;
 const fileInput = document.getElementById('file-input');
 
-function persistSession() {
+const persistSession = () => {
 	canvasManager.persistToStorage();
 }
 
-function selectAll() {
+const selectAll = () => {
 	setSelection({ x: 0, y: 0, w: canvasManager.width, h: canvasManager.height });
 }
 
-function deleteSelection() {
+const deleteSelection = () => {
 	const sel = getSelection();
 	if (!sel || !sel.w || !sel.h) return false;
 	if (canvasManager.floatingCanvas) {
@@ -465,7 +466,7 @@ function deleteSelection() {
 	return true;
 }
 
-function newFile() {
+const newFile = () => {
 	if (shouldAutoSaveOnNew()) {
 		void doNewFile();
 		return;
@@ -479,7 +480,7 @@ function newFile() {
 	document.getElementById('new-file-ok')?.focus();
 }
 
-async function doNewFile() {
+const doNewFile = async () => {
 	if (shouldAutoSaveOnNew()) await sidebar.saveCurrentToHistory();
 	else if (shouldAutoSaveHistory()) await sidebar.saveCurrentToHistory();
 	discardFloatingSelection();
@@ -493,7 +494,7 @@ async function doNewFile() {
 	if (new URLSearchParams(window.location.search).get('dialog') === 'new') setDialogUrl(null);
 }
 
-function makeBlankSource(w, h) {
+const makeBlankSource = (w, h) => {
 	const c = document.createElement('canvas');
 	c.width = w;
 	c.height = h;
@@ -507,7 +508,7 @@ function makeBlankSource(w, h) {
 	return c;
 }
 
-function getDefaultCanvasSize() {
+const getDefaultCanvasSize = () => {
 	const value = document.getElementById('setting-default-canvas-size')?.value || '800x600';
 	const customWidth = Number(document.getElementById('setting-default-canvas-width')?.value);
 	const customHeight = Number(document.getElementById('setting-default-canvas-height')?.value);
@@ -520,17 +521,17 @@ function getDefaultCanvasSize() {
 		: { width: 800, height: 600 };
 }
 
-function openFile() {
+const openFile = () => {
 	fileInput.dataset.mode = 'open';
 	fileInput.click();
 }
 
-function importFile() {
+const importFile = () => {
 	fileInput.dataset.mode = 'import';
 	fileInput.click();
 }
 
-async function openImageFile(file) {
+const openImageFile = async (file) => {
 	const bitmap = await createImageBitmap(file);
 	discardFloatingSelection();
 	historyManager.snapshot();
@@ -542,7 +543,7 @@ async function openImageFile(file) {
 	bitmap.close?.();
 }
 
-async function importImageFile(file) {
+const importImageFile = async (file) => {
 	const bitmap = await createImageBitmap(file);
 	await clipboardManager.insertBitmapAsFloatingSelection(bitmap, {
 		sourceLabel: `Imported ${file.name}`,
@@ -563,7 +564,7 @@ fileInput.addEventListener('change', async (e) => {
 	await openImageFile(file);
 });
 
-async function save() {
+const save = async () => {
 	commitFloatingSelection();
 	if (shouldAutoSaveHistory()) sidebar.saveCurrentToHistory();
 	if (window.showSaveFilePicker) {
@@ -591,7 +592,7 @@ async function save() {
 	downloadPNG();
 }
 
-function downloadPNG() {
+const downloadPNG = () => {
 	const a = document.createElement('a');
 	a.href = canvasManager.canvas.toDataURL('image/png');
 	a.download = 'untitled.png';
@@ -601,7 +602,7 @@ function downloadPNG() {
 	showToast('Successfully downloaded untitled.png', true);
 }
 
-function showToast(msg, success = true) {
+const showToast = (msg, success = true) => {
 	const toast = document.createElement('div');
 	toast.className = 'toast ' + (success ? 'toast-success' : 'toast-error');
 	toast.textContent = msg;
@@ -612,7 +613,7 @@ function showToast(msg, success = true) {
 	}, 3000);
 }
 
-function crop() {
+const crop = () => {
 	const sel = getSelection();
 	if (!sel || !sel.w || !sel.h) {
 		statusBar.flash('Select an area first');
@@ -630,7 +631,7 @@ function crop() {
 }
 
 // ---------- Transformations ----------
-function applyTransformation(transformFn) {
+const applyTransformation = (transformFn) => {
 	// A menu transform starts a new operation; do not use a previous rotate
 	// handle's base canvas for it.
 	selectionRotation = null;
@@ -665,7 +666,7 @@ function applyTransformation(transformFn) {
 	persistSession();
 }
 
-function toggleActionMenu(event) {
+const toggleActionMenu = (event) => {
 	event.stopPropagation();
 	const trigger = event.currentTarget;
 	const menu = trigger.parentElement;
@@ -725,6 +726,7 @@ document.getElementById('btn-crop-menu').addEventListener('click', (event) => {
 	toggleActionMenu(event);
 });
 document.getElementById('btn-tools-menu')?.addEventListener('click', toggleActionMenu);
+document.getElementById('btn-text-menu')?.addEventListener('click', toggleActionMenu);
 document.getElementById('line-size')?.addEventListener('click', toggleActionMenu);
 document.getElementById('btn-remove-bg').addEventListener('click', () => applyTransformation(c => removeBackground(c, 30)));
 rotateSelectionHandle?.addEventListener('click', (event) => {
@@ -780,7 +782,7 @@ rotateSelectionHandle?.addEventListener('pointerdown', (event) => {
 	window.addEventListener('pointerup', onUp, { once: true });
 });
 
-function rotateSelectionByAngle(degrees, { prepared = false } = {}) {
+const rotateSelectionByAngle = (degrees, { prepared = false } = {}) => {
 	const selection = canvasManager.selection;
 	if (!selection?.w || !selection?.h) return;
 	if (!prepared) historyManager.snapshot();
@@ -797,7 +799,7 @@ function rotateSelectionByAngle(degrees, { prepared = false } = {}) {
 	persistSession();
 }
 
-function beginSelectionRotation(selection) {
+const beginSelectionRotation = (selection) => {
 	if (!canvasManager.floatingCanvas) return null;
 	if (!selectionRotation || !sameRotationCenter(selectionRotation.selection, selection)) {
 		selectionRotation = {
@@ -810,12 +812,12 @@ function beginSelectionRotation(selection) {
 	return selectionRotation;
 }
 
-function snapRotation(degrees) {
+const snapRotation = (degrees) => {
 	const quarterTurn = Math.round(degrees / 90) * 90;
 	return Math.abs(degrees - quarterTurn) < 0.75 ? quarterTurn : degrees;
 }
 
-function renderSelectionRotation(rotationState) {
+const renderSelectionRotation = (rotationState) => {
 	const { center, degrees, baseCanvas } = rotationState;
 	const quarterTurn = Math.round(degrees / 90) * 90;
 	// Always rotate the untouched source at its natural size. Fitting an
@@ -839,6 +841,7 @@ document.addEventListener('click', () => {
 	document.querySelectorAll('.action-menu.open').forEach((menu) => menu.classList.remove('open'));
 });
 document.querySelector('.shape-gallery')?.addEventListener('click', (event) => event.stopPropagation());
+document.querySelector('.text-tool-menu-items')?.addEventListener('click', (event) => event.stopPropagation());
 
 // Native dialogs do not close on backdrop clicks by default. Keep the modal
 // interactions lightweight and predictable, like the ribbon menus.
@@ -856,7 +859,7 @@ const keepAspectInput = document.getElementById('resize-keep-aspect');
 let aspectRatio = 1;
 let resizeTarget = { kind: 'canvas', x: 0, y: 0, width: 800, height: 600 };
 
-function activeResizeTarget() {
+const activeResizeTarget = () => {
 	const selection = canvasManager.selection;
 	if (selection?.w > 0 && selection?.h > 0) {
 		return {
@@ -870,13 +873,13 @@ function activeResizeTarget() {
 	return { kind: 'canvas', x: 0, y: 0, width: canvasManager.width, height: canvasManager.height };
 }
 
-function syncResizePercent() {
+const syncResizePercent = () => {
 	if (!resizePercentInput || !resizeTarget.width) return;
 	const width = Number(resizeWidthInput.value);
 	resizePercentInput.value = String(Math.max(1, Math.round((width / resizeTarget.width) * 100)));
 }
 
-function setResizeTargetFields() {
+const setResizeTargetFields = () => {
 	resizeWidthInput.value = resizeTarget.width;
 	resizeHeightInput.value = resizeTarget.height;
 	aspectRatio = resizeTarget.width / Math.max(1, resizeTarget.height);
@@ -889,7 +892,7 @@ function setResizeTargetFields() {
 	}
 }
 
-function openResizeDialog() {
+const openResizeDialog = () => {
 	resizeTarget = activeResizeTarget();
 	setResizeTargetFields();
 	resizeDialog.showModal();
@@ -1012,7 +1015,7 @@ const deterministicAi = createDeterministicCommandService({
 });
 sidebar.setAiCommandService(deterministicAi);
 
-function setDialogUrl(dialog, extra = {}) {
+const setDialogUrl = (dialog, extra = {}) => {
 	const params = new URLSearchParams(window.location.search);
 	if (dialog) params.set('dialog', dialog);
 	else params.delete('dialog');
@@ -1024,20 +1027,20 @@ function setDialogUrl(dialog, extra = {}) {
 	window.history.replaceState(null, '', `${window.location.pathname}${query ? `?${query}` : ''}${window.location.hash}`);
 }
 
-function openSettingsDialog(tab = 'general') {
+const openSettingsDialog = (tab = 'general') => {
 	if (!settingsDialog.open) settingsDialog.showModal();
 	document.querySelector(`[data-settings-tab="${tab}"]`)?.click();
 	setDialogUrl('settings', { tab });
 }
 
-function syncRibbonLayoutControls(state) {
+const syncRibbonLayoutControls = (state) => {
 	const show = document.getElementById('setting-show-ribbon');
 	const position = document.getElementById('setting-ribbon-position');
 	if (show) show.checked = state.visible;
 	if (position) position.value = state.position;
 }
 
-function applyAiChatVisibility(visible) {
+const applyAiChatVisibility = (visible) => {
 	const enabled = Boolean(visible);
 	if (aiCheckbox) aiCheckbox.checked = enabled;
 	const aiButton = document.getElementById('btn-ai-chat');
@@ -1076,13 +1079,13 @@ const segmentedChoices = [...document.querySelectorAll('.choice-summary')].map((
 	root,
 	select: document.getElementById(root.dataset.selectId),
 }));
-function renderSegmentedChoices() { segmentedChoices.forEach((choice) => choice.render()); }
+const renderSegmentedChoices = () => { segmentedChoices.forEach((choice) => choice.render()); }
 
-function readSettings() {
+const readSettings = () => {
 	return settingsStore.get();
 }
 
-function saveSettings() {
+const saveSettings = () => {
 	try {
 		const ribbonVisibility = {};
 		const buttonVisibility = {};
@@ -1121,7 +1124,7 @@ function saveSettings() {
 }
 
 // ---------- History preferences + export helpers ----------
-function getHistoryPrefs() {
+const getHistoryPrefs = () => {
 	const s = readSettings();
 	return {
 		autoSave: s.historyAutoSave !== false, // default: automatic
@@ -1131,23 +1134,23 @@ function getHistoryPrefs() {
 
 // Auto-save on "regular" events (Ctrl+S, new file). Manual Save Current always
 // works on its own.
-function shouldAutoSaveHistory() {
+const shouldAutoSaveHistory = () => {
 	const { autoSave, mode } = getHistoryPrefs();
 	return autoSave && mode === 'all';
 }
 
 // Auto-save when the page is about to close (beforeunload).
-function shouldAutoSaveOnClose() {
+const shouldAutoSaveOnClose = () => {
 	const { autoSave, mode } = getHistoryPrefs();
 	return autoSave && (mode === 'all' || mode === 'lifecycle');
 }
 
-function shouldAutoSaveOnNew() {
+const shouldAutoSaveOnNew = () => {
 	const { autoSave, mode } = getHistoryPrefs();
 	return autoSave && (mode === 'all' || mode === 'lifecycle');
 }
 
-function syncHistoryControls(saved) {
+const syncHistoryControls = (saved) => {
 	const prefs = saved
 		? { autoSave: saved.historyAutoSave !== false, mode: saved.historyAutoSaveMode === 'close' ? 'lifecycle' : (saved.historyAutoSaveMode || 'lifecycle') }
 		: getHistoryPrefs();
@@ -1163,7 +1166,7 @@ function syncHistoryControls(saved) {
 	renderSegmentedChoices();
 }
 
-function syncHistoryLimitSelect(value) {
+const syncHistoryLimitSelect = (value) => {
 	const sidebarSel = document.getElementById('history-save-limit');
 	const settingsSel = document.getElementById('setting-history-save-limit');
 	if (sidebarSel) sidebarSel.value = String(value);
@@ -1173,7 +1176,7 @@ function syncHistoryLimitSelect(value) {
 	renderSegmentedChoices();
 }
 
-async function exportHistoryItem(session, index) {
+const exportHistoryItem = async (session, index) => {
 	const stamp = session.timestamp
 		? new Date(session.timestamp).toISOString().replace(/[:.]/g, '-').slice(0, 19)
 		: 'session-step';
@@ -1186,7 +1189,7 @@ async function exportHistoryItem(session, index) {
 	a.remove();
 }
 
-async function exportSessionEntry(entry, index) {
+const exportSessionEntry = async (entry, index) => {
 	const a = document.createElement('a');
 	a.href = entry.dataUrl;
 	a.download = `session-${index + 1}.png`;
@@ -1195,7 +1198,7 @@ async function exportSessionEntry(entry, index) {
 	a.remove();
 }
 
-async function exportAllHistory() {
+const exportAllHistory = async () => {
 	const sessionView = sidebar.historyView === 'session';
 	if (sessionView) {
 		const entries = sidebar.historyManager?.getSessionEntries?.() || [];
@@ -1243,7 +1246,7 @@ async function exportAllHistory() {
 	statusBar.flash(`Exported ${sessions.length} images`);
 }
 
-function applyHistoryLimit(val) {
+const applyHistoryLimit = (val) => {
 	const parsed = parseInt(val, 10);
 	const safe = Number.isNaN(parsed) ? 50 : parsed;
 	syncHistoryLimitSelect(safe);
@@ -1252,13 +1255,13 @@ function applyHistoryLimit(val) {
 	}
 }
 
-function applyHistoryState() {
+const applyHistoryState = () => {
 	const { autoSave } = getHistoryPrefs();
 	statusBar?.flash?.(autoSave ? 'History auto-save on' : 'History auto-save off');
 	syncHistoryControls();
 }
 
-function applyCanvasBackgroundMode(mode) {
+const applyCanvasBackgroundMode = (mode) => {
 	const value = mode || 'none';
 	canvasManager.setBackgroundMode(value === 'transparent' ? 'transparent' : 'solid');
 	const solidColorControl = document.querySelector('[data-solid-color-control]');
@@ -1270,7 +1273,7 @@ function applyCanvasBackgroundMode(mode) {
 	else if (value === 'grid') viewport.classList.add('bg-grid');
 }
 
-function getDefaultZoom() {
+const getDefaultZoom = () => {
 	const raw = defaultZoomSelect?.value === 'custom'
 		? defaultZoomCustomInput?.value
 		: defaultZoomSelect?.value;
@@ -1278,19 +1281,19 @@ function getDefaultZoom() {
 	return Number.isFinite(value) ? Math.min(800, Math.max(10, Math.round(value))) : 100;
 }
 
-function syncDefaultCanvasInputsFromSelect() {
+const syncDefaultCanvasInputsFromSelect = () => {
 	const [width, height] = String(defaultCanvasSizeSelect?.value || '800x600').split('x').map(Number);
 	if (Number.isFinite(width) && width > 0 && defaultCanvasWidthInput) defaultCanvasWidthInput.value = width;
 	if (Number.isFinite(height) && height > 0 && defaultCanvasHeightInput) defaultCanvasHeightInput.value = height;
 }
 
-function syncDefaultZoomInputFromSelect() {
+const syncDefaultZoomInputFromSelect = () => {
 	const value = Number(defaultZoomSelect?.value);
 	if (Number.isFinite(value) && value > 0 && defaultZoomCustomInput) defaultZoomCustomInput.value = value;
 }
 
 // ---------- Settings dialog ----------
-function applySavedSettings() {
+const applySavedSettings = () => {
 	const saved = readSettings();
 	dmCheckbox.checked = Boolean(saved.darkMode);
 	sbCheckbox.checked = saved.showStatusBar !== false;
@@ -1384,7 +1387,7 @@ function applySavedSettings() {
 	syncRibbonSettingsControls();
 }
 
-function syncRibbonSettingsControls() {
+const syncRibbonSettingsControls = () => {
 	document.querySelectorAll('[data-ribbon-group-setting]').forEach((checkbox) => {
 		const group = document.querySelector(`.${checkbox.dataset.ribbonGroupSetting}`);
 		if (!group) return;
@@ -1394,7 +1397,7 @@ function syncRibbonSettingsControls() {
 	});
 }
 
-async function updateAboutStats() {
+const updateAboutStats = async () => {
 	document.getElementById('about-version').textContent = APP_VERSION;
 	document.getElementById('about-activity').textContent = new Date().toLocaleString();
 	// Storage numbers are estimates, not disk truth.
@@ -1434,7 +1437,7 @@ async function updateAboutStats() {
 	}
 }
 
-function renderReleaseNotes() {
+const renderReleaseNotes = () => {
 	const host = document.getElementById('release-notes-list');
 	if (!host) return;
 	host.innerHTML = '';
@@ -1486,7 +1489,7 @@ const RIBBON_GROUP_ORDER = Object.freeze([
 	'ribbon-group-extras',
 ]);
 
-function populateRibbonSettings() {
+const populateRibbonSettings = () => {
 	const container = document.getElementById('ribbon-settings-list');
 	if (!container) return;
 	container.innerHTML = '';
@@ -1581,7 +1584,7 @@ const settingAutoMode = document.getElementById('setting-history-auto-save-mode'
 const historyLimitSel = document.getElementById('history-save-limit');
 const settingLimit = document.getElementById('setting-history-save-limit');
 
-function persistHistoryPrefs() {
+const persistHistoryPrefs = () => {
 	const state = {
 		historyAutoSave: autoSaveToggle ? autoSaveToggle.checked : (settingAutoSave ? settingAutoSave.checked : true),
 		historyAutoSaveMode: settingAutoMode ? settingAutoMode.value : 'all',
@@ -1710,7 +1713,7 @@ solidBackgroundColorInput?.addEventListener('input', (event) => {
 
 applySavedSettings();
 
-function restoreDialogFromUrl() {
+const restoreDialogFromUrl = () => {
 	const params = new URLSearchParams(window.location.search);
 	const dialog = params.get('dialog');
 	if (dialog === 'settings') openSettingsDialog(params.get('tab') || 'general');
@@ -1723,7 +1726,7 @@ const iconCopyFormats = ['SVG', 'PNG 26x26', 'PNG 100x100', 'PNG 300x300', 'PNG 
 let iconCopyIndex = 0;
 const appIcon = document.querySelector('.app-icon');
 
-async function copyAppIcon() {
+const copyAppIcon = async () => {
 	const format = iconCopyFormats[iconCopyIndex];
 	try {
 		const svgText = await fetch(appIcon.src).then((response) => response.text());
@@ -1841,7 +1844,7 @@ void canvasManager.restoreFromStorage({ maxAgeMs: RECENT_CANVAS_TTL_MS }).then((
 }).catch((error) => console.warn('Unable to restore recent image:', error));
 
 let lifecycleSnapshotQueued = false;
-function queueLifecycleHistorySnapshot() {
+const queueLifecycleHistorySnapshot = () => {
 	if (lifecycleSnapshotQueued || !sidebar.globalHistory.historyEnabled) return;
 	lifecycleSnapshotQueued = true;
 	try {

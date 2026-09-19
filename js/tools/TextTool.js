@@ -17,33 +17,33 @@ export const TEXT_EDITOR_LAYOUT = Object.freeze({
   lineHeightPercent: 1.2,
 });
 
-function getStyleSet(ctx) {
+const getStyleSet = (ctx) => {
   const value = ctx.getTextStyle?.() || [];
   if (Array.isArray(value)) return new Set(value);
   return value === 'plain' ? new Set() : new Set([value]);
 }
 
-function getFontDeclaration(ctx, fontSize, styles) {
+const getFontDeclaration = (ctx, fontSize, styles) => {
   const fontStyle = styles.has('italic') ? 'italic' : 'normal';
   const fontWeight = styles.has('bold') ? '700' : '400';
   return `${fontStyle} ${fontWeight} ${fontSize}px ${ctx.getFontFamily()}`;
 }
 
-function getRenderSize(ctx) {
+const getRenderSize = (ctx) => {
   // The stored font size is screen-facing. Canvas coordinates need the
   // inverse viewport scale, while the textarea lives inside the scaled stage.
   return Math.max(1, Math.round(ctx.getFontSize() * 100 / ctx.viewportManager.zoom));
 }
 
-function getLineHeight(fontSize) {
+const getLineHeight = (fontSize) => {
   return fontSize * TEXT_EDITOR_LAYOUT.lineHeightPercent;
 }
 
-function getCanvasTextOffset(fontSize) {
+const getCanvasTextOffset = (fontSize) => {
   return fontSize * TEXT_EDITOR_LAYOUT.canvasTextOffsetPercent / 100;
 }
 
-export function createTextTool() {
+export const createTextTool = () => {
   let editor = null;
   let editorShell = null;
   let historySelect = null;
@@ -73,6 +73,7 @@ export function createTextTool() {
     editor.style.color = ctx.canvasManager.primaryColor;
 
     if (origin && editorShell) {
+      editorShell.style.left = `${origin.x}px`;
       editorShell.style.top = `${origin.y + fontSize * TEXT_EDITOR_LAYOUT.topOffsetPercent / 100}px`;
     }
   };
@@ -198,6 +199,10 @@ export function createTextTool() {
 
     const toolbar = document.createElement('div');
     toolbar.className = 'text-editor-toolbar';
+    toolbar.setAttribute('role', 'toolbar');
+    toolbar.setAttribute('aria-label', 'Text editor controls');
+    toolbar.tabIndex = 0;
+    toolbar.hidden = ctx.getTextHistoryToolbarVisible?.() === false;
     const historyLabel = document.createElement('span');
     historyLabel.className = 'text-editor-toolbar-label';
     historyLabel.textContent = 'Recent text';
@@ -213,10 +218,14 @@ export function createTextTool() {
 
     const nextEditor = document.createElement('textarea');
     nextEditor.className = 'op-text-box';
+    nextEditor.id = 'text-editor-input';
+    nextEditor.name = 'text';
     nextEditor.setAttribute('aria-label', 'Text to draw');
     nextEditor.style.color = ctx.canvasManager.primaryColor;
 
-    shell.append(toolbar, nextEditor);
+    // Keep the textarea first so its top-left edge remains the exact text
+    // anchor used before the history controls were added.
+    shell.append(nextEditor, toolbar);
     editor = nextEditor;
     editorShell = shell;
     historySelect = nextHistorySelect;
@@ -237,6 +246,40 @@ export function createTextTool() {
       nextEditor.focus();
     });
     historyUnsubscribe = ctx.textHistoryStore?.subscribe(renderHistoryOptions) || null;
+
+    let dragState = null;
+    const moveShell = (clientX, clientY) => {
+      if (!dragState || !origin) return;
+      const zoom = Math.max(0.01, Number(ctx.viewportManager.zoom || 100) / 100);
+      origin = {
+        x: dragState.origin.x + (clientX - dragState.clientX) / zoom,
+        y: dragState.origin.y + (clientY - dragState.clientY) / zoom,
+      };
+      applyEditorStyle(ctx);
+    };
+    const endDrag = () => {
+      dragState = null;
+      toolbar.removeAttribute('aria-grabbed');
+    };
+    toolbar.addEventListener('pointerdown', (event) => {
+      if (event.button !== 0 || event.target.closest('select, button, input')) return;
+      event.preventDefault();
+      dragState = { clientX: event.clientX, clientY: event.clientY, origin: { ...origin } };
+      toolbar.setAttribute('aria-grabbed', 'true');
+      toolbar.setPointerCapture?.(event.pointerId);
+    });
+    toolbar.addEventListener('pointermove', (event) => moveShell(event.clientX, event.clientY));
+    toolbar.addEventListener('pointerup', endDrag);
+    toolbar.addEventListener('pointercancel', endDrag);
+    toolbar.addEventListener('keydown', (event) => {
+      const step = event.shiftKey ? 10 : 1;
+      const deltas = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] };
+      const delta = deltas[event.key];
+      if (!delta || !origin) return;
+      event.preventDefault();
+      origin = { x: origin.x + delta[0], y: origin.y + delta[1] };
+      applyEditorStyle(ctx);
+    });
 
     getEditorParent(ctx).appendChild(shell);
     nextEditor.focus();

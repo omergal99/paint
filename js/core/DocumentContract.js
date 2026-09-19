@@ -1,10 +1,10 @@
 import { SCHEMA_VERSIONS } from './constants.js';
 
-function makeId() {
+const makeId = () => {
 	return `doc-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-export function createPaintDocument({ id = makeId(), width = 800, height = 600, metadata = {} } = {}) {
+export const createPaintDocument = ({ id = makeId(), width = 800, height = 600, metadata = {} } = {}) => {
 	return {
 		schemaVersion: SCHEMA_VERSIONS.document,
 		id,
@@ -17,7 +17,7 @@ export function createPaintDocument({ id = makeId(), width = 800, height = 600, 
 	};
 }
 
-export function isPaintDocument(value) {
+export const isPaintDocument = (value) => {
 	return Boolean(value
 		&& value.schemaVersion === SCHEMA_VERSIONS.document
 		&& typeof value.id === 'string'

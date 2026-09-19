@@ -13,7 +13,7 @@ const STORAGE_KEY = 'omerpaint:last-canvas';
 const MAX_MEASURE_PIXELS = 16 * 1024 * 1024;
 
 /** Clamp a {x,y,w,h} region so it stays fully inside a w×h canvas (min 1×1). */
-function clampRegionToBounds(region, maxW, maxH) {
+const clampRegionToBounds = (region, maxW, maxH) => {
   const w = Math.min(Math.max(1, Math.round(region.w)), maxW);
   const h = Math.min(Math.max(1, Math.round(region.h)), maxH);
   return {

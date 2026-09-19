@@ -3,7 +3,7 @@
 // here prevents browser-native alert/confirm/prompt UI from leaking into
 // feature modules and gives the app one consistent interaction surface.
 
-export function createDialogService({ dialog, title, message, input, confirmButton, cancelButton, form } = {}) {
+export const createDialogService = ({ dialog, title, message, input, confirmButton, cancelButton, form } = {}) => {
   const setContent = ({ heading, body, confirmLabel, cancelLabel, danger, prompt }) => {
     title.textContent = heading;
     message.textContent = body;

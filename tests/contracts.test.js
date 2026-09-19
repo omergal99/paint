@@ -10,7 +10,7 @@ import { createTextHistoryStore } from '../js/document/TextHistoryStore.js';
 import { colorStateToCss, normalizeRgba } from '../js/utils/colorContract.js';
 import { estimateDataUrlBytes, makeMemoryReport } from '../js/storage/MemoryBudget.js';
 
-function memoryStorage() {
+const memoryStorage = () => {
 	const values = new Map();
 	return {
 		getItem: (key) => values.get(key) ?? null,

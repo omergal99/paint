@@ -3,10 +3,10 @@
 // selection to move it (lifting the pixels and leaving a background-color hole,
 // same as classic Paint's "move selection" behavior).
 
-export function createSelectTool() {
+export const createSelectTool = () => {
   const state = { start: null, moving: false, liftedOrigin: null };
 
-  function onActivate(ctx) {
+  const onActivate = (ctx) => {
     // Keep selection if it's already floating (e.g. on paste). Also drop any
     // gesture state a mid-gesture tool switch may have left behind — otherwise
     // the next plain mouse move would ghost-draw a marquee from a stale
@@ -15,11 +15,11 @@ export function createSelectTool() {
     state.moving = false;
   }
 
-  function onDeactivate(ctx) {
+  const onDeactivate = (ctx) => {
     ctx.commitFloatingSelection();
   }
 
-  function onDown(pt, ctx) {
+  const onDown = (pt, ctx) => {
     const sel = ctx.getSelection();
     if (sel && inside(pt, sel)) {
       // Begin moving the existing selection.
@@ -45,7 +45,7 @@ export function createSelectTool() {
     ctx.setSelection({ x: Math.round(pt.x), y: Math.round(pt.y), w: 0, h: 0 });
   }
 
-  function onMove(pt, ctx) {
+  const onMove = (pt, ctx) => {
     if (!state.start) return;
     if (state.moving) {
       const dx = Math.round(pt.x - state.start.x);
@@ -64,7 +64,7 @@ export function createSelectTool() {
     ctx.setSelection({ x: Math.round(x), y: Math.round(y), w: Math.round(w), h: Math.round(h) });
   }
 
-  function onUp(pt, ctx) {
+  const onUp = (pt, ctx) => {
     if (!state.start) return;
     if (state.moving) {
       state.moving = false;
@@ -79,7 +79,7 @@ export function createSelectTool() {
     state.start = null;
   }
 
-  function inside(pt, sel) {
+  const inside = (pt, sel) => {
     return pt.x >= sel.x && pt.x <= sel.x + sel.w && pt.y >= sel.y && pt.y <= sel.y + sel.h;
   }
 

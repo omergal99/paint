@@ -1,7 +1,7 @@
 // js/ui/ColorInspector.js
 import { rgbToString } from '../utils/color.js';
 
-export function createColorInspector({ swatchEl, rgbEl, hexEl, copyButtons }) {
+export const createColorInspector = ({ swatchEl, rgbEl, hexEl, copyButtons }) => {
   copyButtons.forEach((btn) => {
     btn.addEventListener('click', () => {
       const targetId = btn.dataset.copyTarget;
@@ -14,7 +14,7 @@ export function createColorInspector({ swatchEl, rgbEl, hexEl, copyButtons }) {
     });
   });
 
-  function show({ r, g, b, hex }) {
+  const show = ({ r, g, b, hex }) => {
     swatchEl.style.background = hex;
     rgbEl.textContent = rgbToString({ r, g, b });
     hexEl.textContent = hex;

@@ -3,26 +3,26 @@
 // the current ribbon selection. Drag previews live on the overlay; releasing
 // the mouse commits the final shape onto the real canvas.
 
-export function createShapeTool() {
+export const createShapeTool = () => {
   const state = { start: null, button: 0 };
 
-  function onActivate() {
+  const onActivate = () => {
     // Never resume a drag from before this tool (re)gained focus.
     state.start = null;
   }
 
-  function onDown(pt) {
+  const onDown = (pt) => {
     state.start = pt;
     state.button = pt.button;
   }
 
-  function onMove(pt, ctx) {
+  const onMove = (pt, ctx) => {
     if (!state.start) return;
     ctx.canvasManager.clearOverlay();
     draw(ctx.canvasManager.octx, ctx, state.start, pt, state.button);
   }
 
-  function onUp(pt, ctx) {
+  const onUp = (pt, ctx) => {
     if (!state.start) return;
     ctx.canvasManager.clearOverlay();
     const start = state.start;
@@ -54,7 +54,7 @@ export function createShapeTool() {
    * bounds. Returns false (so the caller falls back to baking normally) when
    * nothing was painted.
    */
-  function liftAsSelection(ctx, start, end, button) {
+  const liftAsSelection = (ctx, start, end, button) => {
     const cm = ctx.canvasManager;
     const x = Math.min(start.x, end.x);
     const y = Math.min(start.y, end.y);
@@ -76,7 +76,7 @@ export function createShapeTool() {
     return true;
   }
 
-  function draw(g, ctx, start, end, button) {
+  const draw = (g, ctx, start, end, button) => {
     const kind = ctx.getShapeKind();
     const fillMode = ctx.getShapeFillMode(); // 'outline' | 'fill' | 'outline-fill'
     const cm = ctx.canvasManager;
@@ -205,14 +205,14 @@ export function createShapeTool() {
   };
 }
 
-function squareBounds(x, y, w, h, padding = 0.12) {
+const squareBounds = (x, y, w, h, padding = 0.12) => {
   const size = Math.max(1, Math.min(w, h));
   const left = x + (w - size) / 2;
   const top = y + (h - size) / 2;
   return { left: left + size * padding, top: top + size * padding, size: size * (1 - padding * 2) };
 }
 
-function drawNormalizedX(g, x, y, w, h) {
+const drawNormalizedX = (g, x, y, w, h) => {
   const box = squareBounds(x, y, w, h);
   g.moveTo(box.left, box.top);
   g.lineTo(box.left + box.size, box.top + box.size);
@@ -234,7 +234,7 @@ const V_MARK = {
   maxY: 15.5,
 };
 
-function drawNormalizedV(g, x, y, w, h) {
+const drawNormalizedV = (g, x, y, w, h) => {
   // Check-mark "V". Every point is scaled with a SINGLE factor, so both arms
   // keep a constant angle whatever the drag shape is — scaling the two axes
   // independently (the old per-axis width/height fractions) is what used to
@@ -252,7 +252,7 @@ function drawNormalizedV(g, x, y, w, h) {
   g.lineTo(pts[2][0], pts[2][1]);
 }
 
-function roundRectPath(g, x, y, w, h, r) {
+const roundRectPath = (g, x, y, w, h, r) => {
   g.moveTo(x + r, y);
   g.arcTo(x + w, y, x + w, y + h, r);
   g.arcTo(x + w, y + h, x, y + h, r);
@@ -266,7 +266,7 @@ function roundRectPath(g, x, y, w, h, r) {
  * The head size grows with the line width so thick arrows stay readable,
  * but is capped so a short drag still produces a proportional arrow.
  */
-function drawArrowPath(g, ctx, start, end, color) {
+const drawArrowPath = (g, ctx, start, end, color) => {
   const dx = end.x - start.x;
   const dy = end.y - start.y;
   const len = Math.hypot(dx, dy);
@@ -296,7 +296,7 @@ function drawArrowPath(g, ctx, start, end, color) {
 }
 
 /** Draw a regular polygon centered at (cx, cy), tight inside the rx*ry box. */
-function regularPolygonPath(g, cx, cy, rx, ry, sides) {
+const regularPolygonPath = (g, cx, cy, rx, ry, sides) => {
   const start = -Math.PI / 2; // point the first vertex "up"
   for (let i = 0; i < sides; i++) {
     const a = start + (i * Math.PI * 2) / sides;
@@ -309,7 +309,7 @@ function regularPolygonPath(g, cx, cy, rx, ry, sides) {
 }
 
 /** Draw a 5-pointed star centered at (cx, cy), tight inside the rx*ry box. */
-function starPath(g, cx, cy, rx, ry) {
+const starPath = (g, cx, cy, rx, ry) => {
   const outer = Math.min(rx, ry);
   const inner = outer * 0.45;
   for (let i = 0; i < 10; i++) {
@@ -324,7 +324,7 @@ function starPath(g, cx, cy, rx, ry) {
 }
 
 /** Draw a heart centered at (cx, cy), tight inside the rx*ry box. */
-function heartPath(g, cx, cy, rx, ry) {
+const heartPath = (g, cx, cy, rx, ry) => {
   const s = Math.min(rx, ry);
   g.moveTo(cx, cy - s * 0.22);
   g.bezierCurveTo(cx - s * 0.08, cy - s * 0.62, cx - s * 0.62, cy - s * 0.44, cx - s * 0.62, cy + s * 0.02);
@@ -335,7 +335,7 @@ function heartPath(g, cx, cy, rx, ry) {
 }
 
 /** Draw a plus/cross sign centered at (cx, cy), tight inside the rx*ry box. */
-function plusPath(g, cx, cy, rx, ry) {
+const plusPath = (g, cx, cy, rx, ry) => {
   const arm = Math.min(rx, ry);
   const w = arm * 0.3;
   g.moveTo(cx - w, cy - arm);
@@ -357,7 +357,7 @@ function plusPath(g, cx, cy, rx, ry) {
  * Draw a double arrow: a stroked shaft with solid arrowheads on BOTH ends
  * (each pointing in the direction of travel). Same conventions as the arrow.
  */
-function drawDoubleArrowPath(g, ctx, start, end, color) {
+const drawDoubleArrowPath = (g, ctx, start, end, color) => {
   const dx = end.x - start.x;
   const dy = end.y - start.y;
   const len = Math.hypot(dx, dy);

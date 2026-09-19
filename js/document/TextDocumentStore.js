@@ -3,17 +3,17 @@
 
 const MAX_TEXT_OBJECTS = 1000;
 
-function clone(value) {
+const clone = (value) => {
 	return typeof structuredClone === 'function'
 		? structuredClone(value)
 		: JSON.parse(JSON.stringify(value));
 }
 
-function makeId() {
+const makeId = () => {
 	return `text-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-function normalizeObject(value = {}) {
+const normalizeObject = (value = {}) => {
 	return {
 		id: typeof value.id === 'string' && value.id ? value.id : makeId(),
 		text: String(value.text || ''),
@@ -30,20 +30,20 @@ function normalizeObject(value = {}) {
 	};
 }
 
-export function createTextDocumentStore(initial = []) {
+export const createTextDocumentStore = (initial = []) => {
 	let objects = initial.slice(0, MAX_TEXT_OBJECTS).map(normalizeObject);
 	const listeners = new Set();
 
-	function notify() {
+	const notify = () => {
 		const snapshot = getAll();
 		listeners.forEach((listener) => listener(snapshot));
 	}
 
-	function getAll() {
+	const getAll = () => {
 		return clone(objects).sort((a, b) => a.zIndex - b.zIndex);
 	}
 
-	function add(value) {
+	const add = (value) => {
 		if (objects.length >= MAX_TEXT_OBJECTS) return null;
 		const object = normalizeObject(value);
 		objects = [...objects, object];
@@ -51,7 +51,7 @@ export function createTextDocumentStore(initial = []) {
 		return clone(object);
 	}
 
-	function update(id, patch = {}) {
+	const update = (id, patch = {}) => {
 		const index = objects.findIndex((object) => object.id === id);
 		if (index < 0) return null;
 		const next = normalizeObject({ ...objects[index], ...patch, id, revision: objects[index].revision + 1 });
@@ -60,7 +60,7 @@ export function createTextDocumentStore(initial = []) {
 		return clone(next);
 	}
 
-	function remove(id) {
+	const remove = (id) => {
 		const next = objects.filter((object) => object.id !== id);
 		if (next.length === objects.length) return false;
 		objects = next;
@@ -68,12 +68,12 @@ export function createTextDocumentStore(initial = []) {
 		return true;
 	}
 
-	function replace(value = []) {
+	const replace = (value = []) => {
 		objects = value.slice(0, MAX_TEXT_OBJECTS).map(normalizeObject);
 		notify();
 	}
 
-	function subscribe(listener) {
+	const subscribe = (listener) => {
 		if (typeof listener !== 'function') return () => {};
 		listeners.add(listener);
 		return () => listeners.delete(listener);

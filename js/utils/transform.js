@@ -1,6 +1,6 @@
 // js/utils/transform.js
 
-export function rotateCanvas(sourceCanvas, direction = 1) {
+export const rotateCanvas = (sourceCanvas, direction = 1) => {
   const w = sourceCanvas.width;
   const h = sourceCanvas.height;
   const turns = ((Math.round(direction) % 4) + 4) % 4;
@@ -16,7 +16,7 @@ export function rotateCanvas(sourceCanvas, direction = 1) {
   return out;
 }
 
-export function flipCanvas(sourceCanvas, horizontal = true) {
+export const flipCanvas = (sourceCanvas, horizontal = true) => {
   const w = sourceCanvas.width;
   const h = sourceCanvas.height;
   const out = document.createElement('canvas');
@@ -36,7 +36,7 @@ export function flipCanvas(sourceCanvas, horizontal = true) {
   return out;
 }
 
-export function rotateCanvasByAngle(sourceCanvas, degrees) {
+export const rotateCanvasByAngle = (sourceCanvas, degrees) => {
   // Avoid floating-point sine/cosine padding at exact quarter turns. This
   // keeps 90° rotations pixel-perfect and prevents a selection from gaining
   // a one-pixel border on every subsequent turn.
@@ -58,7 +58,7 @@ export function rotateCanvasByAngle(sourceCanvas, degrees) {
 // Rotate a floating selection without changing its selection rectangle. The
 // rotated pixels are fitted inside the original bounds, so selection handles
 // stay stable instead of growing to the rotated bounding box.
-export function rotateCanvasToFit(sourceCanvas, degrees, width, height) {
+export const rotateCanvasToFit = (sourceCanvas, degrees, width, height) => {
   const radians = degrees * Math.PI / 180;
   const absSin = Math.abs(Math.sin(radians));
   const absCos = Math.abs(Math.cos(radians));
@@ -76,7 +76,7 @@ export function rotateCanvasToFit(sourceCanvas, degrees, width, height) {
   return out;
 }
 
-export function scaleCanvas(sourceCanvas, width, height) {
+export const scaleCanvas = (sourceCanvas, width, height) => {
   const out = document.createElement('canvas');
   out.width = Math.max(1, Math.round(width));
   out.height = Math.max(1, Math.round(height));
@@ -84,7 +84,7 @@ export function scaleCanvas(sourceCanvas, width, height) {
   return out;
 }
 
-export function removeBackground(sourceCanvas, tolerance = 30) {
+export const removeBackground = (sourceCanvas, tolerance = 30) => {
   const w = sourceCanvas.width;
   const h = sourceCanvas.height;
   const out = document.createElement('canvas');

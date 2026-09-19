@@ -1,6 +1,6 @@
 const metricObservers = [];
 
-function observeMetric(type, callback, options = {}) {
+const observeMetric = (type, callback, options = {}) => {
   if (!('PerformanceObserver' in window)) return;
   try {
     const observer = new PerformanceObserver((list) => {
@@ -13,7 +13,7 @@ function observeMetric(type, callback, options = {}) {
   }
 }
 
-export function installTelemetry({ target = window, onMetric = () => {} } = {}) {
+export const installTelemetry = ({ target = window, onMetric = () => {} } = {}) => {
   observeMetric('largest-contentful-paint', (entry) => onMetric('LCP', entry.startTime));
   observeMetric('layout-shift', (entry) => {
     if (!entry.hadRecentInput) onMetric('CLS', entry.value);

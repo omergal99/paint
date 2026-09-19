@@ -212,7 +212,7 @@ export class HistoryManager {
 
 // Async thumbnails (~96px jpeg) for the sessionStorage backup so a refresh
 // restores previews without blowing the ~5MB sessionStorage quota.
-async function makeSessionThumbs(entries, maxSize = 96) {
+const makeSessionThumbs = async (entries, maxSize = 96) => {
   return Promise.all(entries.map(async (entry) => {
     try {
       const thumb = await downscaleDataUrlAsync(entry.dataUrl, maxSize);
@@ -221,7 +221,7 @@ async function makeSessionThumbs(entries, maxSize = 96) {
   }));
 }
 
-function downscaleDataUrlAsync(dataUrl, maxSize = 96) {
+const downscaleDataUrlAsync = (dataUrl, maxSize = 96) => {
   return new Promise((resolve) => {
     try {
       if (!dataUrl || typeof document === 'undefined') return resolve(null);

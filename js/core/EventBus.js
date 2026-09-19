@@ -2,11 +2,11 @@
 // This is intentionally a closure-based factory: event state is private and
 // the public surface is a plain object of functions, not a class instance.
 
-export function createEventBus() {
+export const createEventBus = () => {
 	const listenersByEvent = new Map();
 	let destroyed = false;
 
-	function on(eventName, listener) {
+	const on = (eventName, listener) => {
 		if (destroyed || typeof listener !== 'function') return () => {};
 		if (!listenersByEvent.has(eventName)) listenersByEvent.set(eventName, new Set());
 		const listeners = listenersByEvent.get(eventName);
@@ -14,7 +14,7 @@ export function createEventBus() {
 		return () => off(eventName, listener);
 	}
 
-	function off(eventName, listener) {
+	const off = (eventName, listener) => {
 		const listeners = listenersByEvent.get(eventName);
 		if (!listeners) return false;
 		const removed = listeners.delete(listener);
@@ -22,7 +22,7 @@ export function createEventBus() {
 		return removed;
 	}
 
-	function once(eventName, listener) {
+	const once = (eventName, listener) => {
 		if (typeof listener !== 'function') return () => {};
 		let unsubscribe = () => {};
 		unsubscribe = on(eventName, (payload) => {
@@ -32,7 +32,7 @@ export function createEventBus() {
 		return unsubscribe;
 	}
 
-	function emit(eventName, payload) {
+	const emit = (eventName, payload) => {
 		if (destroyed) return 0;
 		const listeners = listenersByEvent.get(eventName);
 		if (!listeners) return 0;
@@ -40,7 +40,7 @@ export function createEventBus() {
 		return listeners.size;
 	}
 
-	function destroy() {
+	const destroy = () => {
 		listenersByEvent.clear();
 		destroyed = true;
 	}

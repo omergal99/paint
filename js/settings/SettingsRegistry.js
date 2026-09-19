@@ -13,6 +13,7 @@ export const DEFAULT_SETTING_STORAGE_KEYS = Object.freeze([
   'paint:text-styles',
   'paint:text-style',
   'paint:text-history',
+  'paint:text-history-toolbar',
   'paint:tool-styles',
   'paint:style-history',
   'paint:show-current-tool',
@@ -28,7 +29,7 @@ export const DEFAULT_SETTING_STORAGE_KEYS = Object.freeze([
   'paint:ai-connection',
 ]);
 
-export function createSettingsRegistry({ storage = globalThis.localStorage } = {}) {
+export const createSettingsRegistry = ({ storage = globalThis.localStorage } = {}) => {
   const storageKeys = new Set(DEFAULT_SETTING_STORAGE_KEYS);
   const resetHandlers = new Set();
 

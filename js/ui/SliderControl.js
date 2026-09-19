@@ -10,7 +10,7 @@
 //   slider.onInput = (val) => applySize(val);
 //   container.prepend(slider.element);
 
-export function createSliderControl({
+export const createSliderControl = ({
   min = 1,
   max = 120,
   value = 12,
@@ -18,7 +18,7 @@ export function createSliderControl({
   unit = 'px',
   ariaLabel = 'Value slider',
   id = '',
-} = {}) {
+} = {}) => {
   const wrap = document.createElement('div');
   wrap.className = 'slider-control';
 
