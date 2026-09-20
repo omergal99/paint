@@ -1,0 +1,40 @@
+{
+  "measuredAt": "2026-09-20T00:14:46.601Z",
+  "node": "v22.23.1",
+  "source": {
+    "javascriptFiles": 51,
+    "javascriptLines": 8596
+  },
+  "events": {
+    "addEventListenerCalls": 213,
+    "removeEventListenerCalls": 15,
+    "pointerMoveRegistrations": 9,
+    "paintChangedRegistrations": 2,
+    "staticCallRatio": 0.07,
+    "filesWithListeners": 22,
+    "filesWithTeardown": 6,
+    "fileTeardownCoverage": 0.273,
+    "lifecycleContracts": {
+      "eventBusDestroy": true,
+      "autosaveTeardown": true,
+      "canvasResizeTeardown": true,
+      "panelLayoutTeardown": true
+    }
+  },
+  "memoryBudget": {
+    "maxUndoBytes": 67108864,
+    "maxDecodedPixels": 33554432,
+    "maxScratchPixels": 16777216,
+    "storageQuotaIsSeparate": true
+  },
+  "storageContracts": {
+    "indexedDbAutosave": true,
+    "quotaEstimate": true,
+    "autosaveTeardown": true
+  },
+  "limitations": [
+    "Static listener counts and file-level teardown coverage are a census, not a runtime teardown proof.",
+    "Browser memory includes decoded surfaces and engine internals that this report cannot measure.",
+    "Run the real-browser trace and large-canvas journey for performance conclusions."
+  ]
+}

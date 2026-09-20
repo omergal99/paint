@@ -12,11 +12,23 @@ export const createPwaInstallManager = ({
   installButton,
   statusEl,
   updateButton,
+  canReload = () => true,
 } = {}) => {
   let deferredPrompt = null;
   let registration = null;
   let reloading = false;
   let hadController = Boolean(navigator.serviceWorker?.controller);
+
+  const reloadIfSafe = () => {
+    if (!canReload()) {
+      setStatus('Update ready. Finish the current edit, then reload to apply it.', 'update-ready');
+      return false;
+    }
+    if (reloading) return true;
+    reloading = true;
+    window.location.reload();
+    return true;
+  };
 
   const setStatus = (message, state = '') => {
     if (!statusEl) return;
@@ -117,9 +129,7 @@ export const createPwaInstallManager = ({
           hadController = true;
           return;
         }
-        if (reloading) return;
-        reloading = true;
-        window.location.reload();
+        reloadIfSafe();
       });
       navigator.serviceWorker.ready.then(attachRegistration).catch(() => {});
       navigator.serviceWorker.getRegistration?.().then(attachRegistration).catch(() => {});

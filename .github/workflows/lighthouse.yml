@@ -11,6 +11,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+      - name: Verify release contracts
+        run: npm run verify:release
       - name: Start static server
         run: npx --yes http-server paint -p 4173 >/tmp/paint-server.log 2>&1 &
       - name: Run Lighthouse

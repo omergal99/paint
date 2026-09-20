@@ -13,10 +13,13 @@ Last updated: 2026-09-19. This round prepares the 1.6.0 customer handoff.
 ## Verification
 
 - npm test: 5/5 test files passed.
-- node --check passed for the new Pan/PWA modules, composition root, app bootstrap, and version-sync script.
-- git diff --check passed.
+- `npm run verify:release` passed version synchronization, 56 JavaScript syntax checks, 59 service-worker shell assets, documentation consistency, and `git diff --check`.
+- Lighthouse mobile after the accessibility fixes: Performance 84, Accessibility 100, Best Practices 100, SEO 100; LCP 4.4s and CLS 0.
+- Fresh browser evidence covers 200% visual scale, reduced motion, 320px mobile Ribbon scrolling, Escape menu closure, service-worker control, and Settings → App update status.
 - The PWA shell includes PanTool.js and PwaInstallManager.js.
 
-The final remaining Step 11 gates are Lighthouse, real-browser 200% zoom, and a
-final device matrix. These do not block the requested customer commit, but they
-should be completed before claiming the PWA gate is fully closed.
+The remaining Step 11 gates are Performance optimization toward the 90+ target,
+a real device matrix, and production-host HTTPS/install evidence. Accessibility,
+Best Practices, SEO, 200% visual scale, reduced motion, and local update checks
+are now evidenced, but the PWA gate is not claimed fully closed until the
+remaining production conditions pass.

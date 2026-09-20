@@ -20,6 +20,7 @@ export const createTextSelectionOverlay = ({
 } = {}) => {
 	const layer = document.createElement('div');
 	layer.className = 'text-object-focus-layer';
+	layer.setAttribute('role', 'group');
 	layer.setAttribute('aria-label', 'Committed text objects');
 	root?.appendChild(layer);
 

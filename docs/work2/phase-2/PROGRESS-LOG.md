@@ -298,3 +298,27 @@ and legal/metadata files.
 - Added [`PHASE-2-STATUS_5.md`](PHASE-2-STATUS_5.md) and its white-theme HTML
   companion. Steps 12–13 remain planned until the 1.6.0 release boundary and
   remaining Step 11 audit gates are approved.
+
+## 2026-09-19 — Retro Round 1: repeatable gates and evidence discipline
+
+- Confirmed the clean `1.6.0` baseline: `npm test` passes all 5 test files and
+  the current numbered status is Round 6.
+- Added `npm run verify:docs` to detect stale status links, missing HTML
+  companions, missing round-log entries, and outdated test-count evidence.
+- Added `npm run verify:release` to check version synchronization, PWA icons,
+  service-worker shell assets, JavaScript syntax, tests, documentation
+  consistency, and `git diff --check` in one command.
+- Added `npm run audit:runtime` to record the Step 07/08 static listener census,
+  pointer registration count, memory budgets, IndexedDB/quota contracts, and
+  known measurement limitations under `output/quality/`.
+- Lighthouse mobile was run before and after accessibility fixes: Accessibility
+  improved from 68 to 100; Best Practices and SEO stayed at 100; Performance
+  measured 84 with 4.4s LCP and CLS 0. The remaining performance gap is kept
+  explicit instead of being hidden behind a category exclusion.
+- Fresh browser checks recorded 200% visual scale, reduced motion, 320px
+  Ribbon scrolling, Escape menu closure, service-worker control, and Settings
+  → App update status. PWA reload now waits if text editing or a floating
+  selection is active.
+- Persisted the four-hat retrospective in `.agent/retro/` with a white-theme
+  report and reusable release-gate guidance. Step 12, Step 13, and unsafe full
+  text editing remain explicitly deferred.

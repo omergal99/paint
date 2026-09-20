@@ -1072,6 +1072,7 @@ const pwaInstallManager = createPwaInstallManager({
 	installButton: document.getElementById('pwa-install-button'),
 	statusEl: document.getElementById('pwa-install-status'),
 	updateButton: document.getElementById('pwa-update-button'),
+	canReload: () => !document.querySelector('.text-editor-shell') && !canvasManager.floatingCanvas,
 });
 pwaInstallManager.start();
 
@@ -1083,7 +1084,7 @@ const openSettingsDialog = (tab = 'general') => {
 const syncRibbonLayoutControls = (state) => {
 	const show = document.getElementById('setting-show-ribbon');
 	if (show) show.checked = state.visible;
-	document.querySelectorAll('[data-ribbon-position]').forEach((button) => {
+	document.querySelectorAll('.ribbon-position-options [data-ribbon-position]').forEach((button) => {
 		const selected = button.dataset.ribbonPosition === state.position;
 		button.setAttribute('aria-checked', String(selected));
 		button.tabIndex = selected ? 0 : -1;

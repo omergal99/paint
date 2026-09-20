@@ -20,3 +20,10 @@ canvas/editor behavior remains testable. Use `const name = (...) => {}` for
 named standalone functions, including exported functions; this keeps the
 functional style consistent and makes declaration order explicit. Class methods
 remain methods until their owning class is migrated at a tested seam.
+
+For every implementation round, record one owner, one acceptance path, one
+measurement, and one evidence artifact. Prefer a small patch followed by
+syntax, unit, browser, and documentation checks. Release-facing changes must
+keep package version, `APP_VERSION`, service-worker cache version, manifest
+icons, and the canonical status page synchronized through the repository
+release verifier.

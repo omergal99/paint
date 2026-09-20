@@ -1,0 +1,80 @@
+{
+  "round": "retro-1",
+  "date": "2026-09-19",
+  "url": "http://127.0.0.1:4174/",
+  "browser": "Chrome via installed Playwright CLI",
+  "checks": {
+    "desktop": {
+      "viewport": "1280x900",
+      "ribbonHeight": 74,
+      "consoleErrors": 0
+    },
+    "visualScale200": {
+      "visualViewportScale": 2,
+      "viewport": "1280x900",
+      "ribbonHeight": 74,
+      "pageScrollWidth": 1280,
+      "bodyOverflowX": "hidden",
+      "mainVisible": true
+    },
+    "reducedMotion": {
+      "prefersReducedMotion": true,
+      "consoleErrors": 0
+    },
+    "mobile320": {
+      "viewport": "320x720",
+      "bodyScrollWidth": 320,
+      "ribbonHeight": 74,
+      "ribbonClientWidth": 320,
+      "ribbonScrollWidth": 1065,
+      "ribbonOverflowX": "auto",
+      "mainDisplay": "block"
+    },
+    "keyboardMenu": {
+      "openedMoreMenu": true,
+      "escapeClosedMenus": 0,
+      "consoleErrors": 0
+    },
+    "pwaAppTab": {
+      "settingsAppTabVisible": true,
+      "installButtonDisabledInHeadless": true,
+      "manualInstallGuidanceVisible": true,
+      "updateStatus": "Paint is up to date.",
+      "serviceWorkerController": "http://127.0.0.1:4174/sw.js?version=1.6.0"
+    },
+    "finalFreshLoad": {
+      "date": "2026-09-20",
+      "url": "http://127.0.0.1:4175/?retro=round1-final",
+      "title": "Paint",
+      "consoleErrors": 0,
+      "ribbonHeight": 74,
+      "appAriaChecked": null,
+      "textFocusLayerRole": "group",
+      "colorPickerLabel": "Custom color value",
+      "zoomSliderLabel": "Zoom percentage slider",
+      "serviceWorkerController": "http://127.0.0.1:4175/sw.js?version=1.6.0",
+      "screenshot": "output/playwright/phase-2/playwright-cli/retro-round1-final.png"
+    },
+    "lighthouseMobile": {
+      "viewport": "412x823",
+      "before": {
+        "performance": 84,
+        "accessibility": 68,
+        "bestPractices": 100,
+        "seo": 100
+      },
+      "after": {
+        "performance": 84,
+        "accessibility": 100,
+        "bestPractices": 100,
+        "seo": 100,
+        "lcp": "4.4 s",
+        "cls": "0"
+      },
+      "reports": [
+        "output/quality/lighthouse-round1.json",
+        "output/quality/lighthouse-round1-after.json"
+      ]
+    }
+  }
+}

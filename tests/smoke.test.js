@@ -236,6 +236,8 @@ test('PWA settings expose install/update controls and versioned update flow', ()
 	assert.match(pwa, /beforeinstallprompt/);
 	assert.match(pwa, /controllerchange/);
 	assert.match(pwa, /registration\.update/);
+	assert.match(pwa, /canReload/);
+	assert.match(pwa, /Finish the current edit/);
 	assert.match(syncVersion, /CACHE_NAME/);
 	assert.match(serviceWorker, /SKIP_WAITING/);
 	assert.match(appBootstrap, /sw\.js\?version=/);

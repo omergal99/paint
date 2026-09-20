@@ -9,6 +9,7 @@ import { createTextDocumentStore } from '../js/document/TextDocumentStore.js';
 import { createTextHistoryStore } from '../js/document/TextHistoryStore.js';
 import { colorStateToCss, normalizeRgba } from '../js/utils/colorContract.js';
 import { estimateDataUrlBytes, makeMemoryReport } from '../js/storage/MemoryBudget.js';
+import { installCanvasAutosave } from '../js/storage.js';
 
 const memoryStorage = () => {
 	const values = new Map();
@@ -117,4 +118,18 @@ test('memory report separates known history bytes from browser quota', () => {
 	const report = makeMemoryReport({ historyEntries: [{ dataUrl, width: 10, height: 10 }], objectUrlCount: 2 });
 	assert.equal(report.storageQuotaIsSeparate, true);
 	assert.equal(report.objectUrlCount, 2);
+});
+
+test('canvas autosave exposes a teardown handle for its change listener', () => {
+	const listeners = new Map();
+	const eventTarget = {
+		addEventListener: (name, listener) => listeners.set(name, listener),
+		removeEventListener: (name, listener) => {
+			if (listeners.get(name) === listener) listeners.delete(name);
+		},
+	};
+	const cleanup = installCanvasAutosave({ canvas: {}, eventTarget });
+	assert.equal(listeners.size, 1);
+	cleanup();
+	assert.equal(listeners.size, 0);
 });

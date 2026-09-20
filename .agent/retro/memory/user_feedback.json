@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-09-19",
+  "preferences": [
+    "Prefer concrete UI examples using IDs, classes, and before/after behavior.",
+    "Prefer small reversible improvements with visible browser verification.",
+    "Keep unsafe text editing and other weakly proven features deferred.",
+    "Persist important process and evidence in the relevant project documentation.",
+    "Use white/light HTML reports for internal status review.",
+    "Prefer functional factories, SSOT, destructured options, and modular ownership."
+  ],
+  "recommendedPromptShape": {
+    "roundGoal": "One sentence describing the desired outcome.",
+    "mustFix": "Numbered acceptance behaviors that must pass.",
+    "shouldImprove": "Useful but non-blocking refinements.",
+    "deferred": "Explicitly postponed features and the proof required to reopen them.",
+    "evidence": "Expected tests, browser viewport, and saved artifact locations.",
+    "releaseImpact": "Whether the round changes the customer version or only internal tooling."
+  }
+}

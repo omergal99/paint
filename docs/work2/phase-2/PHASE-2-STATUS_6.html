@@ -30,7 +30,8 @@
     </tbody>
   </table>
   <h2>Verification</h2>
-  <p><code>npm test</code>: 5/5 files passed. Syntax checks and <code>git diff --check</code> passed.</p>
-  <p class="muted">Remaining Step 11 gates: Lighthouse, real-browser 200% zoom, and final device matrix.</p>
+  <p><code>npm test</code>: 5/5 files passed. <code>npm run verify:release</code> passed version, syntax, test, shell-asset, documentation, and diff checks.</p>
+  <p>Lighthouse mobile after accessibility fixes: Performance 84, Accessibility 100, Best Practices 100, SEO 100. Browser evidence covers 200% visual scale, reduced motion, 320px internal Ribbon scrolling, Escape menu closure, service-worker control, and Settings → App update status.</p>
+  <p class="muted">Remaining Step 11 gates: performance optimization toward 90+, real device matrix, and production-host HTTPS/install evidence.</p>
 </body>
 </html>

@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-09-19",
+  "learnings": [
+    {
+      "pattern": "Browser validation catches lifecycle and stale-cache bugs that source contracts miss.",
+      "rule": "Run static checks first, then a fresh-browser journey with console output and a saved fixture."
+    },
+    {
+      "pattern": "Whole-repository listener ratios are misleading for an app-lifetime composition root.",
+      "rule": "Report raw census, file-level lifecycle coverage, named teardown contracts, and runtime limitations separately."
+    },
+    {
+      "pattern": "Injected browser dependencies must remain testable in Node.",
+      "rule": "Use globalThis fallbacks and injected event targets; add a direct teardown contract test."
+    },
+    {
+      "pattern": "Large multiline patches create avoidable quoting and context failures.",
+      "rule": "Patch one concern at a time and run the narrowest test immediately after each patch."
+    },
+    {
+      "pattern": "Documentation can drift even when code and tests are green.",
+      "rule": "Run the documentation gate whenever a numbered status or round log changes."
+    },
+    {
+      "pattern": "PWA activation can interrupt active editor work.",
+      "rule": "Never force a service-worker reload while text editing or a floating selection is active."
+    }
+  ]
+}

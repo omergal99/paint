@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "lastSession": "2026-09-19-retro-round-1",
+  "sessions": [
+    {
+      "id": "2026-09-19-retro-round-1",
+      "date": "2026-09-19",
+      "status": "complete",
+      "approvedActions": [1, 2, 3, 4, 5, 6],
+      "report": "reports/retro-20260919-194342.html",
+      "summary": "Introduced persistent four-hat memory, repeatable release and documentation gates, browser evidence, lifecycle-safe PWA reload behavior, runtime Step 07/08 measurement, and updated project guidance.",
+      "evidence": [
+        "output/quality/lighthouse-round1.json",
+        "output/quality/lighthouse-round1-after.json",
+        "output/quality/step-07-08-runtime-audit.json",
+        "output/playwright/phase-2/playwright-cli/retro-round1-browser-fixtures.json",
+        "output/playwright/phase-2/playwright-cli/retro-round1-final.png"
+      ]
+    }
+  ],
+  "generatedSkills": [
+    {
+      "id": "retro",
+      "path": "skills/retro.md",
+      "version": "3.1.0"
+    },
+    {
+      "id": "release-gate",
+      "path": "skills/release-gate.md",
+      "version": "1.0.0"
+    }
+  ],
+  "generatedPlugins": [
+    {
+      "id": "release-check",
+      "path": "../scripts/release-check.mjs",
+      "type": "project-script"
+    },
+    {
+      "id": "docs-consistency",
+      "path": "../scripts/docs-consistency.mjs",
+      "type": "project-script"
+    },
+    {
+      "id": "runtime-audit",
+      "path": "../scripts/runtime-audit.mjs",
+      "type": "project-script"
+    }
+  ],
+  "memory": {
+    "userFeedback": "memory/user_feedback.json",
+    "agentLearnings": "memory/agent_learnings.json",
+    "workspaceContext": "memory/workspace_context.json"
+  }
+}

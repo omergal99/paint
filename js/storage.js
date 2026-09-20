@@ -64,15 +64,18 @@ export const clearCanvasState = async () => {
   }
 }
 
-export const installCanvasAutosave = ({ canvas, eventTarget = window, debounceMs = 700 }) => {
-  let timer = 0;
-  const save = () => {
-    window.clearTimeout(timer);
-    timer = window.setTimeout(() => saveCanvasState(canvas), debounceMs);
-  };
-  eventTarget.addEventListener('paint:changed', save);
-  return () => {
-    window.clearTimeout(timer);
-    eventTarget.removeEventListener('paint:changed', save);
-  };
+export const installCanvasAutosave = ({ canvas, eventTarget = globalThis.window, debounceMs = 700 }) => {
+	if (!eventTarget?.addEventListener || !eventTarget?.removeEventListener) return () => {};
+	const scheduleTimer = globalThis.window?.setTimeout?.bind(globalThis.window) || setTimeout;
+	const clearTimer = globalThis.window?.clearTimeout?.bind(globalThis.window) || clearTimeout;
+	let timer = 0;
+	const save = () => {
+		clearTimer(timer);
+		timer = scheduleTimer(() => saveCanvasState(canvas), debounceMs);
+	};
+	eventTarget.addEventListener('paint:changed', save);
+	return () => {
+		clearTimer(timer);
+		eventTarget.removeEventListener('paint:changed', save);
+	};
 }
