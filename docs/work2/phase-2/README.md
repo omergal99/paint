@@ -6,6 +6,7 @@ step that owns them and must pass the documented gates.
 
 ## Navigation
 
+- [Simple next steps](NEXT-STEPS-SIMPLE.html) — current plain-English continuation plan.
 - [Plan overview](PLAN-OVERVIEW.md) — priority order, dependencies, milestones.
 - [Plan details](PLAN-DETAILS.md) — implementation examples and acceptance criteria.
 - [Target architecture](TARGET-ARCHITECTURE.md) — proposed module and data boundaries.

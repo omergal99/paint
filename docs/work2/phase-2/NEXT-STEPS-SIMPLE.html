@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Paint — Simple Next Steps</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #182230;
+      --muted: #52606d;
+      --line: #d7e0e8;
+      --page: #f5f8fb;
+      --card: #ffffff;
+      --blue: #0b63ce;
+      --blue-soft: #e8f2ff;
+      --green: #187043;
+      --green-soft: #e9f7ed;
+      --amber: #9a5b00;
+      --amber-soft: #fff4dc;
+      --slate: #405261;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 28px 20px 48px;
+      background: var(--page);
+      color: var(--ink);
+      font: 16px/1.5 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { margin-bottom: 8px; font-size: clamp(2rem, 5vw, 3rem); line-height: 1.08; }
+    h2 { margin-bottom: 14px; font-size: 1.3rem; }
+    h3 { margin-bottom: 8px; font-size: 1.05rem; }
+    a { color: var(--blue); }
+
+    .intro, .card, .step, .rule {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      box-shadow: 0 2px 8px rgb(24 34 48 / 5%);
+    }
+
+    .intro { padding: 24px; border-top: 5px solid var(--blue); }
+    .eyebrow { margin-bottom: 8px; color: var(--blue); font-weight: 750; letter-spacing: .04em; text-transform: uppercase; }
+    .lead { max-width: 760px; margin-bottom: 0; color: var(--slate); font-size: 1.18rem; }
+    .muted { color: var(--muted); }
+
+    .answer {
+      margin: 22px 0;
+      padding: 20px;
+      border-radius: 14px;
+      background: var(--blue-soft);
+      border: 1px solid #bdd8f8;
+      font-size: 1.16rem;
+    }
+
+    .summary, .rules { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin: 18px 0 30px; }
+    .card, .rule { padding: 20px; }
+    .card.done { border-top: 4px solid var(--green); }
+    .card.gap { border-top: 4px solid var(--amber); }
+    ul { margin: 0; padding-inline-start: 1.25rem; }
+    li + li { margin-top: 7px; }
+
+    .path { margin: 0 0 30px; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+    .path li { position: relative; min-height: 105px; padding: 16px; border-radius: 12px; background: var(--card); border: 1px solid var(--line); }
+    .path li::before { display: block; margin-bottom: 7px; color: var(--blue); font-weight: 800; font-size: .78rem; letter-spacing: .04em; }
+    .path .now::before { content: "YOU ARE HERE"; color: var(--green); }
+    .path .next::before { content: "NEXT"; }
+    .path .after::before { content: "AFTER THAT"; color: var(--amber); }
+    .path .later::before { content: "LATER"; color: var(--muted); }
+    .path strong { display: block; line-height: 1.2; }
+
+    .steps { display: grid; gap: 14px; }
+    .step { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 16px; padding: 20px; }
+    .number {
+      display: grid;
+      place-items: center;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: var(--blue);
+      color: white;
+      font-weight: 800;
+    }
+    .tag { display: inline-block; margin: 0 0 8px; padding: 3px 8px; border-radius: 999px; background: var(--amber-soft); color: var(--amber); font-size: .8rem; font-weight: 750; }
+    .tag.next { background: var(--blue-soft); color: var(--blue); }
+    .tag.later { background: #eef2f5; color: var(--slate); }
+    .step p:last-child { margin-bottom: 0; }
+    .finish { color: var(--green); font-weight: 700; }
+
+    .rules { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .rule { background: #fffdf7; }
+    .rule h3 { color: var(--amber); }
+
+    .checklist { padding: 20px; background: var(--green-soft); border: 1px solid #b8e0c4; border-radius: 14px; }
+    .checklist li::marker { content: "✓  "; color: var(--green); font-weight: 800; }
+    footer { margin-top: 28px; color: var(--muted); font-size: .92rem; }
+
+    @media (max-width: 760px) {
+      body { padding: 18px 14px 36px; }
+      .summary, .rules, .path { grid-template-columns: 1fr; }
+      .path li { min-height: auto; }
+      .step { gap: 12px; padding: 16px; }
+    }
+
+    @media print {
+      body { max-width: none; padding: 0; background: white; }
+      .intro, .card, .step, .rule, .checklist { box-shadow: none; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header class="intro">
+      <p class="eyebrow">Paint 1.6.1 · Simple view · 20 September 2026</p>
+      <h1>What should happen next?</h1>
+      <p class="lead">Paint works well today. Before adding big new features, finish the evidence that makes it safe, reliable, and ready to ship as a production PWA.</p>
+    </header>
+
+    <p class="answer"><strong>The simple plan:</strong> make drawing and cleanup measurable, protect users’ work and memory, prove the release in real conditions, then build optional background removal, tabs, and Phase 3.</p>
+
+    <section class="summary" aria-label="Current state">
+      <article class="card done">
+        <h2>Already working</h2>
+        <ul>
+          <li>Ribbon, menus, settings, resize, transparency, colors, text safety, and pan.</li>
+          <li>Offline preparation and offline reload work locally.</li>
+          <li>Tests, documentation checks, and release checks pass.</li>
+        </ul>
+      </article>
+      <article class="card gap">
+        <h2>Not finished yet</h2>
+        <ul>
+          <li>Proof that runtime events and pointer work clean up correctly.</li>
+          <li>Safe recovery from storage, quota, and large-image problems.</li>
+          <li>Production HTTPS/install proof, real-device checks, and Performance 90+.</li>
+        </ul>
+      </article>
+    </section>
+
+    <section aria-labelledby="route-title">
+      <h2 id="route-title">The route</h2>
+      <ol class="path">
+        <li class="now"><strong>1.6.1 release candidate</strong><span class="muted">Useful and locally verified</span></li>
+        <li class="next"><strong>Runtime + storage safety</strong><span class="muted">Close Steps 07 and 08</span></li>
+        <li class="after"><strong>Launch proof</strong><span class="muted">Finish Steps 10 and 11</span></li>
+        <li class="later"><strong>New capabilities</strong><span class="muted">Steps 12, 13, then Phase 3</span></li>
+      </ol>
+    </section>
+
+    <section aria-labelledby="steps-title">
+      <h2 id="steps-title">Recommended order</h2>
+      <div class="steps">
+        <article class="step">
+          <div class="number">1</div>
+          <div>
+            <p class="tag next">Do this next · Step 07</p>
+            <h3>Make drawing smooth and cleanup trustworthy</h3>
+            <p>Coalesce pointer moves with animation frames, cache viewport geometry, and make telemetry pause/resume/destroy safely.</p>
+            <p class="finish">Done when: a browser trace proves less duplicate work and a real teardown journey proves the lifecycle behaves correctly.</p>
+          </div>
+        </article>
+        <article class="step">
+          <div class="number">2</div>
+          <div>
+            <p class="tag">Then · Step 08</p>
+            <h3>Protect work, memory, and recovery</h3>
+            <p>Use Blob/object-URL history safely, revoke URLs, limit huge imports/pastes, and give people a “Download now” escape when browser storage fails.</p>
+            <p class="finish">Done when: quota, IndexedDB failure, and large-canvas browser fixtures recover without losing the user’s work.</p>
+          </div>
+        </article>
+        <article class="step">
+          <div class="number">3</div>
+          <div>
+            <p class="tag">Then · Steps 10 + 11</p>
+            <h3>Prove the release is ready</h3>
+            <p>Add missing transparent-file and recovery tests, then raise Lighthouse Performance from 84 toward 90. Test a real HTTPS deployment, install/update, and desktop/mobile devices.</p>
+            <p class="finish">Done when: the tests cover the risky paths and production PWA evidence—not only localhost evidence—exists.</p>
+          </div>
+        </article>
+        <article class="step">
+          <div class="number">4</div>
+          <div>
+            <p class="tag later">Only after the gates</p>
+            <h3>Optional advanced background removal · Step 12</h3>
+            <p>Keep the current JavaScript removal as the default. Any advanced provider must be opt-in, cancellable, lazy-loaded, privacy-explicit, and able to be turned off harmlessly.</p>
+          </div>
+        </article>
+        <article class="step">
+          <div class="number">5</div>
+          <div>
+            <p class="tag later">Only after storage is stable</p>
+            <h3>Tabs, split view, and crash recovery · Step 13</h3>
+            <p>Add multi-document sessions, recovery, accessible tabs, and split panes only after document and storage ownership are proven stable.</p>
+          </div>
+        </article>
+        <article class="step">
+          <div class="number">6</div>
+          <div>
+            <p class="tag later">After Phase 2</p>
+            <h3>Phase 3: language, RTL, and a small notepad</h3>
+            <p>First create a single message catalog; then language/RTL support; then a local, bounded plain-text notepad with tabs. No rich text, sync, or collaboration in the first version.</p>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section aria-labelledby="rules-title">
+      <h2 id="rules-title">Three rules that prevent expensive mistakes</h2>
+      <div class="rules">
+        <article class="rule">
+          <h3>Keep the simple architecture</h3>
+          <p>Stay with native ES modules unless measurement proves a bundler helps. The current browser journey has 49 local JS modules and no Fetch/XHR calls.</p>
+        </article>
+        <article class="rule">
+          <h3>Do not weaken safety limits</h3>
+          <p>The 64 MiB in-memory history cap is separate from browser storage quota. A bigger quota estimate is not permission to use more memory.</p>
+        </article>
+        <article class="rule">
+          <h3>Do not promise unsafe text editing</h3>
+          <p>Full edit-after-blur stays off until overlap, undo/redo, and reload tests prove pixels and text cannot be lost or duplicated.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="checklist" aria-labelledby="ready-title">
+      <h2 id="ready-title">Phase 2 is ready to call production-PWA ready when</h2>
+      <ul>
+        <li>Runtime pointer and teardown evidence is complete.</li>
+        <li>Storage, quota, recovery, and large-image failure paths are proven.</li>
+        <li>Missing test fixtures and type/coverage checks are complete.</li>
+        <li>Performance is near 90+ and a real HTTPS/device install-update matrix passes.</li>
+      </ul>
+    </section>
+
+    <footer>
+      Based on the current <a href="PHASE-2-STATUS.md">Phase 2 status</a>, <a href="PHASE-2-STATUS_7.md">Round 7 status</a>, <a href="NEXT-AGENT-HANDOFF.md">handoff</a>, and <a href="../phase-3/PLAN-OVERVIEW.md">Phase 3 overview</a>. Detailed technical evidence remains in the existing phase documents.
+    </footer>
+  </main>
+</body>
+</html>
