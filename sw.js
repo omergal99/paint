@@ -1,4 +1,4 @@
-const CACHE_NAME = 'paint-shell-v1-6-0';
+const CACHE_NAME = 'paint-shell-v1-6-1';
 const SHELL = [
   './',
   './index.html',
@@ -25,6 +25,7 @@ const SHELL = [
   './js/canvas/ViewportManager.js',
   './js/clipboard/ClipboardManager.js',
   './js/history/HistoryManager.js',
+  './js/history/GlobalHistory.js',
   './js/tools/ToolManager.js',
   './js/tools/FreehandTools.js',
   './js/tools/FillTool.js',
@@ -62,12 +63,19 @@ const SHELL = [
   './css/assets/preview.png',
 ];
 
+const cacheShell = async () => {
+  const cache = await caches.open(CACHE_NAME);
+  const results = await Promise.allSettled(SHELL.map(async (asset) => {
+    if (await cache.match(asset)) return;
+    await cache.add(asset);
+  }));
+  const failed = results.reduce((count, result) => count + (result.status === 'rejected' ? 1 : 0), 0);
+  return { ok: failed === 0, cached: SHELL.length - failed, failed };
+};
+
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(CACHE_NAME).then(async (cache) => {
-    const results = await Promise.allSettled(SHELL.map((asset) => cache.add(asset)));
-    results.forEach((result, index) => {
-      if (result.status === 'rejected') console.warn('Offline shell asset unavailable:', SHELL[index]);
-    });
+  event.waitUntil(cacheShell().then((result) => {
+    if (!result.ok) console.warn(`Offline shell has ${result.failed} unavailable asset(s).`);
   }).then(() => self.skipWaiting()));
 });
 
@@ -79,6 +87,13 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('message', (event) => {
   if (event.data?.type === 'SKIP_WAITING') self.skipWaiting();
+  if (event.data?.type === 'CACHE_ALL') {
+    event.waitUntil(
+      cacheShell()
+        .catch(() => ({ ok: false, cached: 0, failed: SHELL.length }))
+        .then((result) => event.ports[0]?.postMessage(result)),
+    );
+  }
 });
 
 self.addEventListener('fetch', (event) => {

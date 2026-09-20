@@ -1,12 +1,12 @@
 {
-  "measuredAt": "2026-09-20T00:14:46.601Z",
+  "measuredAt": "2026-09-20T00:50:49.569Z",
   "node": "v22.23.1",
   "source": {
     "javascriptFiles": 51,
-    "javascriptLines": 8596
+    "javascriptLines": 8671
   },
   "events": {
-    "addEventListenerCalls": 213,
+    "addEventListenerCalls": 214,
     "removeEventListenerCalls": 15,
     "pointerMoveRegistrations": 9,
     "paintChangedRegistrations": 2,

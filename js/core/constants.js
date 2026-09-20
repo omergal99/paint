@@ -3,6 +3,7 @@
 
 export const STORAGE_KEYS = Object.freeze({
 	settings: 'omerpaint:settings',
+	settingsTab: 'omerpaint:settings-tab',
 	colors: 'paint:colors',
 	zoom: 'paint:zoom',
 	initialZoom: 'paint:initial-zoom',

@@ -2106,15 +2106,17 @@ dialog h3 {
 	margin-top: 18px;
 }
 .pwa-install-card,
-.pwa-update-card {
+.pwa-update-card,
+.pwa-offline-card {
 	border: 1px solid var(--w10-border);
 	border-radius: 5px;
-	padding: 10px;
-	margin-top: 10px;
+	padding: 6px 10px;
+	margin-top: 6px;
 	background: var(--w10-ribbon-bg);
 }
 .pwa-install-card p,
-.pwa-update-card p {
+.pwa-update-card p,
+.pwa-offline-card p {
 	margin: 6px 0 10px;
 }
 .pwa-status {
@@ -2393,6 +2395,7 @@ dialog h3 {
 .settings-panel p {
 	color: var(--w10-text-dim);
 	font-size: 12px;
+	margin: 2px 0px 4px;
 	line-height: 1.4;
 }
 .dialog-actions button.danger,

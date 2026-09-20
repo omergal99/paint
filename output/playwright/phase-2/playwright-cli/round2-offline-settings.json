@@ -1,0 +1,35 @@
+{
+  "round": "2026-09-20-round-2",
+  "url": "http://127.0.0.1:4176/",
+  "browser": "Google Chrome via Playwright",
+  "consoleErrors": 0,
+  "network": {
+    "totalRequests": 56,
+    "localJavaScriptRequests": 49,
+    "fetchOrXhrRequests": 0,
+    "interpretation": "Native ES-module loading is visible as local module requests; this journey did not create Fetch/XHR traffic."
+  },
+  "emptyText": {
+    "editorOpened": true,
+    "editorAfterOutsideClick": 0,
+    "textToolActive": true,
+    "selectToolActive": false
+  },
+  "settings": {
+    "openSearch": "?dialog=settings&tab=about",
+    "closedSearch": "",
+    "reopenedSearch": "?dialog=settings&tab=about",
+    "reopenedActiveTab": "about"
+  },
+  "offline": {
+    "preparationStatus": "Offline use is ready. Paint can open without internet.",
+    "serviceWorkerController": "http://127.0.0.1:4176/sw.js?version=1.6.1",
+    "offlineReload": {
+      "title": "Paint",
+      "appRoot": true,
+      "textLayer": true,
+      "serviceWorkerControlled": true
+    },
+    "note": "This is local-host evidence. Repeat the same journey on the production HTTPS host before calling the final PWA release gate closed."
+  }
+}

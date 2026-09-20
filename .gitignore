@@ -11,3 +11,6 @@ z-next
 # Use docs-internal for future local-only engineering notes in any docs tree.
 /docs-internal/
 **/docs-internal/
+
+# Agent-generated retrospectives and memory are workspace-internal.
+/.agent/

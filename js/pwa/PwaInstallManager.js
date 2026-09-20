@@ -12,12 +12,20 @@ export const createPwaInstallManager = ({
   installButton,
   statusEl,
   updateButton,
+  offlineButton,
+  offlineStatusEl,
   canReload = () => true,
 } = {}) => {
   let deferredPrompt = null;
   let registration = null;
   let reloading = false;
   let hadController = Boolean(navigator.serviceWorker?.controller);
+
+  const setOfflineStatus = (message, state = '') => {
+    if (!offlineStatusEl) return;
+    offlineStatusEl.textContent = message;
+    offlineStatusEl.dataset.state = state;
+  };
 
   const reloadIfSafe = () => {
     if (!canReload()) {
@@ -57,6 +65,16 @@ export const createPwaInstallManager = ({
     updateButton.textContent = registration?.waiting ? 'Update now' : 'Check for updates';
   };
 
+  const syncOfflineUi = () => {
+    if (!offlineButton) return;
+    offlineButton.disabled = !registration;
+    if (!registration) {
+      setOfflineStatus('Waiting for the service worker before preparing offline use…', 'unavailable');
+    } else if (offlineStatusEl?.dataset.state === 'unavailable') {
+      setOfflineStatus('All current app features are included in the offline shell.', 'ready');
+    }
+  };
+
   const watchInstallingWorker = (worker) => {
     if (!worker) return;
     worker.addEventListener('statechange', () => {
@@ -73,10 +91,37 @@ export const createPwaInstallManager = ({
     registration.addEventListener('updatefound', () => watchInstallingWorker(registration.installing));
     watchInstallingWorker(registration.installing);
     syncUpdateUi();
+    syncOfflineUi();
     // Ask the browser to compare sw.js immediately. This makes a published
     // release discoverable on the first foreground visit instead of waiting
     // for the browser's periodic service-worker check.
     registration.update?.().catch(() => {});
+  };
+
+  const prepareOffline = async () => {
+    const worker = registration?.active || navigator.serviceWorker?.controller;
+    if (!worker) {
+      setOfflineStatus('Load Paint once while online before preparing offline use.', 'unavailable');
+      return false;
+    }
+    setOfflineStatus('Preparing all Paint features for offline use…', 'checking');
+    try {
+      const channel = new MessageChannel();
+      const result = await new Promise((resolve, reject) => {
+        const timeout = window.setTimeout(() => reject(new Error('Offline preparation timed out')), 10000);
+        channel.port1.onmessage = (event) => {
+          window.clearTimeout(timeout);
+          resolve(event.data);
+        };
+        worker.postMessage({ type: 'CACHE_ALL' }, [channel.port2]);
+      });
+      if (!result?.ok) throw new Error('One or more app assets were unavailable');
+      setOfflineStatus('Offline use is ready. Paint can open without internet.', 'ready');
+      return true;
+    } catch {
+      setOfflineStatus('Offline preparation needs a connection. Try again while online.', 'error');
+      return false;
+    }
   };
 
   const install = async () => {
@@ -122,6 +167,7 @@ export const createPwaInstallManager = ({
     });
     installButton?.addEventListener('click', install);
     updateButton?.addEventListener('click', checkForUpdate);
+    offlineButton?.addEventListener('click', prepareOffline);
 
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.addEventListener('controllerchange', () => {
@@ -137,7 +183,8 @@ export const createPwaInstallManager = ({
 
     syncInstallUi();
     syncUpdateUi();
+    syncOfflineUi();
   };
 
-  return Object.freeze({ start, install, checkForUpdate, attachRegistration });
+  return Object.freeze({ start, install, checkForUpdate, prepareOffline, attachRegistration });
 };

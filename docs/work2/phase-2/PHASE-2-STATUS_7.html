@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Paint — Phase 2 Round 7 Status</title>
+  <style>
+    :root { color-scheme: light; font-family: system-ui, sans-serif; background: #fff; color: #17202a; }
+    body { max-width: 1100px; margin: 0 auto; padding: 24px; line-height: 1.5; }
+    h1 { margin-bottom: 4px; color: #0b5394; }
+    .muted { color: #52606d; }
+    table { width: 100%; border-collapse: collapse; margin: 18px 0; }
+    th, td { border: 1px solid #c7d0d9; padding: 10px; text-align: left; vertical-align: top; }
+    th { background: #eaf3fb; }
+    .done { color: #176b38; font-weight: 700; }
+    code { background: #f1f3f5; padding: 2px 4px; border-radius: 3px; }
+  </style>
+</head>
+<body>
+  <h1>Phase 2 — Round 7 Status</h1>
+  <p class="muted">1.6.1 hardening patch · 2026-09-20</p>
+  <table>
+    <thead><tr><th>Area</th><th>Result</th><th>Try it</th><th>Evidence / remaining gate</th></tr></thead>
+    <tbody>
+      <tr><td>Empty text edge case</td><td class="done">Done</td><td>Select Text, open an empty editor, then click outside.</td><td>Editor closes, Text remains active, Select stays inactive.</td></tr>
+      <tr><td>Settings URL/tab</td><td class="done">Done</td><td>Open Settings → About, close, and open again.</td><td>URL cleans on close and About is restored.</td></tr>
+      <tr><td>Offline preparation</td><td class="done">Done locally</td><td>Settings → App → Prepare offline use.</td><td>Service worker verifies the full current shell; production-host evidence remains.</td></tr>
+      <tr><td>Offline reload</td><td class="done">Verified locally</td><td>Disable network and reload after preparation.</td><td>Paint, app root, and text layer render offline under service-worker control.</td></tr>
+      <tr><td>Module/network strategy</td><td class="done">Done</td><td>Run <code>npm run verify:release</code> and inspect browser evidence.</td><td>49 local JS requests, 0 Fetch/XHR; import-graph shell coverage is checked.</td></tr>
+      <tr><td>Internal boundary</td><td class="done">Done</td><td>Review <code>.gitignore</code> and <code>git status --short</code>.</td><td>Retro memory/report is in ignored <code>docs-internal/retro/</code>.</td></tr>
+    </tbody>
+  </table>
+  <h2>Verification</h2>
+  <p><code>npm test</code>: 5/5 files passed. <code>npm run verify:release</code>: PASS, version 1.6.1, 60 service-worker assets and app import graph checked. <code>npm run verify:docs</code>: PASS.</p>
+  <p>Browser evidence is saved as <code>round2-offline-settings.json</code> under the curated Playwright output directory.</p>
+  <p class="muted">Remaining Step 11 gates: Performance toward 90+, real-device matrix, and production-host HTTPS/install evidence. Step 12, Step 13, and unsafe full text editing remain deferred.</p>
+</body>
+</html>

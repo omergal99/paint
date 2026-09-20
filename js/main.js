@@ -1021,6 +1021,7 @@ const settingsStore = createSettingsStore({
 });
 const settingsRegistry = createSettingsRegistry();
 settingsRegistry.registerStorageKey(STORAGE_KEYS.textHistory);
+settingsRegistry.registerStorageKey(STORAGE_KEYS.settingsTab);
 settingsRegistry.registerResetHandler(() => colorPalette.resetToDefaults());
 settingsRegistry.registerResetHandler(() => sidebar.resetSettings());
 const deterministicAi = createDeterministicCommandService({
@@ -1048,7 +1049,11 @@ sidebar.setAiCommandService(deterministicAi);
 const setDialogUrl = (dialog, extra = {}) => {
 	const params = new URLSearchParams(window.location.search);
 	if (dialog) params.set('dialog', dialog);
-	else params.delete('dialog');
+	else {
+		params.delete('dialog');
+		params.delete('tab');
+	}
+	if (dialog !== 'settings') params.delete('tab');
 	Object.entries(extra).forEach(([key, value]) => {
 		if (value) params.set(key, value);
 		else params.delete(key);
@@ -1062,21 +1067,32 @@ const settingsDialogController = createSettingsDialog({
 	tabs: document.querySelectorAll('[data-settings-tab]'),
 	panels: document.querySelectorAll('[data-settings-panel]'),
 	onChange: (tab) => {
+		try { localStorage.setItem(STORAGE_KEYS.settingsTab, tab); } catch {}
 		if (tab === 'about') updateAboutStats();
 		if (settingsDialog.open) setDialogUrl('settings', { tab });
 	},
 });
 settingsDialogController.bind();
 
+const getLastSettingsTab = () => {
+	try {
+		return localStorage.getItem(STORAGE_KEYS.settingsTab) || 'general';
+	} catch {
+		return 'general';
+	}
+};
+
 const pwaInstallManager = createPwaInstallManager({
 	installButton: document.getElementById('pwa-install-button'),
 	statusEl: document.getElementById('pwa-install-status'),
 	updateButton: document.getElementById('pwa-update-button'),
+	offlineButton: document.getElementById('pwa-offline-button'),
+	offlineStatusEl: document.getElementById('pwa-offline-status'),
 	canReload: () => !document.querySelector('.text-editor-shell') && !canvasManager.floatingCanvas,
 });
 pwaInstallManager.start();
 
-const openSettingsDialog = (tab = 'general') => {
+const openSettingsDialog = (tab = getLastSettingsTab()) => {
 	settingsDialogController.open(tab);
 	setDialogUrl('settings', { tab });
 }
@@ -1789,7 +1805,7 @@ applySavedSettings();
 const restoreDialogFromUrl = () => {
 	const params = new URLSearchParams(window.location.search);
 	const dialog = params.get('dialog');
-	if (dialog === 'settings') openSettingsDialog(params.get('tab') || 'general');
+	if (dialog === 'settings') openSettingsDialog(params.get('tab') || getLastSettingsTab());
 	else if (dialog === 'resize') openResizeDialog();
 	else if (dialog === 'new' && newFileDialog && !newFileDialog.open) newFileDialog.showModal();
 }

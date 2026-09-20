@@ -4,6 +4,16 @@ import { APP_VERSION } from './version.js';
 // renders this as customer-facing release history.
 export const RELEASE_NOTES = Object.freeze([
 	{
+		version: '1.6.1',
+		date: '2026-09-20',
+		highlights: [
+			'Empty text placement stays in Text mode until text is actually entered',
+			'Settings remembers the last tab while closing with a clean URL',
+			'Offline preparation now verifies and warms every current app feature',
+			'Offline shell coverage now follows the app import graph in release checks',
+		],
+	},
+	{
 		version: '1.6.0',
 		date: '2026-09-19',
 		highlights: [

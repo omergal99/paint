@@ -65,6 +65,28 @@ shellAssets.forEach((asset) => {
   if (!fs.existsSync(path.join(root, asset.slice(2)))) errors.push(`Service-worker shell asset is missing: ${asset}`);
 });
 
+const shellAssetSet = new Set(shellAssets);
+const appModules = new Set();
+const collectAppModules = (file) => {
+  const normalized = path.normalize(file);
+  if (appModules.has(normalized)) return;
+  appModules.add(normalized);
+  const source = read(normalized);
+  const imports = /\b(?:import\s+|from\s+|import\s*\()\s*['\"](\.\.?\/[^'\"]+)['\"]/g;
+  for (const match of source.matchAll(imports)) {
+    let dependency = path.normalize(path.join(path.dirname(normalized), match[1]));
+    if (!path.extname(dependency)) dependency += '.js';
+    if (dependency.startsWith('js' + path.sep) && fs.existsSync(path.join(root, dependency))) {
+      collectAppModules(dependency);
+    }
+  }
+};
+collectAppModules('js/app.js');
+appModules.forEach((module) => {
+  const asset = `./${module.split(path.sep).join('/')}`;
+  if (!shellAssetSet.has(asset)) errors.push(`Service-worker shell omits app module: ${asset}`);
+});
+
 const sourceFiles = [...walk('js'), ...walk('scripts'), ...walk('tests')].filter((file) => file.endsWith('.js'));
 sourceFiles.forEach((file) => run(process.execPath, ['--check', file], `Syntax check ${file}`));
 run(process.execPath, ['scripts/docs-consistency.mjs'], 'Documentation consistency');

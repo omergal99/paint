@@ -120,7 +120,7 @@ export const createTextTool = () => {
     clearEditorReferences();
     activeShell?.remove();
 
-    if (text.trim().length === 0) return;
+    if (text.trim().length === 0) return false;
 
     ctx.textHistoryStore?.record({
       text,
@@ -151,6 +151,7 @@ export const createTextTool = () => {
       ctx.selectTextObject?.(textObject.id);
     }
     ctx.canvasManager.persistToStorage();
+    return Boolean(textObject);
   };
 
   const open = (point, ctx) => {
@@ -289,8 +290,8 @@ export const createTextTool = () => {
         // Do not immediately open a second textarea at the click position;
         // that made the committed text appear missing and left the tool in
         // Text mode forever after the first blur.
-        commit();
-        if (ctx.getTextSelectAfterDraw?.() === true) ctx.setActiveTool?.('select');
+        const committed = commit();
+        if (committed && ctx.getTextSelectAfterDraw?.() === true) ctx.setActiveTool?.('select');
         return;
       }
       open(point, ctx);

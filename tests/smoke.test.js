@@ -14,6 +14,7 @@ const settingsDialog = read('js/ui/SettingsDialog.js');
 const app = read('js/app.js');
 const serviceWorker = read('sw.js');
 const responsiveStyle = read('css/progressive.css');
+const constants = read('js/core/constants.js');
 
 test('Crop menu owns Remove Background', () => {
   const cropMenuStart = html.indexOf('id="btn-crop-menu"');
@@ -117,6 +118,8 @@ test('Settings and text controls expose the refined layout and accessible fields
 	assert.match(read('js/ui/Toolbar.js'), /Foregound color\/alpha are global picker state|Foreground color\/alpha are global picker state/);
 	assert.match(read('js/ui/TextSelectionOverlay.js'), /text-object-focus-layer/);
 	assert.match(textTool, /getTextSelectAfterDraw/);
+	assert.match(textTool, /if \(text\.trim\(\)\.length === 0\) return false/);
+	assert.match(textTool, /const committed = commit\(\);[\s\S]*if \(committed && ctx\.getTextSelectAfterDraw/);
 	assert.match(main, /selectTextObject/);
 });
 
@@ -224,6 +227,7 @@ test('Service Worker precache entries exist', () => {
   for (const asset of assets.filter((asset) => asset !== './')) {
     assert.ok(fs.existsSync(path.join(root, asset)), `Missing precache asset: ${asset}`);
   }
+  assert.match(serviceWorker, /GlobalHistory\.js/);
 });
 
 test('PWA settings expose install/update controls and versioned update flow', () => {
@@ -233,11 +237,17 @@ test('PWA settings expose install/update controls and versioned update flow', ()
 	assert.match(html, /data-settings-tab="app"/);
 	assert.match(html, /id="pwa-install-button"/);
 	assert.match(html, /id="pwa-update-button"/);
+	assert.match(html, /id="pwa-offline-button"/);
+	assert.match(html, /id="pwa-offline-status"/);
 	assert.match(pwa, /beforeinstallprompt/);
 	assert.match(pwa, /controllerchange/);
 	assert.match(pwa, /registration\.update/);
 	assert.match(pwa, /canReload/);
 	assert.match(pwa, /Finish the current edit/);
+	assert.match(pwa, /prepareOffline/);
+	assert.match(pwa, /MessageChannel/);
+	assert.match(serviceWorker, /CACHE_ALL/);
+	assert.match(serviceWorker, /cache\.match\(asset\)/);
 	assert.match(syncVersion, /CACHE_NAME/);
 	assert.match(serviceWorker, /SKIP_WAITING/);
 	assert.match(appBootstrap, /sw\.js\?version=/);
@@ -373,7 +383,11 @@ test('Text editor alignment scales from one layout object', () => {
 
 test('Dialogs and palette settings have persistent UX hooks', () => {
   assert.match(main, /setDialogUrl\('settings'/);
-  assert.match(main, /restoreDialogFromUrl/);
+	assert.match(main, /restoreDialogFromUrl/);
+	assert.match(main, /params\.delete\('tab'\)/);
+	assert.match(main, /localStorage\.setItem\(STORAGE_KEYS\.settingsTab/);
+	assert.match(main, /getLastSettingsTab/);
+	assert.match(constants, /settingsTab:/);
   assert.match(main, /history-settings-link/);
   assert.match(sidebar, /palette-settings-editor/);
   assert.match(read('js/ui/ColorPalette.js'), /defaultPrimary/);

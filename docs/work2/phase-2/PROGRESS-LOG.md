@@ -319,6 +319,23 @@ and legal/metadata files.
   Ribbon scrolling, Escape menu closure, service-worker control, and Settings
   → App update status. PWA reload now waits if text editing or a floating
   selection is active.
-- Persisted the four-hat retrospective in `.agent/retro/` with a white-theme
-  report and reusable release-gate guidance. Step 12, Step 13, and unsafe full
-  text editing remain explicitly deferred.
+- Persisted the four-hat retrospective as local-only engineering evidence in
+  `docs-internal/retro/` with a white-theme report and reusable release-gate
+  guidance. Step 12, Step 13, and unsafe full text editing remain explicitly
+  deferred.
+
+## 2026-09-20 — Round 7 hardening round: empty-text guard, clean Settings URL, and offline preparation
+
+- Fixed the empty-editor edge case: an empty text placement is discarded without
+  activating Select, so the Text tool remains ready for the next placement.
+- Settings now remembers the last selected tab in local storage and removes both
+  dialog query parameters on close. The URL is still useful while the dialog is
+  open for refresh/recovery, but it never remains as stale navigation state.
+- Added Settings → App → Prepare offline use. The active service worker verifies
+  every current shell asset, and release verification traverses the app import
+  graph so a newly imported module cannot silently be omitted from offline use.
+- Browser evidence recorded 49 local JavaScript requests, 0 Fetch/XHR requests,
+  clean Settings URL/tab restoration, a ready offline status, and a successful
+  offline reload containing Paint, `#app`, and the text layer.
+- Moved retro memory/report artifacts to ignored `docs-internal/retro/` and
+  released these customer-facing fixes as version `1.6.1`.

@@ -42,7 +42,7 @@ Search internet/ecosystems for new tools, libraries, or patterns that fit this e
 All learnings, metrics, and generated artifacts are indexed and persisted in the local workspace:
 
 ```text
-.agent/
+docs-internal/
 └── retro/
     ├── index.json                  # Master database of sessions, generated skills, and trends
     ├── skills/                     # Auto-generated reusable skill files created by /retro
@@ -111,20 +111,20 @@ Apply Code & Workflow Fixes: Implement all approved refactorings, package update
 
 Synthesize New Skills/Plugins:
 
-Save newly created skills to .agent/retro/skills/ and update .agent/retro/index.json.
+Save newly created skills to docs-internal/retro/skills/ and update docs-internal/retro/index.json.
 
 CRITICAL — Self-Improvement Protocol:
 
 Analyze how /retro performed during this run.
 
-Update .agent/retro/skills/retro.md (this file) with improved prompts, sharper detection rules, or better UX flows learned from this execution.
+Update docs-internal/retro/skills/retro.md (this file) with improved prompts, sharper detection rules, or better UX flows learned from this execution.
 
 Persist Memory:
 
-Save extracted patterns to .agent/retro/memory/ for long-term indexing.
+Save extracted patterns to docs-internal/retro/memory/ for long-term indexing.
 
 ### Phase 4: Dynamic Light-Theme HTML Report Generation
-Generate a comprehensive, beautifully styled HTML report saved to .agent/retro/reports/retro-[YYYYMMDD-HHMMSS].html and display a summary in chat.
+Generate a comprehensive, beautifully styled HTML report saved to docs-internal/retro/reports/retro-[YYYYMMDD-HHMMSS].html and display a summary in chat.
 
 #### HTML Report Design and Formatting Guidelines
 DO NOT use a static, rigid template. Be creative and adapt the visual presentation dynamically based on the session's specific learnings.
