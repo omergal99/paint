@@ -87,7 +87,7 @@ test('Image action submenus expose consistent icons and translated labels', () =
 	assert.match(imageMenu, /id="btn-flip-vertical"[\s\S]*data-i18n="ui\.flipVertical"/);
 	assert.match(read('css/styles.css'), /\.submenu-label\s*\{[\s\S]*gap:\s*5px/);
 	assert.match(read('css/styles.css'), /\.submenu-arrow\s*\{[\s\S]*margin-inline-start:\s*auto/);
-	assert.match(html, /data-tag="tool-select"[\s\S]*<path d="M3\.5 7V4\.5/);
+	assert.match(html, /data-tag="tool-select"[\s\S]*<path\s+d="M3\.5 7V4\.5/);
 });
 test('Save is owned by File More actions', () => {
 	const save = html.match(/<button[^>]*id="btn-save"[\s\S]*?<\/button>/)?.[0] || '';
