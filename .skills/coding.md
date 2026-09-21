@@ -3,6 +3,8 @@
 - Use plain, readable ES modules and small functions with one responsibility.
 - Apply KISS: choose the simplest design that preserves the required behavior.
 - Apply SSOT: defaults, labels, storage keys, and command definitions belong in one place.
+- Treat localization as part of every UI-text change: use message keys, update
+  all ready catalogs, remove obsolete mappings, and run `npm run check:i18n`.
 - Do not copy/paste behavior; extract a helper or reusable component.
 - Name data and events explicitly. Keep side effects at composition boundaries.
 - Preserve existing contracts unless the task explicitly changes them.

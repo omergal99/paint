@@ -13,7 +13,6 @@ export const STORAGE_KEYS = Object.freeze({
 	textStyle: 'paint:text-style',
 	textHistory: 'paint:text-history',
 	textHistoryToolbar: 'paint:text-history-toolbar',
-	storageEstimate: 'paint:storage-estimate',
 	toolStyles: 'paint:tool-styles',
 	styleHistory: 'paint:style-history',
 	showCurrentTool: 'paint:show-current-tool',
@@ -28,6 +27,7 @@ export const STORAGE_KEYS = Object.freeze({
 	ribbonButtonState: 'paint:ribbon-button-state',
 	pendingHistorySave: 'paint:pending-history-save',
 	aiConnection: 'paint:ai-connection',
+	workspaceStripVisible: 'paint:workspace-strip-visible',
 });
 
 export const EVENTS = Object.freeze({

@@ -18,24 +18,107 @@ const constants = read('js/core/constants.js');
 
 test('Crop menu owns Remove Background', () => {
   const cropMenuStart = html.indexOf('id="btn-crop-menu"');
-  const cropMenuEnd = html.indexOf('</div>', html.indexOf('aria-label="Crop options"'));
+  const cropMenuEnd = html.indexOf('</div>', html.indexOf('aria-label="Crop"'));
   const cropMenu = html.slice(cropMenuStart, cropMenuEnd);
 
   assert.ok(cropMenu.includes('id="btn-crop"'));
-  assert.ok(cropMenu.includes('id="btn-remove-bg"'));
+	assert.ok(cropMenu.includes('id="btn-remove-bg"'));
+	assert.match(cropMenu, /Remove Background/);
+	assert.match(cropMenu, /aria-haspopup="dialog"/);
+	assert.match(cropMenu, /id="btn-crop"[^>]*disabled/);
   assert.equal((html.match(/id="btn-remove-bg"/g) || []).length, 1);
   assert.ok(!/<button[^>]*class="[^"]*rbtn[^\"]*"[^>]*id="btn-remove-bg"/.test(html));
+});
+test('Workspace strip has explicit management and split controls', () => {
+	assert.doesNotMatch(html, /id="workspace-strip"|class="workspace-strip"/);
+	assert.match(main, /const workspaceStripRoot =/);
+	assert.match(main, /id = 'workspace-tab-bar'/);
+	assert.doesNotMatch(html, /workspace-split-toolbar/);
+	assert.match(main, /workspace-split-view/);
+	assert.match(html, /id="btn-manage-workspace"/);
+	assert.match(html, /id="btn-toggle-split-view"/);
+	assert.match(html, /id="workspace-manager-dialog"/);
+	assert.match(main, /createTabBar/);
+	assert.match(main, /createSplitView/);
+});
+test('About stats use one shared loading status and resolve their values', () => {
+	const aboutStart = html.indexOf('data-settings-panel="about"');
+	const aboutEnd = html.indexOf('data-settings-panel="release"');
+	const about = html.slice(aboutStart, aboutEnd);
+	assert.match(about, /id="about-loading-state"[^>]*data-i18n="ui\.loading"/);
+	assert.doesNotMatch(about, /<dd[^>]*>Loading/);
+	assert.equal((about.match(/data-i18n="ui\.loading"/g) || []).length, 1);
+	assert.match(main, /const loading = document\.getElementById\('about-loading-state'\)/);
+	assert.match(main, /finally \{[\s\S]*loading\.hidden = true/);
+	assert.match(app, /debugLoading=1&loadingMs=1500/);
+	assert.match(app, /RIBBON_STARTUP_MASK_DELAY_MS/);
+	assert.match(app, /Math\.min\(10000, Math\.max\(0/);
+});
+test('Tool menu keeps SVG icons after localization and file icons use the shared line style', () => {
+	const toolbar = read('js/ui/Toolbar.js');
+	assert.match(toolbar, /data-i18n=\"\$\{i18nKey\}\"/);
+	assert.match(toolbar, /removeAttribute\('data-i18n-runtime'\)/);
+	assert.match(html, /id="btn-new"[\s\S]*stroke="currentColor"[\s\S]*data-i18n="common\.actions\.new"/);
+	assert.match(html, /id="btn-paste"[\s\S]*stroke="currentColor"[\s\S]*data-i18n="common\.actions\.paste"/);
+	assert.match(html, /id="btn-open"[\s\S]*data-i18n="ribbon\.file\.openImage"/);
+});
+test('Clipboard, resize, and fill controls use clear line icons', () => {
+	const copy = html.match(/<button[^>]*id="btn-copy"[\s\S]*?<\/button>/)?.[0] || '';
+	const resize = html.match(/<button[^>]*id="btn-canvas-size"[\s\S]*?<\/button>/)?.[0] || '';
+	const fill = html.match(/<button[^>]*data-tool="fill"[^>]*data-tag="tool-fill"[\s\S]*?<\/button>/)?.[0] || '';
+	assert.match(copy, /stroke="currentColor"/);
+	assert.match(copy, /<rect[^>]+fill="none"/);
+	assert.match(resize, /stroke-linejoin="round"/);
+	assert.match(resize, /M14 6V3h3/);
+	assert.match(fill, /stroke-linecap="round"/);
+	assert.match(fill, /M4 7\.5 8\.5 3/);
+});
+test('Image action submenus expose consistent icons and translated labels', () => {
+	const imageMenuStart = html.indexOf('class="action-menu-items image-more-menu-items"');
+	const imageMenuEnd = html.indexOf('<div class="ribbon-group-title">Image</div>');
+	const imageMenu = html.slice(imageMenuStart, imageMenuEnd);
+	assert.match(imageMenu, /id="btn-crop-menu"[\s\S]*<svg class="icon size4"/);
+	assert.match(imageMenu, /id="btn-crop"[\s\S]*data-i18n="ribbon\.image\.cropToSelection"/);
+	assert.match(imageMenu, /id="btn-rotate"[\s\S]*<svg class="icon size4"/);
+	assert.match(imageMenu, /id="btn-rotate-90"[\s\S]*data-i18n="ui\.rotate90"/);
+	assert.match(imageMenu, /id="btn-rotate-free"[\s\S]*data-i18n="ui\.freeRotate"/);
+	assert.match(imageMenu, /id="btn-flip"[\s\S]*<svg class="icon size4"/);
+	assert.match(imageMenu, /id="btn-flip-horizontal"[\s\S]*data-i18n="ui\.flipHorizontal"/);
+	assert.match(imageMenu, /id="btn-flip-vertical"[\s\S]*data-i18n="ui\.flipVertical"/);
+	assert.match(read('css/styles.css'), /\.submenu-label\s*\{[\s\S]*gap:\s*5px/);
+	assert.match(read('css/styles.css'), /\.submenu-arrow\s*\{[\s\S]*margin-inline-start:\s*auto/);
+	assert.match(html, /data-tag="tool-select"[\s\S]*<path d="M3\.5 7V4\.5/);
+});
+test('Save is owned by File More actions', () => {
+	const save = html.match(/<button[^>]*id="btn-save"[\s\S]*?<\/button>/)?.[0] || '';
+	assert.match(save, /role="menuitem"/);
+	assert.match(save, /<svg class="icon"/);
+	assert.doesNotMatch(html.slice(html.indexOf('class="rbtn-stack"'), html.indexOf('id="btn-file-more"')), /id="btn-save"/);
 });
 test('Background removal is a cancellable preview workflow', () => {
   const controller = read('js/background/BackgroundRemovalController.js');
   assert.match(html, /id="background-removal-dialog"/);
   assert.match(html, /id="background-removal-preview"/);
-  assert.match(html, /id="background-removal-progress"/);
-  assert.match(main, /createBackgroundRemovalService/);
+	assert.match(html, /id="background-removal-progress"/);
+	assert.match(html, /id="background-removal-mode"/);
+	assert.match(html, /value="soft-edge"/);
+	assert.match(html, /id="background-removal-tolerance"/);
+	assert.match(html, /id="background-removal-softness"/);
+	assert.match(html, /id="background-removal-color"/);
+	assert.match(html, /id="background-removal-sample"/);
+	assert.match(html, /id="background-removal-preview-button"/);
+	assert.match(html, /background-removal-progress-row/);
+	assert.match(html, /id="background-removal-keep"/);
+	assert.match(html, /id="background-removal-remove"/);
+	assert.match(html, /id="background-removal-expand"/);
+	assert.match(read('js/background/BackgroundMaskEditor.js'), /setPointerCapture/);
+	assert.match(read('js/background/BackgroundMaskEditor.js'), /stopPropagation/);
+	assert.match(main, /createBackgroundRemovalService/);
   assert.match(main, /backgroundRemovalController\.open/);
   assert.match(main, /historyManager\.snapshot\(\{ force: true \}\)/);
   assert.match(controller, /controller\?\.signal\.aborted/);
-  assert.match(controller, /urlApi\?\.revokeObjectURL/);
+	assert.match(controller, /urlApi\?\.revokeObjectURL/);
+	assert.match(main, /target === 'floating'/);
 });
 test('Open menu owns Open and Import options', () => {
   const openMenuStart = html.indexOf('id="btn-open-menu"');
@@ -378,7 +461,8 @@ test('PWA settings expose install/update controls and versioned update flow', ()
 	assert.match(html, /id="pwa-install-button"/);
 	assert.match(html, /id="pwa-update-button"/);
 	assert.match(html, /id="pwa-offline-button"/);
-	assert.match(html, /id="pwa-offline-status"/);
+	assert.match(html, /id="pwa-install-status"[^>]*hidden/);
+	assert.match(html, /id="pwa-offline-status"[^>]*hidden/);
 	assert.match(pwa, /beforeinstallprompt/);
 	assert.match(pwa, /controllerchange/);
 	assert.match(pwa, /registration\.update/);
@@ -386,6 +470,8 @@ test('PWA settings expose install/update controls and versioned update flow', ()
 	assert.match(pwa, /Finish the current edit/);
 	assert.match(pwa, /prepareOffline/);
 	assert.match(pwa, /MessageChannel/);
+	assert.match(pwa, /translate\('ui\.offlineUse', 'Offline use'\)/);
+	assert.match(pwa, /statusEl\.hidden = false/);
 	assert.match(serviceWorker, /CACHE_ALL/);
 	assert.match(serviceWorker, /cache\.match\(asset\)/);
 	assert.match(syncVersion, /CACHE_NAME/);
@@ -650,14 +736,15 @@ test('Round-2 fixes: V glyph, session persistence, view-aware actions, storage m
   // 3. taller settings dialog + compact ribbon rows
   assert.match(css, /height:\s*min\(470px,\s*88vh\)/);
   assert.match(css, /\.ribbon-setting-row:hover/);
-	// 3.2 storage math: validated raw bytes, cached browser estimate, exact free
+	// 3.2 storage math: validated raw bytes, fresh browser estimate, exact free
 	//     space, and a bounded percentage bar.
-	assert.match(main, /STORAGE_ESTIMATE_CACHE_TTL_MS/);
+	assert.doesNotMatch(main, /STORAGE_ESTIMATE_CACHE_TTL_MS/);
 	assert.match(main, /normalizeStorageEstimate/);
-	assert.match(main, /STORAGE_KEYS\.storageEstimate/);
+	assert.match(main, /getStorageEstimate/);
 	assert.match(main, /minimumFractionDigits: 2/);
-	assert.match(main, /STORAGE_DISPLAY_QUOTA_CAP_MB/);
-	assert.match(main, /Math\.floor\(estimate\.quota \/ MB\)/);
+	assert.match(main, /GiB/);
+	assert.match(main, /free of/);
+	assert.match(main, /browser estimate/);
 	assert.match(main, /Math\.min\(100, Math\.max\(1, Math\.ceil/);
 });
 

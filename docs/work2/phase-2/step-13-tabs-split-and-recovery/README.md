@@ -2,9 +2,10 @@
 
 ## Current status
 
-The session and recovery contracts are implemented as isolated, UI-neutral
-foundations. There is no visible tab bar, split view, or multi-document editor
-yet, so this step is not feature-complete.
+The session and recovery contracts remain isolated foundations, and the first
+visible workspace shell is now available as reusable UI modules. It is
+deliberately mountable without changing the current single-canvas boot path,
+so document/canvas migration can land incrementally.
 
 ## Implemented foundation
 
@@ -26,14 +27,34 @@ yet, so this step is not feature-complete.
   state, undo-close, malformed restore rejection, recovery classification,
   explicit discard, bounded snapshots, and disposal.
 
+## First visible UI slice
+
+- `js/ui/TabBar.js` renders an accessible `role="tablist"` from a
+  `SessionService` snapshot. It supports active/dirty indicators, close and
+  new-document affordances, Home/End and arrow-key navigation, and clean
+  subscription teardown.
+- `js/ui/SplitView.js` renders an opt-in split host. It assigns the secondary
+	  pane through `SessionService`, exposes an accessible keyboard/pointer
+	  divider, and loads an isolated full Paint app (ribbon, canvas, sidebar,
+	  status bar) in each pane.
+- `css/styles.css` contains shared light/dark-mode-aware shell styles.
+- The shell is compact and controllable: the File → More menu exposes Save and
+	Manage multiple Paint, while the strip provides a manage button and a split
+	view control. The manager dialog can select or close session documents.
+- The strip is hidden by default for a clean canvas and its visibility is
+  persisted through the shared storage-key contract. Split controls are also
+  hidden until File → More → Split Paint view is chosen; the active split host
+  covers the app with two bounded full-app panes.
+- `tests/step13-ui.test.js` verifies tab projection, split-ratio bounds, pane
+	  assignment, iframe pane creation, and hidden-by-default behavior. Cross-pane
+	  document metadata and crash recovery remain the next integration slice.
+
 ## Still required to finish the feature
 
-- Build and wire an accessible TabBar and SplitView, including mouse, touch,
-  and keyboard divider behavior, focus management, dirty indicators, and
-  visible undo-close controls.
-- Connect the services to `main.js`, canvas ownership, tool/history state, and
-  the existing single-document UI. Each tab needs an independently live or
-  safely suspended canvas/document lifecycle.
+- Connect parent tab metadata and dirty state to the isolated pane apps, then
+	  add visible undo-close and recovery actions.
+- Add a small postMessage/session bridge for active-document labels, focus, and
+	  safe close behavior without sharing raster or tool state across panes.
 - Move from the current single-canvas persistence model to bounded
   per-document IndexedDB raster storage, with history/object-URL cleanup,
   inactive-document compression, quota recovery, and safe restore ordering.

@@ -98,10 +98,9 @@ behavior and its relevant browser or contract evidence are both complete.
   turned on or off. It focuses the committed metadata target after commit;
   clicking elsewhere clears the focus and returns the current tool to Text. It
   must not be confused with unsafe text-object editing.
-- About storage uses the browser estimate API once per 24-hour cache window,
-  stores raw validated bytes in local storage, and calculates free space as
-  `max(0, quota - usage)` before formatting. Browser memory remains a separate
-  budget.
+- About storage reads the browser estimate API whenever the About tab opens,
+  validates raw bytes, and calculates `max(0, quota - usage)` before showing
+  `free of total (browser estimate)`. Browser memory remains a separate budget.
 - Working-canvas autosave is now versioned PNG `Blob` data in IndexedDB. If a
   saved record is malformed, the app explains the recovery choice before it is
   removed; if storage reports quota exhaustion, it offers a recovery download
@@ -126,7 +125,7 @@ behavior and its relevant browser or contract evidence are both complete.
 | Code design | 9/10 | Legacy class owners and the large composition root remain |
 | UI design | 9/10 | RTL/PWA polish and full visual regression remain |
 | Logic/data safety | 9.4/10 | Local storage-recovery fixtures now pass; editable text and real-device quota/memory pressure remain gated. |
-| Verification | 9.6/10 | Release verifier, production-build audit, runtime teardown/recovery journeys, 12/12 tests, TypeScript 7 `checkJs`, and local desktop P100/A96/BP100/SEO100 pass. Mobile P76 and public device/deployment proof remain. |
+| Verification | 9.6/10 | Release verifier, production-build audit, runtime teardown/recovery journeys, current 13/13 tests, TypeScript 7 `checkJs`, and local desktop P100/A96/BP100/SEO100 pass. Mobile P76 and public device/deployment proof remain. |
 | Overall | **9/10** | Strong `1.6.1` local release candidate; final public PWA and device audit remains. |
 
 ## Updating this file

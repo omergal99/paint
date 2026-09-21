@@ -38,6 +38,23 @@
 - Real-device, HTTPS deployment, 200% zoom, and mobile performance evidence
   remain open and are not claimed by this local matrix.
 
+## 2026-09-22 - Toolbar icon and optional workspace-shell polish
+
+- Refined the Copy, Resize canvas, and Fill SVGs to use consistent
+  `currentColor` line geometry with clearer document, resize, and paint-fill
+  affordances. The dynamic More Tools menu continues to clone these source
+  icons after localization.
+- The workspace strip is no longer required in the static `index.html` shell;
+  `main.js` mounts the tagged strip and tab bar after the editor graph loads,
+  preserving the hidden-by-default persisted preference and keeping first paint
+  compact. Legacy shells that already include the nodes remain supported.
+- Added smoke assertions for the icon geometry and dynamic workspace mount.
+
+The next agent should continue from the existing Step 12/13 gates in
+`NEXT-AGENT-HANDOFF.md`; no advanced background-removal model is silently
+enabled. The self-hosted worker/model, migration, cancellation, memory, and
+real-device proofs remain explicit follow-up work.
+
 ## 2026-09-21 - Step 12 visible local workflow
 
 - Replaced the direct synchronous Remove Background transform with a reusable
@@ -51,6 +68,35 @@
 - Added controller contract coverage to `background-provider.test.js` and ran
   a Chrome 151 preview/cancel/apply smoke journey. Evidence is recorded in
   `output/playwright/phase-2/local-audit-20260920/background-removal-browser-20260921.json`.
+
+## 2026-09-22 - About loading state and startup preview control
+
+- Removed four static `Loading...` About values. About now has one localized,
+  reusable loading status, fills version/activity synchronously, resolves
+  storage/free-space values with a `finally` cleanup, and reports unavailable
+  storage instead of leaving an indefinite placeholder.
+- Added a development-only startup-mask preview: use
+  `?debugLoading=1&loadingMs=1500` locally to hold the ribbon mask for 1.5s
+  after `paint:ready`. The flag is explicit and capped at 10 seconds; normal
+  production startup adds no artificial delay.
+- Added smoke coverage for the single About loading state, completion cleanup,
+  and delay guard.
+
+- App-tab status paragraphs now start hidden and are revealed only by the PWA
+  manager with a resolved state. Offline status no longer leaves a permanent
+  “Checking…” placeholder when no registration exists.
+- About free-space output now uses a fresh raw browser quota estimate and keeps
+  the familiar `free of total (browser estimate)` format. The previous fixed
+  10 GB presentation was removed because it is not device-disk truth.
+- Reconciled the supplied offline-first segmentation blueprint into the Step
+  12 future plan: lazy self-hosted Worker/model assets, exact model-graph
+  validation, positive/negative prompts, cancellation, memory limits, and
+  history-safe Apply. No AI runtime or model was added to this release.
+- Added a project-wide localization rule to `AGENTS.md` and `.skills/coding.md`:
+  every visible text change must update the shared catalog/mapping contract and
+  all ready locales, with `check:i18n` required before handoff.
+- Added line icons to Crop, Crop-to-selection, Rotate (90/180/270/free), Flip
+  (horizontal/vertical), and improved Select with explicit translated labels.
 
 ## Handoff rule
 
@@ -402,3 +448,71 @@ and legal/metadata files.
   sustained large-canvas memory growth, and touch/stylus stress remain open.
   Step 12, Step 13, and Phase 3 only provide tested foundations so far; their
   visible UI workflows remain later integration work.
+
+## 2026-09-21 - Round 9: background-removal workflow and Step 13 shell
+
+- Step 12 now has a richer local workflow: color-key and edge-connected
+  flood-fill modes, bounded tolerance, explicit/sampleable background color,
+  repeatable previews, and a checkerboard result that stays non-destructive
+  until Apply.
+- Active pasted selections no longer fail with “Place the active selection”;
+  Apply commits the temporary layer only after the forced undo snapshot, then
+  replaces the selected region so undo remains meaningful.
+- Crop is disabled until a real selection exists and exposes the
+  “No Selection Area to Crop” hint. The menu now says “Remove Background” and
+  uses a dialog/options icon.
+- Mounted the first Step 13 visible shell: session-driven tabs with dirty
+  indicators and keyboard navigation, plus an accessible split-view control.
+  Canvas ownership and per-document persistence remain the next slice.
+- Verification: 13/13 tests, TypeScript 7, i18n, docs consistency, runtime
+  audit, production build, release verifier, and headless Chrome startup all
+  pass.
+
+## 2026-09-21 - Round 10: controllable workspace and mask review
+
+- File → More now contains Save, Manage multiple Paint, and a hide/show
+  workspace-strip control. The strip has compact active tabs, a manager button,
+  pane selectors, and an RTL-safe split divider.
+- Background removal now has an isolated normalized mask editor. Keep/remove
+  rectangles survive re-preview, the preview can zoom or expand, and pointer
+  capture/drag suppression prevents modal gestures from changing the canvas.
+- Provider output accepts keep/remove regions after local segmentation, keeping
+  the provider boundary ready for a future mask-producing model/library.
+- Verification remains green: 13/13 tests, TypeScript 7, i18n, docs, build,
+  runtime audit, release verification, and Chrome startup smoke.
+
+## 2026-09-22 - Round 13: tool-menu icon regression
+
+- Restored Pencil, Fill, Eraser, Color picker, and Magnifier SVGs in More Tools
+  after fixing the localization observer so translated labels no longer replace
+  icon-bearing menu content.
+- Refined New, Open, and Paste icons with consistent current-color line artwork
+  and shared translation keys.
+- Verification: 13/13 tests, 10 repeated test loops, TypeScript 7, i18n, docs,
+  production build, release verification, and headless Chrome icon inspection.
+
+## 2026-09-22 - Round 12: opt-in full-app split and clean static shell
+
+- Removed the split-view placeholder from `index.html`; the host is created only
+  after the editor starts and remains hidden until File → More → Split Paint view.
+- Split view now creates a second session document and two isolated Paint app
+  instances, each with its own ribbon, canvas, sidebar, and status bar. The
+  divider and close controls stay inside the active split overlay.
+- Read the attached SAM/SlimSAM specification. The existing provider boundary
+  already matches its privacy and lazy-loading requirements; model/ONNX assets
+  remain an explicit next slice rather than an accidental first-load download.
+- Verification: 13/13 tests, 10 repeated test loops, TypeScript 7, i18n, docs,
+  production build, release verification, and Chrome DOM/interaction checks.
+
+## 2026-09-21 - Round 11: persisted strip and bounded split host
+
+- Workspace-strip visibility now uses the shared `STORAGE_KEYS` contract,
+  restores safely when storage is unavailable, and defaults to hidden for new
+  users. File → More remains the recovery path for showing it again.
+- The split host moved out of the strip into a bounded workspace-content row;
+  activating split view can no longer stretch an active tab into a full-height
+  panel. The current editor remains the primary raster owner while the next
+  Step 13 slice assigns independent canvas state to each pane.
+- Added controller persistence coverage and reran 13/13 tests, TypeScript 7,
+  i18n, docs, production build, release verification, and delayed headless
+  Chrome startup smoke.

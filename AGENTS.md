@@ -10,6 +10,9 @@ Required habits:
 - Prefer one source of truth (SSOT), small composable functions, and KISS.
 - Reuse or extend infrastructure components before adding one-off UI logic.
 - Keep settings, events, defaults, and mirrored controls synchronized.
+- Every user-visible text change must use an existing i18n key or add one to
+  `js/i18n/messages.js`, `js/i18n/uiText.js`, and every ready locale catalog;
+  remove obsolete keys/text and run `npm run check:i18n` before handoff.
 - Avoid duplication and unnecessary work in hot paths; preserve canvas pixels.
 - Validate with `npm test`, syntax checks, and `git diff --check` before handoff.
 - Do not add provider secrets, arbitrary code execution, or native browser alert UI.

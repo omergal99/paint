@@ -28,9 +28,13 @@ export const createBackgroundRemovalController = ({
 	applyButton,
 	cancelButton,
 	closeButton,
+	previewButton,
 	service,
 	getInput,
+	getOptions,
 	applyResult,
+	onOpen,
+	onClose,
 	urlApi = globalThis.URL,
 	AbortControllerCtor = globalThis.AbortController,
 } = {}) => {
@@ -52,6 +56,7 @@ export const createBackgroundRemovalController = ({
 		dialog?.setAttribute?.('aria-busy', String(Boolean(busy)));
 		if (progress) progress.hidden = !busy && !pending;
 		if (applyButton) applyButton.disabled = busy || !pending;
+		if (previewButton) previewButton.disabled = busy;
 		if (cancelButton) cancelButton.hidden = !busy;
 		if (closeButton) closeButton.hidden = busy;
 	};
@@ -75,6 +80,7 @@ export const createBackgroundRemovalController = ({
 		setPreviewUrl();
 		if (dialog?.open) dialog.close('cancel');
 		setBusy(false);
+		onClose?.();
 	};
 
 	const updateProgress = (update = {}) => {
@@ -102,10 +108,11 @@ export const createBackgroundRemovalController = ({
 
 	const run = async () => {
 		if (operation || destroyed) return false;
+		const preservePreview = Boolean(pending && previewUrl);
 		const controller = typeof AbortControllerCtor === 'function' ? new AbortControllerCtor() : null;
 		operation = controller;
 		pending = null;
-		setPreviewUrl();
+		if (!preservePreview) setPreviewUrl();
 		setBusy(true);
 		if (message) message.textContent = 'Processing locally in this browser. No image is uploaded.';
 		try {
@@ -113,7 +120,7 @@ export const createBackgroundRemovalController = ({
 			if (!input?.blob) throw new Error('No image is available for background removal.');
 			const result = await service?.remove(input.blob, {
 				providerId: 'local-color-key',
-				tolerance: 30,
+				...(getOptions?.() || {}),
 				onProgress: updateProgress,
 			}, controller?.signal);
 			if (controller?.signal.aborted) return false;
@@ -122,9 +129,10 @@ export const createBackgroundRemovalController = ({
 				if (phase) phase.textContent = 'Could not finish';
 				if (cancelButton) cancelButton.hidden = true;
 				if (closeButton) closeButton.hidden = false;
+				if (previewButton) previewButton.disabled = false;
 				return false;
 			}
-			pending = { ...result, region: input.region || null };
+			pending = { ...result, region: input.region || null, target: input.target || 'canvas' };
 			const url = urlApi?.createObjectURL?.(result.imageBlob);
 			setPreviewUrl(url || null);
 			if (message) message.textContent = 'Preview ready. Apply it when the result looks right.';
@@ -138,6 +146,7 @@ export const createBackgroundRemovalController = ({
 				if (phase) phase.textContent = 'Could not finish';
 				if (cancelButton) cancelButton.hidden = true;
 				if (closeButton) closeButton.hidden = false;
+				if (previewButton) previewButton.disabled = false;
 			}
 			return false;
 		} finally {
@@ -148,8 +157,14 @@ export const createBackgroundRemovalController = ({
 	const open = async () => {
 		if (destroyed || operation) return false;
 		reset();
+		onOpen?.();
 		dialog?.showModal?.();
 		return run();
+	};
+
+	const onPreview = (event) => {
+		event?.preventDefault?.();
+		void run();
 	};
 
 	const onCancel = (event) => {
@@ -160,6 +175,7 @@ export const createBackgroundRemovalController = ({
 	cancelButton?.addEventListener?.('click', close);
 	closeButton?.addEventListener?.('click', close);
 	applyButton?.addEventListener?.('click', onApply);
+	previewButton?.addEventListener?.('click', onPreview);
 	dialog?.addEventListener?.('cancel', onCancel);
 
 	const destroy = () => {
@@ -170,6 +186,7 @@ export const createBackgroundRemovalController = ({
 		cancelButton?.removeEventListener?.('click', close);
 		closeButton?.removeEventListener?.('click', close);
 		applyButton?.removeEventListener?.('click', onApply);
+		previewButton?.removeEventListener?.('click', onPreview);
 		dialog?.removeEventListener?.('cancel', onCancel);
 	};
 

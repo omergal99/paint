@@ -43,6 +43,9 @@ import { createTextDocumentStore } from './document/TextDocumentStore.js';
 import { createTextHistoryStore } from './document/TextHistoryStore.js';
 import { createTextLayerService } from './document/TextLayerService.js';
 import { createTextSelectionOverlay } from './ui/TextSelectionOverlay.js';
+import { createTabBar } from './ui/TabBar.js';
+import { createSplitView } from './ui/SplitView.js';
+import { createWorkspaceStripController } from './ui/WorkspaceStrip.js';
 import { createActionMenuController } from './ui/ActionMenuController.js';
 import { createDialogSearch } from './ui/DialogSearch.js';
 import { createSettingsDialog } from './ui/SettingsDialog.js';
@@ -53,6 +56,9 @@ import { createEventBus } from './core/EventBus.js';
 import { createBackgroundRemovalService } from './background/BackgroundRemovalProvider.js';
 import { createLocalColorKeyProvider } from './background/LocalColorKeyProvider.js';
 import { createBackgroundRemovalController } from './background/BackgroundRemovalController.js';
+import { createBackgroundMaskEditor } from './background/BackgroundMaskEditor.js';
+import { createPaintDocument } from './core/DocumentContract.js';
+import { createSessionService } from './session/SessionService.js';
 
 // ---------- DOM refs ----------
 // Every addressable UI element gets a stable inspection hook. Explicit
@@ -63,6 +69,9 @@ const ensureDataTags = (root = document) => {
 	});
 };
 ensureDataTags();
+
+const isEmbeddedPaint = new URLSearchParams(globalThis.location?.search || '').get('embedded') === '1';
+document.documentElement.classList.toggle('embedded-paint-app', isEmbeddedPaint);
 
 const stage = document.getElementById('canvas-stage');
 const canvasEl = document.getElementById('paint-canvas');
@@ -94,6 +103,86 @@ const statusBar = createStatusBar({
 	canvasSizeEl: document.getElementById('status-canvas-size'),
 	flashEl: document.getElementById('status-flash'),
 });
+
+// Step 13 keeps the parent session as the pane-assignment source of truth.
+// Split panes render isolated full Paint app instances so each raster/editor
+// lifecycle remains independent from the parent shell.
+const workspaceSession = createSessionService({
+	initialDocuments: [createPaintDocument({ metadata: { label: 'Untitled' } })],
+});
+// Workspace chrome is optional and intentionally absent from the static HTML
+// shell. Mount it after the editor graph loads so first paint stays compact;
+// keep compatibility with shells that still provide the nodes.
+const workspaceStripRoot = (() => {
+	const existing = document.getElementById('workspace-strip');
+	if (existing) return existing;
+	const mainArea = document.getElementById('main-area');
+	const content = document.getElementById('workspace-content');
+	if (!mainArea || !content) return null;
+	const strip = document.createElement('section');
+	strip.id = 'workspace-strip';
+	strip.className = 'workspace-strip';
+	strip.dataset.tag = 'workspace-strip';
+	strip.setAttribute('aria-label', 'Open documents');
+	const tabBar = document.createElement('div');
+	tabBar.id = 'workspace-tab-bar';
+	tabBar.className = 'workspace-tab-bar';
+	tabBar.dataset.tag = 'workspace-tab-bar';
+	strip.append(tabBar);
+	mainArea.insertBefore(strip, content);
+	return strip;
+})();
+const workspaceSplitRoot = (() => {
+	const existing = document.getElementById('workspace-split-view');
+	if (existing) return existing;
+	const host = document.getElementById('workspace-content');
+	if (!host) return null;
+	const root = document.createElement('div');
+	root.id = 'workspace-split-view';
+	root.className = 'workspace-split-view workspace-split-host';
+	root.dataset.tag = 'workspace-split-view';
+	root.hidden = true;
+	host.prepend(root);
+	return root;
+})();
+const workspaceTabBar = createTabBar({
+	root: workspaceStripRoot?.querySelector('#workspace-tab-bar') || document.getElementById('workspace-tab-bar'),
+	sessionService: workspaceSession,
+	onSelect: (id) => statusBar.flash(`Active document: ${workspaceSession.getDocument?.(id)?.metadata?.label || 'Image'}`),
+	onManage: () => workspaceManagerDialog?.showModal?.(),
+	onNew: () => {
+		const count = workspaceSession.getState().documents.length + 1;
+		const created = workspaceSession.createDocument({ metadata: { label: `Image ${count}` } });
+		if (!created.ok) statusBar.flash(created.error?.message || 'Could not open another document tab');
+		else statusBar.flash('New document tab added; canvas ownership is the next Step 13 slice.');
+	},
+});
+const workspaceSplitView = createSplitView({
+	root: workspaceSplitRoot,
+	sessionService: workspaceSession,
+	onChange: (model) => {
+		if (model.isSplit) statusBar.flash('Split view is ready for two document canvases.');
+	},
+});
+const workspaceManagerDialog = document.getElementById('workspace-manager-dialog');
+const workspaceStripController = createWorkspaceStripController({
+	root: workspaceStripRoot,
+	toggleButton: document.getElementById('btn-toggle-workspace'),
+	labelElement: document.getElementById('workspace-strip-toggle-label'),
+	storageKey: STORAGE_KEYS.workspaceStripVisible,
+	defaultVisible: false,
+});
+const workspaceManagerTabs = createTabBar({
+	root: document.getElementById('workspace-manager-tabs'),
+	sessionService: workspaceSession,
+	onSelect: (id) => {
+		workspaceManagerDialog?.close?.();
+		statusBar.flash(`Active document: ${workspaceSession.getDocument?.(id)?.metadata?.label || 'Image'}`);
+	},
+	onNew: () => workspaceSession.createDocument({ metadata: { label: `Image ${workspaceSession.getState().documents.length + 1}` } }),
+});
+document.getElementById('btn-manage-workspace')?.addEventListener('click', () => workspaceManagerDialog?.showModal?.());
+document.getElementById('btn-toggle-split-view')?.addEventListener('click', () => workspaceSplitView.openSplit?.());
 statusBar.setCanvasSize(canvasManager.width, canvasManager.height);
 canvasManager.onAdmissionRejected = (admission) => statusBar.flash(admission.message);
 canvasManager.onImageLoadError = (error) => statusBar.flash(error.message);
@@ -236,6 +325,17 @@ const getSelection = () => {
 	return canvasManager.selection;
 }
 
+const updateCropActionState = () => {
+	const button = document.getElementById('btn-crop');
+	if (!button) return;
+	const enabled = Boolean(canvasManager.selection?.w && canvasManager.selection?.h);
+	button.disabled = !enabled;
+	button.setAttribute('aria-disabled', String(!enabled));
+	const label = enabled ? 'Crop to selection' : 'No Selection Area to Crop';
+	button.title = label;
+	button.setAttribute('aria-label', label);
+};
+
 let selectionRotation = null;
 const sameRegion = (a, b) => {
 	return a && b && ['x', 'y', 'w', 'h'].every((key) => a[key] === b[key]);
@@ -267,7 +367,10 @@ const setSelection = (region, opts = {}) => {
 		drawSelectionOutline(region);
 	}
 	updateSelectionHandles(region);
+	updateCropActionState();
 }
+
+updateCropActionState();
 
 const nudgeSelection = (dx, dy) => {
 	const selection = canvasManager.selection;
@@ -603,20 +706,52 @@ const canvasToPngBlob = (source) => new Promise((resolve) => {
 });
 
 const getBackgroundRemovalInput = async () => {
-	if (canvasManager.floatingCanvas) {
-		throw new Error('Place the active selection before removing its background.');
-	}
 	const region = canvasManager.selection?.w && canvasManager.selection?.h
 		? { ...canvasManager.selection }
 		: null;
-	const source = region ? canvasManager.extractRegion(region) : canvasManager.createCompositeCanvas();
+	const target = canvasManager.floatingCanvas ? 'floating' : (region ? 'selection' : 'canvas');
+	const source = canvasManager.floatingCanvas
+		? canvasManager.floatingCanvas
+		: (region ? canvasManager.extractRegion(region) : canvasManager.createCompositeCanvas());
 	const blob = await canvasToPngBlob(source);
 	if (!blob) throw new Error('This browser could not prepare the image preview.');
-	return { blob, region };
+	return { blob, region, target };
 };
+
+const backgroundMaskEditor = createBackgroundMaskEditor({
+	root: document.getElementById('background-removal-preview-stage'),
+	overlay: document.getElementById('background-removal-mask-overlay'),
+});
 
 const applyBackgroundRemovalResult = async (result) => {
 	historyManager.snapshot({ force: true });
+	if (result?.target === 'floating' && canvasManager.floatingCanvas && typeof createImageBitmap === 'function') {
+		let bitmap = null;
+		try {
+			// A pasted selection is a temporary layer and is not part of the
+			// snapshot stream. Commit it only after Apply (the snapshot above still
+			// represents the pre-Apply document), then replace its region with the
+			// processed output so undo remains reliable.
+			const region = result.region || canvasManager.selection;
+			if (!region) return false;
+			commitFloatingPixels(region);
+			canvasManager.floatingCanvas = null;
+			canvasManager.flattenLayers();
+			bitmap = await createImageBitmap(result.imageBlob);
+			canvasManager.fillRegion(region, canvasManager.backgroundColor);
+			canvasManager.ctx.drawImage(bitmap, region.x, region.y, region.w, region.h);
+			canvasManager.clearOverlay();
+			setSelection(null);
+			canvasManager.markDocumentDirty();
+			persistSession();
+			statusBar.flash('Background preview applied to the active selection');
+			return true;
+		} catch {
+			return false;
+		} finally {
+			bitmap?.close?.();
+		}
+	}
 	// The preview is composed from raster and text layers. Flatten only after
 	// Apply so cancelling never changes the working document.
 	canvasManager.flattenLayers();
@@ -652,9 +787,60 @@ const backgroundRemovalController = createBackgroundRemovalController({
 	applyButton: document.getElementById('background-removal-apply'),
 	cancelButton: document.getElementById('background-removal-cancel'),
 	closeButton: document.getElementById('background-removal-close'),
+	previewButton: document.getElementById('background-removal-preview-button'),
 	service: backgroundRemovalService,
 	getInput: getBackgroundRemovalInput,
+	getOptions: () => ({
+		tolerance: Number(document.getElementById('background-removal-tolerance')?.value || 30),
+		backgroundColor: document.getElementById('background-removal-color')?.value || '#ffffff',
+		mode: document.getElementById('background-removal-mode')?.value || 'color-key',
+		edgeSoftness: Number(document.getElementById('background-removal-softness')?.value || 25),
+		...backgroundMaskEditor.getRegions(),
+	}),
 	applyResult: applyBackgroundRemovalResult,
+	onOpen: () => backgroundMaskEditor.clear(),
+	onClose: () => backgroundMaskEditor.clear(),
+});
+
+document.getElementById('background-removal-tolerance')?.addEventListener('input', (event) => {
+	const value = document.getElementById('background-removal-tolerance-value');
+	if (value) value.value = event.target.value;
+	if (value) value.textContent = event.target.value;
+});
+document.getElementById('background-removal-softness')?.addEventListener('input', (event) => {
+	const value = document.getElementById('background-removal-softness-value');
+	if (value) value.textContent = event.target.value;
+});
+document.getElementById('background-removal-sample')?.addEventListener('click', () => {
+	const source = canvasManager.floatingCanvas || canvasManager.canvas;
+	try {
+		const pixel = source?.getContext?.('2d', { willReadFrequently: true })?.getImageData(0, 0, 1, 1)?.data;
+		if (!pixel || pixel[3] === 0) return;
+		const hex = [...pixel.slice(0, 3)].map((channel) => Number(channel).toString(16).padStart(2, '0')).join('');
+		const color = document.getElementById('background-removal-color');
+		if (color) color.value = `#${hex}`;
+	} catch {
+		statusBar.flash('Could not sample the source color');
+	}
+});
+const setBackgroundMaskTool = (tool) => {
+	backgroundMaskEditor.setTool(tool);
+	document.getElementById('background-removal-keep')?.setAttribute('aria-pressed', String(tool === 'keep'));
+	document.getElementById('background-removal-remove')?.setAttribute('aria-pressed', String(tool === 'remove'));
+};
+document.getElementById('background-removal-keep')?.addEventListener('click', () => setBackgroundMaskTool('keep'));
+document.getElementById('background-removal-remove')?.addEventListener('click', () => setBackgroundMaskTool('remove'));
+document.getElementById('background-removal-clear-mask')?.addEventListener('click', () => backgroundMaskEditor.clear());
+document.getElementById('background-removal-expand')?.addEventListener('click', (event) => {
+	const dialog = document.getElementById('background-removal-dialog');
+	const expanded = dialog?.classList.toggle('is-expanded') === true;
+	event.currentTarget.setAttribute('aria-pressed', String(expanded));
+	event.currentTarget.textContent = expanded ? 'Compact' : 'Expand';
+});
+document.getElementById('background-removal-zoom')?.addEventListener('input', (event) => {
+	const scale = Math.max(0.5, Number(event.target.value) / 100);
+	const stage = document.getElementById('background-removal-preview-stage');
+	if (stage) stage.style.setProperty('--background-preview-scale', String(scale));
 });
 
 const selectAll = () => {
@@ -938,6 +1124,7 @@ document.getElementById('btn-rotate-free').addEventListener('click', async () =>
 });
 document.getElementById('btn-flip-horizontal').addEventListener('click', () => applyTransformation(c => flipCanvas(c, true)));
 document.getElementById('btn-flip-vertical').addEventListener('click', () => applyTransformation(c => flipCanvas(c, false)));
+document.getElementById('btn-crop').addEventListener('click', crop);
 document.getElementById('btn-remove-bg').addEventListener('click', () => { void backgroundRemovalController.open(); });
 const bindRotateSelectionHandle = () => {
 	if (!rotateSelectionHandle) return () => {};
@@ -1325,6 +1512,7 @@ const pwaInstallManager = createPwaInstallManager({
 	updateButton: document.getElementById('pwa-update-button'),
 	offlineButton: document.getElementById('pwa-offline-button'),
 	offlineStatusEl: document.getElementById('pwa-offline-status'),
+	translate: (key, fallback) => localeController.i18n.t(key) || fallback,
 	canReload: () => !document.querySelector('.text-editor-shell') && !canvasManager.floatingCanvas,
 	requireReloadGuard: true,
 });
@@ -1741,9 +1929,6 @@ const syncRibbonSettingsControls = () => {
 	});
 }
 
-const STORAGE_ESTIMATE_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
-const STORAGE_DISPLAY_QUOTA_CAP_MB = 10 * 1024;
-
 const normalizeStorageEstimate = (value) => {
 	const usage = Number(value?.usage);
 	const quota = Number(value?.quota);
@@ -1751,53 +1936,63 @@ const normalizeStorageEstimate = (value) => {
 	return { usage, quota, checkedAt: Number(value?.checkedAt) || Date.now() };
 }
 
-const getCachedStorageEstimate = async () => {
-	let cached = null;
-	try {
-		cached = normalizeStorageEstimate(JSON.parse(localStorage.getItem(STORAGE_KEYS.storageEstimate) || 'null'));
-	} catch {}
-	if (cached && Date.now() - cached.checkedAt < STORAGE_ESTIMATE_CACHE_TTL_MS) return cached;
-
+const getStorageEstimate = async () => {
 	const estimate = await navigator.storage?.estimate?.();
-	const normalized = normalizeStorageEstimate({ ...estimate, checkedAt: Date.now() });
-	if (!normalized) return null;
-	try { localStorage.setItem(STORAGE_KEYS.storageEstimate, JSON.stringify(normalized)); } catch {}
-	return normalized;
+	return normalizeStorageEstimate({ ...estimate, checkedAt: Date.now() });
 }
 
 const updateAboutStats = async () => {
-	document.getElementById('about-version').textContent = APP_VERSION;
-	document.getElementById('about-activity').textContent = new Date().toLocaleString();
-	// Storage numbers are estimates, not disk truth. Cache one validated browser
-	// estimate for 24 hours so opening the About tab does not probe repeatedly.
+	const loading = document.getElementById('about-loading-state');
+	const aboutValues = document.querySelectorAll('[data-about-value]');
+	if (loading) loading.hidden = false;
+	aboutValues.forEach((element) => element.setAttribute('aria-busy', 'true'));
+	const version = document.getElementById('about-version');
+	const activity = document.getElementById('about-activity');
+	if (version) version.textContent = APP_VERSION;
+	if (activity) activity.textContent = new Date().toLocaleString();
+		// Storage numbers are estimates, not disk truth. Read a fresh validated
+	// browser estimate every time the About tab is opened.
 	const MB = 1024 * 1024;
-	const fmt2 = (mb) => `${mb.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MB`;
+	const formatBytes = (bytes) => {
+		const value = Number(bytes);
+		if (!Number.isFinite(value) || value < 0) return 'Unavailable';
+		const units = value >= 1024 ** 3 ? ['GiB', 1024 ** 3]
+			: value >= MB ? ['MiB', MB]
+			: value >= 1024 ? ['KiB', 1024]
+			: ['B', 1];
+		return `${(value / units[1]).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${units[0]}`;
+	};
 	try {
-		const estimate = await getCachedStorageEstimate();
-		const usageMB = estimate ? estimate.usage / MB : 0;
-		// Chromium reports a quota with implementation overhead (for example
-		// 10,240.39 MiB). The About surface presents the stable 10 GiB budget
-		// instead of exposing that fractional overhead as user storage.
-		const quotaMB = estimate ? Math.min(STORAGE_DISPLAY_QUOTA_CAP_MB, Math.floor(estimate.quota / MB)) : 0;
-		document.getElementById('about-storage').textContent = estimate ? fmt2(usageMB) : 'Unavailable';
+		const estimate = await getStorageEstimate();
+		const usageBytes = estimate?.usage || 0;
+		const quotaBytes = estimate?.quota || 0;
+		// This is the browser's storage quota estimate, not free space on the
+		// user's disk. Keep the raw estimate and label the result accordingly;
+		// never present a made-up fixed 10 GB capacity.
+		const storage = document.getElementById('about-storage');
+		if (storage) storage.textContent = estimate ? formatBytes(usageBytes) : 'Unavailable';
 		const freeEl = document.getElementById('about-storage-free');
 		if (freeEl) {
 			freeEl.textContent = estimate
-				? `${fmt2(Math.max(0, quotaMB - usageMB))} free of ${fmt2(quotaMB)}`
+				? `${formatBytes(Math.max(0, quotaBytes - usageBytes))} free of ${formatBytes(quotaBytes)}`
 				: 'Unavailable';
 		}
 		const fill = document.getElementById('about-storage-bar-fill');
 		if (fill) {
 			let pct = 0;
-			if (estimate && quotaMB > 0 && usageMB > 0) {
-				pct = Math.min(100, Math.max(1, Math.ceil((usageMB / quotaMB) * 100)));
+			if (estimate && quotaBytes > 0 && usageBytes > 0) {
+				pct = Math.min(100, Math.max(1, Math.ceil((usageBytes / quotaBytes) * 100)));
 			}
 			fill.style.width = `${pct}%`;
 		}
 	} catch {
-		document.getElementById('about-storage').textContent = 'Unavailable';
+		const storage = document.getElementById('about-storage');
+		if (storage) storage.textContent = 'Unavailable';
 		const freeEl = document.getElementById('about-storage-free');
 		if (freeEl) freeEl.textContent = 'Unavailable';
+	} finally {
+		aboutValues.forEach((element) => element.removeAttribute('aria-busy'));
+		if (loading) loading.hidden = true;
 	}
 }
 

@@ -18,7 +18,7 @@ export const UI_TEXT_KEYS = Object.freeze({
 	More: 'ribbon.annotations.more',
 	Crop: 'ui.crop',
 	'Crop to selection': 'ribbon.image.cropToSelection',
-	'Remove Background (Color Key)': 'ui.removeBackground',
+	'Remove Background': 'ui.removeBackground',
 	Rotate: 'ui.rotate',
 	'Rotate 90': 'ui.rotate90',
 	'Rotate 180': 'ui.rotate180',

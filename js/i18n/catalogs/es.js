@@ -28,7 +28,7 @@ export const ES_MESSAGES = Object.freeze({
 		languageReady: '{language} está disponible', languagePlanned: '{language} está previsto',
 	},
 	ui: {
-		crop: 'Recortar', removeBackground: 'Quitar fondo (por color)', rotate: 'Rotar', rotate90: 'Rotar 90', rotate180: 'Rotar 180',
+		crop: 'Recortar', removeBackground: 'Quitar fondo', backgroundRemovalMode: 'Modo de eliminación', backgroundRemovalColorKey: 'Clave de color (todos los píxeles coincidentes)', backgroundRemovalFloodFill: 'Relleno conectado (fondo contiguo)', backgroundRemovalSoftEdge: 'Borde suave (alfa difuminado)', backgroundRemovalTolerance: 'Tolerancia', backgroundRemovalSoftness: 'Suavidad del borde', backgroundRemovalColor: 'Color de fondo', backgroundRemovalSample: 'Muestrear', preview: 'Vista previa', noSelectionCrop: 'No hay área de selección para recortar', openBackgroundRemovalOptions: 'Abrir opciones de eliminación de fondo', rotate: 'Rotar', rotate90: 'Rotar 90', rotate180: 'Rotar 180',
 		rotate270: 'Rotar 270', freeRotate: 'Rotación libre', showRotateInSelection: 'Mostrar rotación en la selección', flip: 'Voltear',
 		flipHorizontal: 'Voltear horizontalmente', flipVertical: 'Voltear verticalmente', showRecentTextToolbar: 'Mostrar barra de texto reciente',
 		selectTextAfterDraw: 'Seleccionar texto después de dibujar', textFocusHelp: 'Los objetivos son seguros; editar texto existente aún no está disponible.',

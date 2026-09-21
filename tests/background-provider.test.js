@@ -9,6 +9,7 @@ import {
 } from '../js/background/BackgroundRemovalProvider.js';
 import { createLocalColorKeyProvider } from '../js/background/LocalColorKeyProvider.js';
 import { createBackgroundRemovalController } from '../js/background/BackgroundRemovalController.js';
+import { createBackgroundMaskEditor } from '../js/background/BackgroundMaskEditor.js';
 import {
 	createAdvancedProviderLoader,
 	createSelfHostedAdvancedProviderImporter,
@@ -62,6 +63,29 @@ test('background-removal service returns a bounded local result', async () => {
 	assert.equal(result.imageBlob.type, 'image/png');
 });
 
+test('background mask editor captures preview drags and emits normalized keep regions', () => {
+	const listeners = new Map();
+	const document = { createElement: () => ({ style: {}, dataset: {}, setAttribute: () => {} }) };
+	const overlay = { ownerDocument: document, replaceChildren: () => {}, append: () => {} };
+	const root = {
+		ownerDocument: document,
+		dataset: {},
+		getBoundingClientRect: () => ({ left: 0, top: 0, width: 100, height: 100 }),
+		addEventListener: (name, listener) => listeners.set(name, listener),
+		removeEventListener: (name) => listeners.delete(name),
+		setPointerCapture: () => {},
+		releasePointerCapture: () => {},
+	};
+	const editor = createBackgroundMaskEditor({ root, overlay });
+	let stopped = false;
+	const event = (x, y) => ({ button: 0, pointerId: 1, clientX: x, clientY: y, preventDefault: () => {}, stopPropagation: () => { stopped = true; } });
+	listeners.get('pointerdown')(event(10, 20));
+	listeners.get('pointerup')(event(60, 80));
+	assert.equal(stopped, true);
+	assert.deepEqual(editor.getRegions().keepRegions[0], { x: 0.1, y: 0.2, w: 0.5, h: 0.6 });
+	editor.destroy();
+});
+
 test('background-removal controller previews, applies, and releases its object URL', async () => {
 	const dialog = uiElement();
 	dialog.open = false;
@@ -97,6 +121,67 @@ test('background-removal controller previews, applies, and releases its object U
 	await new Promise((resolve) => setTimeout(resolve, 0));
 	assert.equal(applied.region.w, 4);
 	assert.deepEqual(revoked, ['blob:preview']);
+	controller.destroy();
+});
+
+test('background-removal controller can re-preview with current options without mutating until Apply', async () => {
+	const dialog = uiElement();
+	dialog.open = false;
+	dialog.showModal = () => { dialog.open = true; };
+	dialog.close = () => { dialog.open = false; };
+	const previewButton = uiElement();
+	const applyButton = uiElement();
+	let calls = 0;
+	let seenTolerance = null;
+	const controller = createBackgroundRemovalController({
+		dialog, message: uiElement(), phase: uiElement(), progress: uiElement(), preview: uiElement(),
+		applyButton, previewButton, cancelButton: uiElement(), closeButton: uiElement(),
+		service: { remove: async (_blob, options) => {
+			calls += 1;
+			seenTolerance = options.tolerance;
+			return { ok: true, imageBlob: pngBlob(`preview-${calls}`), width: 1, height: 1, providerId: 'local-color-key' };
+		} },
+		getInput: async () => ({ blob: pngBlob('input'), target: 'canvas' }),
+		getOptions: () => ({ tolerance: 77, mode: 'flood-fill' }),
+		applyResult: async () => true,
+	});
+	assert.equal(await controller.open(), true);
+	assert.equal(calls, 1);
+	previewButton.dispatch('click', { preventDefault() {} });
+	await new Promise((resolve) => setTimeout(resolve, 0));
+	assert.equal(calls, 2);
+	assert.equal(seenTolerance, 77);
+	assert.equal(applyButton.disabled, false);
+	controller.destroy();
+});
+
+test('background-removal controller keeps the previous preview visible during a re-preview', async () => {
+	const dialog = uiElement();
+	dialog.open = false;
+	dialog.showModal = () => { dialog.open = true; };
+	dialog.close = () => { dialog.open = false; };
+	const preview = uiElement();
+	const previewButton = uiElement();
+	let calls = 0;
+	let resolveSecond;
+	const controller = createBackgroundRemovalController({
+		dialog, message: uiElement(), phase: uiElement(), progress: uiElement(), preview,
+		previewButton, applyButton: uiElement(), cancelButton: uiElement(), closeButton: uiElement(),
+		service: { remove: async () => {
+			calls += 1;
+			if (calls === 2) await new Promise((resolve) => { resolveSecond = resolve; });
+			return { ok: true, imageBlob: pngBlob(`keep-${calls}`), width: 1, height: 1, providerId: 'local-color-key' };
+		} },
+		getInput: async () => ({ blob: pngBlob('input') }),
+		urlApi: { createObjectURL: (blob) => `blob:${blob.size}:${calls}`, revokeObjectURL: () => {} },
+	});
+	await controller.open();
+	assert.equal(preview.hidden, false);
+	previewButton.dispatch('click', { preventDefault() {} });
+	await new Promise((resolve) => setTimeout(resolve, 0));
+	assert.equal(preview.hidden, false);
+	resolveSecond();
+	await new Promise((resolve) => setTimeout(resolve, 0));
 	controller.destroy();
 });
 
@@ -230,6 +315,95 @@ test('local color-key fallback returns a standard decode error instead of throwi
 	const result = await provider.remove(pngBlob());
 	assert.equal(result.ok, false);
 	assert.equal(result.error.code, BACKGROUND_REMOVAL_ERROR_CODES.decodeFailed);
+});
+
+test('local color-key accepts an explicit background color', async () => {
+	const pixels = new Uint8ClampedArray([
+		200, 0, 0, 255,
+		0, 0, 200, 255,
+	]);
+	let written = null;
+	const bitmap = { width: 2, height: 1, close: () => {} };
+	const canvas = {
+		getContext: () => ({
+			drawImage: () => {},
+			getImageData: () => ({ data: pixels }),
+			putImageData: (imageData) => { written = imageData.data; },
+		}),
+		toBlob: (callback) => callback(pngBlob('local-output')),
+	};
+	const provider = createLocalColorKeyProvider({
+		createImageBitmapFn: async () => bitmap,
+		createCanvas: () => canvas,
+	});
+	const result = await provider.remove(pngBlob(), { backgroundColor: '#0000c8' });
+	assert.equal(result.ok, true);
+	assert.equal(written[3], 255, 'a non-background pixel remains opaque');
+	assert.equal(written[7], 0, 'the selected background color becomes transparent');
+});
+
+test('local flood-fill mode removes only background-connected pixels', async () => {
+	const pixels = new Uint8ClampedArray([
+		10, 10, 10, 255, 10, 10, 10, 255, 10, 10, 10, 255,
+		10, 10, 10, 255, 200, 0, 0, 255, 10, 10, 10, 255,
+		10, 10, 10, 255, 10, 10, 10, 255, 10, 10, 10, 255,
+	]);
+	let written = null;
+	const bitmap = { width: 3, height: 3, close: () => {} };
+	const canvas = {
+		getContext: () => ({
+			drawImage: () => {},
+			getImageData: () => ({ data: pixels }),
+			putImageData: (imageData) => { written = imageData.data; },
+		}),
+		toBlob: (callback) => callback(pngBlob('flood-output')),
+	};
+	const provider = createLocalColorKeyProvider({
+		createImageBitmapFn: async () => bitmap,
+		createCanvas: () => canvas,
+		chunkPixels: 1,
+	});
+	const result = await provider.remove(pngBlob(), { mode: 'flood-fill', tolerance: 0 });
+	assert.equal(result.ok, true);
+	assert.equal(written[4 * 4 + 3], 255, 'a different-colored subject remains opaque');
+	assert.equal(written[3], 0, 'connected edge background becomes transparent');
+});
+
+test('local provider applies normalized keep/remove mask regions after segmentation', async () => {
+	const pixels = new Uint8ClampedArray([
+		10, 10, 10, 255, 200, 0, 0, 255,
+	]);
+	let written = null;
+	const bitmap = { width: 2, height: 1, close: () => {} };
+	const canvas = {
+		getContext: () => ({ drawImage: () => {}, getImageData: () => ({ data: pixels }), putImageData: (value) => { written = value.data; } }),
+		toBlob: (callback) => callback(pngBlob('mask-output')),
+	};
+	const provider = createLocalColorKeyProvider({ createImageBitmapFn: async () => bitmap, createCanvas: () => canvas });
+	const result = await provider.remove(pngBlob(), {
+		tolerance: 100,
+		keepRegions: [{ x: 0.5, y: 0, w: 0.5, h: 1 }],
+		removeRegions: [{ x: 0, y: 0, w: 0.5, h: 1 }],
+	});
+	assert.equal(result.ok, true);
+	assert.equal(written[3], 0, 'remove region is transparent');
+	assert.equal(written[7], 255, 'keep region restores original alpha');
+});
+
+test('local soft-edge mode produces feathered alpha instead of a hard cut', async () => {
+	const pixels = new Uint8ClampedArray([100, 100, 100, 255]);
+	let written = null;
+	const bitmap = { width: 1, height: 1, close: () => {} };
+	const canvas = {
+		getContext: () => ({ drawImage: () => {}, getImageData: () => ({ data: pixels }), putImageData: (value) => { written = value.data; } }),
+		toBlob: (callback) => callback(pngBlob('soft-output')),
+	};
+	const provider = createLocalColorKeyProvider({ createImageBitmapFn: async () => bitmap, createCanvas: () => canvas });
+	const result = await provider.remove(pngBlob(), {
+		mode: 'soft-edge', tolerance: 20, edgeSoftness: 20, backgroundColor: '#4b4b4b',
+	});
+	assert.equal(result.ok, true);
+	assert.ok(written[3] > 0 && written[3] < 255, 'soft edge keeps a partial alpha');
 });
 
 test('advanced importer factory only accepts self-hosted relative module paths', () => {

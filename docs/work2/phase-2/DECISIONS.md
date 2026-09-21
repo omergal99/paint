@@ -24,9 +24,9 @@
 10. “Select text after draw” is enabled as a persisted, non-destructive focus
     affordance. It selects metadata bounds only; text-object editing remains
     gated by partial-overlap, undo/redo, and reload proofs.
-11. About stores the validated raw browser estimate once per 24-hour window but
-    displays a stable 10,240 MiB budget, avoiding implementation-overhead noise
-    such as 10,240.39 MiB.
+11. About reads a fresh validated browser estimate whenever the About tab opens
+    and displays `free of total` from raw byte values. The UI labels this as a
+    browser estimate; it must not present a fixed 10,240 MiB device budget.
 12. Ribbon action menus use one functional controller for positioning,
     outside-click/Escape close, and `aria-expanded`; new menus must use that
     seam rather than adding a private document listener.

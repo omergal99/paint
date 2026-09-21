@@ -14,6 +14,7 @@ export const createPwaInstallManager = ({
   updateButton,
   offlineButton,
   offlineStatusEl,
+  translate = (key, fallback) => fallback,
   canReload = () => true,
   requireReloadGuard = false,
 } = {}) => {
@@ -31,6 +32,7 @@ export const createPwaInstallManager = ({
     if (!offlineStatusEl) return;
     offlineStatusEl.textContent = message;
     offlineStatusEl.dataset.state = state;
+    offlineStatusEl.hidden = false;
   };
 
   const getReloadDecision = () => {
@@ -95,6 +97,7 @@ export const createPwaInstallManager = ({
     if (!statusEl) return;
     statusEl.textContent = message;
     statusEl.dataset.state = state;
+    statusEl.hidden = false;
   };
 
   const setUpdateReadyStatus = () => {
@@ -129,7 +132,7 @@ export const createPwaInstallManager = ({
     if (!offlineButton) return;
     offlineButton.disabled = !registration;
     if (!registration) {
-      setOfflineStatus('Waiting for the service worker before preparing offline use…', 'unavailable');
+      setOfflineStatus(translate('ui.offlineUse', 'Offline use'), 'unavailable');
     } else if (offlineStatusEl?.dataset.state === 'unavailable') {
       setOfflineStatus('All current app features are included in the offline shell.', 'ready');
     }

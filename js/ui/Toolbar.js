@@ -62,7 +62,22 @@ export class Toolbar {
   _bindTools() {
     this.root.querySelectorAll('.tool-menu-item').forEach((menuButton) => {
       const source = this.root.querySelector(`.tool-grid .tool-btn[data-tool="${menuButton.dataset.tool}"]`);
-      if (source) menuButton.innerHTML = `${source.querySelector('svg')?.outerHTML || ''}<span>${source.title.replace(/ \(.+\)$/, '')}</span>`;
+      if (!source) return;
+      const label = source.title.replace(/ \(.+\)$/, '');
+      const i18nKey = {
+        pencil: 'ribbon.tools.pencil',
+        fill: 'ribbon.tools.fill',
+        eraser: 'ribbon.tools.eraser',
+        eyedropper: 'ribbon.tools.colorPicker',
+        zoom: 'ribbon.tools.magnifier',
+      }[menuButton.dataset.tool];
+      menuButton.innerHTML = `${source.querySelector('svg')?.outerHTML || ''}<span${i18nKey ? ` data-i18n="${i18nKey}"` : ''}>${label}</span>`;
+      // LocaleController may have tagged the original text-only button with a
+      // runtime translation key. The icon-bearing button now owns a translated
+      // child span, so keeping that parent key would make the observer replace
+      // the SVG with plain text on the next mutation.
+      menuButton.removeAttribute('data-i18n-runtime');
+      menuButton.removeAttribute('data-i18n-runtime-source');
     });
     this.toolButtons.forEach((btn) => {
       btn.addEventListener('click', () => {

@@ -56,6 +56,274 @@ body.dark-mode {
 	box-sizing: border-box;
 }
 
+/* ===================== STEP 13 WORKSPACE SHELL ===================== */
+/* These components are intentionally canvas-neutral. They can be mounted
+   beside the current single canvas while document ownership is migrated. */
+.workspace-tab-bar {
+	display: flex;
+	align-items: stretch;
+	gap: 3px;
+	min-height: 24px;
+	padding: 1px 3px;
+	background: var(--w10-ribbon-bg);
+	border-bottom: 1px solid var(--w10-border);
+	overflow-x: auto;
+}
+.workspace-tab {
+	display: flex;
+	align-items: center;
+	min-width: 0;
+	max-width: 168px;
+	border: 1px solid transparent;
+	border-radius: 4px;
+	background: transparent;
+}
+.workspace-tab.is-active {
+	background: var(--w10-active);
+	border-color: var(--w10-active-border);
+}
+.workspace-tab:focus-within {
+	outline: 2px solid var(--w10-accent);
+	outline-offset: -2px;
+}
+.workspace-tab-select,
+.workspace-tab-close,
+.workspace-tab-new,
+.workspace-split-toggle,
+.workspace-pane-focus {
+	border: 0;
+	background: transparent;
+	color: var(--w10-text);
+	cursor: pointer;
+}
+.workspace-tab-select {
+	flex: 1;
+	min-width: 0;
+	padding: 1px 4px;
+	line-height: 18px;
+	text-align: start;
+	text-overflow: ellipsis;
+	overflow: hidden;
+	white-space: nowrap;
+}
+.workspace-tab-close,
+.workspace-tab-new,
+.workspace-tab-manage {
+	min-width: 20px;
+	min-height: 20px;
+	font-size: 14px;
+	border-radius: 3px;
+}
+.workspace-tab-close:hover,
+.workspace-tab-close:focus-visible,
+.workspace-tab-new:hover,
+.workspace-tab-new:focus-visible,
+.workspace-tab-manage:hover,
+.workspace-tab-manage:focus-visible {
+	background: var(--w10-hover);
+	color: var(--w10-accent);
+}
+.workspace-split-view {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+	min-height: 0;
+	background: var(--w10-bg);
+}
+.workspace-strip {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	align-items: stretch;
+	border-bottom: 1px solid var(--w10-border);
+	background: var(--w10-ribbon-bg);
+}
+.workspace-strip[hidden] {
+	display: none !important;
+}
+.workspace-strip .workspace-tab-bar {
+	min-width: 0;
+	border-bottom: 0;
+}
+.workspace-content {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto;
+	grid-template-rows: auto minmax(0, 1fr);
+	flex: 1;
+	min-width: 0;
+	min-height: 0;
+	overflow: hidden;
+}
+.workspace-split-host {
+	grid-column: 1 / -1;
+	grid-row: 1;
+	min-width: 0;
+	min-height: 0;
+	max-height: 34px;
+	overflow: hidden;
+	border-bottom: 0;
+}
+.workspace-split-host[hidden] {
+	display: none !important;
+}
+.workspace-split-host.is-expanded {
+	position: fixed;
+	inset: 0;
+	z-index: 1000;
+	display: flex;
+	flex-direction: column;
+	max-height: none;
+	background: var(--w10-bg);
+	border: 0;
+}
+.workspace-split-host:not(.is-expanded) .workspace-split-panes {
+	display: none;
+}
+.workspace-split-host .workspace-split-toolbar {
+	min-height: 30px;
+	align-items: center;
+	border-bottom: 0;
+}
+.workspace-split-host.is-expanded .workspace-split-panes {
+	flex: 1;
+	min-height: 0;
+}
+.workspace-tab-manage {
+	flex: 0 0 auto;
+	margin-inline-start: 2px;
+	border: 1px solid var(--w10-border);
+	background: var(--w10-bg);
+	color: var(--w10-text);
+	cursor: pointer;
+}
+.workspace-manager-dialog {
+	width: min(560px, calc(100vw - 28px));
+}
+.workspace-manager-dialog form {
+	display: grid;
+	gap: 10px;
+}
+.workspace-manager-dialog p {
+	margin: 0;
+	color: var(--w10-text-dim);
+	font-size: 13px;
+}
+.workspace-manager-tabs {
+	display: flex;
+	flex-wrap: wrap;
+	min-height: 42px;
+	padding: 4px;
+	border: 1px solid var(--w10-border);
+	background: var(--w10-bg);
+}
+.workspace-split-toolbar {
+	display: flex;
+	justify-content: flex-end;
+	align-items: center;
+	gap: 6px;
+	flex: 0 0 auto;
+	padding: 4px 6px;
+	border-bottom: 1px solid var(--w10-border);
+}
+.workspace-split-toggle,
+.workspace-split-close,
+.workspace-pane-focus {
+	padding: 4px 8px;
+	border: 1px solid var(--w10-border);
+	border-radius: 4px;
+}
+.workspace-split-toggle:hover,
+.workspace-split-toggle:focus-visible,
+.workspace-split-close:hover,
+.workspace-split-close:focus-visible,
+.workspace-pane-focus:hover,
+.workspace-pane-focus:focus-visible {
+	background: var(--w10-hover);
+	border-color: var(--w10-accent);
+}
+.workspace-split-panes {
+	display: grid;
+	grid-template-columns: var(--workspace-split-ratio, 50%) 8px minmax(0, 1fr);
+	flex: 1;
+	min-height: 120px;
+	min-width: 0;
+}
+.workspace-pane {
+	display: flex;
+	align-items: stretch;
+	justify-content: flex-start;
+	flex-direction: column;
+	min-width: 0;
+	padding: 0;
+	position: relative;
+	overflow: hidden;
+	background: var(--w10-bg);
+}
+.workspace-pane-heading {
+	position: absolute;
+	top: 8px;
+	inset-inline: 8px;
+	z-index: 2;
+	padding: 4px 6px;
+	border: 1px solid var(--w10-border);
+	border-radius: 4px;
+	background: color-mix(in srgb, var(--w10-bg) 90%, transparent);
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	min-height: 26px;
+}
+.workspace-pane-label {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-size: 12px;
+	font-weight: 600;
+}
+.workspace-pane-select {
+	width: 100%;
+	min-height: 28px;
+	margin-top: 4px;
+	padding: 3px 6px;
+	border: 1px solid var(--w10-border);
+	border-radius: 3px;
+	background: var(--w10-bg);
+	color: var(--w10-text);
+}
+.workspace-pane-frame {
+	display: block;
+	width: 100%;
+	height: 100%;
+	min-width: 0;
+	min-height: 0;
+	border: 0;
+	background: var(--w10-bg);
+}
+.workspace-pane-secondary[hidden] {
+	display: none;
+}
+.workspace-split-view:not(.is-split) .workspace-split-panes {
+	display: block;
+}
+.workspace-split-view:not(.is-split) .workspace-pane-primary {
+	min-height: 120px;
+}
+.workspace-split-view:not(.is-split) .workspace-split-divider {
+	display: none;
+}
+.workspace-split-divider {
+	width: 8px;
+	min-height: 100%;
+	background: var(--w10-border);
+	cursor: col-resize;
+	touch-action: none;
+}
+.workspace-split-divider:hover,
+.workspace-split-divider:focus-visible {
+	background: var(--w10-accent);
+	outline: none;
+}
 html,
 body {
 	margin: 0;
@@ -112,8 +380,12 @@ body {
 }
 @keyframes ribbon-loading-pulse {
 	0%,
-	100% { opacity: 0.8; }
-	50% { opacity: 1; }
+	100% {
+		opacity: 0.8;
+	}
+	50% {
+		opacity: 1;
+	}
 }
 .ribbon::-webkit-scrollbar {
 	display: none;
@@ -213,7 +485,8 @@ body {
 	height: 24px;
 }
 
-.rbtn:hover, .rbtn.cell.text-tool-menu-arrow:hover {
+.rbtn:hover,
+.rbtn.cell.text-tool-menu-arrow:hover {
 	background: var(--w10-hover);
 	border-color: var(--w10-hover-border);
 }
@@ -893,6 +1166,7 @@ body {
 
 .main-area {
 	display: flex;
+	flex-direction: column;
 	flex: 1;
 	overflow: hidden;
 	min-width: 0;
@@ -1084,6 +1358,8 @@ body {
 }
 
 .canvas-viewport {
+	grid-column: 1;
+	grid-row: 2;
 	flex: 1;
 	overflow: auto;
 	background: var(--w10-canvas-bg);
@@ -1126,6 +1402,8 @@ body {
 
 /* ===================== RIGHT SIDEBAR ===================== */
 .right-sidebar {
+	grid-column: 2;
+	grid-row: 2;
 	width: clamp(220px, 26vw, 360px);
 	min-width: 190px;
 	max-width: min(42vw, 420px);
@@ -2084,6 +2362,9 @@ dialog h3 {
 .background-removal-dialog {
 	width: min(460px, calc(100vw - 32px));
 }
+.background-removal-dialog.is-expanded {
+	width: min(860px, calc(100vw - 24px));
+}
 .background-removal-dialog form {
 	display: grid;
 	gap: 10px;
@@ -2093,6 +2374,42 @@ dialog h3 {
 	color: var(--w10-text-dim);
 	font-size: 13px;
 	line-height: 1.45;
+}
+.background-removal-options {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 7px 12px;
+	align-items: center;
+	font-size: 13px;
+}
+.background-removal-field {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	min-width: 0;
+	flex: 1 1 180px;
+}
+.background-removal-options label {
+	color: var(--w10-text-dim);
+	white-space: nowrap;
+}
+.background-removal-options input[type="range"],
+.background-removal-options select {
+	min-width: 0;
+	flex: 1 1 auto;
+}
+.background-removal-options input[type="color"] {
+	width: 46px;
+	height: 28px;
+	padding: 2px;
+}
+.background-removal-color-control {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+.menu-dialog-icon {
+	flex: 0 0 auto;
 }
 .background-removal-preview {
 	display: grid;
@@ -2108,7 +2425,75 @@ dialog h3 {
 		linear-gradient(45deg, transparent 75%, color-mix(in srgb, var(--w10-border) 55%, transparent) 75%),
 		linear-gradient(-45deg, transparent 75%, color-mix(in srgb, var(--w10-border) 55%, transparent) 75%);
 	background-size: 16px 16px;
-	background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+	background-position:
+		0 0,
+		0 8px,
+		8px -8px,
+		-8px 0;
+}
+.background-removal-mask-tools {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 6px;
+	font-size: 12px;
+}
+.background-removal-mask-tools button,
+.background-removal-mask-tools input {
+	font: inherit;
+}
+.background-removal-mask-tools button {
+	padding: 3px 7px;
+	border: 1px solid var(--w10-border);
+	border-radius: 4px;
+	background: var(--w10-bg);
+	color: var(--w10-text);
+	cursor: pointer;
+}
+.background-removal-mask-tools button[aria-pressed="true"] {
+	border-color: var(--w10-accent);
+	background: color-mix(in srgb, var(--w10-accent) 18%, var(--w10-bg));
+}
+.background-removal-zoom-label {
+	margin-inline-start: auto;
+	color: var(--w10-text-dim);
+}
+.background-removal-preview-stage {
+	position: relative;
+	display: grid;
+	place-items: center;
+	width: max-content;
+	max-width: 100%;
+	min-width: 120px;
+	transform: scale(var(--background-preview-scale, 1));
+	transform-origin: center;
+	touch-action: none;
+}
+.background-removal-preview-stage img {
+	position: relative;
+	z-index: 1;
+}
+.background-removal-mask-overlay {
+	position: absolute;
+	inset: 0;
+	z-index: 2;
+	overflow: hidden;
+	touch-action: none;
+	cursor: crosshair;
+}
+.background-mask-region {
+	position: absolute;
+	min-width: 2px;
+	min-height: 2px;
+	border: 2px solid;
+	background: color-mix(in srgb, currentColor 16%, transparent);
+	pointer-events: none;
+}
+.background-mask-keep {
+	color: #16a34a;
+}
+.background-mask-remove {
+	color: #dc2626;
 }
 .background-removal-preview img {
 	display: block;
@@ -2116,14 +2501,27 @@ dialog h3 {
 	max-height: 270px;
 	object-fit: contain;
 }
+.background-removal-dialog.is-expanded .background-removal-preview {
+	max-height: min(62vh, 620px);
+}
+.background-removal-dialog.is-expanded .background-removal-preview img {
+	max-height: min(60vh, 600px);
+}
 .background-removal-dialog progress {
-	width: 100%;
+	flex: 1 1 auto;
 	accent-color: var(--w10-accent);
+}
+.background-removal-progress-row {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	min-height: 18px;
 }
 .background-removal-dialog output {
 	min-height: 18px;
 	color: var(--w10-text-dim);
 	font-size: 12px;
+	white-space: nowrap;
 }
 .ai-connection-dialog {
 	width: min(470px, calc(100vw - 32px));
@@ -2416,6 +2814,14 @@ dialog h3 {
 .about-stats {
 	margin: 18px 0;
 }
+.about-loading-state {
+	margin: 12px 0 0;
+	color: var(--w10-text-dim);
+	font-size: 0.9rem;
+}
+.about-loading-state[hidden] {
+	display: none;
+}
 .about-stats div {
 	display: flex;
 	justify-content: space-between;
@@ -2493,11 +2899,6 @@ dialog h3 {
 	white-space: nowrap;
 	margin-bottom: 0;
 }
-.inline-choice-field > select {
-	flex: 0 1 180px;
-	width: 180px;
-	min-width: 0;
-}
 .inline-choice-field > .settings-help {
 	flex: 1 0 100%;
 	margin: 0;
@@ -2505,10 +2906,6 @@ dialog h3 {
 @media (max-width: 420px) {
 	.inline-choice-field {
 		align-items: stretch;
-	}
-	.inline-choice-field > select {
-		flex-basis: 100%;
-		width: auto;
 	}
 }
 .choice-summary {
@@ -2798,8 +3195,7 @@ dialog h3 {
 .action-submenu-trigger {
 	display: flex;
 	align-items: center;
-	justify-content: space-between;
-	gap: 12px;
+	gap: 6px;
 	width: 100%;
 	min-height: 24px;
 	padding: 3px 6px;
@@ -2811,6 +3207,17 @@ dialog h3 {
 	text-align: start;
 	cursor: pointer;
 }
+.submenu-label {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	min-width: 0;
+}
+.submenu-label .icon {
+	flex: 0 0 auto;
+	width: 16px;
+	height: 16px;
+}
 .action-submenu-trigger:hover,
 .action-submenu-trigger:focus-visible {
 	border-color: var(--w10-hover-border);
@@ -2818,6 +3225,7 @@ dialog h3 {
 	outline: none;
 }
 .submenu-arrow {
+	margin-inline-start: auto;
 	color: var(--w10-text-dim);
 	font-size: 16px;
 	line-height: 1;
@@ -3127,6 +3535,14 @@ dialog input[type="number"] {
 		flex-direction: column;
 		height: 100dvh;
 		min-height: 100dvh;
+	}
+	#settings-dialog {
+		padding: 2px;
+		max-width: 100%;
+	}
+	.settings-shell {
+		grid-template-columns: minmax(56px, 82px) minmax(0, 1fr);
+		width: 100%;
 	}
 	.ribbon {
 		order: 3;

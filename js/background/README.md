@@ -28,6 +28,24 @@ own the image source and Apply mutation so history and persistence stay at the
 composition boundary. The default Crop → Remove Background action uses only
 the local provider and does not load the advanced importer.
 
+The local provider accepts bounded, browser-only options:
+
+```js
+{ mode: 'color-key', tolerance: 0..255, backgroundColor: '#rrggbb' }
+{ mode: 'flood-fill', tolerance: 0..255, backgroundColor: '#rrggbb' }
+
+// optional normalized manual corrections
+{ keepRegions: [{ x: 0..1, y: 0..1, w: 0..1, h: 0..1 }],
+  removeRegions: [{ x: 0..1, y: 0..1, w: 0..1, h: 0..1 }] }
+```
+
+Color-key removes matching colors across the image. Flood-fill removes only
+matching pixels connected to the image edges, which keeps similarly colored
+interior areas. Manual keep/remove rectangles are applied after segmentation
+and remain normalized across preview zoom levels. The background color defaults
+to the first source pixel, and the optional flood-fill queue plus mask alpha
+buffer are included in the working-memory admission check.
+
 Future advanced providers must run their runtime/model in a dedicated Worker,
 report progress, honour the supplied `AbortSignal`, terminate on timeout, and
 keep runtime/model assets versioned and self-hosted. This boundary contains no

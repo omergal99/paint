@@ -133,7 +133,7 @@ export const admitBackgroundRemovalBlob = ({ imageBlob, limits } = {}) => {
  * dimensions before allocating working canvases. Providers must call this as
  * a defence in depth measure; the service calls it before provider.remove().
  */
-export const admitBackgroundRemovalInput = ({ imageBlob, width, height, limits } = {}) => {
+export const admitBackgroundRemovalInput = ({ imageBlob, width, height, limits, workingBytesPerPixel = 12 } = {}) => {
 	const blobAdmission = admitBackgroundRemovalBlob({ imageBlob, limits });
 	if (!blobAdmission.ok) return blobAdmission;
 	const boundedLimits = blobAdmission.limits;
@@ -154,7 +154,10 @@ export const admitBackgroundRemovalInput = ({ imageBlob, width, height, limits }
 			),
 		};
 	}
-	if (pixels * 12 > boundedLimits.maxWorkingBytes) {
+	const bytesPerPixel = Number.isFinite(workingBytesPerPixel) && workingBytesPerPixel >= 12
+		? Math.floor(workingBytesPerPixel)
+		: 12;
+	if (pixels * bytesPerPixel > boundedLimits.maxWorkingBytes) {
 		return {
 			ok: false,
 			error: createInputFailure(
@@ -379,6 +382,7 @@ export const createBackgroundRemovalService = ({
 				width: inspected.value?.width,
 				height: inspected.value?.height,
 				limits: boundedLimits,
+				workingBytesPerPixel: options.mode === 'flood-fill' ? 17 : 13,
 			});
 			if (!admission.ok) return createBackgroundRemovalFailure({ providerId: provider.id, elapsedMs: elapsed(startedAt, now), error: admission.error });
 			const removed = await control.run(() => provider.remove(imageBlob, {

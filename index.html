@@ -79,8 +79,9 @@
 				<div class="rbtn-row">
 					<button class="rbtn" id="btn-new" data-tag="btn-new" title="New (Ctrl+N)">
 						<svg class="icon size5" viewBox="0 0 20 20">
-							<rect x="4" y="2" width="11" height="16" rx="1" />
-							<path d="M11 2v4h4" fill="none" />
+							<path d="M5 2.5h7l3 3v12H5a1.5 1.5 0 0 1-1.5-1.5V4A1.5 1.5 0 0 1 5 2.5Z" fill="none" stroke="currentColor"
+								stroke-linejoin="round" />
+							<path d="M12 2.5V6h3.5M10 9v6M7 12h6" fill="none" stroke="currentColor" stroke-linecap="round" />
 						</svg>
 						<span data-i18n="common.actions.new">New</span></button>
 					<div class="rbtn-stack">
@@ -88,15 +89,20 @@
 							<button class="rbtn small action-menu-trigger" id="btn-open-menu" data-tag="btn-open-menu"
 								title="Open or import an image">
 								<svg class="icon size4" viewBox="0 0 20 20">
-									<path d="M2 6h4l2 2h10v9a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6z" />
+									<path d="M2.5 6h4l2 2h9v8.5a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1V6Z" fill="none" stroke="currentColor"
+										stroke-linejoin="round" />
+									<path d="M2.5 8h15" fill="none" stroke="currentColor" stroke-linecap="round" />
 								</svg>
-								<span><span data-i18n="common.actions.open">Open</span> <span class="menu-arrow" aria-hidden="true">▾</span></span></button>
+								<span><span data-i18n="common.actions.open">Open</span> <span class="menu-arrow"
+										aria-hidden="true">▾</span></span></button>
 							<div class="action-menu-items" role="menu" aria-label="Open options">
 								<button type="button" id="btn-open" data-tag="btn-open" role="menuitem" title="Open (Ctrl+O)">
 									<svg class="icon" viewBox="0 0 20 20">
-										<path fill="currentColor" d="M2 6h4l2 2h10v9a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6z" />
+										<path d="M2.5 6h4l2 2h9v8.5a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1V6Z" fill="none" stroke="currentColor"
+											stroke-linejoin="round" />
+										<path d="M2.5 8h15" fill="none" stroke="currentColor" stroke-linecap="round" />
 									</svg>
-									<span>Open Image</span>
+									<span data-i18n="ribbon.file.openImage">Open Image</span>
 									<span class="menu-shortcut" aria-hidden="true">Ctrl+O</span>
 								</button>
 								<button type="button" id="btn-import" data-tag="btn-import" role="menuitem"
@@ -109,13 +115,47 @@
 								</button>
 							</div>
 						</div>
-						<button class="rbtn small" id="btn-save" data-tag="btn-save" title="Save (Ctrl+S)">
-							<svg class="icon size4" viewBox="0 0 20 20">
-								<rect x="3" y="3" width="14" height="14" rx="1" />
-								<rect class="op-cut" x="6" y="3" width="8" height="5" />
-								<rect class="op-cut" x="6" y="12" width="8" height="5" />
-							</svg>
-							<span data-i18n="common.actions.save">Save</span></button>
+						<div class="action-menu">
+							<button class="rbtn small action-menu-trigger" id="btn-file-more" data-tag="btn-file-more"
+								title="More file actions" aria-haspopup="menu">
+								<svg class="icon size4" viewBox="0 0 20 20" aria-hidden="true">
+									<circle cx="4" cy="10" r="1.5" fill="currentColor" />
+									<circle cx="10" cy="10" r="1.5" fill="currentColor" />
+									<circle cx="16" cy="10" r="1.5" fill="currentColor" />
+								</svg>
+								<span>More <span class="menu-arrow" aria-hidden="true">▾</span></span>
+							</button>
+							<div class="action-menu-items" role="menu" aria-label="More file actions">
+								<button type="button" id="btn-save" data-tag="btn-save" role="menuitem" title="Save (Ctrl+S)">
+									<svg class="icon" viewBox="0 0 20 20" aria-hidden="true">
+										<path d="M3 3h11l3 3v11H3zM6 3v5h7V3M6 13h8v4H6z" fill="none" stroke="currentColor"
+											stroke-linejoin="round" />
+									</svg><span data-i18n="common.actions.save">Save</span>
+								</button>
+								<button type="button" id="btn-manage-workspace" data-tag="btn-manage-workspace" role="menuitem"
+									title="Manage multiple Paint documents">
+									<svg class="icon" viewBox="0 0 20 20" aria-hidden="true">
+										<rect x="2.5" y="3" width="9" height="12" rx="1" fill="none" stroke="currentColor" />
+										<rect x="8.5" y="5" width="9" height="12" rx="1" fill="none" stroke="currentColor" />
+									</svg><span>Manage multiple Paint</span>
+								</button>
+								<button type="button" id="btn-toggle-split-view" data-tag="btn-toggle-split-view" role="menuitem"
+									title="Open two Paint apps side by side">
+									<svg class="icon" viewBox="0 0 20 20" aria-hidden="true">
+										<rect x="2.5" y="3" width="6" height="14" rx="1" fill="none" stroke="currentColor" />
+										<rect x="11.5" y="3" width="6" height="14" rx="1" fill="none" stroke="currentColor" />
+									</svg><span>Split Paint view</span>
+								</button>
+								<button type="button" id="btn-toggle-workspace" data-tag="btn-toggle-workspace" role="menuitem"
+									aria-pressed="false" title="Show open images">
+									<svg class="icon" viewBox="0 0 20 20" aria-hidden="true">
+										<path d="M2.5 10s2.7-5 7.5-5 7.5 5 7.5 5-2.7 5-7.5 5-7.5-5-7.5-5Z" fill="none"
+											stroke="currentColor" />
+										<circle cx="10" cy="10" r="2" fill="none" stroke="currentColor" />
+									</svg><span id="workspace-strip-toggle-label">Show workspace strip</span>
+								</button>
+							</div>
+						</div>
 					</div>
 				</div>
 				<input type="file" id="file-input" accept="image/*" hidden aria-hidden="true" tabindex="-1">
@@ -129,11 +169,12 @@
 				<div class="rbtn-row">
 					<button class="rbtn big" id="btn-paste" data-tag="btn-paste" title="Paste (Ctrl+V)">
 						<svg class="icon size5" viewBox="0 0 20 20">
-							<rect x="4" y="3" width="12" height="15" rx="1" />
-							<rect x="7" y="1" width="6" height="3" rx="1" />
-							<path d="M7 9h6M7 12h6M7 15h3" stroke-linecap="round" />
+							<path d="M6 4h8.5A1.5 1.5 0 0 1 16 5.5V17a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V5.5A1.5 1.5 0 0 1 6 4Z"
+								fill="none" stroke="currentColor" />
+							<path d="M8 2.5h4a1 1 0 0 1 1 1V5H7V3.5a1 1 0 0 1 1-1ZM8 9h6M8 12h6M8 15h3" fill="none"
+								stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" />
 						</svg>
-						<span>Paste</span></button>
+						<span data-i18n="common.actions.paste">Paste</span></button>
 					<div class="rbtn-col">
 
 					</div>
@@ -147,8 +188,10 @@
 							<span>Cut</span></button>
 						<button class="rbtn small" id="btn-copy" data-tag="btn-copy" title="Copy (Ctrl+C)">
 							<svg class="icon size5" viewBox="0 0 20 20">
-								<rect x="2" y="6" width="10" height="12" rx="1" />
-								<rect x="6" y="2" width="10" height="12" rx="1" class="op-outline-only" />
+								<rect x="5" y="6" width="10" height="11" rx="1" fill="none" stroke="currentColor"
+									stroke-linejoin="round" />
+								<path d="M7.5 6V4a1.5 1.5 0 0 1 1.5-1.5h6A1.5 1.5 0 0 1 16.5 4v8a1.5 1.5 0 0 1-1.5 1.5h-1" fill="none"
+									stroke="currentColor" stroke-linejoin="round" />
 							</svg>
 							<span>Copy</span></button>
 					</div>
@@ -163,14 +206,19 @@
 				<div class="rbtn-row">
 					<button class="rbtn tool-btn" data-tool="select" data-tag="tool-select" title="Select (S)">
 						<svg class="icon size5" viewBox="0 0 20 20">
-							<rect x="3" y="3" width="14" height="14" rx="1" stroke-dasharray="2.5 2" />
+							<rect x="3.5" y="3.5" width="13" height="13" rx="1" fill="none" stroke="currentColor"
+								stroke-dasharray="2 1.8" />
+							<path
+								d="M3.5 7V4.5a1 1 0 0 1 1-1H7M13 3.5h2.5a1 1 0 0 1 1 1V7M16.5 13v2.5a1 1 0 0 1-1 1H13M7 16.5H4.5a1 1 0 0 1-1-1V13"
+								fill="none" stroke="currentColor" stroke-linecap="round" />
 						</svg>
-						<span>Select</span></button>
+						<span data-i18n="ribbon.tools.select">Select</span></button>
 					<div class="rbtn-stack">
 						<button class="rbtn small" id="btn-canvas-size" data-tag="btn-canvas-size" title="Resize canvas">
 							<svg class="icon size5" viewBox="0 0 20 20">
-								<rect x="2" y="6" width="9" height="9" />
-								<path d="M14 2l4 4M18 2v4h-4" stroke-linecap="round" />
+								<rect x="3" y="4" width="10" height="12" rx="1" fill="none" stroke="currentColor" />
+								<path d="M14 6V3h3M17 3l-4 4M14 14v3h3M17 17l-4-4" fill="none" stroke="currentColor"
+									stroke-linecap="round" stroke-linejoin="round" />
 							</svg>
 							<span>Resize</span></button>
 						<div class="action-menu image-more-menu">
@@ -181,49 +229,108 @@
 									<circle cx="10" cy="10" r="1.5" fill="currentColor" />
 									<circle cx="16" cy="10" r="1.5" fill="currentColor" />
 								</svg>
-							<span><span data-i18n="ribbon.annotations.more">More</span> <span class="menu-arrow" aria-hidden="true">▾</span></span></button>
+								<span><span data-i18n="ribbon.annotations.more">More</span> <span class="menu-arrow"
+										aria-hidden="true">▾</span></span></button>
 							<div class="action-menu-items image-more-menu-items" role="menu" aria-label="More image actions">
 								<div class="action-menu action-submenu">
 									<button class="action-menu-trigger action-submenu-trigger" id="btn-crop-menu" type="button"
-										role="menuitem" aria-haspopup="menu" aria-expanded="false" aria-label="Crop options">
-										<span>Crop</span><span class="submenu-arrow" aria-hidden="true">›</span>
+										role="menuitem" aria-haspopup="menu" aria-expanded="false" aria-label="Crop"
+										data-i18n-attr="aria-label:ui.crop">
+										<span class="submenu-label"><svg class="icon size4" viewBox="0 0 20 20" aria-hidden="true">
+												<path d="M6 3v11a3 3 0 0 0 3 3h8M3 6h11a3 3 0 0 1 3 3v8" fill="none" stroke="currentColor"
+													stroke-linecap="round" stroke-linejoin="round" />
+											</svg><span data-i18n="ui.crop">Crop</span></span><span class="submenu-arrow"
+											aria-hidden="true">›</span>
 									</button>
-									<div class="action-menu-items action-submenu-items" role="menu" aria-label="Crop options">
-										<button type="button" id="btn-crop" role="menuitem" title="Crop to selection"><span>Crop to
-												selection</span></button>
-										<button type="button" id="btn-remove-bg" role="menuitem"
-											title="Remove background by color key"><span>Remove Background (Color Key)</span></button>
+									<div class="action-menu-items action-submenu-items" role="menu" aria-label="Crop"
+										data-i18n-attr="aria-label:ui.crop">
+										<button type="button" id="btn-crop" role="menuitem" disabled aria-disabled="true"
+											title="No Selection Area to Crop" data-i18n-attr="title:ui.noSelectionCrop">
+											<svg class="icon size4" viewBox="0 0 20 20" aria-hidden="true">
+												<path d="M4 4h5M4 4v5M16 16h-5M16 16v-5" fill="none" stroke="currentColor"
+													stroke-linecap="round" />
+											</svg>
+											<span data-i18n="ribbon.image.cropToSelection">Crop to selection</span></button>
+										<button type="button" id="btn-remove-bg" role="menuitem" aria-haspopup="dialog"
+											title="Open background removal options" data-i18n-attr="title:ui.openBackgroundRemovalOptions">
+											<svg class="icon size4 menu-dialog-icon" viewBox="0 0 20 20" aria-hidden="true">
+												<path d="M4 5h12M4 10h12M4 15h12" stroke="currentColor" stroke-width="1.6"
+													stroke-linecap="round" />
+												<circle cx="8" cy="5" r="1.5" fill="currentColor" />
+												<circle cx="13" cy="10" r="1.5" fill="currentColor" />
+												<circle cx="7" cy="15" r="1.5" fill="currentColor" />
+											</svg><span>Remove Background</span></button>
 									</div>
 								</div>
 								<div class="action-menu action-submenu">
 									<button class="action-menu-trigger action-submenu-trigger" id="btn-rotate" data-tag="btn-rotate"
-										type="button" role="menuitem" aria-haspopup="menu" aria-expanded="false"
-										aria-label="Rotate options">
-										<span>Rotate</span><span class="submenu-arrow" aria-hidden="true">›</span>
+										type="button" role="menuitem" aria-haspopup="menu" aria-expanded="false" aria-label="Rotate"
+										data-i18n-attr="aria-label:ui.rotate">
+										<span class="submenu-label"><svg class="icon size4" viewBox="0 0 20 20" aria-hidden="true">
+												<path d="M15.5 7A6 6 0 1 0 16 11" fill="none" stroke="currentColor" stroke-linecap="round" />
+												<path d="M15.5 3v4h-4" fill="none" stroke="currentColor" stroke-linecap="round"
+													stroke-linejoin="round" />
+											</svg>
+											<span data-i18n="ui.rotate">Rotate</span></span><span class="submenu-arrow"
+											aria-hidden="true">›</span>
 									</button>
-									<div class="action-menu-items action-submenu-items" role="menu" aria-label="Rotate options">
-										<button type="button" id="btn-rotate-90" role="menuitem" title="Rotate 90°"><span>Rotate
-												90</span></button>
-										<button type="button" id="btn-rotate-180" role="menuitem" title="Rotate 180°"><span>Rotate
-												180</span></button>
-										<button type="button" id="btn-rotate-270" role="menuitem" title="Rotate 270°"><span>Rotate
-												270</span></button>
-										<button type="button" id="btn-rotate-free" role="menuitem" title="Free rotate by angle"><span>Free
-												Rotate</span></button>
+									<div class="action-menu-items action-submenu-items" role="menu" aria-label="Rotate"
+										data-i18n-attr="aria-label:ui.rotate">
+										<button type="button" id="btn-rotate-90" role="menuitem" title="Rotate 90°"
+											data-i18n-attr="title:ui.rotate90"><svg class="icon size4" viewBox="0 0 20 20" aria-hidden="true">
+												<path d="M15 6a6 6 0 1 0 1 5" fill="none" stroke="currentColor" stroke-linecap="round" />
+												<path d="M15 3v3h-3" fill="none" stroke="currentColor" stroke-linecap="round" />
+											</svg><span data-i18n="ui.rotate90">Rotate 90</span></button>
+										<button type="button" id="btn-rotate-180" role="menuitem" title="Rotate 180°"
+											data-i18n-attr="title:ui.rotate180"><svg class="icon size4" viewBox="0 0 20 20"
+												aria-hidden="true">
+												<path d="M15 6a6 6 0 1 0 1 5" fill="none" stroke="currentColor" stroke-linecap="round" />
+												<path d="M15 3v3h-3" fill="none" stroke="currentColor" stroke-linecap="round" />
+												<path d="M10 10h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+											</svg><span data-i18n="ui.rotate180">Rotate 180</span></button>
+										<button type="button" id="btn-rotate-270" role="menuitem" title="Rotate 270°"
+											data-i18n-attr="title:ui.rotate270"><svg class="icon size4" viewBox="0 0 20 20"
+												aria-hidden="true">
+												<path d="M15 6a6 6 0 1 0 1 5" fill="none" stroke="currentColor" stroke-linecap="round" />
+												<path d="M15 3v3h-3" fill="none" stroke="currentColor" stroke-linecap="round" />
+												<path d="M10 10h.01M10 13h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+											</svg><span data-i18n="ui.rotate270">Rotate 270</span></button>
+										<button type="button" id="btn-rotate-free" role="menuitem" title="Free rotate by angle"
+											data-i18n-attr="title:ui.freeRotate"><svg class="icon size4" viewBox="0 0 20 20"
+												aria-hidden="true">
+												<circle cx="10" cy="10" r="6" fill="none" stroke="currentColor" />
+												<path d="M10 10 14 7M10 10V5" fill="none" stroke="currentColor" stroke-linecap="round" />
+											</svg><span data-i18n="ui.freeRotate">Free Rotate</span></button>
 										<div class="menu-checkbox"><input type="checkbox" id="rotate-selection-toggle" checked> <label
-												for="rotate-selection-toggle">Show Rotate in selection</label></div>
+												for="rotate-selection-toggle" data-i18n="ui.showRotateInSelection">Show Rotate in
+												selection</label></div>
 									</div>
 								</div>
 								<div class="action-menu action-submenu">
 									<button class="action-menu-trigger action-submenu-trigger" id="btn-flip" data-tag="btn-flip"
-										type="button" role="menuitem" aria-haspopup="menu" aria-expanded="false" aria-label="Flip options">
-										<span>Flip</span><span class="submenu-arrow" aria-hidden="true">›</span>
+										type="button" role="menuitem" aria-haspopup="menu" aria-expanded="false" aria-label="Flip"
+										data-i18n-attr="aria-label:ui.flip">
+										<span class="submenu-label"><svg class="icon size4" viewBox="0 0 20 20" aria-hidden="true">
+												<path d="M3 10h14M6 6l-3 4 3 4M14 6l3 4-3 4" fill="none" stroke="currentColor"
+													stroke-linecap="round" stroke-linejoin="round" />
+											</svg>
+											<span data-i18n="ui.flip">Flip</span></span><span class="submenu-arrow"
+											aria-hidden="true">›</span>
 									</button>
-									<div class="action-menu-items action-submenu-items" role="menu" aria-label="Flip options">
-										<button type="button" id="btn-flip-horizontal" role="menuitem" title="Flip horizontal"><span>Flip
-												Horizontal</span></button>
-										<button type="button" id="btn-flip-vertical" role="menuitem" title="Flip vertical"><span>Flip
-												Vertical</span></button>
+									<div class="action-menu-items action-submenu-items" role="menu" aria-label="Flip"
+										data-i18n-attr="aria-label:ui.flip">
+										<button type="button" id="btn-flip-horizontal" role="menuitem" title="Flip horizontal"
+											data-i18n-attr="title:ui.flipHorizontal"><svg class="icon size4" viewBox="0 0 20 20"
+												aria-hidden="true">
+												<path d="M3 10h14M6 6l-3 4 3 4M14 6l3 4-3 4" fill="none" stroke="currentColor"
+													stroke-linecap="round" stroke-linejoin="round" />
+											</svg><span data-i18n="ui.flipHorizontal">Flip Horizontal</span></button>
+										<button type="button" id="btn-flip-vertical" role="menuitem" title="Flip vertical"
+											data-i18n-attr="title:ui.flipVertical"><svg class="icon size4" viewBox="0 0 20 20"
+												aria-hidden="true">
+												<path d="M10 3v14M6 6l4-3 4 3M6 14l4 3 4-3" fill="none" stroke="currentColor"
+													stroke-linecap="round" stroke-linejoin="round" />
+											</svg><span data-i18n="ui.flipVertical">Flip Vertical</span></button>
 									</div>
 								</div>
 							</div>
@@ -254,9 +361,10 @@
 							</button>
 							<button class="rbtn cell tool-btn" data-tool="fill" data-tag="tool-fill" title="Fill (F)">
 								<svg class="icon size5" viewBox="0 0 20 20">
-									<path d="M3 9l6-6 7 7-6 6z" />
-									<path d="M3 9l6 6" fill="none" />
-									<circle cx="16" cy="15" r="2.4" />
+									<path d="M4 7.5 8.5 3l7 7-4.5 4.5-7-7Z" fill="none" stroke="currentColor" stroke-linejoin="round" />
+									<path
+										d="m4 7.5 7 7M13.5 13.5c1.7-.2 3 .5 3 1.8 0 1.1-1 1.7-2.2 1.7-1.8 0-2.8-.9-2.8-2.1 0-.5.3-1 .8-1.4"
+										fill="none" stroke="currentColor" stroke-linecap="round" />
 								</svg>
 							</button>
 							<button class="rbtn cell tool-btn" data-tool="eraser" data-tag="tool-eraser" title="Eraser (E)">
@@ -335,8 +443,8 @@
 								<rect x="3" y="3" width="14" height="14" rx="1" stroke-dasharray="2.5 2" />
 							</svg>
 						</button>
-						<button class="rbtn small action-menu-trigger tools-menu-arrow" id="btn-tools-menu"
-								title="More" data-i18n-attr="title:ribbon.annotations.more"><span data-i18n="ribbon.annotations.more">More</span>
+						<button class="rbtn small action-menu-trigger tools-menu-arrow" id="btn-tools-menu" title="More"
+							data-i18n-attr="title:ribbon.annotations.more"><span data-i18n="ribbon.annotations.more">More</span>
 							<span class="menu-arrow">▾</span></button>
 						<div class="action-menu-items" role="menu" aria-label="More tools"
 							data-i18n-attr="aria-label:ribbon.annotations.moreTools">
@@ -799,116 +907,119 @@
 
 		<!-- ===================== MAIN AREA ===================== -->
 		<div class="main-area" id="main-area">
-			<!-- ===================== CANVAS AREA ===================== -->
-			<main class="canvas-viewport" id="canvas-viewport" data-tag="canvas-viewport">
-				<!-- Outer box: sized to the scaled canvas so scrollbars match the
+			<div class="workspace-content" id="workspace-content" data-tag="workspace-content">
+				<!-- ===================== CANVAS AREA ===================== -->
+				<main class="canvas-viewport" id="canvas-viewport" data-tag="canvas-viewport">
+					<!-- Outer box: sized to the scaled canvas so scrollbars match the
              visible canvas exactly (no dead gray space when zoomed out,
              full panning room when zoomed in). -->
-				<div class="canvas-stage" id="canvas-stage" data-tag="canvas-stage" style="width: 800px; height: 600px;">
-					<!-- Inner box: keeps image-pixel coordinates; the zoom transform is
+					<div class="canvas-stage" id="canvas-stage" data-tag="canvas-stage" style="width: 800px; height: 600px;">
+						<!-- Inner box: keeps image-pixel coordinates; the zoom transform is
                applied here by ViewportManager. -->
-					<div class="canvas-scale" id="canvas-scale" data-tag="canvas-scale" style="width: 800px; height: 600px;">
-						<canvas id="paint-canvas" data-tag="paint-canvas" width="800" height="600"></canvas>
-						<canvas id="text-layer-canvas" class="text-layer-canvas" data-tag="text-layer-canvas" width="800"
-							height="600" aria-hidden="true"></canvas>
-						<canvas id="overlay-canvas" data-tag="overlay-canvas" width="800" height="600"></canvas>
-						<div class="resize-handle handle-right" id="handle-right" data-tag="handle-right"></div>
-						<div class="resize-handle handle-bottom" id="handle-bottom" data-tag="handle-bottom"></div>
-						<div class="resize-handle handle-corner" id="handle-corner" data-tag="handle-corner"></div>
-						<button class="selection-handle handle-nw" data-selection-handle="nw"
-							aria-label="Resize selection northwest" hidden></button>
-						<button class="selection-handle handle-n" data-selection-handle="n" aria-label="Resize selection north"
-							hidden></button>
-						<button class="selection-handle handle-ne" data-selection-handle="ne"
-							aria-label="Resize selection northeast" hidden></button>
-						<button class="selection-handle handle-e" data-selection-handle="e" aria-label="Resize selection east"
-							hidden></button>
-						<button class="selection-handle handle-se" data-selection-handle="se"
-							aria-label="Resize selection southeast" hidden></button>
-						<button class="selection-handle handle-s" data-selection-handle="s" aria-label="Resize selection south"
-							hidden></button>
-						<button class="selection-handle handle-sw" data-selection-handle="sw"
-							aria-label="Resize selection southwest" hidden></button>
-						<button class="selection-handle handle-w" data-selection-handle="w" aria-label="Resize selection west"
-							hidden></button>
-						<button class="selection-rotate" id="selection-rotate" aria-label="Rotate selection 90 degrees"
-							title="Rotate selection" hidden>↻</button>
-						<div class="resize-ghost" id="resize-ghost" data-tag="resize-ghost"></div>
-					</div><!-- /canvas-scale -->
-				</div><!-- /canvas-stage -->
-			</main>
+						<div class="canvas-scale" id="canvas-scale" data-tag="canvas-scale" style="width: 800px; height: 600px;">
+							<canvas id="paint-canvas" data-tag="paint-canvas" width="800" height="600"></canvas>
+							<canvas id="text-layer-canvas" class="text-layer-canvas" data-tag="text-layer-canvas" width="800"
+								height="600" aria-hidden="true"></canvas>
+							<canvas id="overlay-canvas" data-tag="overlay-canvas" width="800" height="600"></canvas>
+							<div class="resize-handle handle-right" id="handle-right" data-tag="handle-right"></div>
+							<div class="resize-handle handle-bottom" id="handle-bottom" data-tag="handle-bottom"></div>
+							<div class="resize-handle handle-corner" id="handle-corner" data-tag="handle-corner"></div>
+							<button class="selection-handle handle-nw" data-selection-handle="nw"
+								aria-label="Resize selection northwest" hidden></button>
+							<button class="selection-handle handle-n" data-selection-handle="n" aria-label="Resize selection north"
+								hidden></button>
+							<button class="selection-handle handle-ne" data-selection-handle="ne"
+								aria-label="Resize selection northeast" hidden></button>
+							<button class="selection-handle handle-e" data-selection-handle="e" aria-label="Resize selection east"
+								hidden></button>
+							<button class="selection-handle handle-se" data-selection-handle="se"
+								aria-label="Resize selection southeast" hidden></button>
+							<button class="selection-handle handle-s" data-selection-handle="s" aria-label="Resize selection south"
+								hidden></button>
+							<button class="selection-handle handle-sw" data-selection-handle="sw"
+								aria-label="Resize selection southwest" hidden></button>
+							<button class="selection-handle handle-w" data-selection-handle="w" aria-label="Resize selection west"
+								hidden></button>
+							<button class="selection-rotate" id="selection-rotate" aria-label="Rotate selection 90 degrees"
+								title="Rotate selection" hidden>↻</button>
+							<div class="resize-ghost" id="resize-ghost" data-tag="resize-ghost"></div>
+						</div><!-- /canvas-scale -->
+					</div><!-- /canvas-stage -->
+				</main>
 
-			<!-- ===================== RIGHT SIDEBAR ===================== -->
-			<aside class="right-sidebar" id="right-sidebar" style="display: none; width: 250px;">
-				<div class="sidebar-resizer" id="sidebar-resizer"></div>
-				<div class="sidebar-header">
-					<h3 id="sidebar-title">Sidebar</h3>
-					<button class="sidebar-close" id="sidebar-close" title="Close">×</button>
-				</div>
-				<div class="sidebar-content" id="sidebar-history-content" style="display: none;">
-					<div class="history-controls">
-						<div class="history-preferences" aria-live="polite">
-							<div>Auto-save: <strong id="history-auto-status">Exit, refresh or new image</strong></div>
-							<div>Save limit: <strong id="history-limit-status">50 images</strong></div>
-							<button type="button" id="history-settings-link">Open History Settings</button>
-						</div>
-						<!-- Hidden mirrors keep the existing settings/state contract while the
+				<!-- ===================== RIGHT SIDEBAR ===================== -->
+				<aside class="right-sidebar" id="right-sidebar" style="display: none; width: 250px;">
+					<div class="sidebar-resizer" id="sidebar-resizer"></div>
+					<div class="sidebar-header">
+						<h3 id="sidebar-title">Sidebar</h3>
+						<button class="sidebar-close" id="sidebar-close" title="Close">×</button>
+					</div>
+					<div class="sidebar-content" id="sidebar-history-content" style="display: none;">
+						<div class="history-controls">
+							<div class="history-preferences" aria-live="polite">
+								<div>Auto-save: <strong id="history-auto-status">Exit, refresh or new image</strong></div>
+								<div>Save limit: <strong id="history-limit-status">50 images</strong></div>
+								<button type="button" id="history-settings-link">Open History Settings</button>
+							</div>
+							<!-- Hidden mirrors keep the existing settings/state contract while the
 						     sidebar presents a read-only summary. -->
-						<input type="checkbox" id="history-auto-save-toggle" checked class="visually-hidden-control" tabindex="-1"
-							aria-hidden="true" />
-						<select id="history-save-limit" class="visually-hidden-control" tabindex="-1" aria-hidden="true">
-							<option value="0">Off</option>
-							<option value="10">10 images</option>
-							<option value="20">20 images</option>
-							<option value="50">50 images</option>
-							<option value="100">100 images</option>
-						</select>
-						<!-- Label sits above the action buttons and mirrors the active tab
+							<input type="checkbox" id="history-auto-save-toggle" checked class="visually-hidden-control" tabindex="-1"
+								aria-hidden="true" />
+							<select id="history-save-limit" class="visually-hidden-control" tabindex="-1" aria-hidden="true">
+								<option value="0">Off</option>
+								<option value="10">10 images</option>
+								<option value="20">20 images</option>
+								<option value="50">50 images</option>
+								<option value="100">100 images</option>
+							</select>
+							<!-- Label sits above the action buttons and mirrors the active tab
 					     (History / Session), so "Save Current / Export All / Clear All"
 				 		always read as actions on the currently shown store. -->
-						<div class="history-actions-label" id="history-actions-label" aria-live="polite">
-							Actions: History
+							<div class="history-actions-label" id="history-actions-label" aria-live="polite">
+								Actions: History
+							</div>
+							<div class="history-actions">
+								<button type="button" id="history-save-current-btn" title="Save current paint to history">Save
+									Current</button>
+								<button type="button" id="history-export-all-btn"
+									title="Export the whole history to your computer">Export
+									All</button>
+								<button type="button" id="history-clear-btn" title="Clear all saved history">Clear All</button>
+							</div>
 						</div>
-						<div class="history-actions">
-							<button type="button" id="history-save-current-btn" title="Save current paint to history">Save
-								Current</button>
-							<button type="button" id="history-export-all-btn" title="Export the whole history to your computer">Export
-								All</button>
-							<button type="button" id="history-clear-btn" title="Clear all saved history">Clear All</button>
+						<div class="history-view-tabs" id="history-view-tabs" role="tablist" aria-label="History views">
+							<button type="button" class="history-view-tab active" data-history-view="history" role="tab"
+								aria-selected="true">History</button>
+							<button type="button" class="history-view-tab" data-history-view="session" role="tab"
+								aria-selected="false">Session</button>
+						</div>
+						<div class="history-grid" id="history-grid"></div>
+					</div>
+					<div class="sidebar-content" id="sidebar-ai-content" style="display: none;">
+						<section class="ai-connection-panel" aria-labelledby="ai-connection-title">
+							<h4 id="ai-connection-title">AI provider</h4>
+							<select id="ai-provider-select" aria-label="AI provider"></select>
+							<div class="ai-connection-row">
+								<span id="ai-connection-status" role="status"></span>
+								<button type="button" id="ai-connect-button">Connection details</button>
+							</div>
+						</section>
+						<div class="ai-chat-messages" id="ai-chat-messages">
+							<div class="ai-msg bot">Use Quick actions or type a supported command. I will show exactly what I apply.
+							</div>
+						</div>
+						<div class="ai-chat-actions" id="ai-chat-actions" aria-label="Quick actions"></div>
+						<div class="ai-chat-input-area">
+							<input type="text" id="ai-chat-input" placeholder="Try /dark, /grid, /zoom 100, /save" />
+							<button id="ai-chat-send">Send</button>
 						</div>
 					</div>
-					<div class="history-view-tabs" id="history-view-tabs" role="tablist" aria-label="History views">
-						<button type="button" class="history-view-tab active" data-history-view="history" role="tab"
-							aria-selected="true">History</button>
-						<button type="button" class="history-view-tab" data-history-view="session" role="tab"
-							aria-selected="false">Session</button>
+					<div class="sidebar-content" id="sidebar-group-settings"
+						style="display: none; padding: 10px; overflow-y: auto;">
+						<div id="group-settings-container"></div>
 					</div>
-					<div class="history-grid" id="history-grid"></div>
-				</div>
-				<div class="sidebar-content" id="sidebar-ai-content" style="display: none;">
-					<section class="ai-connection-panel" aria-labelledby="ai-connection-title">
-						<h4 id="ai-connection-title">AI provider</h4>
-						<select id="ai-provider-select" aria-label="AI provider"></select>
-						<div class="ai-connection-row">
-							<span id="ai-connection-status" role="status"></span>
-							<button type="button" id="ai-connect-button">Connection details</button>
-						</div>
-					</section>
-					<div class="ai-chat-messages" id="ai-chat-messages">
-						<div class="ai-msg bot">Use Quick actions or type a supported command. I will show exactly what I apply.
-						</div>
-					</div>
-					<div class="ai-chat-actions" id="ai-chat-actions" aria-label="Quick actions"></div>
-					<div class="ai-chat-input-area">
-						<input type="text" id="ai-chat-input" placeholder="Try /dark, /grid, /zoom 100, /save" />
-						<button id="ai-chat-send">Send</button>
-					</div>
-				</div>
-				<div class="sidebar-content" id="sidebar-group-settings"
-					style="display: none; padding: 10px; overflow-y: auto;">
-					<div id="group-settings-container"></div>
-				</div>
-			</aside>
+				</aside>
+			</div>
 		</div>
 
 		<!-- ===================== STATUS BAR ===================== -->
@@ -985,7 +1096,8 @@
 				<input type="number" id="resize-percent" data-tag="resize-percent" min="1" max="1000" step="1" value="100" />
 				<span id="resize-target-status" role="status">Whole canvas</span>
 			</div>
-			<div class="checkbox-row" data-tag="resize-keep-aspect-row"><input type="checkbox" id="resize-keep-aspect" data-tag="resize-keep-aspect" checked />
+			<div class="checkbox-row" data-tag="resize-keep-aspect-row"><input type="checkbox" id="resize-keep-aspect"
+					data-tag="resize-keep-aspect" checked />
 				<label for="resize-keep-aspect">Maintain aspect ratio</label>
 			</div>
 			<div class="dialog-actions">
@@ -1027,14 +1139,19 @@
 			<form method="dialog" id="settings-form" class="settings-panel settings-body" data-settings-panel="general">
 				<h3 data-i18n="settings.general">General</h3>
 				<div class="settings-general-options" aria-label="General display options">
-					<div class="checkbox-row" data-tag="setting-dark-mode-row"><input type="checkbox" id="setting-dark-mode" data-tag="setting-dark-mode" /> <label for="setting-dark-mode" data-tag="setting-dark-mode-label">Dark
+					<div class="checkbox-row" data-tag="setting-dark-mode-row"><input type="checkbox" id="setting-dark-mode"
+							data-tag="setting-dark-mode" /> <label for="setting-dark-mode" data-tag="setting-dark-mode-label">Dark
 							Mode</label></div>
-					<div class="checkbox-row" data-tag="setting-show-status-bar-row"><input type="checkbox" id="setting-show-status-bar" data-tag="setting-show-status-bar" checked /> <label
-						for="setting-show-status-bar" data-tag="setting-show-status-bar-label">Show Status Bar</label></div>
-					<div class="checkbox-row" data-tag="setting-show-color-inspector-row"><input type="checkbox" id="setting-show-color-inspector" data-tag="setting-show-color-inspector" checked /> <label
-						for="setting-show-color-inspector" data-tag="setting-show-color-inspector-label">Show Color Inspector</label></div>
-					<div class="checkbox-row" data-tag="setting-show-ai-chat-row"><input type="checkbox" id="setting-show-ai-chat" data-tag="setting-show-ai-chat" /> <label
-						for="setting-show-ai-chat" data-tag="setting-show-ai-chat-label">Show AI Chat</label></div>
+					<div class="checkbox-row" data-tag="setting-show-status-bar-row"><input type="checkbox"
+							id="setting-show-status-bar" data-tag="setting-show-status-bar" checked /> <label
+							for="setting-show-status-bar" data-tag="setting-show-status-bar-label">Show Status Bar</label></div>
+					<div class="checkbox-row" data-tag="setting-show-color-inspector-row"><input type="checkbox"
+							id="setting-show-color-inspector" data-tag="setting-show-color-inspector" checked /> <label
+							for="setting-show-color-inspector" data-tag="setting-show-color-inspector-label">Show Color
+							Inspector</label></div>
+					<div class="checkbox-row" data-tag="setting-show-ai-chat-row"><input type="checkbox" id="setting-show-ai-chat"
+							data-tag="setting-show-ai-chat" /> <label for="setting-show-ai-chat"
+							data-tag="setting-show-ai-chat-label">Show AI Chat</label></div>
 				</div>
 				<div class="settings-field choice-field inline-choice-field">
 					<label for="setting-locale" data-i18n="settings.language">Language</label>
@@ -1114,10 +1231,14 @@
 			</section>
 			<section class="settings-panel settings-body" data-settings-panel="history" hidden>
 				<h3>History</h3>
-				<div class="checkbox-row history-checkbox-row" data-tag="setting-history-auto-save-row"><input type="checkbox" id="setting-history-auto-save" data-tag="setting-history-auto-save" checked /> <label
-						for="setting-history-auto-save" data-tag="setting-history-auto-save-label">Auto-save to history</label></div>
-				<div class="checkbox-row history-checkbox-row" data-tag="setting-restore-last-image-row"><input type="checkbox" id="setting-restore-last-image" data-tag="setting-restore-last-image" /> <label
-						for="setting-restore-last-image" data-tag="setting-restore-last-image-label">Load last image on startup</label></div>
+				<div class="checkbox-row history-checkbox-row" data-tag="setting-history-auto-save-row"><input type="checkbox"
+						id="setting-history-auto-save" data-tag="setting-history-auto-save" checked /> <label
+						for="setting-history-auto-save" data-tag="setting-history-auto-save-label">Auto-save to history</label>
+				</div>
+				<div class="checkbox-row history-checkbox-row" data-tag="setting-restore-last-image-row"><input type="checkbox"
+						id="setting-restore-last-image" data-tag="setting-restore-last-image" /> <label
+						for="setting-restore-last-image" data-tag="setting-restore-last-image-label">Load last image on
+						startup</label></div>
 				<p class="settings-help">Off starts with a blank canvas. Turn it on when you want Paint to restore the last
 					working image automatically.</p>
 				<div class="settings-field choice-field"><span>Auto-save when</span>
@@ -1152,8 +1273,9 @@
 			<section class="settings-panel settings-body" data-settings-panel="ribbon" hidden>
 				<h3>Ribbon</h3>
 				<p>Choose which ribbon groups are visible. Detailed group options open in the sidebar.</p>
-				<div class="checkbox-row" data-tag="setting-show-ribbon-row"><input type="checkbox" id="setting-show-ribbon" data-tag="setting-show-ribbon" checked /> <label
-						for="setting-show-ribbon" data-tag="setting-show-ribbon-label">Show ribbon</label></div>
+				<div class="checkbox-row" data-tag="setting-show-ribbon-row"><input type="checkbox" id="setting-show-ribbon"
+						data-tag="setting-show-ribbon" checked /> <label for="setting-show-ribbon"
+						data-tag="setting-show-ribbon-label">Show ribbon</label></div>
 				<div class="settings-field ribbon-position-row">
 					<span id="ribbon-position-label">Ribbon position</span>
 					<div class="ribbon-position-options" role="radiogroup" aria-labelledby="ribbon-position-label">
@@ -1168,22 +1290,23 @@
 			<section class="settings-panel settings-body" data-settings-panel="about" hidden>
 				<h3>About paint</h3>
 				<p>paint is a local-first browser drawing workspace built for fast, private image editing.</p>
+				<p id="about-loading-state" class="about-loading-state" data-i18n="ui.loading" role="status">Loading…</p>
 				<dl class="about-stats">
 					<div>
 						<dt>Version</dt>
-						<dd id="about-version">Loading...</dd>
+						<dd id="about-version" data-about-value></dd>
 					</div>
 					<div>
 						<dt>Activity</dt>
-						<dd id="about-activity">Loading...</dd>
+						<dd id="about-activity" data-about-value></dd>
 					</div>
 					<div>
 						<dt>Stored data</dt>
-						<dd id="about-storage">Loading...</dd>
+						<dd id="about-storage" data-about-value></dd>
 					</div>
 					<div>
 						<dt>Free space</dt>
-						<dd id="about-storage-free">Loading...</dd>
+						<dd id="about-storage-free" data-about-value></dd>
 					</div>
 					<div>
 						<dt>Usage</dt>
@@ -1208,7 +1331,7 @@
 					installation is available.</p>
 				<div class="pwa-install-card">
 					<button type="button" class="settings-link-button" id="pwa-install-button">Install paint</button>
-					<p id="pwa-install-status" class="pwa-status" role="status" aria-live="polite">Checking install options…</p>
+					<p id="pwa-install-status" class="pwa-status" role="status" aria-live="polite" hidden></p>
 				</div>
 				<div class="pwa-update-card">
 					<strong>Version updates</strong>
@@ -1221,7 +1344,7 @@
 					<p>Prepare every current Paint feature for use without an internet connection. Future optional features may
 						add a separate download step.</p>
 					<button type="button" class="settings-link-button" id="pwa-offline-button">Prepare offline use</button>
-					<p id="pwa-offline-status" class="pwa-status" role="status" aria-live="polite">Checking offline shell…</p>
+					<p id="pwa-offline-status" class="pwa-status" role="status" aria-live="polite" hidden></p>
 				</div>
 			</section>
 			<section class="settings-panel settings-body" data-settings-panel="feedback" hidden>
@@ -1254,21 +1377,96 @@
 		</form>
 	</dialog>
 
+	<dialog id="workspace-manager-dialog" class="app-dialog workspace-manager-dialog" data-tag="workspace-manager-dialog"
+		aria-labelledby="workspace-manager-title">
+		<form method="dialog">
+			<h3 id="workspace-manager-title" data-tag="workspace-manager-title">Manage multiple Paint</h3>
+			<p data-tag="workspace-manager-help">Choose an open document or close one before switching to split view.</p>
+			<div id="workspace-manager-tabs" class="workspace-manager-tabs" data-tag="workspace-manager-tabs"></div>
+			<div class="dialog-actions"><button type="submit" data-tag="workspace-manager-close">Close</button></div>
+		</form>
+	</dialog>
+
 	<!-- ===================== Background-removal dialog ===================== -->
-	<dialog id="background-removal-dialog" class="app-dialog background-removal-dialog" data-tag="background-removal-dialog"
-		aria-labelledby="background-removal-title">
+	<dialog id="background-removal-dialog" class="app-dialog background-removal-dialog"
+		data-tag="background-removal-dialog" aria-labelledby="background-removal-title">
 		<form method="dialog" id="background-removal-form">
-			<h3 id="background-removal-title" data-i18n="ui.removeBackground">Remove Background (Color Key)</h3>
-			<p id="background-removal-message" data-tag="background-removal-message">The image stays unchanged until you choose Apply.</p>
-			<div class="background-removal-preview" data-tag="background-removal-preview-wrap">
-				<img id="background-removal-preview" data-tag="background-removal-preview" alt="Background-removal preview" hidden />
+			<h3 id="background-removal-title" data-i18n="ui.removeBackground">Remove Background</h3>
+			<p id="background-removal-message" data-tag="background-removal-message">The image stays unchanged until you
+				choose Apply.</p>
+			<div class="background-removal-options" data-tag="background-removal-options">
+				<div class="background-removal-field" data-tag="background-removal-mode-field">
+					<label data-tag="background-removal-mode-label" for="background-removal-mode"
+						data-i18n="ui.backgroundRemovalMode">Removal mode</label>
+					<select id="background-removal-mode" data-tag="background-removal-mode">
+						<option value="color-key" data-i18n="ui.backgroundRemovalColorKey">Color key (all matching pixels)</option>
+						<option value="flood-fill" data-i18n="ui.backgroundRemovalFloodFill">Flood fill (connected background)
+						</option>
+						<option value="soft-edge" data-i18n="ui.backgroundRemovalSoftEdge">Soft edge (feathered alpha)</option>
+					</select>
+				</div>
+				<div class="background-removal-field" data-tag="background-removal-tolerance-field">
+					<label data-tag="background-removal-tolerance-label" for="background-removal-tolerance"><span
+							data-i18n="ui.backgroundRemovalTolerance">Tolerance</span> <output id="background-removal-tolerance-value"
+							data-tag="background-removal-tolerance-value">30</output></label>
+					<input id="background-removal-tolerance" data-tag="background-removal-tolerance" type="range" min="0"
+						max="100" value="30" />
+				</div>
+				<div class="background-removal-field" data-tag="background-removal-softness-field">
+					<label data-tag="background-removal-softness-label" for="background-removal-softness"><span
+							data-i18n="ui.backgroundRemovalSoftness">Edge softness</span> <output
+							id="background-removal-softness-value" data-tag="background-removal-softness-value">25</output></label>
+					<input id="background-removal-softness" data-tag="background-removal-softness" type="range" min="1" max="100"
+						value="25" />
+				</div>
+				<div class="background-removal-field" data-tag="background-removal-color-field">
+					<label data-tag="background-removal-color-label" for="background-removal-color"
+						data-i18n="ui.backgroundRemovalColor">Background color</label>
+					<div class="background-removal-color-control">
+						<input id="background-removal-color" data-tag="background-removal-color" type="color" value="#ffffff" />
+						<button type="button" id="background-removal-sample" data-tag="background-removal-sample"
+							title="Sample the source corner" data-i18n="ui.backgroundRemovalSample">Sample</button>
+					</div>
+				</div>
 			</div>
-			<progress id="background-removal-progress" data-tag="background-removal-progress" max="100" value="0" hidden></progress>
-			<output id="background-removal-phase" data-tag="background-removal-phase" aria-live="polite">Ready</output>
+			<div class="background-removal-mask-tools" data-tag="background-removal-mask-tools">
+				<span class="background-removal-mask-label" data-tag="background-removal-mask-label">Mark areas:</span>
+				<button type="button" id="background-removal-keep" data-tag="background-removal-keep"
+					aria-pressed="true">Keep</button>
+				<button type="button" id="background-removal-remove" data-tag="background-removal-remove"
+					aria-pressed="false">Remove</button>
+				<button type="button" id="background-removal-clear-mask" data-tag="background-removal-clear-mask">Clear
+					areas</button>
+				<button type="button" id="background-removal-expand" data-tag="background-removal-expand"
+					aria-pressed="false">Expand</button>
+				<label class="background-removal-zoom-label" data-tag="background-removal-zoom-label"
+					for="background-removal-zoom">Zoom</label>
+				<input id="background-removal-zoom" data-tag="background-removal-zoom" type="range" min="50" max="300"
+					value="100" />
+			</div>
+			<div class="background-removal-preview" data-tag="background-removal-preview-wrap">
+				<div id="background-removal-preview-stage" class="background-removal-preview-stage"
+					data-tag="background-removal-preview-stage">
+					<img id="background-removal-preview" data-tag="background-removal-preview" alt="Background-removal preview"
+						hidden draggable="false" />
+					<div id="background-removal-mask-overlay" class="background-removal-mask-overlay"
+						data-tag="background-removal-mask-overlay" aria-hidden="true"></div>
+				</div>
+			</div>
+			<div class="background-removal-progress-row" data-tag="background-removal-progress-row">
+				<progress id="background-removal-progress" data-tag="background-removal-progress" max="100" value="0"
+					hidden></progress>
+				<output id="background-removal-phase" data-tag="background-removal-phase" aria-live="polite">Ready</output>
+			</div>
 			<div class="dialog-actions">
-				<button type="button" id="background-removal-cancel" data-tag="background-removal-cancel" data-i18n="common.actions.cancel">Cancel</button>
-				<button type="button" id="background-removal-close" data-tag="background-removal-close" data-i18n="common.actions.close" hidden>Close</button>
-				<button type="button" id="background-removal-apply" data-tag="background-removal-apply" data-i18n="common.actions.apply" disabled>Apply</button>
+				<button type="button" id="background-removal-cancel" data-tag="background-removal-cancel"
+					data-i18n="common.actions.cancel">Cancel</button>
+				<button type="button" id="background-removal-close" data-tag="background-removal-close"
+					data-i18n="common.actions.close" hidden>Close</button>
+				<button type="button" id="background-removal-preview-button" data-tag="background-removal-preview-button"
+					data-i18n="ui.preview">Preview</button>
+				<button type="button" id="background-removal-apply" data-tag="background-removal-apply"
+					data-i18n="common.actions.apply" disabled>Apply</button>
 			</div>
 		</form>
 	</dialog>
