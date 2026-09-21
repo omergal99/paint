@@ -26,19 +26,44 @@ import { createDeterministicCommandService } from './ai/DeterministicCommandServ
 import { createAiConnectionStore } from './ai/AiConnectionStore.js';
 import { getReleaseNotes } from './releaseNotes.js';
 import { hexToRgb } from './utils/color.js';
-import { rotateCanvas, rotateCanvasByAngle, flipCanvas, scaleCanvas, removeBackground } from './utils/transform.js';
+import { rotateCanvas, rotateCanvasByAngle, flipCanvas, scaleCanvas } from './utils/transform.js';
 import { APP_VERSION } from './version.js';
-import { DEFAULT_SETTINGS, HISTORY_VIEWS, KEYBOARD_KEYS, RIBBON_POSITIONS, STORAGE_KEYS } from './core/constants.js';
+import {
+	DEFAULT_SETTINGS,
+	HISTORY_VIEWS,
+	KEYBOARD_KEYS,
+	RIBBON_POSITIONS,
+	SHORTCUT_ACTIONS,
+	SHORTCUT_DEFINITIONS,
+	STORAGE_KEYS,
+} from './core/constants.js';
 import { createSettingsStore } from './settings/SettingsStore.js';
+import { createShortcutManager, formatShortcut, shortcutFromEvent } from './settings/ShortcutManager.js';
 import { createTextDocumentStore } from './document/TextDocumentStore.js';
 import { createTextHistoryStore } from './document/TextHistoryStore.js';
 import { createTextLayerService } from './document/TextLayerService.js';
 import { createTextSelectionOverlay } from './ui/TextSelectionOverlay.js';
 import { createActionMenuController } from './ui/ActionMenuController.js';
+import { createDialogSearch } from './ui/DialogSearch.js';
 import { createSettingsDialog } from './ui/SettingsDialog.js';
+import { createLocaleController } from './i18n/LocaleController.js';
 import { createPwaInstallManager } from './pwa/PwaInstallManager.js';
+import { assessImageAdmission } from './storage/ImageAdmission.js';
+import { createEventBus } from './core/EventBus.js';
+import { createBackgroundRemovalService } from './background/BackgroundRemovalProvider.js';
+import { createLocalColorKeyProvider } from './background/LocalColorKeyProvider.js';
+import { createBackgroundRemovalController } from './background/BackgroundRemovalController.js';
 
 // ---------- DOM refs ----------
+// Every addressable UI element gets a stable inspection hook. Explicit
+// data-tag values remain authoritative; id values provide the safe fallback.
+const ensureDataTags = (root = document) => {
+	root.querySelectorAll?.('[id]').forEach((element) => {
+		if (!element.dataset.tag) element.dataset.tag = element.id;
+	});
+};
+ensureDataTags();
+
 const stage = document.getElementById('canvas-stage');
 const canvasEl = document.getElementById('paint-canvas');
 const overlayEl = document.getElementById('overlay-canvas');
@@ -54,8 +79,12 @@ const dialogService = createDialogService({
 });
 
 // ---------- Core managers ----------
-const canvasManager = new CanvasManager({ canvas: canvasEl, overlay: overlayEl, width: 800, height: 600 });
+const eventBus = createEventBus();
+const canvasManager = new CanvasManager({ canvas: canvasEl, overlay: overlayEl, width: 800, height: 600, eventBus });
 const historyManager = new HistoryManager(canvasManager);
+const backgroundRemovalService = createBackgroundRemovalService({
+	localProvider: createLocalColorKeyProvider(),
+});
 const textDocumentStore = createTextDocumentStore();
 const textHistoryStore = createTextHistoryStore();
 
@@ -66,6 +95,9 @@ const statusBar = createStatusBar({
 	flashEl: document.getElementById('status-flash'),
 });
 statusBar.setCanvasSize(canvasManager.width, canvasManager.height);
+canvasManager.onAdmissionRejected = (admission) => statusBar.flash(admission.message);
+canvasManager.onImageLoadError = (error) => statusBar.flash(error.message);
+historyManager.onSnapshotRejected = (admission) => statusBar.flash(admission.message);
 
 const viewportManager = new ViewportManager({
 	stage,
@@ -88,6 +120,17 @@ const canvasResizer = new CanvasResizer({
 	handleCorner: document.getElementById('handle-corner'),
 	ghost: document.getElementById('resize-ghost'),
 });
+
+// Direction changes move the stage and can change the transformed canvas
+// rectangle. Invalidate cached pointer geometry and re-glue resize handles so
+// a direction toggle never leaves resize math one layout behind.
+const refreshCanvasDirectionGeometry = () => {
+	viewportManager.invalidateGeometry();
+	canvasResizer.reposition();
+	viewportManager.alignRtlResizeEdge(document.documentElement?.dir);
+};
+const directionEventTarget = document.documentElement || window;
+directionEventTarget.addEventListener('paint:locale-change', refreshCanvasDirectionGeometry);
 
 const textLayerService = createTextLayerService({
 	root: scaleEl,
@@ -250,6 +293,20 @@ const nudgeSelection = (dx, dy) => {
 const selectionHandles = [...document.querySelectorAll('[data-selection-handle]')];
 const rotateSelectionHandle = document.getElementById('selection-rotate');
 let activeToolName = 'select';
+let activeSelectionHandleDragCleanup = null;
+let activeSelectionRotationDragCleanup = null;
+
+const stopSelectionHandleDrag = () => {
+	const cleanup = activeSelectionHandleDragCleanup;
+	activeSelectionHandleDragCleanup = null;
+	cleanup?.();
+};
+
+const stopSelectionRotationDrag = () => {
+	const cleanup = activeSelectionRotationDragCleanup;
+	activeSelectionRotationDragCleanup = null;
+	cleanup?.();
+};
 
 const updateSelectionHandles = (region) => {
 	const selectionToolActive = activeToolName === 'select';
@@ -278,8 +335,10 @@ const updateSelectionHandles = (region) => {
 }
 
 const bindSelectionHandles = () => {
+	const handleBindings = [];
 	selectionHandles.forEach((handle) => {
-		handle.addEventListener('pointerdown', (event) => {
+		const onPointerDown = (event) => {
+			stopSelectionHandleDrag();
 			event.preventDefault();
 			event.stopPropagation();
 			historyManager.snapshot();
@@ -318,16 +377,33 @@ const bindSelectionHandles = () => {
 				if (canvasManager.floatingCanvas) canvasManager.floatingCanvas = scaleCanvas(canvasManager.floatingCanvas, w, h);
 				setSelection({ x, y, w, h }, { preview: true });
 			};
-			const onUp = () => {
+			let finished = false;
+			const cleanup = () => {
+				if (finished) return;
+				finished = true;
 				window.removeEventListener('pointermove', onMove);
 				window.removeEventListener('pointerup', onUp);
+				window.removeEventListener('pointercancel', onCancel);
+				if (activeSelectionHandleDragCleanup === cleanup) activeSelectionHandleDragCleanup = null;
+			};
+			const onUp = () => {
+				cleanup();
 				canvasManager.persistToStorage();
 			};
+			const onCancel = () => cleanup();
 			window.addEventListener('pointermove', onMove);
 			window.addEventListener('pointerup', onUp, { once: true });
+			window.addEventListener('pointercancel', onCancel, { once: true });
+			activeSelectionHandleDragCleanup = cleanup;
 			void start;
-		});
+		};
+		handle.addEventListener('pointerdown', onPointerDown);
+		handleBindings.push(() => handle.removeEventListener('pointerdown', onPointerDown));
 	});
+	return () => {
+		stopSelectionHandleDrag();
+		handleBindings.forEach((dispose) => dispose());
+	};
 }
 
 const commitFloatingPixels = (region) => {
@@ -521,6 +597,66 @@ const persistSession = () => {
 	canvasManager.persistToStorage();
 }
 
+const canvasToPngBlob = (source) => new Promise((resolve) => {
+		if (typeof source?.toBlob !== 'function') return resolve(null);
+		source.toBlob((blob) => resolve(blob || null), 'image/png');
+});
+
+const getBackgroundRemovalInput = async () => {
+	if (canvasManager.floatingCanvas) {
+		throw new Error('Place the active selection before removing its background.');
+	}
+	const region = canvasManager.selection?.w && canvasManager.selection?.h
+		? { ...canvasManager.selection }
+		: null;
+	const source = region ? canvasManager.extractRegion(region) : canvasManager.createCompositeCanvas();
+	const blob = await canvasToPngBlob(source);
+	if (!blob) throw new Error('This browser could not prepare the image preview.');
+	return { blob, region };
+};
+
+const applyBackgroundRemovalResult = async (result) => {
+	historyManager.snapshot({ force: true });
+	// The preview is composed from raster and text layers. Flatten only after
+	// Apply so cancelling never changes the working document.
+	canvasManager.flattenLayers();
+	if (!result?.region) {
+		const loaded = await canvasManager.loadImageBlob(result.imageBlob, result.width, result.height);
+		if (loaded) persistSession();
+		return loaded;
+	}
+	if (typeof createImageBitmap !== 'function') return false;
+	let bitmap = null;
+	try {
+		bitmap = await createImageBitmap(result.imageBlob);
+		canvasManager.fillRegion(result.region, canvasManager.backgroundColor);
+		canvasManager.ctx.drawImage(bitmap, result.region.x, result.region.y, result.region.w, result.region.h);
+		canvasManager.clearOverlay();
+		setSelection(null);
+		canvasManager.markDocumentDirty();
+		persistSession();
+		return true;
+	} catch {
+		return false;
+	} finally {
+		bitmap?.close?.();
+	}
+};
+
+const backgroundRemovalController = createBackgroundRemovalController({
+	dialog: document.getElementById('background-removal-dialog'),
+	message: document.getElementById('background-removal-message'),
+	phase: document.getElementById('background-removal-phase'),
+	progress: document.getElementById('background-removal-progress'),
+	preview: document.getElementById('background-removal-preview'),
+	applyButton: document.getElementById('background-removal-apply'),
+	cancelButton: document.getElementById('background-removal-cancel'),
+	closeButton: document.getElementById('background-removal-close'),
+	service: backgroundRemovalService,
+	getInput: getBackgroundRemovalInput,
+	applyResult: applyBackgroundRemovalResult,
+});
+
 const selectAll = () => {
 	setSelection({ x: 0, y: 0, w: canvasManager.width, h: canvasManager.height });
 }
@@ -548,7 +684,13 @@ const newFile = () => {
 	}
 	const dialog = document.getElementById('new-file-dialog');
 	const button = document.getElementById('btn-new').getBoundingClientRect();
-	dialog.style.left = `${Math.max(12, Math.round(button.left))}px`;
+	dialog.style.left = '';
+	dialog.style.right = '';
+	if (document.documentElement?.dir === 'rtl') {
+		dialog.style.right = `${Math.max(12, Math.round(window.innerWidth - button.right))}px`;
+	} else {
+		dialog.style.left = `${Math.max(12, Math.round(button.left))}px`;
+	}
 	dialog.style.top = `${Math.round(button.bottom + 8)}px`;
 	dialog.showModal();
 	setDialogUrl('new');
@@ -556,12 +698,17 @@ const newFile = () => {
 }
 
 const doNewFile = async () => {
+	const { width, height } = getDefaultCanvasSize();
+	const admission = assessImageAdmission({ width, height });
+	if (!admission.ok) {
+		statusBar.flash(admission.message);
+		return;
+	}
 	if (shouldAutoSaveOnNew()) await sidebar.saveCurrentToHistory();
 	else if (shouldAutoSaveHistory()) await sidebar.saveCurrentToHistory();
 	discardFloatingSelection();
 	historyManager.clear();
 	fileHandle = null;
-	const { width, height } = getDefaultCanvasSize();
 	canvasManager.loadFromSource(makeBlankSource(width, height));
 	setSelection(null);
 	persistSession();
@@ -607,23 +754,37 @@ const importFile = () => {
 }
 
 const openImageFile = async (file) => {
-	const bitmap = await createImageBitmap(file);
-	discardFloatingSelection();
-	historyManager.snapshot();
-	canvasManager.loadFromSource(bitmap);
-	fileHandle = null;
-	setSelection(null);
-	persistSession();
-	statusBar.flash(`Opened ${file.name}`);
-	bitmap.close?.();
+	let bitmap = null;
+	try {
+		bitmap = await createImageBitmap(file);
+		const admission = assessImageAdmission({ width: bitmap.width, height: bitmap.height });
+		if (!admission.ok) {
+			statusBar.flash(admission.message);
+			return false;
+		}
+		discardFloatingSelection();
+		historyManager.snapshot();
+		if (!canvasManager.loadFromSource(bitmap)) return false;
+		fileHandle = null;
+		setSelection(null);
+		persistSession();
+		statusBar.flash(`Opened ${file.name}`);
+		return true;
+	} catch (error) {
+		console.error('Open image failed:', error);
+		statusBar.flash('Image could not be decoded');
+		return false;
+	} finally {
+		bitmap?.close?.();
+	}
 }
 
 const importImageFile = async (file) => {
-	const bitmap = await createImageBitmap(file);
-	await clipboardManager.insertBitmapAsFloatingSelection(bitmap, {
+	const result = await clipboardManager.insertImageBlob(file, {
 		sourceLabel: `Imported ${file.name}`,
 	});
-	fileHandle = null;
+	if (result) fileHandle = null;
+	return result;
 }
 
 fileInput.addEventListener('change', async (e) => {
@@ -632,11 +793,16 @@ fileInput.addEventListener('change', async (e) => {
 	e.target.value = '';
 	fileInput.dataset.mode = '';
 	if (!file) return;
-	if (mode === 'import') {
-		await importImageFile(file);
-		return;
+	try {
+		if (mode === 'import') {
+			await importImageFile(file);
+			return;
+		}
+		await openImageFile(file);
+	} catch (error) {
+		console.error('Image import failed:', error);
+		statusBar.flash('Image could not be decoded');
 	}
-	await openImageFile(file);
 });
 
 const save = async () => {
@@ -664,17 +830,28 @@ const save = async () => {
 			console.warn('File System Access save failed, falling back to download:', err);
 		}
 	}
-	downloadPNG();
+	await downloadPNG();
 }
 
-const downloadPNG = () => {
-	const a = document.createElement('a');
-	a.href = canvasManager.toDataURL('image/png');
-	a.download = 'untitled.png';
-	a.click();
-	statusBar.flash('Downloaded as PNG');
-	document.title = 'paint - untitled.png';
-	showToast('Successfully downloaded untitled.png', true);
+const downloadPNG = async () => {
+	const blob = await canvasManager.toBlob('image/png');
+	if (!(blob instanceof Blob) || !globalThis.URL?.createObjectURL) {
+		statusBar.flash('PNG download could not be prepared');
+		return false;
+	}
+	const url = URL.createObjectURL(blob);
+	try {
+		const a = document.createElement('a');
+		a.href = url;
+		a.download = 'untitled.png';
+		a.click();
+		statusBar.flash('Downloaded as PNG');
+		document.title = 'paint - untitled.png';
+		showToast('Successfully downloaded untitled.png', true);
+		return true;
+	} finally {
+		window.setTimeout(() => URL.revokeObjectURL(url), 0);
+	}
 }
 
 const showToast = (msg, success = true) => {
@@ -761,59 +938,82 @@ document.getElementById('btn-rotate-free').addEventListener('click', async () =>
 });
 document.getElementById('btn-flip-horizontal').addEventListener('click', () => applyTransformation(c => flipCanvas(c, true)));
 document.getElementById('btn-flip-vertical').addEventListener('click', () => applyTransformation(c => flipCanvas(c, false)));
-document.getElementById('btn-remove-bg').addEventListener('click', () => applyTransformation(c => removeBackground(c, 30)));
-rotateSelectionHandle?.addEventListener('click', (event) => {
-	event.preventDefault();
-	event.stopPropagation();
-	if (rotateSelectionHandle._dragged) {
-		rotateSelectionHandle._dragged = false;
-		return;
-	}
-	if (document.getElementById('rotate-selection-toggle')?.checked) {
-		rotateSelectionByAngle(90, { prepared: rotateSelectionHandle._rotationPrepared === true });
-		rotateSelectionHandle._rotationPrepared = false;
-	}
-});
-rotateSelectionHandle?.addEventListener('pointerdown', (event) => {
-	if (activeToolName !== 'select' || !document.getElementById('rotate-selection-toggle')?.checked || !canvasManager.selection) return;
-	event.preventDefault();
-	event.stopPropagation();
-	const originalSelection = { ...canvasManager.selection };
-	historyManager.snapshot();
-	if (!canvasManager.floatingCanvas) {
-		canvasManager.floatingCanvas = canvasManager.extractRegion(originalSelection);
-		canvasManager.fillRegion(originalSelection, canvasManager.backgroundColor);
-		setSelection(originalSelection);
-	}
-	const rotationState = beginSelectionRotation(originalSelection);
-	const startDegrees = rotationState.degrees;
-	rotateSelectionHandle._rotationPrepared = true;
-	const center = { x: originalSelection.x + originalSelection.w / 2, y: originalSelection.y + originalSelection.h / 2 };
-	const startPoint = viewportManager.clientToImage(event.clientX, event.clientY);
-	const startAngle = Math.atan2(startPoint.y - center.y, startPoint.x - center.x);
-	let moved = false;
-	const onMove = (moveEvent) => {
-		const point = viewportManager.clientToImage(moveEvent.clientX, moveEvent.clientY);
-		const angle = Math.atan2(point.y - center.y, point.x - center.x);
-		const degrees = snapRotation(startDegrees + (angle - startAngle) * 180 / Math.PI);
-		if (Math.abs(degrees - startDegrees) > 1) moved = true;
-		rotationState.degrees = degrees;
-		const rendered = renderSelectionRotation(rotationState);
-		canvasManager.floatingCanvas = rendered.canvas;
-		setSelection(rendered.region);
-	};
-	const onUp = () => {
-		window.removeEventListener('pointermove', onMove);
-		window.removeEventListener('pointerup', onUp);
-		if (moved) {
-			rotateSelectionHandle._dragged = true;
+document.getElementById('btn-remove-bg').addEventListener('click', () => { void backgroundRemovalController.open(); });
+const bindRotateSelectionHandle = () => {
+	if (!rotateSelectionHandle) return () => {};
+	const onClick = (event) => {
+		event.preventDefault();
+		event.stopPropagation();
+		if (rotateSelectionHandle._dragged) {
+			rotateSelectionHandle._dragged = false;
+			return;
+		}
+		if (document.getElementById('rotate-selection-toggle')?.checked) {
+			rotateSelectionByAngle(90, { prepared: rotateSelectionHandle._rotationPrepared === true });
 			rotateSelectionHandle._rotationPrepared = false;
-			canvasManager.persistToStorage();
 		}
 	};
-	window.addEventListener('pointermove', onMove);
-	window.addEventListener('pointerup', onUp, { once: true });
-});
+	const onPointerDown = (event) => {
+		if (activeToolName !== 'select' || !document.getElementById('rotate-selection-toggle')?.checked || !canvasManager.selection) return;
+		stopSelectionRotationDrag();
+		event.preventDefault();
+		event.stopPropagation();
+		const originalSelection = { ...canvasManager.selection };
+		historyManager.snapshot();
+		if (!canvasManager.floatingCanvas) {
+			canvasManager.floatingCanvas = canvasManager.extractRegion(originalSelection);
+			canvasManager.fillRegion(originalSelection, canvasManager.backgroundColor);
+			setSelection(originalSelection);
+		}
+		const rotationState = beginSelectionRotation(originalSelection);
+		const startDegrees = rotationState.degrees;
+		rotateSelectionHandle._rotationPrepared = true;
+		const center = { x: originalSelection.x + originalSelection.w / 2, y: originalSelection.y + originalSelection.h / 2 };
+		const startPoint = viewportManager.clientToImage(event.clientX, event.clientY);
+		const startAngle = Math.atan2(startPoint.y - center.y, startPoint.x - center.x);
+		let moved = false;
+		const onMove = (moveEvent) => {
+			const point = viewportManager.clientToImage(moveEvent.clientX, moveEvent.clientY);
+			const angle = Math.atan2(point.y - center.y, point.x - center.x);
+			const degrees = snapRotation(startDegrees + (angle - startAngle) * 180 / Math.PI);
+			if (Math.abs(degrees - startDegrees) > 1) moved = true;
+			rotationState.degrees = degrees;
+			const rendered = renderSelectionRotation(rotationState);
+			canvasManager.floatingCanvas = rendered.canvas;
+			setSelection(rendered.region);
+		};
+		let finished = false;
+		const cleanup = () => {
+			if (finished) return;
+			finished = true;
+			window.removeEventListener('pointermove', onMove);
+			window.removeEventListener('pointerup', onUp);
+			window.removeEventListener('pointercancel', onCancel);
+			if (activeSelectionRotationDragCleanup === cleanup) activeSelectionRotationDragCleanup = null;
+		};
+		const onUp = () => {
+			cleanup();
+			if (moved) {
+				rotateSelectionHandle._dragged = true;
+				rotateSelectionHandle._rotationPrepared = false;
+				canvasManager.persistToStorage();
+			}
+		};
+		const onCancel = () => cleanup();
+		window.addEventListener('pointermove', onMove);
+		window.addEventListener('pointerup', onUp, { once: true });
+		window.addEventListener('pointercancel', onCancel, { once: true });
+		activeSelectionRotationDragCleanup = cleanup;
+	};
+	rotateSelectionHandle.addEventListener('click', onClick);
+	rotateSelectionHandle.addEventListener('pointerdown', onPointerDown);
+	return () => {
+		stopSelectionRotationDrag();
+		rotateSelectionHandle.removeEventListener('click', onClick);
+		rotateSelectionHandle.removeEventListener('pointerdown', onPointerDown);
+	};
+};
+const destroyRotateSelectionHandleBinding = bindRotateSelectionHandle();
 
 const rotateSelectionByAngle = (degrees, { prepared = false } = {}) => {
 	const selection = canvasManager.selection;
@@ -868,7 +1068,7 @@ const renderSelectionRotation = (rotationState) => {
 		},
 	};
 }
-bindSelectionHandles();
+const destroySelectionHandleBindings = bindSelectionHandles();
 
 document.querySelector('.shape-gallery')?.addEventListener('click', (event) => event.stopPropagation());
 document.querySelector('.text-tool-menu-items')?.addEventListener('click', (event) => event.stopPropagation());
@@ -962,6 +1162,22 @@ document.getElementById('resize-form').addEventListener('submit', () => {
 	const w = parseInt(resizeWidthInput.value, 10);
 	const h = parseInt(resizeHeightInput.value, 10);
 	if (w > 0 && h > 0) {
+		const requiredWidth = resizeTarget.kind === 'selection'
+			? Math.max(canvasManager.width, resizeTarget.x + w)
+			: w;
+		const requiredHeight = resizeTarget.kind === 'selection'
+			? Math.max(canvasManager.height, resizeTarget.y + h)
+			: h;
+		const admission = assessImageAdmission({
+			width: w,
+			height: h,
+			targetWidth: requiredWidth,
+			targetHeight: requiredHeight,
+		});
+		if (!admission.ok) {
+			statusBar.flash(admission.message);
+			return;
+		}
 		historyManager.snapshot();
 		if (resizeTarget.kind === 'selection') {
 			const source = canvasManager.floatingCanvas || canvasManager.extractRegion({
@@ -979,16 +1195,14 @@ document.getElementById('resize-form').addEventListener('submit', () => {
 				}, canvasManager.backgroundColor);
 				canvasManager.floatingCanvas = source;
 			}
-			const requiredWidth = Math.max(canvasManager.width, resizeTarget.x + w);
-			const requiredHeight = Math.max(canvasManager.height, resizeTarget.y + h);
 			if (requiredWidth !== canvasManager.width || requiredHeight !== canvasManager.height) {
-				canvasManager.resize(requiredWidth, requiredHeight);
+				if (!canvasManager.resize(requiredWidth, requiredHeight)) return;
 			}
 			canvasManager.floatingCanvas = scaleCanvas(source, w, h);
 			setSelection({ x: resizeTarget.x, y: resizeTarget.y, w, h });
 		} else {
 			commitFloatingSelection();
-			canvasManager.resize(w, h);
+			if (!canvasManager.resize(w, h)) return;
 		}
 		persistSession();
 	}
@@ -1000,6 +1214,7 @@ const dmCheckbox = document.getElementById('setting-dark-mode');
 const sbCheckbox = document.getElementById('setting-show-status-bar');
 const ciCheckbox = document.getElementById('setting-show-color-inspector');
 const aiCheckbox = document.getElementById('setting-show-ai-chat');
+const directionSelect = document.getElementById('setting-direction');
 const bgSelect = document.getElementById('setting-canvas-bg');
 const solidBackgroundColorInput = document.getElementById('setting-solid-background-color');
 const defaultCanvasSizeSelect = document.getElementById('setting-default-canvas-size');
@@ -1016,9 +1231,12 @@ const settingsStore = createSettingsStore({
 		canvasBackground: (value) => ['none', 'solid', 'transparent', 'checkerboard', 'grid'].includes(value),
 		solidBackgroundColor: (value) => typeof value === 'string' && /^#[0-9a-f]{6}$/i.test(value),
 		defaultZoom: (value) => Number.isFinite(Number(value)) && Number(value) > 0,
+		interfaceDirection: (value) => ['auto', 'ltr', 'rtl'].includes(value),
 		historyAutoSaveMode: (value) => ['all', 'close', 'lifecycle'].includes(value),
 	},
 });
+const shortcutManager = createShortcutManager({ bindings: settingsStore.get().shortcuts });
+settingsStore.subscribe((state) => shortcutManager.replace(state.shortcuts));
 const settingsRegistry = createSettingsRegistry();
 settingsRegistry.registerStorageKey(STORAGE_KEYS.textHistory);
 settingsRegistry.registerStorageKey(STORAGE_KEYS.settingsTab);
@@ -1074,6 +1292,25 @@ const settingsDialogController = createSettingsDialog({
 });
 settingsDialogController.bind();
 
+const settingsSearch = createDialogSearch({
+	dialog: settingsDialog,
+	input: document.getElementById('settings-search-input'),
+	status: document.getElementById('settings-search-status'),
+	previousButton: document.getElementById('settings-search-prev'),
+	nextButton: document.getElementById('settings-search-next'),
+	tabs: document.querySelectorAll('[data-settings-tab]'),
+	panels: document.querySelectorAll('[data-settings-panel]'),
+	onSelectTab: (tab) => settingsDialogController.setTab(tab),
+});
+settingsSearch.bind();
+
+// Locale selection is deliberately independent from the large settings object:
+// it can evolve into lazy-loaded catalogs without changing paint preferences.
+const localeController = createLocaleController({
+	select: document.getElementById('setting-locale'),
+});
+localeController.bind();
+
 const getLastSettingsTab = () => {
 	try {
 		return localStorage.getItem(STORAGE_KEYS.settingsTab) || 'general';
@@ -1089,8 +1326,14 @@ const pwaInstallManager = createPwaInstallManager({
 	offlineButton: document.getElementById('pwa-offline-button'),
 	offlineStatusEl: document.getElementById('pwa-offline-status'),
 	canReload: () => !document.querySelector('.text-editor-shell') && !canvasManager.floatingCanvas,
+	requireReloadGuard: true,
 });
 pwaInstallManager.start();
+
+// app.js owns the working-canvas autosave lifecycle because it also owns
+// recovery startup and pagehide flushing. It binds that controller here after
+// both modules are ready, so PWA updates share one durable-save decision.
+const setPwaUpdateSafetyGuard = (guard) => pwaInstallManager.setReloadGuard(guard);
 
 const openSettingsDialog = (tab = getLastSettingsTab()) => {
 	settingsDialogController.open(tab);
@@ -1165,6 +1408,10 @@ const readSettings = () => {
 	return settingsStore.get();
 }
 
+const getRibbonGroupKey = (groupSection) => groupSection?.dataset.ribbonKey
+	|| [...(groupSection?.classList || [])].find((name) => name.startsWith('ribbon-group-'))?.slice('ribbon-group-'.length)
+	|| groupSection?.querySelector('.ribbon-group-title')?.textContent.trim();
+
 const saveSettings = () => {
 	try {
 		const ribbonVisibility = {};
@@ -1172,7 +1419,7 @@ const saveSettings = () => {
 		document.querySelectorAll('.ribbon-group').forEach((groupSection) => {
 			const title = groupSection.querySelector('.ribbon-group-title');
 			if (!title) return;
-			ribbonVisibility[title.textContent.trim()] = [...groupSection.children]
+			ribbonVisibility[getRibbonGroupKey(groupSection)] = [...groupSection.children]
 				.filter((child) => !child.classList.contains('ribbon-group-title') && child.id !== 'file-input')
 				.some((child) => !child.hidden && child.style.display !== 'none');
 			groupSection.querySelectorAll('.rbtn[id]').forEach((button) => {
@@ -1186,7 +1433,8 @@ const saveSettings = () => {
 			darkMode: dmCheckbox.checked,
 			showStatusBar: sbCheckbox.checked,
 			showColorInspector: ciCheckbox.checked,
-			showAiChat: aiCheckbox?.checked === true,
+		showAiChat: aiCheckbox?.checked === true,
+		interfaceDirection: directionSelect?.value || 'auto',
 			canvasBackground: bgSelect.value,
 			solidBackgroundColor: solidBackgroundColorInput?.value || DEFAULT_SETTINGS.solidBackgroundColor,
 			defaultCanvasSize: defaultCanvasSizeSelect?.value || '800x600',
@@ -1195,10 +1443,12 @@ const saveSettings = () => {
 			defaultZoom: getDefaultZoom(),
 			historyAutoSave,
 			historyAutoSaveMode,
+			restoreLastImage: document.getElementById('setting-restore-last-image')?.checked === true,
 			ribbonLayout: { ...ribbonLayoutManager.state },
 			ribbonVisibility,
 			buttonVisibility,
 			showRotateInSelection: document.getElementById('rotate-selection-toggle')?.checked === true,
+			shortcuts: shortcutManager.get(),
 		});
 	} catch (error) { console.warn('Unable to save settings:', error); }
 }
@@ -1237,9 +1487,11 @@ const syncHistoryControls = (saved) => {
 	const t1 = document.getElementById('history-auto-save-toggle');
 	const t2 = document.getElementById('setting-history-auto-save');
 	const m = document.getElementById('setting-history-auto-save-mode');
+	const restore = document.getElementById('setting-restore-last-image');
 	if (t1) t1.checked = prefs.autoSave;
 	if (t2) t2.checked = prefs.autoSave;
 	if (m) m.value = prefs.mode;
+	if (restore) restore.checked = readSettings().restoreLastImage === true;
 	const status = document.getElementById('history-auto-status');
 	const labels = { lifecycle: 'Exit, refresh or new image', all: 'All automatic events', manual: 'Only manually' };
 	if (status) status.textContent = prefs.autoSave ? (labels[prefs.mode] || prefs.mode) : 'Off';
@@ -1379,6 +1631,8 @@ const applySavedSettings = () => {
 	sbCheckbox.checked = saved.showStatusBar !== false;
 	ciCheckbox.checked = saved.showColorInspector !== false;
 	if (aiCheckbox) aiCheckbox.checked = saved.showAiChat === true;
+	if (directionSelect) directionSelect.value = ['auto', 'ltr', 'rtl'].includes(saved.interfaceDirection)
+		? saved.interfaceDirection : 'auto';
 	bgSelect.value = saved.canvasBackground || 'none';
 	const solidColor = /^#[0-9a-f]{6}$/i.test(saved.solidBackgroundColor || '')
 		? saved.solidBackgroundColor.toLowerCase()
@@ -1386,6 +1640,8 @@ const applySavedSettings = () => {
 	if (solidBackgroundColorInput) solidBackgroundColorInput.value = solidColor;
 	canvasManager.setBackgroundColor(solidColor);
 	defaultCanvasSizeSelect.value = saved.defaultCanvasSize || '800x600';
+	const restoreLastImage = document.getElementById('setting-restore-last-image');
+	if (restoreLastImage) restoreLastImage.checked = saved.restoreLastImage === true;
 	if (![...defaultCanvasSizeSelect.options].some((option) => option.value === defaultCanvasSizeSelect.value)) {
 		defaultCanvasSizeSelect.value = 'custom';
 	}
@@ -1404,19 +1660,26 @@ const applySavedSettings = () => {
 	applyCanvasBackgroundMode(bgSelect.value);
 	viewportManager.setInitialZoom(getDefaultZoom());
 	if (!localStorage.getItem('paint:zoom')) viewportManager.setZoom(getDefaultZoom());
-	if (!localStorage.getItem('omerpaint:last-canvas')) {
-		const { width, height } = getDefaultCanvasSize();
-		if (width !== canvasManager.width || height !== canvasManager.height) canvasManager.resize(width, height);
-	}
+	// Startup begins from the configured blank size. app.js restores the
+	// canonical IndexedDB working record afterwards, so this must not inspect
+	// the retired localStorage canvas key or it can make restore timing depend
+	// on stale fallback data.
+	const { width, height } = getDefaultCanvasSize();
+	if (width !== canvasManager.width || height !== canvasManager.height) canvasManager.resize(width, height);
 	syncHistoryControls(saved);
 	document.body.classList.toggle('dark-mode', dmCheckbox.checked);
+	localeController.setDirection(directionSelect?.value || 'auto');
 	document.querySelector('.status-bar').style.display = sbCheckbox.checked ? 'grid' : 'none';
 	document.getElementById('color-inspector').style.display = ciCheckbox.checked ? 'flex' : 'none';
 	const ribbonVisibility = saved.ribbonVisibility || {};
 	document.querySelectorAll('.ribbon-group').forEach((groupSection) => {
 		const title = groupSection.querySelector('.ribbon-group-title');
-		if (!title || ribbonVisibility[title.textContent.trim()] === undefined) return;
-		const visible = ribbonVisibility[title.textContent.trim()];
+		if (!title) return;
+		const stableKey = getRibbonGroupKey(groupSection);
+		const legacyKey = title.textContent.trim();
+		const storedVisibility = ribbonVisibility[stableKey] ?? ribbonVisibility[legacyKey];
+		if (storedVisibility === undefined) return;
+		const visible = storedVisibility;
 		groupSection.hidden = !visible;
 		[...groupSection.children]
 			.filter((child) => !child.classList.contains('ribbon-group-title') && child.id !== 'file-input')
@@ -1458,6 +1721,7 @@ const applySavedSettings = () => {
 	if (inspectorSeparator?.classList.contains('separator')) {
 		inspectorSeparator.style.display = ciCheckbox.checked ? '' : 'none';
 	}
+	renderShortcutSettings();
 	const layout = saved.ribbonLayout || ribbonLayoutManager.state;
 	ribbonLayoutManager.setPosition(layout.position || 'top');
 	ribbonLayoutManager.setVisible(layout.visible !== false);
@@ -1567,6 +1831,65 @@ const renderReleaseNotes = () => {
 }
 renderReleaseNotes();
 
+const shortcutSettingsStatus = document.getElementById('shortcut-settings-status');
+const persistShortcutSettings = () => settingsStore.set({ shortcuts: shortcutManager.get() });
+const renderShortcutSettings = () => {
+	const host = document.getElementById('shortcut-settings-list');
+	if (!host) return;
+	host.replaceChildren();
+	for (const definition of SHORTCUT_DEFINITIONS) {
+		const row = document.createElement('div');
+		row.className = 'shortcut-setting-row';
+		const label = document.createElement('label');
+		label.textContent = definition.label;
+		const input = document.createElement('input');
+		input.type = 'text';
+		input.readOnly = true;
+		input.className = 'shortcut-setting-input';
+		input.id = `shortcut-${definition.action}`;
+		input.dataset.shortcutAction = definition.action;
+		input.setAttribute('aria-label', `${definition.label} shortcut`);
+		input.value = formatShortcut(shortcutManager.get()[definition.action]);
+		input.title = 'Focus this field and press the shortcut you want';
+		input.addEventListener('keydown', (event) => {
+			if (event.key === 'Escape') {
+				input.blur();
+				return;
+			}
+			const next = shortcutFromEvent(event);
+			if (!next) return;
+			event.preventDefault();
+			event.stopPropagation();
+			const result = shortcutManager.assign(definition.action, next);
+			if (!result.ok) {
+				input.setCustomValidity('That shortcut is already assigned.');
+				if (shortcutSettingsStatus) shortcutSettingsStatus.textContent = 'That shortcut is already assigned.';
+				return;
+			}
+			input.setCustomValidity('');
+			input.value = formatShortcut(result.value);
+			persistShortcutSettings();
+			if (shortcutSettingsStatus) shortcutSettingsStatus.textContent = `${definition.label} shortcut saved.`;
+		});
+		const reset = document.createElement('button');
+		reset.type = 'button';
+		reset.className = 'settings-link-button shortcut-reset';
+		reset.textContent = 'Default';
+		reset.addEventListener('click', () => {
+			const result = shortcutManager.reset(definition.action);
+			if (!result.ok) return;
+			input.setCustomValidity('');
+			input.value = formatShortcut(result.value);
+			persistShortcutSettings();
+			if (shortcutSettingsStatus) shortcutSettingsStatus.textContent = `${definition.label} reset to default.`;
+		});
+		label.htmlFor = input.id;
+		row.append(label, input, reset);
+		host.appendChild(row);
+	}
+};
+renderShortcutSettings();
+
 const RIBBON_GROUP_ORDER = Object.freeze([
 	'ribbon-group-file',
 	'ribbon-group-clipboard',
@@ -1591,10 +1914,16 @@ const populateRibbonSettings = () => {
 		if (!title) return;
 		const row = document.createElement('div');
 		row.className = 'ribbon-setting-row';
-		const label = document.createElement('label');
+		const label = document.createElement('div');
 		label.className = 'checkbox-row';
+		label.dataset.tag = `ribbon-group-visibility-row-${groups.indexOf(groupSection)}`;
 		const checkbox = document.createElement('input');
 		checkbox.type = 'checkbox';
+		checkbox.id = `ribbon-group-visibility-${groups.indexOf(groupSection)}`;
+		checkbox.dataset.tag = checkbox.id;
+		const checkboxLabel = document.createElement('label');
+		checkboxLabel.htmlFor = checkbox.id;
+		checkboxLabel.dataset.tag = `${checkbox.id}-label`;
 		checkbox.dataset.ribbonGroupSetting = [...groupSection.classList].find((name) => name.startsWith('ribbon-group-')) || '';
 		checkbox.checked = [...groupSection.children]
 			.filter((child) => !child.classList.contains('ribbon-group-title') && child.id !== 'file-input')
@@ -1614,10 +1943,12 @@ const populateRibbonSettings = () => {
 			if (separator?.classList.contains('separator')) separator.style.display = checkbox.checked ? '' : 'none';
 			saveSettings();
 		});
-		label.append(checkbox, document.createTextNode(isExtras ? `${title.textContent} (Settings always visible)` : title.textContent));
+		checkboxLabel.textContent = isExtras ? `${title.textContent} (Settings always visible)` : title.textContent;
+		label.append(checkbox, checkboxLabel);
 		const details = document.createElement('button');
 		details.type = 'button';
 		details.className = 'ribbon-setting-details';
+		details.dataset.tag = `ribbon-group-details-${groups.indexOf(groupSection)}`;
 		details.textContent = 'Details';
 		details.addEventListener('click', () => sidebar.showGroupSettings(title.textContent, groupSection));
 		row.append(label, details);
@@ -1647,6 +1978,10 @@ settingsDialog.addEventListener('close', () => {
 	if (new URLSearchParams(window.location.search).get('dialog') === 'settings') setDialogUrl(null);
 });
 document.getElementById('settings-close').addEventListener('click', () => settingsDialog.close());
+directionSelect?.addEventListener('change', () => {
+	localeController.setDirection(directionSelect.value);
+	saveSettings();
+});
 
 document.getElementById('settings-clear-data').addEventListener('click', async () => {
 	const confirmed = await dialogService.confirm({
@@ -1700,6 +2035,7 @@ settingAutoMode?.addEventListener('change', () => {
 	syncHistoryControls();
 	renderSegmentedChoices();
 });
+document.getElementById('setting-restore-last-image')?.addEventListener('change', saveSettings);
 historyLimitSel?.addEventListener('change', (e) => applyHistoryLimit(e.target.value));
 settingLimit?.addEventListener('change', (e) => applyHistoryLimit(e.target.value));
 
@@ -1921,17 +2257,6 @@ document.querySelectorAll('.ribbon-group-title').forEach(titleEl => {
 // ---------- File / Storage logic ----------
 historyManager.onChange = (canUndo, canRedo) => toolbar.setUndoRedoEnabled(canUndo, canRedo);
 
-// Restore the current working image for one short session window. Older work
-// remains available through global history instead of unexpectedly reopening
-// as the active document.
-const RECENT_CANVAS_TTL_MS = 24 * 60 * 60 * 1000;
-void canvasManager.restoreFromStorage({ maxAgeMs: RECENT_CANVAS_TTL_MS }).then((restored) => {
-	if (restored) {
-		setSelection(null);
-		statusBar.flash('Restored recent image');
-	}
-}).catch((error) => console.warn('Unable to restore recent image:', error));
-
 let lifecycleSnapshotQueued = false;
 const queueLifecycleHistorySnapshot = () => {
 	if (lifecycleSnapshotQueued || !sidebar.globalHistory.historyEnabled) return;
@@ -1951,7 +2276,7 @@ const queueLifecycleHistorySnapshot = () => {
 window.addEventListener('beforeunload', () => {
 	// A shape lifted by "select after draw" exists only as a floating layer until
 	// the selection is left. Closing or refreshing IS leaving it, so bake it onto
-	// the canvas first — otherwise the refresh would silently discard the shape
+	// the canvas first - otherwise the refresh would silently discard the shape
 	// that was just drawn (the canvas holds the pre-lift pixels, not the shape).
 	commitFloatingSelection();
 	persistSession();
@@ -2011,122 +2336,106 @@ if (viewportEl) {
 }
 
 // ---------- Keyboard shortcuts ----------
-const TOOL_KEYS = {
-	s: 'select', p: 'pencil', b: 'brush', f: 'fill', e: 'eraser', t: 'text', k: 'eyedropper', z: 'zoom', h: 'pan',
-};
+const SHORTCUT_TOOL_TARGETS = Object.freeze({
+	[SHORTCUT_ACTIONS.selectTool]: 'select',
+	[SHORTCUT_ACTIONS.pencilTool]: 'pencil',
+	[SHORTCUT_ACTIONS.brushTool]: 'brush',
+	[SHORTCUT_ACTIONS.fillTool]: 'fill',
+	[SHORTCUT_ACTIONS.eraserTool]: 'eraser',
+	[SHORTCUT_ACTIONS.textTool]: 'text',
+	[SHORTCUT_ACTIONS.eyedropperTool]: 'eyedropper',
+	[SHORTCUT_ACTIONS.zoomTool]: 'zoom',
+	[SHORTCUT_ACTIONS.panTool]: 'pan',
+});
+
+const SHORTCUT_NUDGE_DELTAS = Object.freeze({
+	[SHORTCUT_ACTIONS.nudgeUp]: [0, -1],
+	[SHORTCUT_ACTIONS.nudgeDown]: [0, 1],
+	[SHORTCUT_ACTIONS.nudgeLeft]: [-1, 0],
+	[SHORTCUT_ACTIONS.nudgeRight]: [1, 0],
+});
 
 window.addEventListener('keydown', (e) => {
 	if (e.defaultPrevented) return;
 	const tag = document.activeElement?.tagName;
 	const typing = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
-	// Undo: Ctrl/Cmd+Z (Shift = redo). Redo: Ctrl+Y or Ctrl/Cmd+Shift+Z.
-	// Skipped while typing so text fields keep native behavior.
-	if ((e.ctrlKey || e.metaKey) && !e.altKey && !typing) {
-		const key = e.key.toLowerCase();
-		if (key === 'z' && !e.shiftKey) {
-			e.preventDefault();
-			historyManager.undo();
-			return;
-		}
-		if ((key === 'y') || (key === 'z' && e.shiftKey)) {
-			e.preventDefault();
-			historyManager.redo();
-			return;
-		}
-	}
+	const shortcut = shortcutFromEvent(e);
+	const action = shortcutManager.resolve(shortcut);
+	if (!action) return;
+	const activeElement = document.activeElement;
+	const editable = activeElement instanceof HTMLTextAreaElement || activeElement?.isContentEditable ||
+		(activeElement instanceof HTMLInputElement &&
+			!['checkbox', 'radio', 'range', 'color', 'button', 'submit'].includes(activeElement.type));
+	const hasTextSelection = editable && typeof activeElement.selectionStart === 'number'
+		&& activeElement.selectionStart !== activeElement.selectionEnd;
 
-	if (e.ctrlKey || e.metaKey) {
-		switch (e.key.toLowerCase()) {
-			case 'a': {
-				// Select all on the canvas. Only let the browser take over when an
-				// actual multi-line text entry is focused (the text tool's textarea),
-				// where native select-all-text is expected. Number/select/other form
-				// controls keep Ctrl+A as "select the whole picture".
-				const el = document.activeElement;
-				const inTextEntry = tag === 'TEXTAREA' || (el && el.isContentEditable === true);
-				if (inTextEntry) return;
-				e.preventDefault();
-				selectAll();
-				return;
-			}
-			case 'z':
-				e.preventDefault();
-				discardFloatingSelection();
-				e.shiftKey ? historyManager.redo() : historyManager.undo();
-				return;
-			case 'y':
-				e.preventDefault();
-				discardFloatingSelection();
-				historyManager.redo();
-				return;
-			case 'c':
-			case 'x': {
-				// Defer to the browser only when the focused field has selected text
-				// worth copying natively. Otherwise treat Cmd/Ctrl+C/X as an image
-				// clipboard action even when a ribbon control (e.g. a size input)
-				// still holds focus — previously the shortcut silently did nothing.
-				const el = document.activeElement;
-				const editable = el instanceof HTMLTextAreaElement || el?.isContentEditable ||
-					(el instanceof HTMLInputElement &&
-						!['checkbox', 'radio', 'range', 'color', 'button', 'submit'].includes(el.type));
-				const hasTextSelection = editable &&
-					typeof el.selectionStart === 'number' && el.selectionStart !== el.selectionEnd;
-				if (editable && hasTextSelection) return;
-				e.preventDefault();
-				if (e.key.toLowerCase() === 'c') clipboardManager.copy();
-				else clipboardManager.cut();
-				return;
-			}
-			case 'v':
-				// Handled by the native 'paste' event listener below: it carries the
-				// clipboard image without any read permission, so Cmd+V works on Mac
-				// (Safari blocks navigator.clipboard.read() outside real gestures).
-				return;
-			case 's':
-				e.preventDefault();
-				save();
-				return;
-			case 'o':
-				e.preventDefault();
-				openFile();
-				return;
-			case 'n':
-				e.preventDefault();
-				newFile();
-				return;
-		}
+	if (action === SHORTCUT_ACTIONS.undo || action === SHORTCUT_ACTIONS.redo) {
+		if (typing) return;
+		e.preventDefault();
+		discardFloatingSelection();
+		if (action === SHORTCUT_ACTIONS.undo) historyManager.undo();
+		else historyManager.redo();
 		return;
 	}
-
+	if (action === SHORTCUT_ACTIONS.selectAll) {
+		if (editable) return;
+		e.preventDefault();
+		selectAll();
+		return;
+	}
+	if (action === SHORTCUT_ACTIONS.copy || action === SHORTCUT_ACTIONS.cut) {
+		if (editable && hasTextSelection) return;
+		e.preventDefault();
+		if (action === SHORTCUT_ACTIONS.copy) clipboardManager.copy();
+		else clipboardManager.cut();
+		return;
+	}
+	if (action === SHORTCUT_ACTIONS.paste) {
+		// The default Ctrl/Cmd+V remains the native paste event below for Safari
+		// and permission-free clipboard image transfer. Custom bindings use the
+		// explicit clipboard-read fallback while preserving user activation.
+		if (shortcutManager.isDefault(action, shortcut) || typing) return;
+		e.preventDefault();
+		void clipboardManager.paste();
+		return;
+	}
 	if (typing) return;
-	if (e.key === 'Delete' || e.key === 'Backspace') {
+	if (action === SHORTCUT_ACTIONS.save) {
+		e.preventDefault();
+		save();
+		return;
+	}
+	if (action === SHORTCUT_ACTIONS.open) {
+		e.preventDefault();
+		openFile();
+		return;
+	}
+	if (action === SHORTCUT_ACTIONS.newFile) {
+		e.preventDefault();
+		newFile();
+		return;
+	}
+	if (action === SHORTCUT_ACTIONS.deleteSelection) {
 		if (deleteSelection()) e.preventDefault();
 		return;
 	}
-
-	if (KEYBOARD_KEYS.arrows.includes(e.key)) {
-		if (canvasManager.selection?.w && canvasManager.selection?.h) {
-			e.preventDefault();
-			const step = e.shiftKey ? 10 : 1;
-			const deltas = {
-				[KEYBOARD_KEYS.arrowUp]: [0, -step],
-				[KEYBOARD_KEYS.arrowDown]: [0, step],
-				[KEYBOARD_KEYS.arrowLeft]: [-step, 0],
-				[KEYBOARD_KEYS.arrowRight]: [step, 0],
-			};
-			const [dx, dy] = deltas[e.key];
-			nudgeSelection(dx, dy);
-			return;
-		}
+	const tool = SHORTCUT_TOOL_TARGETS[action];
+	if (tool) {
+		e.preventDefault();
+		toolManager.setActive(tool);
+		return;
 	}
-
-	const tool = TOOL_KEYS[e.key.toLowerCase()];
-	if (tool) toolManager.setActive(tool);
+	const delta = SHORTCUT_NUDGE_DELTAS[action];
+	if (delta && canvasManager.selection?.w && canvasManager.selection?.h) {
+		e.preventDefault();
+		const step = e.shiftKey ? 10 : 1;
+		nudgeSelection(delta[0] * step, delta[1] * step);
+	}
 });
 
 // ---------- Native paste events (Cmd/Ctrl+V on any OS, incl. macOS) ----------
 // The browser dispatches a real 'paste' event for Cmd+V with clipboard contents
-// attached — no async clipboard-read permission needed (Safari on Mac blocks
+// attached - no async clipboard-read permission needed (Safari on Mac blocks
 // navigator.clipboard.read() most of the time).
 document.addEventListener('paste', async (e) => {
 	const target = e.target;
@@ -2145,7 +2454,7 @@ document.addEventListener('paste', async (e) => {
 				await clipboardManager.insertImageBlob(file, { sourceLabel: 'Pasted' });
 			} catch (err) {
 				console.error('Paste failed:', err);
-				statusBar.flash('Paste failed — unsupported image data');
+				statusBar.flash('Paste failed - unsupported image data');
 			}
 			return;
 		}
@@ -2159,12 +2468,36 @@ window.addEventListener('drop', async (e) => {
 	e.preventDefault();
 	const file = e.dataTransfer?.files?.[0];
 	if (file && file.type.startsWith('image/')) {
-		const bitmap = await createImageBitmap(file);
-		await clipboardManager.insertBitmapAsFloatingSelection(bitmap, {
+		const result = await clipboardManager.insertImageBlob(file, {
 			sourceLabel: `Dropped ${file.name}`,
 		});
-		fileHandle = null;
+		if (result) fileHandle = null;
 	}
 });
 
-export { canvasManager };
+let editorDestroyed = false;
+const destroyEditor = () => {
+	if (editorDestroyed) return;
+	editorDestroyed = true;
+	// Pagehide is normally terminal, but this explicit ownership boundary also
+	// makes a future document/tab host safe to dispose without retaining canvas
+	// pointer handlers, geometry observers, history Blob URLs, or panel frames.
+	historyManager.persistSession();
+	destroySelectionHandleBindings();
+	destroyRotateSelectionHandleBinding();
+	toolManager.destroy();
+	canvasResizer.destroy();
+	viewportManager.destroy();
+	directionEventTarget.removeEventListener('paint:locale-change', refreshCanvasDirectionGeometry);
+	ribbonLayoutManager.destroy();
+	actionMenuController.destroy();
+	backgroundRemovalController.destroy();
+	pwaInstallManager.destroy();
+	textSelectionOverlay.destroy();
+	textLayerService.destroy();
+	historyManager.dispose();
+};
+
+const shouldRestoreLastImage = () => settingsStore.get().restoreLastImage === true;
+
+export { canvasManager, eventBus, statusBar, dialogService, destroyEditor, setPwaUpdateSafetyGuard, shouldRestoreLastImage };

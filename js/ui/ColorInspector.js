@@ -6,7 +6,7 @@ export const createColorInspector = ({ swatchEl, rgbEl, hexEl, copyButtons }) =>
     btn.addEventListener('click', () => {
       const targetId = btn.dataset.copyTarget;
       const text = document.getElementById(targetId).textContent;
-      if (text && text !== '—') {
+      if (text && text !== '-') {
         navigator.clipboard.writeText(text).catch(() => {});
         btn.textContent = '✓';
         setTimeout(() => (btn.textContent = '⧉'), 900);

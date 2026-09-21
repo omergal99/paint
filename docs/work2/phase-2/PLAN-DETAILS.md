@@ -1,9 +1,9 @@
-# Phase 2 — Detailed Implementation Plan
+# Phase 2 - Detailed Implementation Plan
 
 This is the implementation sequence behind `PLAN-OVERVIEW.md`. Each section
 should become small tasks with its own tests and browser checks.
 
-## Step 01 — Baseline and safety gate
+## Step 01 - Baseline and safety gate
 
 Fix the current red gate first. The smoke test references the wrong location
 for the existing canonical standards document (`docs/work1/COMMUNITY_STANDARDS.md`).
@@ -15,7 +15,7 @@ Lighthouse run when a browser is available.
 **Deliverables:** green test suite, baseline metrics, link audit, manual QA
 checklist, and a CI job that blocks merges on the supported commands.
 
-## Step 02 — Contracts and SSOT
+## Step 02 - Contracts and SSOT
 
 Create the seams used by later work:
 
@@ -40,7 +40,7 @@ settings.define('canvas.backgroundMode', {
 No feature should add a new `localStorage` key after this step without adding a
 schema owner and migration note.
 
-## Step 03 — Ribbon, settings, history/session UX
+## Step 03 - Ribbon, settings, history/session UX
 
 ### History/session
 
@@ -82,7 +82,7 @@ schema owner and migration note.
 - Keep the text button/chevron split as a future-gated follow-up after Step 06;
   it depends on the postponed editable-text proof.
 
-## Step 04 — Resize, selection, and transparent canvas
+## Step 04 - Resize, selection, and transparent canvas
 
 Introduce a shared transform target:
 
@@ -102,7 +102,7 @@ const target = selection
   white replacement into the PNG.
 - Verify Open, Paste, Crop, Resize, Save, and New with alpha-bearing fixtures.
 
-## Step 05 — Colors and palette
+## Step 05 - Colors and palette
 
 Upgrade the palette from hex-only state to versioned RGBA state while keeping a
 readable migration from existing `paint:colors` data.
@@ -117,7 +117,7 @@ readable migration from existing `paint:colors` data.
 - Keep eyedropper results, text colors, shape fill, brush, eraser, and export on
   the same color contract.
 
-## Step 06 — Safe text entry history
+## Step 06 - Safe text entry history
 
 This step takes only the impact that can be delivered without weakening the
 canvas-pixel source of truth.
@@ -152,7 +152,7 @@ entry and leave Text mode. The Recent text toolbar toggle must use both semantic
 `hidden` state and a CSS `[hidden]` rule so author layout styles cannot make a
 disabled toolbar remain visible.
 
-## Step 07 — Performance and event hygiene
+## Step 07 - Performance and event hygiene
 
 - Combine ToolManager pointermove work into one listener and one rAF pipeline.
 - Cache the canvas rect on pointerdown and invalidate it on resize/zoom/scroll;
@@ -167,7 +167,7 @@ disabled toolbar remain visible.
 Measure before/after with a repeatable draw trace. The target is fewer handlers
 and less per-move work, not a cosmetic listener count.
 
-### Step 08.1 — composition and alpha quick wins
+### Step 08.1 - composition and alpha quick wins
 
 Before deeper memory work, keep floating-layer placement in one source-over
 seam. A layer already contains its intended alpha; committing it with a stale
@@ -178,7 +178,7 @@ The shared ActionMenuController is the first low-risk Step 09 seam and is also
 an 8.1 integration fixture: nested menus must keep their ancestors open while
 opening, and outside click/Escape must close the complete menu tree.
 
-### Step 08.2 — recovery and budget proof
+### Step 08.2 - recovery and budget proof
 
 The remaining memory work is intentionally separate from browser storage quota:
 measure decoded canvases, scratch surfaces, Blobs, object URLs, and history
@@ -186,7 +186,7 @@ bytes; then add release, quota-error, and reload/recovery fixtures. Do not raise
 the 64 MiB in-memory cap merely because `navigator.storage.estimate()` reports
 more disk quota.
 
-## Step 08 — Storage, memory, and recovery
+## Step 08 - Storage, memory, and recovery
 
 - Replace undo/redo full PNG strings with Blob/object URL entries or another
   byte-bounded codec. Cap total bytes, not only entry count.
@@ -201,7 +201,7 @@ more disk quota.
 - Finish Phase 1 #8 with `docId` compatibility and compressed thumbs; test both
   old v1 records and new records.
 
-## Step 09 — Modularization
+## Step 09 - Modularization
 
 Extract in low-risk seams (the shared ActionMenuController is the first slice):
 
@@ -222,7 +222,7 @@ directs top-level, submenu, and pointer-positioned menus through one placement
 contract. Each future extraction must add a behavior contract and browser
 journey before the next extraction.
 
-## Step 10 — Tests, types, and quality
+## Step 10 - Tests, types, and quality
 
 - Replace new source-regex tests with behavior tests.
 - Add history byte-cap/undo/redo tests, resize-selection tests, palette/context
@@ -233,7 +233,7 @@ journey before the next extraction.
 - Use Node's test coverage support and set targets per subsystem rather than a
   misleading whole-repository number.
 
-## Step 11 — PWA, accessibility, CSS, Lighthouse
+## Step 11 - PWA, accessibility, CSS, Lighthouse
 
 Step 11 is substantially delivered but not fully complete. The manifest now
 has installable 192×192 and 512×512 PNG icons, including a maskable variant;
@@ -252,7 +252,7 @@ browser-level 200% zoom, update-prompt behavior, and a final device matrix.
   expanded, and alternate layouts rather than assuming one fixed height.
 - Promote Lighthouse from manual workflow to repeatable PR/nightly budgets.
 
-## Step 12 — Optional advanced background removal
+## Step 12 - Optional advanced background removal
 
 Define a provider interface first:
 
@@ -284,7 +284,7 @@ Preferred implementation order:
 5. If the optional path misses the memory/performance budget, keep the JS
    fallback and postpone Python rather than making it a mandatory dependency.
 
-## Step 13 — Tabs, split, and recovery
+## Step 13 - Tabs, split, and recovery
 
 Carry Phase 1 #7 here after the document and storage boundaries are stable:
 

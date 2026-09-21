@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json.schemastore.org/jsconfig",
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": true,
+    "noEmit": true,
+    "strict": false,
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"]
+  },
+  "include": [
+    "js/ai/**/*.js",
+    "js/core/**/*.js",
+    "js/document/TextDocumentStore.js",
+    "js/document/TextHistoryStore.js",
+    "js/releaseNotes.js",
+    "js/settings/**/*.js",
+    "js/storage/MemoryBudget.js",
+    "js/utils/**/*.js",
+    "js/version.js"
+  ],
+  "exclude": ["node_modules", "tests"]
+}

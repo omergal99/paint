@@ -1,0 +1,106 @@
+{
+  "date": "2026-09-20",
+  "scope": "Local production-build browser audit; this is not production HTTPS or real-device evidence.",
+  "url": "http://127.0.0.1:4175/",
+  "server": "python3 -m http.server 4175 --directory dist --bind 127.0.0.1",
+  "build": {
+    "command": "npm run build",
+    "offlineShellAssets": 12,
+    "cacheName": "paint-shell-v1-6-1-e81f540a5827",
+    "workerUrl": "sw.js?version=1.6.1&build=bc6c09c48482",
+    "notes": "The generated service worker has both a content-fingerprinted cache name and a build-specific script URL, giving the browser a distinct update candidate on its next online load. A deployed two-build update journey remains an external proof gate. Source development remains native ES modules."
+  },
+  "runtimeAndStorage": {
+    "journey": "Select Pencil, draw a real pointer stroke, wait for debounced autosave, then inspect the canvas and IndexedDB record.",
+    "consoleErrors": 0,
+    "samplePixel": [211, 168, 211, 255],
+    "serviceWorkerControlled": true,
+    "workingRecord": {
+      "schemaVersion": 1,
+      "kind": "working-raster",
+      "width": 800,
+      "height": 600,
+      "blobType": "image/png",
+      "blobSize": 13488
+    }
+  },
+  "teardown": {
+    "journey": "Draw a stroke, dispatch non-persisted pagehide, then send another real pointer stroke to a clean canvas region.",
+    "consoleErrors": 0,
+    "drawnBeforeDestroy": [211, 168, 211, 255],
+    "targetBeforeDestroy": [255, 255, 255, 255],
+    "targetAfterDestroy": [255, 255, 255, 255],
+    "blockedAfterDestroy": true
+  },
+  "productionOfflineReload": {
+    "journey": "Load the fresh dist build, let its generated worker take control, switch the browser offline, and reload.",
+    "consoleErrors": 0,
+    "controlledOnline": true,
+    "controlledOffline": true,
+    "cacheEntries": 12,
+    "canvasPresentAfterOfflineReload": true,
+    "titleAfterOfflineReload": "Paint",
+    "meaning": "The exact generated production shell, including its build-specific worker URL, supplied the local offline reload."
+  },
+  "largeImageAdmission": {
+    "server": "http://127.0.0.1:4173/ (source-mode browser journey)",
+    "journey": "Attempt a 5000 × 7000 canvas resize through the live CanvasManager admission path.",
+    "consoleErrors": 0,
+    "accepted": false,
+    "before": { "width": 800, "height": 600 },
+    "after": { "width": 800, "height": 600 },
+    "status": "Image exceeds the 33554432-pixel limit.",
+    "meaning": "The request was rejected before allocating the oversized canvas and the open image dimensions were unchanged."
+  },
+  "corruptAutosaveRecovery": {
+    "server": "http://127.0.0.1:4173/ (source-mode browser journey)",
+    "setup": "Seed a malformed IndexedDB last-canvas record before app navigation.",
+    "dialog": {
+      "title": "Damaged autosave found",
+      "message": "The saved recovery image cannot be read. Discard that autosave? Your currently open image will not be changed."
+    },
+    "recordPresentBeforeExplicitReset": true,
+    "recordPresentAfterExplicitReset": false,
+    "status": "Damaged autosave was removed",
+    "notes": "The setup page's browser-default /favicon.ico request returned 404; the Paint recovery dialog and reset flow completed normally."
+  },
+  "quotaRecovery": {
+    "server": "http://127.0.0.1:4173/ (source-mode browser journey)",
+    "setup": "Inject a QuotaExceededError only into the IndexedDB read-write put path, then draw a live Pencil stroke.",
+    "consoleErrors": 0,
+    "dialog": {
+      "title": "Autosave storage is full",
+      "message": "Your image is still open. Download a PNG copy now before continuing.",
+      "confirm": "Download now",
+      "cancel": "Keep editing"
+    },
+    "status": "Autosave storage is full. Your image is still open.",
+    "downloadNow": {
+      "suggestedFilename": "paint-recovery.png",
+      "resultingStatus": "Recovery PNG downloaded"
+    },
+    "meaning": "A write failure is visible and offers an explicit safe PNG-download path without closing or replacing the open image."
+  },
+  "lighthouse": {
+    "desktopReport": "../../../quality/lighthouse-production-build-desktop.json",
+    "desktopCategories": {
+      "performance": 100,
+      "accessibility": 96,
+      "bestPractices": 100,
+      "seo": 100
+    },
+    "desktopMetrics": {
+      "fcp": "0.4 s",
+      "lcp": "0.5 s",
+      "tbt": "30 ms",
+      "cls": "0.001"
+    },
+    "mobileDiagnosticReport": "../../../quality/lighthouse-production-build-optimized.json",
+    "mobileDiagnosticPerformance": 76,
+    "notes": "The CI budget is explicitly the repeatable desktop profile. The slow-mobile local diagnostic remains an optimization/follow-up signal and is not represented as meeting the 90 target."
+  },
+  "notExercised": [
+    "A sustained large-canvas memory-growth journey.",
+    "Production HTTPS install prompt, deployed update, and a real desktop/mobile-device matrix."
+  ]
+}

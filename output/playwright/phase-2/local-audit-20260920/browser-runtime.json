@@ -1,0 +1,84 @@
+{
+  "date": "2026-09-20",
+  "scope": "Local-only browser audit; not production HTTPS or real-device evidence.",
+  "url": "http://127.0.0.1:4173/",
+  "server": "python3 -m http.server 4173 --bind 127.0.0.1",
+  "browser": "Google Chrome 151.0.7922.137 via the project Playwright CLI",
+  "coldLoad": {
+    "console": { "errors": 0, "warnings": 0 },
+    "navigation": {
+      "domContentLoadedMs": 321,
+      "loadMs": 333,
+      "transferSize": 66327
+    },
+    "resources": {
+      "total": 55,
+      "scripts": 51,
+      "failed": []
+    }
+  },
+  "runtimeInteraction": {
+    "journey": "Brush stroke on the 800x600 canvas, then inspect the resulting canvas/history/storage state.",
+    "samplePixel": [163, 73, 164, 255],
+    "undoEnabled": true,
+    "localStorageKeys": 9,
+    "storageEstimate": {
+      "usage": 766388,
+      "quota": 6443217332
+    },
+    "trace": ".playwright-cli/traces/trace-1789869895142.trace"
+  },
+  "pwa": {
+    "controller": "http://127.0.0.1:4173/sw.js?version=1.6.1",
+    "activeState": "activated",
+    "scope": "http://127.0.0.1:4173/",
+    "cacheNames": ["paint-shell-v1-6-1"],
+    "offlineReload": {
+      "title": "Paint",
+      "appPresent": true,
+      "canvasPresent": true,
+      "textLayerPresent": true,
+      "cacheEntries": 62,
+      "console": { "errors": 0, "warnings": 0 }
+    },
+    "settingsApp": {
+      "offlineStatus": "Offline use is ready. Paint can open without internet.",
+      "offlineState": "ready",
+      "updateStatus": "Paint is up to date.",
+      "updateState": "current"
+    }
+  },
+  "lighthouse": {
+    "report": "../../../quality/lighthouse-local-20260920.json",
+    "categories": {
+      "performance": 80,
+      "accessibility": 100,
+      "bestPractices": 100,
+      "seo": 100
+    },
+    "metrics": {
+      "fcp": "2.0 s",
+      "lcp": "4.9 s",
+      "cls": "0",
+      "tbt": "80 ms",
+      "speedIndex": "2.0 s"
+    },
+    "localBlockers": [
+      "Render-blocking CSS: estimated 510 ms; styles.css accounts for 752 ms in the audit table.",
+      "Unused JavaScript: estimated 90 KiB, led by main.js, HistoryManager.js, and Sidebar.js.",
+      "Unminified JavaScript: estimated 71 KiB.",
+      "Unused CSS: estimated 39 KiB.",
+      "Four long tasks were reported; the largest two were about 129 ms, including main.js."
+    ]
+  },
+  "artifacts": {
+    "coldLoadScreenshot": "cold-load.png",
+    "offlineReloadScreenshot": "offline-reload.png",
+    "settingsAppScreenshot": "app-offline-ready.png"
+  },
+  "notExercised": [
+    "Quota-exceeded download recovery, IndexedDB corruption/open recovery, and oversized-image/large-canvas failure journeys.",
+    "Repeated runtime teardown/memory-growth loops beyond one local drawing trace.",
+    "A real update deployment, production HTTPS install prompt, and real-device matrix."
+  ]
+}

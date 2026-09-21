@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Paint - Phase 2 Round 8 Status</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #ffffff;
+      color: #172033;
+    }
+    body { max-width: 1180px; margin: 0 auto; padding: 32px 24px 48px; line-height: 1.55; }
+    h1, h2 { color: #123d69; }
+    h1 { margin: 0; font-size: clamp(1.8rem, 5vw, 2.5rem); }
+    h2 { margin-top: 32px; font-size: 1.3rem; }
+    .muted { color: #596579; margin-top: 4px; }
+    .notice { background: #f3f8fc; border: 1px solid #c8dceb; border-radius: 8px; padding: 12px 14px; }
+    .table-wrap { overflow-x: auto; margin: 18px 0; }
+    table { width: 100%; min-width: 850px; border-collapse: collapse; }
+    th, td { border: 1px solid #cad5e1; padding: 11px; text-align: left; vertical-align: top; }
+    th { background: #eaf3fb; color: #123d69; }
+    .done { color: #176b38; font-weight: 700; }
+    .follow-up { color: #9b5c07; font-weight: 700; }
+    .foundation { color: #5c438c; font-weight: 700; }
+    code { background: #f1f4f7; border-radius: 3px; padding: 2px 4px; }
+    ul { padding-left: 22px; }
+  </style>
+</head>
+<body>
+  <h1>Phase 2 - Round 8 Status</h1>
+  <p class="muted">Local release-candidate evidence · 2026-09-20</p>
+  <p class="notice">This round proves local browser and production-build behavior. It is not proof of a public production deployment, HTTPS installability, or real-device behavior.</p>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Area</th><th>Status</th><th>Local evidence</th><th>Remaining boundary</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Step 07 - runtime and pointer lifecycle</td>
+          <td class="done">Completed locally</td>
+          <td>A real pointer stroke persisted normally; after a non-persisted <code>pagehide</code>, a later pointer stroke did not draw. The production-build journey recorded zero console errors.</td>
+          <td>A sustained large-canvas memory-growth trace is not yet exercised.</td>
+        </tr>
+        <tr>
+          <td>Step 08 - storage and recovery</td>
+          <td class="done">Completed locally</td>
+          <td>Verified a versioned PNG <code>Blob</code> autosave, pre-allocation rejection of a 5000 × 7000 image, corrupt-autosave discard, and injected-quota recovery with a PNG download path.</td>
+          <td>These localhost fixtures are not an operating-system quota test on a user device.</td>
+        </tr>
+        <tr>
+          <td>Offline shell and update foundations</td>
+          <td class="done">Completed locally</td>
+          <td>The local production build was service-worker controlled and used a content-fingerprinted shell cache plus a build-specific worker URL; its 12-file shell reloaded offline locally.</td>
+          <td>HTTPS installability and a deployed update journey remain external gates.</td>
+        </tr>
+        <tr>
+          <td>Production build/deploy pipeline</td>
+          <td class="done">Completed locally</td>
+          <td><code>npm run build</code> produced <code>dist/</code>, which was served and audited locally as a production build.</td>
+          <td>This proves build-and-local-serve only-not a public host, CDN, TLS, rollback, or deployed update.</td>
+        </tr>
+        <tr>
+          <td>Desktop Lighthouse</td>
+          <td class="done">Local target met</td>
+          <td>Local production-build desktop result: <strong>Performance 100</strong>, <strong>Accessibility 96</strong>, <strong>Best Practices 100</strong>, <strong>SEO 100</strong>.</td>
+          <td>It is a repeatable localhost desktop profile, not a production field measurement.</td>
+        </tr>
+        <tr>
+          <td>Mobile Lighthouse diagnostic</td>
+          <td class="follow-up">Follow-up remains</td>
+          <td>The local slow-mobile diagnostic is <strong>Performance 76</strong>.</td>
+          <td>The desktop score does not close the mobile 90+ target.</td>
+        </tr>
+        <tr>
+          <td>Step 12 - background removal</td>
+          <td class="foundation">Foundation only</td>
+          <td>Provider boundary, local color-key provider, optional loader, limits, and tests are present.</td>
+          <td>No visible UI workflow or advanced-provider integration is shipped.</td>
+        </tr>
+        <tr>
+          <td>Step 13 - tabs, split, and recovery</td>
+          <td class="foundation">Foundation only</td>
+          <td>Bounded session/recovery services and their tests are present.</td>
+          <td>No visible document tabs, split view, or canvas/IndexedDB UI integration is shipped.</td>
+        </tr>
+        <tr>
+          <td>Phase 3</td>
+          <td class="foundation">Foundations only</td>
+          <td>English and Spanish catalogs now have a persisted Settings language selector, locale registry, and <code>html.lang</code>/<code>dir</code> controller; remaining languages stay disabled until reviewed catalogs exist.</td>
+          <td>Full remaining catalogs, RTL layout proof, and a visible notepad panel/tabs remain open.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Verification recorded for this round</h2>
+  <ul>
+    <li><code>npm test</code>: <strong>12/12</strong> test files passed.</li>
+    <li>Settings → Shortcuts supports custom bindings with conflict checks, persistence, and dynamic action resolution.</li>
+    <li>TypeScript 7.0.2 is dev-only; <code>npm run build</code> does not invoke it.</li>
+    <li>Local production-build browser audit passed real pointer/autosave, teardown, corrupt-autosave, quota-recovery, and large-image-admission journeys.</li>
+    <li>Local desktop Lighthouse: <strong>P100 / A96 / BP100 / SEO100</strong>.</li>
+    <li>Local mobile diagnostic: <strong>P76</strong>; this remains an explicit follow-up.</li>
+  </ul>
+  <p>Current evidence is retained in <code>output/playwright/phase-2/local-audit-20260920/</code> and the two current Lighthouse/runtime JSON files described in <code>output/README.md</code>.</p>
+
+  <h2>External launch gates still open</h2>
+  <ul>
+    <li>Production HTTPS install proof.</li>
+    <li>Install and update behavior on the deployed host.</li>
+    <li>Real desktop and mobile-device matrix.</li>
+    <li>Mobile performance work toward a 90+ result.</li>
+  </ul>
+</body>
+</html>

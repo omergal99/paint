@@ -122,7 +122,7 @@ export class Toolbar {
     this._applyRememberedStyle();
     if (name !== 'eyedropper') this._recordStyle(this._styleKey());
     // Selecting any of the shape-drawing tools is implicit: the "shape" tool
-    // itself isn't a ribbon button — shapes are chosen via the Shapes gallery
+    // itself isn't a ribbon button - shapes are chosen via the Shapes gallery
     // and always use the active drawing color (handled in _bindShapes).
   }
 
@@ -157,7 +157,7 @@ export class Toolbar {
     }
   }
 
-  /** Restore the last chosen shape on load (kind + icon + highlight only — the
+  /** Restore the last chosen shape on load (kind + icon + highlight only - the
    *  active tool is restored separately so it can stay e.g. the pencil). */
   _restoreShape() {
     let kind = null;

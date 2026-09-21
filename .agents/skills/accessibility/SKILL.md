@@ -94,8 +94,8 @@ focus, zoom, or screen-reader checks.
 
 ## References
 
-- `references/WCAG.md` — Paint-relevant WCAG 2.2 criteria.
-- `references/A11Y-PATTERNS.md` — dialogs, labels, tabs, menus, live regions,
+- `references/WCAG.md` - Paint-relevant WCAG 2.2 criteria.
+- `references/A11Y-PATTERNS.md` - dialogs, labels, tabs, menus, live regions,
   and dragging alternatives.
 - [WCAG 2.2 Quick Reference](https://www.w3.org/WAI/WCAG22/quickref/)
 - [WAI-ARIA Authoring Practices](https://www.w3.org/WAI/ARIA/apg/)

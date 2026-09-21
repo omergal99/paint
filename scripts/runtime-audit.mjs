@@ -12,6 +12,13 @@ const walk = (directory) => fs.readdirSync(path.join(root, directory), { withFil
 walk('js');
 
 const source = files.map((file) => fs.readFileSync(path.join(root, file), 'utf8')).join('\n');
+const toolManagerSource = fs.readFileSync(path.join(root, 'js/tools/ToolManager.js'), 'utf8');
+const viewportSource = fs.readFileSync(path.join(root, 'js/canvas/ViewportManager.js'), 'utf8');
+const telemetrySource = fs.readFileSync(path.join(root, 'js/telemetry.js'), 'utf8');
+const storageSource = fs.readFileSync(path.join(root, 'js/storage.js'), 'utf8');
+const historySource = fs.readFileSync(path.join(root, 'js/history/HistoryManager.js'), 'utf8');
+const mainSource = fs.readFileSync(path.join(root, 'js/main.js'), 'utf8');
+const appSource = fs.readFileSync(path.join(root, 'js/app.js'), 'utf8');
 const count = (pattern) => (source.match(pattern) || []).length;
 const addEventListenerCalls = count(/\.addEventListener\s*\(/g);
 const removeEventListenerCalls = count(/\.removeEventListener\s*\(/g);
@@ -42,9 +49,22 @@ const result = {
     fileTeardownCoverage: Number((teardownFiles.length / Math.max(1, listenerFiles.length)).toFixed(3)),
     lifecycleContracts: {
       eventBusDestroy: source.includes('listenersByEvent.clear()'),
-      autosaveTeardown: source.includes("removeEventListener('paint:changed', save)"),
+      autosaveTeardown: storageSource.includes('if (unsubscribe) unsubscribe()')
+        && storageSource.includes("eventTarget.removeEventListener('paint:changed', schedule)"),
       canvasResizeTeardown: source.includes("removeEventListener('lostpointercapture', onCancel)"),
       panelLayoutTeardown: source.includes("removeEventListener('pointercancel', stop)"),
+      pointerFrameCoalescing: toolManagerSource.includes('getCoalescedEvents')
+        && toolManagerSource.includes('requestFrame')
+        && toolManagerSource.includes('cancelFrame'),
+      cachedViewportGeometry: viewportSource.includes('_canvasRect')
+        && viewportSource.includes('invalidateGeometry'),
+      telemetryLifecycle: telemetrySource.includes('const pause = () =>')
+        && telemetrySource.includes('const destroy = () =>'),
+      editorTeardown: mainSource.includes('const destroyEditor = () =>')
+        && mainSource.includes('toolManager.destroy()')
+        && mainSource.includes('viewportManager.destroy()')
+        && mainSource.includes('historyManager.dispose()')
+        && appSource.includes('destroyEditor?.()'),
     },
   },
   memoryBudget: {
@@ -54,9 +74,15 @@ const result = {
     storageQuotaIsSeparate: true,
   },
   storageContracts: {
-    indexedDbAutosave: source.includes('indexedDB.open'),
+    indexedDbAutosave: storageSource.includes('openWorkspaceDatabase')
+      && storageSource.includes("store.put(record, WORKING_CANVAS_KEY)"),
     quotaEstimate: source.includes('navigator.storage?.estimate'),
-    autosaveTeardown: source.includes("removeEventListener('paint:changed', save)"),
+    autosaveTeardown: storageSource.includes('if (unsubscribe) unsubscribe()')
+      && storageSource.includes("eventTarget.removeEventListener('paint:changed', schedule)"),
+    versionedWorkingRecord: storageSource.includes('schemaVersion: WORKING_CANVAS_SCHEMA_VERSION'),
+    preEncodeLargeCanvasGuard: storageSource.includes('WORKING_CANVAS_MAX_AUTOSAVE_PIXELS'),
+    historyBlobUrlRelease: historySource.includes('_releaseEntry')
+      && historySource.includes('revokeObjectURL'),
   },
   limitations: [
     'Static listener counts and file-level teardown coverage are a census, not a runtime teardown proof.',
@@ -65,8 +91,27 @@ const result = {
   ],
 };
 
-const outputPath = path.join(root, 'output/quality/step-07-08-runtime-audit.json');
-fs.mkdirSync(path.dirname(outputPath), { recursive: true });
-fs.writeFileSync(outputPath, `${JSON.stringify(result, null, 2)}\n`);
+const requiredContracts = [
+  ...Object.entries(result.events.lifecycleContracts),
+  ...Object.entries(result.storageContracts),
+].filter(([, present]) => !present).map(([name]) => name);
+
+const outputIndex = process.argv.indexOf('--output');
+const outputArgument = outputIndex === -1 ? null : process.argv[outputIndex + 1];
+if (outputIndex !== -1 && !outputArgument) throw new Error('--output requires a file path.');
+if (outputArgument) {
+  const outputPath = path.resolve(root, outputArgument);
+  if (outputPath !== root && !outputPath.startsWith(`${root}${path.sep}`)) {
+    throw new Error('--output must stay inside the project root.');
+  }
+  fs.mkdirSync(path.dirname(outputPath), { recursive: true });
+  fs.writeFileSync(outputPath, `${JSON.stringify(result, null, 2)}\n`);
+  console.log(`Wrote intentional audit snapshot: ${path.relative(root, outputPath)}`);
+}
 console.log(JSON.stringify(result, null, 2));
-console.log(`Saved ${path.relative(root, outputPath)}`);
+if (requiredContracts.length) {
+  console.error(`Runtime audit: FAIL - missing contract(s): ${requiredContracts.join(', ')}`);
+  process.exitCode = 1;
+} else {
+  console.log('Runtime audit: PASS - required static contracts are present; see limitations for what still needs browser/device evidence.');
+}

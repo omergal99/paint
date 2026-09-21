@@ -1,4 +1,4 @@
-# Step 06 — Safe Text Entry History
+# Step 06 - Safe Text Entry History
 
 ## Goal
 

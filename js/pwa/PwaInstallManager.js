@@ -15,11 +15,17 @@ export const createPwaInstallManager = ({
   offlineButton,
   offlineStatusEl,
   canReload = () => true,
+  requireReloadGuard = false,
 } = {}) => {
   let deferredPrompt = null;
   let registration = null;
   let reloading = false;
+  let reloadPending = false;
+  let reloadGuard = null;
   let hadController = Boolean(navigator.serviceWorker?.controller);
+  let started = false;
+  let disposed = false;
+  let watchedWorker = null;
 
   const setOfflineStatus = (message, state = '') => {
     if (!offlineStatusEl) return;
@@ -27,9 +33,56 @@ export const createPwaInstallManager = ({
     offlineStatusEl.dataset.state = state;
   };
 
+  const getReloadDecision = () => {
+    if (!canReload()) return { ok: false, reason: 'active-edit' };
+    if (!reloadGuard) {
+      return requireReloadGuard
+        ? { ok: false, reason: 'autosave-unavailable' }
+        : { ok: true };
+    }
+    if (reloadGuard.isSafeToReload?.()) return { ok: true };
+    const state = reloadGuard.getState?.();
+    return { ok: false, reason: state?.reason || 'autosave-pending', state };
+  };
+
+  const setReloadBlockedStatus = ({ reason }) => {
+    if (reason === 'autosave-failed') {
+      setStatus('Update ready. Autosave has not finished safely. Resolve the storage warning or download a copy before updating.', 'update-blocked');
+      return;
+    }
+    if (reason === 'autosave-unavailable') {
+      setStatus('Update ready. Autosave is still starting. Try again in a moment.', 'update-blocked');
+      return;
+    }
+    if (reason === 'autosave-disabled') {
+      setStatus('Update ready. Automatic recovery is off. Save or download the image before updating.', 'update-blocked');
+      return;
+    }
+    if (reason === 'autosave-pending' || reason === 'autosave-saving') {
+      setStatus('Update ready. Saving the latest canvas change before applying it.', 'update-ready');
+      return;
+    }
+    setStatus('Update ready. Finish the current edit, then reload to apply it.', 'update-ready');
+  };
+
+  const prepareReload = async () => {
+    const initial = getReloadDecision();
+    if (initial.ok || initial.reason === 'active-edit' || !reloadGuard?.prepareForReload) return initial;
+    const prepared = await reloadGuard.prepareForReload();
+    if (!prepared?.ok) {
+      return {
+        ok: false,
+        reason: prepared?.reason || getReloadDecision().reason || 'autosave-pending',
+        state: prepared?.state,
+      };
+    }
+    return getReloadDecision();
+  };
+
   const reloadIfSafe = () => {
-    if (!canReload()) {
-      setStatus('Update ready. Finish the current edit, then reload to apply it.', 'update-ready');
+    const decision = getReloadDecision();
+    if (!decision.ok) {
+      setReloadBlockedStatus(decision);
       return false;
     }
     if (reloading) return true;
@@ -42,6 +95,10 @@ export const createPwaInstallManager = ({
     if (!statusEl) return;
     statusEl.textContent = message;
     statusEl.dataset.state = state;
+  };
+
+  const setUpdateReadyStatus = () => {
+    setStatus('A new version is ready. Finish the current edit, then select Update now.', 'update-ready');
   };
 
   const syncInstallUi = () => {
@@ -59,10 +116,13 @@ export const createPwaInstallManager = ({
     }
   };
 
-  const syncUpdateUi = () => {
-    if (!updateButton) return;
-    updateButton.disabled = !registration;
-    updateButton.textContent = registration?.waiting ? 'Update now' : 'Check for updates';
+  const syncUpdateUi = ({ announceReady = true } = {}) => {
+    const waiting = registration?.waiting;
+    if (updateButton) {
+      updateButton.disabled = !registration;
+      updateButton.textContent = waiting || reloadPending ? 'Update now' : 'Check for updates';
+    }
+    if (announceReady && waiting) setUpdateReadyStatus();
   };
 
   const syncOfflineUi = () => {
@@ -75,20 +135,28 @@ export const createPwaInstallManager = ({
     }
   };
 
-  const watchInstallingWorker = (worker) => {
-    if (!worker) return;
-    worker.addEventListener('statechange', () => {
-      if (worker.state === 'installed' && navigator.serviceWorker.controller) {
-        setStatus('A new version is ready. It will apply automatically.', 'update-ready');
-        syncUpdateUi();
-      }
-    });
+  const onWorkerStateChange = () => {
+    if (!watchedWorker || disposed) return;
+    if (watchedWorker.state === 'installed' && navigator.serviceWorker.controller) {
+      setUpdateReadyStatus();
+      syncUpdateUi({ announceReady: false });
+    }
   };
 
+  const watchInstallingWorker = (worker) => {
+    if (!worker || worker === watchedWorker || disposed) return;
+    watchedWorker?.removeEventListener?.('statechange', onWorkerStateChange);
+    watchedWorker = worker;
+    worker.addEventListener('statechange', onWorkerStateChange);
+  };
+
+  const onUpdateFound = () => watchInstallingWorker(registration?.installing);
+
   const attachRegistration = (nextRegistration) => {
-    if (!nextRegistration || registration === nextRegistration) return;
+    if (!nextRegistration || registration === nextRegistration || disposed) return;
+    registration?.removeEventListener?.('updatefound', onUpdateFound);
     registration = nextRegistration;
-    registration.addEventListener('updatefound', () => watchInstallingWorker(registration.installing));
+    registration.addEventListener('updatefound', onUpdateFound);
     watchInstallingWorker(registration.installing);
     syncUpdateUi();
     syncOfflineUi();
@@ -96,6 +164,57 @@ export const createPwaInstallManager = ({
     // release discoverable on the first foreground visit instead of waiting
     // for the browser's periodic service-worker check.
     registration.update?.().catch(() => {});
+  };
+
+  const onBeforeInstallPrompt = (event) => {
+    event.preventDefault();
+    deferredPrompt = event;
+    syncInstallUi();
+  };
+  const onAppInstalled = () => {
+    deferredPrompt = null;
+    syncInstallUi();
+  };
+  const onVisibilityChange = () => {
+    if (!document.hidden) registration?.update?.();
+  };
+  const onControllerChange = () => {
+    if (!hadController) {
+      hadController = true;
+      return;
+    }
+    reloadPending = true;
+    if (!reloadIfSafe()) syncUpdateUi({ announceReady: false });
+  };
+
+  /*
+   * Event ownership is deliberately explicit: the app can now dispose a
+   * document host without keeping browser-level PWA listeners alive.
+   */
+  const destroy = () => {
+    if (disposed) return;
+    disposed = true;
+    window.removeEventListener?.('beforeinstallprompt', onBeforeInstallPrompt);
+    window.removeEventListener?.('appinstalled', onAppInstalled);
+    document.removeEventListener?.('visibilitychange', onVisibilityChange);
+    installButton?.removeEventListener?.('click', install);
+    updateButton?.removeEventListener?.('click', checkForUpdate);
+    offlineButton?.removeEventListener?.('click', prepareOffline);
+    navigator.serviceWorker?.removeEventListener?.('controllerchange', onControllerChange);
+    registration?.removeEventListener?.('updatefound', onUpdateFound);
+    watchedWorker?.removeEventListener?.('statechange', onWorkerStateChange);
+    watchedWorker = null;
+    registration = null;
+    reloadGuard = null;
+    reloadPending = false;
+  };
+
+  // The document host binds this after its autosave controller is installed.
+  // Keeping it optional makes the manager reusable, while requireReloadGuard
+  // lets production hosts fail closed during startup.
+  const setReloadGuard = (nextGuard) => {
+    reloadGuard = nextGuard && typeof nextGuard.isSafeToReload === 'function' ? nextGuard : null;
+    return Boolean(reloadGuard);
   };
 
   const prepareOffline = async () => {
@@ -137,10 +256,25 @@ export const createPwaInstallManager = ({
 
   const checkForUpdate = async () => {
     if (!registration) return;
+    if (reloadPending && !registration.waiting) {
+      const pendingDecision = await prepareReload();
+      if (!pendingDecision.ok) {
+        setReloadBlockedStatus(pendingDecision);
+        syncUpdateUi({ announceReady: false });
+        return false;
+      }
+      return reloadIfSafe();
+    }
     setStatus('Checking for updates…', 'checking');
     try {
       await registration.update();
       if (registration.waiting) {
+        const decision = await prepareReload();
+        if (!decision.ok) {
+          setReloadBlockedStatus(decision);
+          syncUpdateUi({ announceReady: false });
+          return false;
+        }
         registration.waiting.postMessage({ type: 'SKIP_WAITING' });
         setStatus('Applying the update…', 'updating');
       } else {
@@ -149,34 +283,22 @@ export const createPwaInstallManager = ({
     } catch {
       setStatus('Update check is unavailable right now.', 'error');
     }
-    syncUpdateUi();
+    syncUpdateUi({ announceReady: false });
+    return true;
   };
 
   const start = () => {
-    window.addEventListener('beforeinstallprompt', (event) => {
-      event.preventDefault();
-      deferredPrompt = event;
-      syncInstallUi();
-    });
-    window.addEventListener('appinstalled', () => {
-      deferredPrompt = null;
-      syncInstallUi();
-    });
-    document.addEventListener('visibilitychange', () => {
-      if (!document.hidden) registration?.update?.();
-    });
+    if (started || disposed) return;
+    started = true;
+    window.addEventListener('beforeinstallprompt', onBeforeInstallPrompt);
+    window.addEventListener('appinstalled', onAppInstalled);
+    document.addEventListener('visibilitychange', onVisibilityChange);
     installButton?.addEventListener('click', install);
     updateButton?.addEventListener('click', checkForUpdate);
     offlineButton?.addEventListener('click', prepareOffline);
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.addEventListener('controllerchange', () => {
-        if (!hadController) {
-          hadController = true;
-          return;
-        }
-        reloadIfSafe();
-      });
+      navigator.serviceWorker.addEventListener('controllerchange', onControllerChange);
       navigator.serviceWorker.ready.then(attachRegistration).catch(() => {});
       navigator.serviceWorker.getRegistration?.().then(attachRegistration).catch(() => {});
     }
@@ -186,5 +308,5 @@ export const createPwaInstallManager = ({
     syncOfflineUi();
   };
 
-  return Object.freeze({ start, install, checkForUpdate, prepareOffline, attachRegistration });
+  return Object.freeze({ start, install, checkForUpdate, prepareOffline, attachRegistration, setReloadGuard, destroy });
 };

@@ -49,7 +49,12 @@ const createFreehandTool = (name, { sizeAware = true } = {}) => {
     last = null;
   }
 
-  return { name, cursor: 'crosshair', sizeAware, onDown, onMove, onUp };
+  const onCancel = () => {
+    drawing = false;
+    last = null;
+  }
+
+  return { name, cursor: 'crosshair', sizeAware, onDown, onMove, onUp, onCancel };
 }
 
 export const createPencilTool = () => {

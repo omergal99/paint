@@ -10,13 +10,29 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
       - name: Verify release contracts
-        run: npm run verify:release
+        run: |
+          npm run check:i18n
+          npm run verify:release
+          npm run typecheck
+          npm run build
       - name: Start static server
-        run: npx --yes http-server paint -p 4173 >/tmp/paint-server.log 2>&1 &
+        run: |
+          npx --yes http-server@14.1.1 dist -p 4173 >/tmp/paint-server.log 2>&1 &
+          for attempt in {1..20}; do
+            curl --fail --silent http://localhost:4173/ >/dev/null && exit 0
+            sleep 0.5
+          done
+          cat /tmp/paint-server.log
+          exit 1
       - name: Run Lighthouse
-        run: npx --yes lighthouse http://localhost:4173/ --output=json --output-path=./lighthouse-report.json --chrome-flags="--headless --no-sandbox"
+        run: npx --yes lighthouse@13.5.0 http://localhost:4173/ --preset=desktop --output=json --output-path=./lighthouse-report.json --chrome-flags="--headless --no-sandbox"
+      - name: Enforce desktop performance budget
+        run: node scripts/lighthouse-budget.mjs ./lighthouse-report.json performance=0.9 accessibility=0.9 best-practices=0.9 seo=0.9
       - name: Upload Lighthouse report
         uses: actions/upload-artifact@v4
         with:

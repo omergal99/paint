@@ -1,7 +1,7 @@
 // Behavioural regression tests for "select after draw".
 //
 // When a shape is lifted as a floating selection it must:
-//   1. carry ONLY the shape's ink — never a copy of the background or of the
+//   1. carry ONLY the shape's ink - never a copy of the background or of the
 //      artwork underneath it (that was the "selection selects the whole
 //      background" bug); and
 //   2. be selected by its real ink bounds, not by the raw drag box (emoji ink is
@@ -121,7 +121,7 @@ test('select after draw: layer carries the shape ink only, never the background'
   assert.equal(lifted, true, 'the shape should lift as a floating layer');
   const sel = ctx.getSelection();
   assert.deepEqual(sel, ink, 'the selection IS the measured ink bounds');
-  // Every inked pixel falls inside the selection — the reported bug was that
+  // Every inked pixel falls inside the selection - the reported bug was that
   // painted pixels sat outside it ("some sides it draws but not selected"),
   // and the drag box alone is too small for emoji ink.
   const box = { x: drag.start.x, y: drag.start.y, w: 50, h: 50 };

@@ -1,7 +1,7 @@
-# paint — Architecture Guide
+# paint - Architecture Guide
 
 `paint` is a browser-based drawing app styled after Windows 10 Paint. It is built
-with **plain JavaScript (ES modules)** — no framework, no build step — and targets
+with **plain JavaScript (ES modules)** - no framework, no build step - and targets
 Chrome/Edge.
 
 ---
@@ -19,7 +19,7 @@ paint/
 │   └── assets/                # icon.svg, preview.png, screenshot.png
 ├── js/
 │   ├── app.js                 # Entry point: autosave, telemetry, SW registration, legacy-session restore
-│   ├── main.js                # Composition root — wires every manager/tool (the only big file)
+│   ├── main.js                # Composition root - wires every manager/tool (the only big file)
 │   ├── storage.js             # IndexedDB autosave (blob of the last canvas)
 │   ├── telemetry.js           # LCP/CLS/INP/FPS performance metrics
 │   ├── version.js             # APP_VERSION singleton
@@ -113,7 +113,7 @@ visible canvas at any zoom:
 - The outer **`.canvas-stage`** is sized to the *scaled* canvas (e.g. 800×600 at
   100%, 400×300 at 50%, 1600×1200 at 200%). Because it defines the scrollable
   extent, the browser shows **no scrollbars / no dead gray space below 100%**,
-  and full panning room above 100% — exactly proportional to the view.
+  and full panning room above 100% - exactly proportional to the view.
 
 ### Scroll & zoom behavior
 

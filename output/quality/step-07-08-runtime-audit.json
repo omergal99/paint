@@ -1,24 +1,28 @@
 {
-  "measuredAt": "2026-09-20T00:50:49.569Z",
+  "measuredAt": "2026-09-20T02:33:50.099Z",
   "node": "v22.23.1",
   "source": {
-    "javascriptFiles": 51,
-    "javascriptLines": 8671
+    "javascriptFiles": 59,
+    "javascriptLines": 12447
   },
   "events": {
-    "addEventListenerCalls": 214,
-    "removeEventListenerCalls": 15,
-    "pointerMoveRegistrations": 9,
+    "addEventListenerCalls": 220,
+    "removeEventListenerCalls": 40,
+    "pointerMoveRegistrations": 8,
     "paintChangedRegistrations": 2,
-    "staticCallRatio": 0.07,
+    "staticCallRatio": 0.182,
     "filesWithListeners": 22,
-    "filesWithTeardown": 6,
-    "fileTeardownCoverage": 0.273,
+    "filesWithTeardown": 11,
+    "fileTeardownCoverage": 0.5,
     "lifecycleContracts": {
       "eventBusDestroy": true,
       "autosaveTeardown": true,
       "canvasResizeTeardown": true,
-      "panelLayoutTeardown": true
+      "panelLayoutTeardown": true,
+      "pointerFrameCoalescing": true,
+      "cachedViewportGeometry": true,
+      "telemetryLifecycle": true,
+      "editorTeardown": true
     }
   },
   "memoryBudget": {
@@ -30,7 +34,10 @@
   "storageContracts": {
     "indexedDbAutosave": true,
     "quotaEstimate": true,
-    "autosaveTeardown": true
+    "autosaveTeardown": true,
+    "versionedWorkingRecord": true,
+    "preEncodeLargeCanvasGuard": true,
+    "historyBlobUrlRelease": true
   },
   "limitations": [
     "Static listener counts and file-level teardown coverage are a census, not a runtime teardown proof.",

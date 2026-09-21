@@ -26,6 +26,17 @@ test('Crop menu owns Remove Background', () => {
   assert.equal((html.match(/id="btn-remove-bg"/g) || []).length, 1);
   assert.ok(!/<button[^>]*class="[^"]*rbtn[^\"]*"[^>]*id="btn-remove-bg"/.test(html));
 });
+test('Background removal is a cancellable preview workflow', () => {
+  const controller = read('js/background/BackgroundRemovalController.js');
+  assert.match(html, /id="background-removal-dialog"/);
+  assert.match(html, /id="background-removal-preview"/);
+  assert.match(html, /id="background-removal-progress"/);
+  assert.match(main, /createBackgroundRemovalService/);
+  assert.match(main, /backgroundRemovalController\.open/);
+  assert.match(main, /historyManager\.snapshot\(\{ force: true \}\)/);
+  assert.match(controller, /controller\?\.signal\.aborted/);
+  assert.match(controller, /urlApi\?\.revokeObjectURL/);
+});
 test('Open menu owns Open and Import options', () => {
   const openMenuStart = html.indexOf('id="btn-open-menu"');
   const openMenuEnd = html.indexOf('</div>', html.indexOf('aria-label="Open options"'));
@@ -62,7 +73,7 @@ test('telemetry does not log every dropped frame', () => {
 });
 
 test('Text font size is driven by the shared Shapes size-select (no separate dropdown)', () => {
-  // The dedicated font dropdown was removed — the Shapes size-select is the
+  // The dedicated font dropdown was removed - the Shapes size-select is the
   // single size control for both brush/line width and the text tool.
   assert.equal((html.match(/id="font-size"/g) || []).length, 0);
   assert.equal((html.match(/id="custom-font-size"/g) || []).length, 0);
@@ -147,6 +158,27 @@ test('Keyboard paste defers to the native paste event for macOS support', () => 
     'Copy must encode the PNG synchronously to keep the Safari user gesture alive');
 });
 
+test('keyboard shortcuts are SSOT-backed, editable in Settings, and persisted', () => {
+  assert.match(html, /data-settings-tab="shortcuts"\s*>\s*SHORTCUTS/);
+  assert.match(html, /data-settings-panel="shortcuts"/);
+  assert.match(html, /id="shortcut-settings-list"/);
+  assert.match(read('js/core/constants.js'), /SHORTCUT_DEFINITIONS/);
+  assert.match(read('js/settings/ShortcutManager.js'), /normalizeShortcut/);
+  assert.match(main, /createShortcutManager/);
+  assert.match(main, /settingsStore\.set\(\{ shortcuts: shortcutManager\.get\(\) \}\)/);
+  assert.match(main, /shortcutManager\.resolve\(shortcut\)/);
+});
+
+test('the first paint matches the default visual settings', () => {
+  assert.match(html, /id="btn-ai-chat"[^>]*style="display: none;"/);
+  assert.match(html, /id="primary-swatch"[^>]*background-color: #a349a4/);
+  assert.match(html, /id="secondary-swatch"[^>]*background-color: #ffffff/);
+	assert.match(html, /id="ci-hex"[^>]*>#a349a4</);
+	assert.match(html, /id="ci-rgb"[^>]*>rgb\(163, 73, 164\)</);
+	assert.equal((html.match(/data-bootstrap-palette/g) || []).length, 28);
+	assert.match(main, /applyAiChatVisibility\(aiCheckbox\?\.checked === true\)/);
+});
+
 test('Zoom is persisted so a refresh keeps the last zoom level', () => {
   const vpm = read('js/canvas/ViewportManager.js');
   assert.match(vpm, /ZOOM_STORAGE_KEY/);
@@ -163,6 +195,114 @@ test('Settings dialog has a HISTORY tab with history controls', () => {
   assert.match(html, /id="setting-history-save-limit"/);
   assert.match(html, /id="settings-history-export-all"/);
   assert.match(html, /id="settings-history-clear"/);
+});
+
+	test('startup image restore is opt-in and settings search is modular', () => {
+	assert.match(html, /id="setting-restore-last-image"/);
+	assert.match(html, /id="settings-search-input"/);
+	assert.match(html, /id="settings-search-status"/);
+	assert.match(main, /shouldRestoreLastImage/);
+	const app = read('js/app.js');
+	assert.match(app, /shouldRestoreLastImage/);
+	assert.doesNotMatch(app, /canRestoreLastImage/, 'startup must not destructure into an undeclared alias');
+	assert.match(read('js/ui/DialogSearch.js'), /createDialogSearch/);
+	assert.match(read('js/ui/DialogSearch.js'), /previousButton/);
+	assert.doesNotMatch(read('js/ui/DialogSearch.js'), /press Enter to go/);
+	assert.match(main, /createDialogSearch/);
+	assert.match(sidebar, /snapshot\?\.\(\{ force: true \}\)/);
+	assert.match(sidebar, /waitForPendingSnapshots/);
+	const makefile = read('Makefile');
+	assert.match(makefile, /^setup:/m);
+	assert.match(makefile, /^dev:/m);
+});
+
+test('localization registry, complete catalogs, and settings selector are wired', () => {
+  assert.match(html, /id="setting-locale"/);
+	assert.match(html, /id="settings-search-prev"/);
+	assert.match(html, /id="settings-search-next"/);
+	assert.match(html, /id="settings-search-prev"[^>]*hidden/);
+  assert.match(main, /createLocaleController/);
+  assert.match(read('js/i18n/localeRegistry.js'), /SUPPORTED_LOCALES/);
+  assert.match(read('js/i18n/LocaleController.js'), /paint:locale-change/);
+  assert.match(read('js/i18n/README.md'), /Adding a language|Add the normalized/);
+  assert.match(read('js/i18n/catalogs/es.js'), /ES_MESSAGES/);
+  assert.match(read('js/i18n/uiText.js'), /UI_TEXT_KEYS/);
+  assert.match(read('package.json'), /check:i18n/);
+  assert.match(read('sw.js'), /\.\/js\/i18n\/localeRegistry\.js/);
+  assert.match(read('sw.js'), /\.\/js\/i18n\/catalogs\/es\.js/);
+  assert.match(read('sw.js'), /\.\/js\/i18n\/LocaleController\.js/);
+  assert.match(read('sw.js'), /\.\/js\/i18n\/uiText\.js/);
+});
+
+test('language setting keeps its label and selector on one compact row', () => {
+  assert.match(html, /settings-field choice-field inline-choice-field/);
+  assert.doesNotMatch(html, /setting-locale-help/);
+  assert.match(read('css/styles.css'), /\.inline-choice-field\s*\{[\s\S]*flex-direction:\s*row/);
+});
+
+test('direction preference and RTL layout mirroring are available independently', () => {
+  assert.match(html, /id="setting-direction"/);
+  assert.match(read('js/main.js'), /interfaceDirection/);
+  assert.match(read('js/i18n/LocaleController.js'), /setDirection/);
+  assert.match(read('css/styles.css'), /html\[dir="rtl"\] \.handle-corner/);
+  assert.match(read('css/styles.css'), /border-inline-end/);
+});
+
+test('history settings checkboxes have a clear vertical gap', () => {
+  assert.match(read('css/styles.css'), /\.history-checkbox-row\s*\{[\s\S]*margin-bottom: 8px/);
+});
+
+test('checkbox rows keep empty whitespace inert and expose explicit hit targets', () => {
+  assert.doesNotMatch(html, /<label class="checkbox-row"/);
+  assert.doesNotMatch(html, /<label class="menu-checkbox/);
+  assert.doesNotMatch(html, /<div class="checkbox-row(?:\s[^"]*)?"(?![^>]*data-tag)/);
+  assert.match(html, /class="checkbox-row history-checkbox-row" data-tag="setting-history-auto-save-row"/);
+  assert.match(read('css/styles.css'), /\.history-checkbox-row\s*\{[\s\S]*margin-bottom: 8px/);
+  assert.doesNotMatch(read('css/styles.css'), /settings-panel\[data-settings-panel="history"\] > \.checkbox-row/);
+  assert.match(read('css/styles.css'), /\.checkbox-row input:not\(:disabled\),[\s\S]*\.checkbox-row > label/);
+  assert.match(read('css/styles.css'), /\.menu-checkbox input,[\s\S]*\.menu-checkbox > label/);
+  assert.match(read('js/ui/Sidebar.js'), /htmlFor = cbGroup\.id/);
+  assert.match(main, /checkboxLabel\.htmlFor = checkbox\.id/);
+  assert.match(read('js/ui/Sidebar.js'), /toggleGroup\.dataset\.tag/);
+  assert.match(main, /label\.dataset\.tag = `ribbon-group-visibility-row/);
+  assert.match(main, /if \(!element\.dataset\.tag\) element\.dataset\.tag = element\.id/);
+});
+
+test('settings search keeps text intact and reports only deepest areas', () => {
+  const search = read('js/ui/DialogSearch.js');
+  assert.match(search, /query\.length < 2/);
+  assert.match(search, /addDeepestOwner/);
+  assert.doesNotMatch(search, /createTreeWalker|markText|unwrapMarks/);
+  assert.match(read('css/styles.css'), /\.dialog-search-tab-match::after/);
+  assert.match(read('css/styles.css'), /padding-inline: 10px 6px/);
+  assert.match(read('css/styles.css'), /\.settings-search\s*\{[\s\S]*margin-bottom: 0px/);
+  assert.match(read('js/ui/SettingsDialog.js'), /focusTarget\?\.focus/);
+  assert.match(read('css/styles.css'), /html\[dir="rtl"\] \.canvas-viewport,[\s\S]*direction: rtl/);
+  assert.match(read('css/styles.css'), /html\[dir="rtl"\] \.canvas-scale\s*\{[\s\S]*transform-origin: top right/);
+  assert.match(read('css/styles.css'), /html\[dir="rtl"\] \.handle-right\s*\{[\s\S]*right: auto[\s\S]*left: -4px/);
+  assert.match(read('css/styles.css'), /html\[dir="rtl"\] \.handle-corner\s*\{[\s\S]*right: auto[\s\S]*left: -14px[\s\S]*transform-origin: top right/);
+  assert.match(read('css/styles.css'), /html\[dir="rtl"\] \.resize-ghost\s*\{[\s\S]*right: 0[\s\S]*left: auto/);
+  assert.match(main, /refreshCanvasDirectionGeometry/);
+  assert.match(main, /viewportManager\.invalidateGeometry\(\);[\s\S]*canvasResizer\.reposition\(\)/);
+  assert.match(read('js/canvas/ViewportManager.js'), /alignRtlResizeEdge/);
+  assert.match(read('js/canvas/ViewportManager.js'), /scrollLeft = -maxScroll/);
+  assert.match(main, /directionEventTarget\.addEventListener\('paint:locale-change', refreshCanvasDirectionGeometry\)/);
+  assert.match(main, /directionEventTarget\.removeEventListener\('paint:locale-change', refreshCanvasDirectionGeometry\)/);
+  assert.match(read('index.html'), /data-i18n="ribbon\.annotations\.more">More<\/span>/);
+  assert.match(read('js/i18n/messages.js'), /more: 'More'/);
+  assert.match(read('index.html'), /class="ribbon ribbon-loading"/);
+  assert.match(read('js/app.js'), /RIBBON_STARTUP_MASK_ENABLED = true/);
+  assert.match(read('js/app.js'), /paint:ready.*releaseRibbonStartupMask/s);
+  assert.match(read('index.html'), /class="ribbon-group ribbon-group-file" data-ribbon-key="file"/);
+  assert.match(main, /getRibbonGroupKey/);
+  assert.match(main, /ribbonVisibility\[stableKey\] \?\? ribbonVisibility\[legacyKey\]/);
+  assert.doesNotMatch(main, /ribbonVisibility\[title\.textContent\.trim\(\)\]/);
+  assert.match(read('css/styles.css'), /--w10-search-accent/);
+  assert.match(read('css/styles.css'), /body\.dark-mode[\s\S]*--w10-search-accent/);
+  assert.match(read('css/styles.css'), /\.settings-tab\.dialog-search-tab-active\s*\{[\s\S]*box-shadow: inset 0 0 0 2px var\(--w10-search-accent\)/);
+  assert.match(search, /firstResultIndex = results\.findIndex/);
+  assert.match(read('css/styles.css'), /right: 2px[\s\S]*bottom: 2px[\s\S]*min-width: 10px[\s\S]*padding: 0 1px[\s\S]*font-size: 10px[\s\S]*line-height: 12px/);
+  assert.match(main, /if \(editable\) return;[\s\S]*selectAll\(\)/);
 });
 
 test('History auto-save toggle + export-all are wired and guarded', () => {
@@ -187,9 +327,9 @@ test('Plain wheel scrolls natively; only Ctrl/Cmd+wheel zooms', () => {
   const resizer = read('js/canvas/CanvasResizer.js');
   // Plain wheel must NOT zoom (it stays native so the user can scroll/pan
   // without moving the view percentage).
-  assert.match(vpm, /if \(!e\.ctrlKey && !e\.metaKey\) return/);
+  assert.match(vpm, /if \(!event\.ctrlKey && !event\.metaKey\) return/);
   // Zoom still works both directions for Ctrl+wheel…
-  assert.match(vpm, /this\.zoom \+ \(e\.deltaY < 0 \? STEP : -STEP\)/);
+  assert.match(vpm, /this\.zoom \+ \(event\.deltaY < 0 \? STEP : -STEP\)/);
   // …and stays disabled while a canvas resize drag owns the wheel.
   assert.match(vpm, /dataset\.resizing === 'true'/);
   assert.match(resizer, /wheelAdjust/);
@@ -257,7 +397,7 @@ test('Hand/Pan is available as a shared tool and shortcut', () => {
 	const pan = read('js/tools/PanTool.js');
 	assert.match(html, /data-tool="pan"/);
 	assert.match(main, /createPanTool/);
-	assert.match(main, /h:\s*'pan'/);
+	assert.match(main, /SHORTCUT_ACTIONS\.panTool\]:\s*'pan'/);
 	assert.match(pan, /scrollLeft/);
 	assert.match(pan, /scrollTop/);
 	assert.match(read('css/styles.css'), /#canvas-viewport\.pan-mode/);
@@ -271,10 +411,18 @@ test('Mobile status bar stays on one line and hides app branding', () => {
 
 test('Action menus choose their direction from available viewport space', () => {
   const actionMenus = read('js/ui/ActionMenuController.js');
+  const css = read('css/styles.css');
   assert.match(actionMenus, /const measureMenu = \(menuItems\)/);
   assert.match(actionMenus, /const clamp = \(value, min, max\)/);
   assert.match(actionMenus, /placement === 'submenu'/);
+  assert.match(actionMenus, /menuItems\.style\.right/);
+  assert.match(actionMenus, /const isRtl = \(\) =>/);
+  assert.match(actionMenus, /const openSubmenuKey = isRtl\(\) \? KEYBOARD_KEYS\.arrowLeft/);
+  assert.match(actionMenus, /const closeSubmenuKey = isRtl\(\) \? KEYBOARD_KEYS\.arrowRight/);
   assert.match(actionMenus, /menuItems\.dataset\.direction = direction/);
+  assert.match(css, /\.action-menu-items\s*\{[^}]*inset-inline-start:\s*0/s);
+  assert.match(css, /\.action-menu-items button\s*\{[^}]*text-align:\s*start/s);
+  assert.match(css, /html\[dir="rtl"\] \.submenu-arrow/);
   assert.match(main, /createActionMenuController/);
 });
 
@@ -353,7 +501,7 @@ test('Settings includes a feedback path to GitHub issues', () => {
 
 test('New defaults are safe and configurable', () => {
   assert.match(read('js/history/GlobalHistory.js'), /DEFAULT_HISTORY_LIMIT = 50/);
-  assert.match(html, /id="setting-show-ai-chat"\s*\/>/);
+  assert.match(html, /id="setting-show-ai-chat"[^>]*\/>/);
   assert.match(main, /saved\.showAiChat === true/);
   assert.match(html, /id="rotate-selection-toggle" checked/);
   assert.match(main, /mode: s\.historyAutoSaveMode.*lifecycle/);
@@ -460,7 +608,7 @@ test('P0 quick wins: hover affordance, slider, release notes, fresh paste, undo 
   assert.match(css, /#history-save-current-btn/);
   assert.match(read('js/history/GlobalHistory.js'), /makeThumbnail/);
   assert.match(html, /id="about-storage-free"/);
-  assert.match(main, /Ctrl\/Cmd\+Shift\+Z/);
+	assert.match(read('js/core/constants.js'), /mod\+shift\+z/);
 });
 
 test('Round-2 fixes: V glyph, session persistence, view-aware actions, storage math', () => {
@@ -528,7 +676,8 @@ test('Round-2 stabilization: alpha, text commit, and nested image actions', () =
 	assert.match(html, /class="action-menu-trigger action-submenu-trigger"[^>]*id="btn-crop-menu"/);
 	assert.match(html, /class="action-menu-trigger action-submenu-trigger"[^>]*id="btn-rotate"/);
 	assert.match(html, /class="action-menu-trigger action-submenu-trigger"[^>]*id="btn-flip"/);
-	assert.match(actionMenu, /root\.addEventListener\('click', \(\) => closeAll\(\)\)/);
+	assert.match(actionMenu, /root\.addEventListener\('click', handleRootClick\)/);
+	assert.match(actionMenu, /root\.removeEventListener\('click', handleRootClick\)/);
 	assert.match(main, /const commitFloatingPixels = \(region\) =>/);
 	assert.match(canvas, /export const commitLayerWithSourceOver = \(context, layer, region\) =>/);
 	assert.match(canvas, /globalAlpha = 1;[\s\S]*globalCompositeOperation = 'source-over'/);
@@ -579,7 +728,7 @@ test('select after draw: a lifted shape is a layer, and unload bakes it', () => 
   const shapeTool = read('js/tools/ShapeTool.js');
   const canvas = read('js/canvas/CanvasManager.js');
   // The shape is measured on a transparent scratch canvas so the layer carries
-  // the ink only — never a copy of the background or of the artwork underneath.
+  // the ink only - never a copy of the background or of the artwork underneath.
   assert.match(canvas, /renderShapeLayer\(bounds, drawFn, pad = 0\)/);
   assert.match(canvas, /_alphaBounds\(/);
   assert.match(canvas, /const scratch = document\.createElement\('canvas'\)/);
@@ -600,17 +749,28 @@ test('select after draw: a lifted shape is a layer, and unload bakes it', () => 
   assert.match(read('js/tools/SelectTool.js'), /if \(!ctx\.canvasManager\.floatingCanvas\) \{[\s\S]*?fillRegion\(sel, ctx\.canvasManager\.backgroundColor\)/);
   // The click that places the shape is mid-gesture: the tool restore must be
   // deferred to that gesture's pointerup (ToolManager), never applied during
-  // onDown — an immediate switch leaves SelectTool a stale drag start + 0x0
+  // onDown - an immediate switch leaves SelectTool a stale drag start + 0x0
   // marquee, so the next mouse move ghost-draws a phantom selection.
   const toolManager = read('js/tools/ToolManager.js');
   assert.match(main, /if \(toolManager\._dragging\) toolContext\._pendingToolRestore = target/);
   assert.match(main, /else toolManager\.setActive\(target\)/);
   assert.match(toolManager, /const pending = this\.toolContext\?\._pendingToolRestore/);
-  assert.match(toolManager, /if \(wasDragging\) this\._handle\('onUp', e\)/);
+  assert.match(toolManager, /this\._flushQueuedMove\(event\.pointerId\)/);
+  assert.match(toolManager, /if \(cancelled\) this\.active\?\.onCancel\?\./);
   // Both tools drop stale gesture state when activated, so a mid-gesture
   // switch can never leak a phantom drag into the new tool.
 	assert.match(read('js/tools/SelectTool.js'), /const onActivate = \(ctx\) => \{[\s\S]*?state\.start = null;/);
 	assert.match(shapeTool, /const onActivate = \(\) => \{[\s\S]*?state\.start = null;/);
+});
+
+test('selection-handle drags are explicitly released with the editor', () => {
+	const destroyEditorBlock = main.match(/const destroyEditor = \(\) => \{[\s\S]*?\n\};/)?.[0] || '';
+	assert.match(main, /const bindSelectionHandles = \(\) => \{[\s\S]*?handle\.removeEventListener\('pointerdown', onPointerDown\)[\s\S]*?stopSelectionHandleDrag\(\)/);
+	assert.match(main, /const destroySelectionHandleBindings = bindSelectionHandles\(\);/);
+	assert.match(main, /const bindRotateSelectionHandle = \(\) => \{[\s\S]*?stopSelectionRotationDrag\(\)[\s\S]*?rotateSelectionHandle\.removeEventListener\('pointerdown', onPointerDown\)/);
+	assert.match(main, /window\.addEventListener\('pointercancel', onCancel, \{ once: true \}\);/);
+	assert.match(destroyEditorBlock, /destroySelectionHandleBindings\(\);/);
+	assert.match(destroyEditorBlock, /destroyRotateSelectionHandleBinding\(\);/);
 });
 
 test('text focus owns a separate layer instead of the pixel-selection path', () => {

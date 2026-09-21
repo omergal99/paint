@@ -8,7 +8,7 @@ export const createSelectTool = () => {
 
   const onActivate = (ctx) => {
     // Keep selection if it's already floating (e.g. on paste). Also drop any
-    // gesture state a mid-gesture tool switch may have left behind — otherwise
+    // gesture state a mid-gesture tool switch may have left behind - otherwise
     // the next plain mouse move would ghost-draw a marquee from a stale
     // pointerdown point.
     state.start = null;
@@ -83,9 +83,16 @@ export const createSelectTool = () => {
     state.start = null;
   }
 
+  const onCancel = (_pt, ctx) => {
+    if (!state.moving) ctx.setSelection(null);
+    state.start = null;
+    state.moving = false;
+    state.liftedOrigin = null;
+  }
+
   const inside = (pt, sel) => {
     return pt.x >= sel.x && pt.x <= sel.x + sel.w && pt.y >= sel.y && pt.y <= sel.y + sel.h;
   }
 
-  return { name: 'select', cursor: 'crosshair', onActivate, onDeactivate, onDown, onMove, onUp, _inside: inside };
+  return { name: 'select', cursor: 'crosshair', onActivate, onDeactivate, onDown, onMove, onUp, onCancel, _inside: inside };
 }

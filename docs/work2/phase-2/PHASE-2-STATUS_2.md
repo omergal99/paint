@@ -1,4 +1,4 @@
-# Phase 2 — Round 2 Stabilization Status
+# Phase 2 - Round 2 Stabilization Status
 
 Date: 2026-09-19  
 Round: 2  
@@ -65,8 +65,8 @@ release-complete.
 - [`round2-text-toolbar-hidden.yml`](../../../output/playwright/phase-2/playwright-cli/round2-text-toolbar-hidden.yml)
 - [`round2-text-select-option.yml`](../../../output/playwright/phase-2/playwright-cli/round2-text-select-option.yml)
 - [`round2-tools-menu.yml`](../../../output/playwright/phase-2/playwright-cli/round2-tools-menu.yml)
-- [`WEB-QUALITY-AUDIT-ROUND2.json`](WEB-QUALITY-AUDIT-ROUND2.json) — `index.html`: 0 issues, 0 warnings
-- [`WEB-QUALITY-AUDIT-ROUND2-STATUS.json`](WEB-QUALITY-AUDIT-ROUND2-STATUS.json) — this HTML status: 0 issues, 0 warnings
+- [`WEB-QUALITY-AUDIT-ROUND2.json`](WEB-QUALITY-AUDIT-ROUND2.json) - `index.html`: 0 issues, 0 warnings
+- [`WEB-QUALITY-AUDIT-ROUND2-STATUS.json`](WEB-QUALITY-AUDIT-ROUND2-STATUS.json) - this HTML status: 0 issues, 0 warnings
 - [`PROGRESS-LOG.md`](PROGRESS-LOG.md)
 
 ## Next recommended order

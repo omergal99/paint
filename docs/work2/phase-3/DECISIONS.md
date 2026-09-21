@@ -1,4 +1,4 @@
-# Phase 3 — Decisions
+# Phase 3 - Decisions
 
 | Decision | Choice | Reason |
 |---|---|---|

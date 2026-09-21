@@ -1,11 +1,13 @@
 // js/canvas/CanvasManager.js
 // Owns the two stacked canvases:
 //   - `canvas`  : the real image pixels (what gets saved/copied)
-//   - `overlay` : selection marquees, shape previews, text caret — never touches real pixels
+//   - `overlay` : selection marquees, shape previews, text caret - never touches real pixels
 // Zoom is applied as a CSS transform by ViewportManager; CanvasManager always works
 // in true image-pixel coordinates so drawing stays crisp at any zoom level.
 
-const STORAGE_KEY = 'omerpaint:last-canvas';
+import { assessImageAdmission } from '../storage/ImageAdmission.js';
+import { EVENTS } from '../core/constants.js';
+import { LEGACY_WORKING_CANVAS_KEY } from '../storage.js';
 
 // Memory guard for shape-layer measurement: reading more than this many pixels
 // in one getImageData call (16M px ≈ 64 MB RGBA) risks a failed allocation on
@@ -38,7 +40,7 @@ const clampRegionToBounds = (region, maxW, maxH) => {
 }
 
 export class CanvasManager {
-  constructor({ canvas, overlay, width = 800, height = 600, backgroundColor = '#ffffff', backgroundMode = 'solid' }) {
+  constructor({ canvas, overlay, width = 800, height = 600, backgroundColor = '#ffffff', backgroundMode = 'solid', eventBus = null }) {
     this.canvas = canvas;
     this.overlay = overlay;
     this.ctx = canvas.getContext('2d', { willReadFrequently: true });
@@ -48,6 +50,7 @@ export class CanvasManager {
     this.height = height;
     this.backgroundColor = backgroundColor;
     this.backgroundMode = backgroundMode === 'transparent' ? 'transparent' : 'solid';
+    this.eventBus = eventBus;
 
     this.primaryColor = '#000000';
     this.primaryAlpha = 1;
@@ -59,6 +62,8 @@ export class CanvasManager {
     this.floatingCanvas = null; // offscreen canvas for active floating selection
     this.layerComposer = null;
     this.onRasterLoad = null;
+    this.onAdmissionRejected = null;
+    this.onImageLoadError = null;
 
     this._setSize(width, height);
     this.clear(backgroundColor);
@@ -90,7 +95,7 @@ export class CanvasManager {
 
   isCleanDocument() {
     // A floating shape has not been composited yet, so pixel-wise the canvas can
-    // still look blank — treat it as dirty so a paste does not land at 0,0.
+    // still look blank - treat it as dirty so a paste does not land at 0,0.
     if (this.floatingCanvas) return false;
     if (this.layerComposer?.hasContent?.()) return false;
     return this._pixelsSignature() === this._cleanSignature;
@@ -141,46 +146,55 @@ export class CanvasManager {
     this.height = h;
   }
 
+  _admitImage({ width, height, targetWidth, targetHeight }) {
+    const admission = assessImageAdmission({ width, height, targetWidth, targetHeight });
+    if (!admission.ok) this.onAdmissionRejected?.(admission);
+    return admission;
+  }
+
   persistToStorage() {
-    if (typeof window === 'undefined' || !window.localStorage) return;
-    try {
-      const dataUrl = this.toDataURL('image/png');
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ dataUrl, width: this.width, height: this.height, updatedAt: Date.now() }));
-      window.dispatchEvent(new CustomEvent('paint:changed', {
-        detail: { width: this.width, height: this.height },
-      }));
-    } catch (err) {
-      console.warn('Unable to persist canvas state:', err);
+    // IndexedDB owns working-document persistence. This method deliberately
+    // remains the synchronous mutation boundary for old tools: it emits one
+    // change signal and lets the serial Blob autosaver encode outside the
+    // pointer/input hot path.
+    const detail = { width: this.width, height: this.height };
+    this.eventBus?.emit(EVENTS.documentChanged, detail);
+    const target = globalThis.window;
+    if (target?.dispatchEvent && typeof CustomEvent !== 'undefined') {
+      target.dispatchEvent(new CustomEvent('paint:changed', { detail }));
     }
   }
 
   clearStoredState() {
     if (typeof window === 'undefined' || !window.localStorage) return;
     try {
-      window.localStorage.removeItem(STORAGE_KEY);
+      // This only removes the read-once pre-v1 fallback. Canonical IndexedDB
+      // data is reset explicitly through storage.js after user confirmation.
+      window.localStorage.removeItem(LEGACY_WORKING_CANVAS_KEY);
     } catch (err) {
       console.warn('Unable to clear persisted canvas state:', err);
     }
   }
 
-  async restoreFromStorage({ maxAgeMs = Infinity } = {}) {
+  async restoreLegacyFromStorage({ maxAgeMs = Infinity } = {}) {
     if (typeof window === 'undefined' || !window.localStorage) return false;
     try {
-      const raw = window.localStorage.getItem(STORAGE_KEY);
+      const raw = window.localStorage.getItem(LEGACY_WORKING_CANVAS_KEY);
       if (!raw) return false;
       const { dataUrl, width, height, updatedAt } = JSON.parse(raw);
       if (!dataUrl) return false;
       if (!Number.isFinite(updatedAt) || Date.now() - updatedAt > maxAgeMs) return false;
-      await this.loadImageDataUrl(dataUrl, width, height);
-      // Seeing a recent document refreshes its session TTL without creating a
-      // change event or a duplicate history entry.
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ dataUrl, width, height, updatedAt: Date.now() }));
-      return true;
+      return await this.loadImageDataUrl(dataUrl, width, height);
     } catch (err) {
       console.warn('Unable to restore canvas state:', err);
       return false;
     }
   }
+
+  // Compatibility alias for integrations that predate the IndexedDB working
+  // record. New startup code should call restoreLegacyFromStorage only after
+  // it confirms that no canonical record is available.
+  async restoreFromStorage(options = {}) { return this.restoreLegacyFromStorage(options); }
 
   clear(color = this.backgroundColor) {
     this.ctx.save();
@@ -212,11 +226,13 @@ export class CanvasManager {
     this.octx.clearRect(0, 0, this.overlay.width, this.overlay.height);
   }
 
-  /** Resize the working canvas, anchored top-left, preserving existing pixels. */
-  resize(newWidth, newHeight, fillColor = this.backgroundColor) {
+  /** Resize the working canvas, preserving pixels from the requested anchor. */
+  resize(newWidth, newHeight, fillColor = this.backgroundColor, { anchorX = 'left', anchorY = 'top' } = {}) {
     newWidth = Math.max(1, Math.round(newWidth));
     newHeight = Math.max(1, Math.round(newHeight));
-    if (newWidth === this.width && newHeight === this.height) return;
+    const admission = this._admitImage({ width: newWidth, height: newHeight });
+    if (!admission.ok) return false;
+    if (newWidth === this.width && newHeight === this.height) return true;
 
     const snapshot = document.createElement('canvas');
     snapshot.width = this.width;
@@ -229,17 +245,22 @@ export class CanvasManager {
       ? { ...this.selection }
       : null;
     const prevFloating = this.floatingCanvas;
+    const offsetX = anchorX === 'right' ? newWidth - this.width : 0;
+    const offsetY = anchorY === 'bottom' ? newHeight - this.height : 0;
 
     this._setSize(newWidth, newHeight);
     this.ctx.save();
     this._paintBackground(this.ctx, 0, 0, newWidth, newHeight, fillColor);
-    this.ctx.drawImage(snapshot, 0, 0);
+    this.ctx.drawImage(snapshot, offsetX, offsetY);
     this.ctx.restore();
 
     this.clearOverlay();
-    this.selection = prevSelection ? clampRegionToBounds(prevSelection, newWidth, newHeight) : null;
+    this.selection = prevSelection
+      ? clampRegionToBounds({ ...prevSelection, x: prevSelection.x + offsetX, y: prevSelection.y + offsetY }, newWidth, newHeight)
+      : null;
     this.floatingCanvas = this.selection ? prevFloating : null;
     if (this.onSizeChange) this.onSizeChange(newWidth, newHeight);
+    return true;
   }
 
   /** Used by HistoryManager to restore a previous state (image + dimensions). */
@@ -249,6 +270,11 @@ export class CanvasManager {
       img.onload = () => {
         const targetWidth = Number(width) > 0 ? Number(width) : img.width;
         const targetHeight = Number(height) > 0 ? Number(height) : img.height;
+        const admission = this._admitImage({ width: img.width, height: img.height, targetWidth, targetHeight });
+        if (!admission.ok) {
+          resolve(false);
+          return;
+        }
         this._setSize(targetWidth, targetHeight);
         this.ctx.clearRect(0, 0, targetWidth, targetHeight);
         this.ctx.drawImage(img, 0, 0);
@@ -257,15 +283,32 @@ export class CanvasManager {
         this.markDocumentDirty();
         this.onRasterLoad?.({ reason: 'load-image-data' });
         if (this.onSizeChange) this.onSizeChange(targetWidth, targetHeight);
-        resolve();
+        resolve(true);
+      };
+      img.onerror = () => {
+        this.onImageLoadError?.({ message: 'The saved image could not be decoded.' });
+        resolve(false);
       };
       img.src = dataUrl;
     });
   }
 
+  async loadImageBlob(blob, width, height, { urlApi = globalThis.URL } = {}) {
+    if (typeof Blob === 'undefined' || !(blob instanceof Blob) || !urlApi?.createObjectURL) {
+      this.onImageLoadError?.({ message: 'The saved image could not be decoded.' });
+      return false;
+    }
+    const url = urlApi.createObjectURL(blob);
+    try {
+      return await this.loadImageDataUrl(url, width, height);
+    } finally {
+      urlApi.revokeObjectURL?.(url);
+    }
+  }
+
   /**
    * Draw a decoded image at full native resolution (never downsampled), positioned
-   * at (x, y). If it doesn't fit, the canvas is expanded to fit it — matching
+   * at (x, y). If it doesn't fit, the canvas is expanded to fit it - matching
    * how Paste behaves in real Paint. Returns the {x,y,w,h} region it now occupies.
    */
   drawImageAtFullSize(imgBitmap, x = 0, y = 0) {
@@ -273,8 +316,10 @@ export class CanvasManager {
     const h = imgBitmap.height;
     const neededWidth = Math.max(this.width, x + w);
     const neededHeight = Math.max(this.height, y + h);
+    const admission = this._admitImage({ width: w, height: h, targetWidth: neededWidth, targetHeight: neededHeight });
+    if (!admission.ok) return null;
     if (neededWidth !== this.width || neededHeight !== this.height) {
-      this.resize(neededWidth, neededHeight);
+      if (!this.resize(neededWidth, neededHeight)) return null;
     }
     this.ctx.drawImage(imgBitmap, x, y, w, h);
     return { x, y, w, h };
@@ -287,6 +332,8 @@ export class CanvasManager {
   loadFromSource(source) {
     const w = source.width;
     const h = source.height;
+    const admission = this._admitImage({ width: w, height: h });
+    if (!admission.ok) return false;
     this._setSize(w, h);
     this.ctx.clearRect(0, 0, w, h);
     this.ctx.drawImage(source, 0, 0);
@@ -296,6 +343,7 @@ export class CanvasManager {
     // A New blank source resets the clean baseline; real images mark dirty.
     this._cleanSignature = this._pixelsSignature();
     if (this.onSizeChange) this.onSizeChange(w, h);
+    return true;
   }
 
   resetCleanBaseline() { this._cleanSignature = this._pixelsSignature(); }
@@ -320,8 +368,8 @@ export class CanvasManager {
 
   /**
    * Draw a shape in isolation on a transparent scratch canvas and crop it to the
-   * shape's exact ink bounds. Returns `{ layer, x, y, w, h }` — the shape alone on
-   * transparency plus its real canvas coordinates — or null when nothing painted.
+   * shape's exact ink bounds. Returns `{ layer, x, y, w, h }` - the shape alone on
+   * transparency plus its real canvas coordinates - or null when nothing painted.
    *
    * Used by "select after draw" to lift a just-drawn shape as a floating layer.
    * Two things this fixes over copying the raw drag box:
@@ -339,7 +387,7 @@ export class CanvasManager {
     let inflate = Math.max(8, Math.ceil(Math.max(bounds.w, bounds.h) * 0.25), pad);
     let best = null;
     // If the measured ink touches an inflated edge that is NOT a canvas edge,
-    // the scratch was too small and the shape would be clipped — grow and
+    // the scratch was too small and the shape would be clipped - grow and
     // re-measure (the doubling always converges: once the box reaches the
     // canvas edges nothing is "clipped" any more). This is what makes the
     // selection always cover every pixel that was painted.
@@ -360,7 +408,7 @@ export class CanvasManager {
 
   /** One measurement pass at a given inflation. See renderShapeLayer. */
   _renderShapeLayerAt(bounds, drawFn, inflate) {
-    // Clamp to the canvas — pixels outside it were already clipped when the
+    // Clamp to the canvas - pixels outside it were already clipped when the
     // shape would have been drawn.
     const x0 = Math.max(0, Math.floor(bounds.x - inflate));
     const y0 = Math.max(0, Math.floor(bounds.y - inflate));

@@ -17,10 +17,10 @@ community and security readiness status is tracked in
 ES modules need to be served over `http://`, not opened directly as a `file://` path (the browser blocks module imports over `file://`). Pick one:
 
 ```bash
-# Option A — Node (no install needed beyond npx)
+# Option A - Node (no install needed beyond npx)
 npx serve .
 
-# Option B — Python
+# Option B - Python
 python3 -m http.server 8000
 ```
 
@@ -77,7 +77,7 @@ graph TD
 - **index.html**: Defines the Fluent ribbon layout, the Color Inspector bar, the pointer status bars, and the main canvas stage viewport (`.canvas-stage` outer scroll box → `.canvas-scale` inner zoom box).
 - **js/main.js**: Wires all the managers and tools together. Coordinates selection outline rendering, global keyboard shortcuts, and file actions (New, Open, Save, Crop, Resize).
 - **js/canvas/CanvasManager.js**: Handles the two canvas layers: `paint-canvas` (real image pixels) and `overlay-canvas` (selection marquees, shapes previews, caret). Manages the `floatingCanvas` for uncommitted selections.
-- **js/canvas/ViewportManager.js**: Handles zoom logic (buttons, slider, editable %, `Ctrl/Cmd+wheel`). Sizes the outer stage to the *scaled* canvas so scrollbars always match the visible canvas — plain wheel scrolls/panels natively and never changes the zoom.
+- **js/canvas/ViewportManager.js**: Handles zoom logic (buttons, slider, editable %, `Ctrl/Cmd+wheel`). Sizes the outer stage to the *scaled* canvas so scrollbars always match the visible canvas - plain wheel scrolls/panels natively and never changes the zoom.
 - **js/canvas/CanvasResizer.js**: Tracks drag events on the bottom-right handles to expand the canvas workspace while preserving existing image contents.
 - **js/clipboard/ClipboardManager.js**: Bridges the browser to the OS Clipboard. Supports pasting image blobs directly, copying active selection pixels, and cutting pixels.
 - **js/history/HistoryManager.js**: Retains up to 50 snapshots of the canvas for instant undo/redo functionality (`Ctrl+Z` / `Ctrl+Y`).
@@ -120,5 +120,5 @@ graph TD
 ## Browser support note
 
 Per design choice, this targets **Chrome/Edge** specifically:
-- **Async Clipboard API** (`navigator.clipboard.write/read` with `ClipboardItem`) — Baseline 2024, works in current Chrome, Edge, Firefox, and Safari.
-- **File System Access API** (`window.showSaveFilePicker`) — Chrome/Edge only. `save()` checks for it and silently falls back to a plain PNG download everywhere else, so the app still works (just without "save back to the same file") in other browsers.
+- **Async Clipboard API** (`navigator.clipboard.write/read` with `ClipboardItem`) - Baseline 2024, works in current Chrome, Edge, Firefox, and Safari.
+- **File System Access API** (`window.showSaveFilePicker`) - Chrome/Edge only. `save()` checks for it and silently falls back to a plain PNG download everywhere else, so the app still works (just without "save back to the same file") in other browsers.

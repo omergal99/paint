@@ -41,7 +41,7 @@ analyze_html() {
   grep -qi '<html[^>]*lang='     "$file" || ISSUES+=("$file:0: Missing lang attribute on <html>")
   grep -qi '<title>'             "$file" || ISSUES+=("$file:0: Missing <title> tag")
 
-  # <img> without alt — two-pass replaces broken PCRE lookahead
+  # <img> without alt - two-pass replaces broken PCRE lookahead
   local alt_count=0
   while IFS=: read -r ln tag; do
     if grep -qE 'alt=' <<<"$tag"; then continue; fi

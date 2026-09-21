@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Paint - Work completion summary</title>
+  <style>
+    :root { color-scheme: light; --ink:#172333; --muted:#526173; --line:#d8e1ea; --page:#f5f8fb; --card:#fff; --blue:#075fc5; --blue-soft:#e8f2ff; --green:#167345; --green-soft:#e8f7ee; --amber:#9a5b00; --amber-soft:#fff4dc; }
+    * { box-sizing:border-box; }
+    body { max-width:1080px; margin:0 auto; padding:24px 18px 48px; background:var(--page); color:var(--ink); font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif; }
+    h1,h2,h3,p { margin-top:0; } h1 { margin-bottom:8px; font-size:clamp(2rem,5vw,3rem); line-height:1.05; } h2 { font-size:1.25rem; margin-bottom:12px; } h3 { font-size:1rem; margin-bottom:6px; } a { color:var(--blue); }
+    .hero,.card,.diagram,.commands { background:var(--card); border:1px solid var(--line); border-radius:14px; box-shadow:0 2px 8px #1723330d; }
+    .hero { padding:24px; border-top:5px solid var(--blue); } .eyebrow { color:var(--blue); font-weight:750; letter-spacing:.04em; text-transform:uppercase; } .lead { max-width:800px; color:var(--muted); font-size:1.12rem; margin-bottom:0; }
+    .grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; margin:18px 0; } .card { padding:18px; } .done { border-top:4px solid var(--green); } .open { border-top:4px solid var(--amber); } .card ul { margin:0; padding-inline-start:1.15rem; } li+li { margin-top:6px; }
+    .diagram { margin:18px 0; padding:18px; overflow:hidden; } .diagram svg { display:block; width:100%; height:auto; min-height:180px; } .legend { color:var(--muted); font-size:.92rem; }
+    .examples { width:100%; border-collapse:collapse; background:var(--card); border:1px solid var(--line); border-radius:12px; overflow:hidden; } th,td { padding:10px 12px; border-bottom:1px solid var(--line); text-align:left; vertical-align:top; } th { background:var(--blue-soft); } tr:last-child td { border-bottom:0; } code { padding:.12em .35em; border-radius:5px; background:#eef2f6; font-size:.92em; }
+    .commands { padding:18px; margin-top:18px; } pre { margin:0; overflow:auto; } .mermaid-source { margin-top:12px; color:var(--muted); font-size:.85rem; }
+    footer { margin-top:22px; color:var(--muted); font-size:.9rem; } @media (max-width:760px) { body{padding:16px 12px 36px;} .grid{grid-template-columns:1fr;} th,td{padding:8px;} }
+  </style>
+</head>
+<body>
+  <main>
+    <header class="hero">
+      <p class="eyebrow">Paint 1.6.1 · local completion view · 20 September 2026</p>
+      <h1>What changed?</h1>
+      <p class="lead">The safety/build work is locally checked. Keyboard shortcuts are now user-configurable, persisted, and resolved from one constants-backed service. The remaining launch claims need a deployed HTTPS host and real devices.</p>
+    </header>
+
+    <section class="grid" aria-label="Status cards">
+      <article class="card done"><h2>Done locally</h2><ul><li>Pointer and editor teardown.</li><li>Autosave, quota, corrupt-record, and large-image recovery.</li><li>Production build + offline shell.</li><li>Startup restore is opt-in; first paint shows the default palette.</li><li>Localization registry + persisted Settings language selector; English and Spanish are ready, with future languages mapped safely.</li><li>12/12 test files, TypeScript 7 check, build and release gates.</li></ul></article>
+      <article class="card done"><h2>Settings improvements</h2><ul><li>Settings search scans hidden panels and highlights tabs/results.</li><li>History can start blank or restore the last image.</li><li>Session/history rerenders preserve position and pending captures settle first.</li><li>Press a new shortcut combination; conflicts are rejected and saved.</li></ul></article>
+      <article class="card open"><h2>Still open</h2><ul><li>Public HTTPS install/update proof.</li><li>Desktop/mobile real-device matrix.</li><li>Mobile Lighthouse 90+ (local diagnostic is P76).</li><li>Reviewed non-English catalogs, RTL layout proof, and visible Step 12/13 UI workflows.</li></ul></article>
+    </section>
+
+    <section class="diagram" aria-labelledby="flow-title">
+      <h2 id="flow-title">How the new shortcut flow works</h2>
+      <svg viewBox="0 0 960 205" role="img" aria-label="Settings flows to persisted settings, then ShortcutManager resolves keyboard events to app actions">
+        <defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#075fc5"/></marker></defs>
+        <g font-family="system-ui, sans-serif" font-size="16" text-anchor="middle"><rect x="24" y="70" width="180" height="64" rx="12" fill="#e8f2ff" stroke="#075fc5"/><text x="114" y="98">Settings →</text><text x="114" y="120">Shortcuts</text><path d="M204 102h82" stroke="#075fc5" stroke-width="3" marker-end="url(#arrow)"/>
+        <rect x="286" y="70" width="190" height="64" rx="12" fill="#e8f7ee" stroke="#167345"/><text x="381" y="98">settingsStore</text><text x="381" y="120">localStorage</text><path d="M476 102h82" stroke="#075fc5" stroke-width="3" marker-end="url(#arrow)"/>
+        <rect x="558" y="70" width="180" height="64" rx="12" fill="#fff4dc" stroke="#9a5b00"/><text x="648" y="98">ShortcutManager</text><text x="648" y="120">normalize + resolve</text><path d="M738 102h82" stroke="#075fc5" stroke-width="3" marker-end="url(#arrow)"/>
+        <rect x="820" y="70" width="116" height="64" rx="12" fill="#e8f2ff" stroke="#075fc5"/><text x="878" y="98">keydown</text><text x="878" y="120">action</text></g>
+        <text x="480" y="177" fill="#526173" font-family="system-ui, sans-serif" font-size="13" text-anchor="middle">Example: Ctrl/Cmd+Shift+P → Pencil tool, immediately and after reload</text>
+      </svg>
+      <p class="legend">The same action names live in <code>js/core/constants.js</code>; behavior lives in <code>js/settings/ShortcutManager.js</code>.</p>
+    </section>
+
+    <table class="examples"><thead><tr><th>Try this</th><th>Expected result</th><th>Where</th></tr></thead><tbody>
+      <tr><td>Settings → Shortcuts → Pencil tool → press <code>Ctrl/Cmd+Shift+P</code></td><td>“Pencil tool shortcut saved.” Pressing the combo activates Pencil; reload keeps it.</td><td><code>index.html</code> + <code>js/main.js</code></td></tr>
+      <tr><td>Settings → General → Language</td><td>English and Español are enabled and persisted; remaining languages are listed but disabled until reviewed catalogs are added.</td><td><code>js/i18n/localeRegistry.js</code> + <code>LocaleController.js</code></td></tr>
+      <tr><td>Assign a shortcut already used by another action</td><td>The assignment is rejected with a conflict message; the old binding stays safe.</td><td><code>ShortcutManager.js</code></td></tr>
+      <tr><td>Open a 5000 × 7000 image</td><td>Admission rejects it before dangerous allocation.</td><td>Storage/recovery guard</td></tr>
+      <tr><td><code>make serve</code></td><td>Starts the source app at <code>http://127.0.0.1:4173/</code>; no Live Server extension needed.</td><td><code>Makefile</code></td></tr>
+    </tbody></table>
+
+    <section class="commands"><h2>Verification commands</h2><pre><code>npm test                 # 12/12 test files
+npm run typecheck        # TypeScript 7, dev-only
+npm run build            # production bundle; does not run tsc
+npm run audit:runtime    # checks contracts; does not rewrite JSON
+npm run audit:snapshot   # intentional historical JSON refresh only
+make serve               # local source server</code></pre>
+      <details class="mermaid-source"><summary>Mermaid source</summary><pre class="mermaid">flowchart LR
+  A[Settings: Shortcuts] --> B[settingsStore]
+  B --> C[ShortcutManager]
+  C --> D[keydown event]
+  D --> E[App action]
+  C -. conflict .-> F[Reject + keep old binding]
+  G[Pointer input] --> H[ToolManager]
+  H --> I[Canvas + autosave]
+  I --> J{quota / corrupt / too large}
+  J --> K[explicit recovery]</pre></details>
+    </section>
+    <footer>See <a href="PHASE-2-STATUS.md">current Phase 2 status</a> and <a href="NEXT-STEPS-SIMPLE.html">simple next steps</a>. Local evidence is not public deployment or physical-device proof.</footer>
+  </main>
+</body>
+</html>

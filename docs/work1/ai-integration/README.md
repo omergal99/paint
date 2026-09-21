@@ -33,7 +33,7 @@ js/ai/
 contract such as `sendMessage({ messages, image })` and return text plus an
 optional image edit. `AiContextBuilder` should send the current canvas or
 selection as an explicit, user-visible attachment and include dimensions and
-the active selection—not hidden application state.
+the active selection-not hidden application state.
 
 ## Connection and safety rules
 

@@ -23,8 +23,8 @@ exists.
 ## The requested transparency location
 
 The transparency/opacity control requested beneath the two large foreground and
-background swatches belongs to **Step 05 — Colors and Palette**. It is distinct
-from **Step 04 — Resize and Canvas Semantics**, which owns transparent canvas
+background swatches belongs to **Step 05 - Colors and Palette**. It is distinct
+from **Step 04 - Resize and Canvas Semantics**, which owns transparent canvas
 backgrounds, checkerboard display, alpha-safe edits, and PNG behavior.
 
 The `index.html` `ribbon-group ribbon-group-colors` now contains the two

@@ -46,6 +46,12 @@ export const createSettingsDialog = ({
     returnFocus = trigger instanceof HTMLElement ? trigger : null;
     if (!dialog?.open) dialog?.showModal();
     setTab(name);
+    // Native dialog autofocus selects the first focusable control, which is
+    // the settings search field in our header. Keep initial focus on the
+    // selected tab so opening Settings never starts typing into search.
+    const focusTarget = tabList.find((tab) => tab.dataset.settingsTab === activeTab)
+      || dialog?.querySelector('.settings-close');
+    focusTarget?.focus?.({ preventScroll: true });
   };
 
   const close = () => dialog?.close();

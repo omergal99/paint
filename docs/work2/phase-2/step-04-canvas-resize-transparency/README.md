@@ -1,4 +1,4 @@
-# Step 04 — Canvas Resize and Transparency
+# Step 04 - Canvas Resize and Transparency
 
 ## Goal
 

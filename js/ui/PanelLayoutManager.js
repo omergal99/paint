@@ -21,9 +21,15 @@ export class PanelLayoutManager {
     this.storageKey = storageKey;
     this.onChange = onChange;
     this.state = this._read();
+    this._destroyed = false;
+    this._dragHandle = null;
+    this._activeFloatDrag = null;
+    this._floatResizeFrame = 0;
+    this._onRestoreClick = () => this.setVisible(true);
+    this._onSettingsClick = () => this.onChange?.({ ...this.state, action: 'settings' });
 
-    this.restoreButton?.addEventListener('click', () => this.setVisible(true));
-    this.settingsButton?.addEventListener('click', () => this.onChange?.({ ...this.state, action: 'settings' }));
+    this.restoreButton?.addEventListener('click', this._onRestoreClick);
+    this.settingsButton?.addEventListener('click', this._onSettingsClick);
     this._bindFloatDrag();
     this._bindFloatResize();
     this.apply();
@@ -67,7 +73,9 @@ export class PanelLayoutManager {
   _bindFloatDrag() {
     const handle = this.panel?.querySelector('#ribbon-drag-handle');
     if (!handle) return;
-    handle.addEventListener('pointerdown', (event) => {
+    this._dragHandle = handle;
+    this._onFloatPointerDown = (event) => {
+      if (this._destroyed) return;
       if (this.state.position !== 'float' || event.button != null && event.button !== 0) return;
       event.preventDefault();
       const rect = this.panel.getBoundingClientRect();
@@ -77,6 +85,7 @@ export class PanelLayoutManager {
       const originY = rect.top;
       const pointerId = event.pointerId;
       handle.setPointerCapture?.(pointerId);
+      this._activeFloatDrag?.stop();
       const onMove = (moveEvent) => {
         if (moveEvent.pointerId !== pointerId) return;
         const x = Math.max(4, Math.min(window.innerWidth - this.panel.offsetWidth - 4, originX + moveEvent.clientX - startX));
@@ -86,16 +95,20 @@ export class PanelLayoutManager {
         this._applyFloatPosition();
       };
       const stop = () => {
+        if (this._activeFloatDrag?.stop !== stop) return;
         handle.removeEventListener('pointermove', onMove);
         handle.removeEventListener('pointerup', stop);
         handle.removeEventListener('pointercancel', stop);
+        this._activeFloatDrag = null;
         this._write();
         this.onChange?.({ ...this.state });
       };
+      this._activeFloatDrag = { stop };
       handle.addEventListener('pointermove', onMove);
       handle.addEventListener('pointerup', stop, { once: true });
       handle.addEventListener('pointercancel', stop, { once: true });
-    });
+    };
+    handle.addEventListener('pointerdown', this._onFloatPointerDown);
   }
 
   _applyFloatPosition() {
@@ -120,11 +133,11 @@ export class PanelLayoutManager {
 
   _bindFloatResize() {
     if (!this.panel || typeof ResizeObserver === 'undefined') return;
-    let frame = 0;
     this._floatResizeObserver = new ResizeObserver(() => {
-      if (this.state.position !== 'float' || frame) return;
-      frame = requestAnimationFrame(() => {
-        frame = 0;
+      if (this._destroyed || this.state.position !== 'float' || this._floatResizeFrame) return;
+      this._floatResizeFrame = requestAnimationFrame(() => {
+        this._floatResizeFrame = 0;
+        if (this._destroyed) return;
         const rect = this.panel.getBoundingClientRect();
         if (rect.width < 320) return;
         this.state.floatWidth = Math.round(rect.width);
@@ -133,6 +146,19 @@ export class PanelLayoutManager {
       });
     });
     this._floatResizeObserver.observe(this.panel);
+  }
+
+  destroy() {
+    if (this._destroyed) return;
+    this._destroyed = true;
+    this.restoreButton?.removeEventListener('click', this._onRestoreClick);
+    this.settingsButton?.removeEventListener('click', this._onSettingsClick);
+    this._dragHandle?.removeEventListener('pointerdown', this._onFloatPointerDown);
+    this._activeFloatDrag?.stop();
+    if (this._floatResizeFrame) cancelAnimationFrame(this._floatResizeFrame);
+    this._floatResizeFrame = 0;
+    this._floatResizeObserver?.disconnect();
+    this._floatResizeObserver = null;
   }
 
   apply() {

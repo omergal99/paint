@@ -1,0 +1,24 @@
+{
+  "date": "2026-09-21",
+  "scope": "Local production-build Chrome smoke journey; not large-image or real-device evidence.",
+  "browser": "Google Chrome 151.0.7922.137",
+  "journey": [
+    "Open Crop → Remove Background",
+    "Wait for local preview",
+    "Cancel without mutation",
+    "Open again and Apply"
+  ],
+  "checks": {
+    "previewReached100Percent": true,
+    "previewDisplayed": true,
+    "cancelClosedWithoutApplying": true,
+    "applyCommittedThroughHistoryStoragePath": true,
+    "defaultProviderUploadedImage": false
+  },
+  "notExercised": [
+    "Oversized encoded/decoded image rejection in the browser UI",
+    "Timeout and quota failure presentation",
+    "Optional advanced provider consent flow",
+    "Physical mobile devices"
+  ]
+}

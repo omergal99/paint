@@ -1,8 +1,8 @@
-# Step 10 — Tests, Types, and Quality
+# Step 10 - Tests, Types, and Quality
 
 ## Goal
 
-Make behavior—not source formatting—the durable regression contract.
+Make behavior-not source formatting-the durable regression contract.
 
 ## Tasks
 
@@ -43,6 +43,21 @@ teardown/error-path fixtures remain open.
 ## Done when
 
 CI is green, coverage is measured, and the highest-risk workflows have direct
-behavioral tests. Current evidence is `npm test` 4/4, syntax checks,
-`git diff --check`, and repeatable headless browser assertions; coverage,
-`checkJs`, and negative/error-path fixtures remain open.
+behavioral tests. Current evidence is `npm test` 12/12, TypeScript 7 dev-only
+checking, syntax checks,
+`git diff --check`, and repeatable headless browser assertions.
+
+## Current type-check baseline
+
+`npm run typecheck` passes with `jsconfig.json` and `checkJs` enabled for the
+current incremental baseline: core/settings/AI/utilities, the text-document
+stores, release notes/version code, and `MemoryBudget`.
+
+This is deliberately **not** full-app type coverage. The DOM-heavy
+application bootstrap, canvas, tools, and UI layers remain outside this
+baseline, as do the newer storage, history, background-removal, session,
+i18n, and notepad modules. Expanding the checked surface remains a follow-up;
+a passing scoped check must not be reported as a fully typed application.
+
+Coverage measurement and additional browser negative/error-path fixtures also
+remain open.

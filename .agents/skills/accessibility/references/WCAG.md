@@ -2,7 +2,7 @@
 
 This is a focused checklist for the editor, not a full WCAG catalog.
 
-## Level A — required baseline
+## Level A - required baseline
 
 | Criterion | Paint application |
 |---|---|
@@ -21,7 +21,7 @@ This is a focused checklist for the editor, not a full WCAG catalog.
 | 4.1.2 Name, Role, Value | Custom tabs, menus, buttons, and controls expose correct state. |
 | 4.1.3 Status Messages | Save/delete/restore/errors are announced without moving focus. |
 
-## Level AA — launch target
+## Level AA - launch target
 
 | Criterion | Paint application |
 |---|---|

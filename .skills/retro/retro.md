@@ -113,7 +113,7 @@ Synthesize New Skills/Plugins:
 
 Save newly created skills to docs-internal/retro/skills/ and update docs-internal/retro/index.json.
 
-CRITICAL — Self-Improvement Protocol:
+CRITICAL - Self-Improvement Protocol:
 
 Analyze how /retro performed during this run.
 

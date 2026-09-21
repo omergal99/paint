@@ -14,11 +14,13 @@ checkout, or discard unrelated work. There is intentionally no commit yet.
 
 ## Current release state
 
-The current customer-facing patch is version **1.6.1**. Phase 2 is a strong
-release candidate, but it is not allowed to claim full production-PWA readiness
-until the remaining evidence gates pass.
+The current customer-facing patch is version **1.6.1**. Round 8 closes the
+local runtime, recovery, typecheck, build, and desktop Lighthouse gates. It is
+not allowed to claim full production-PWA readiness until public HTTPS,
+install/update, real-device, sustained-memory, and mobile-performance evidence
+passes.
 
-Already delivered and verified:
+Earlier delivered and verified:
 
 - SSOT constants, SettingsStore, SettingsRegistry, DocumentContract, and the
   functional EventBus seam.
@@ -38,33 +40,54 @@ Already delivered and verified:
 - PWA install/update UI, versioned service-worker cache, PNG icons, safe update
   reload behavior, and Settings → App → Prepare offline use.
 - Service-worker import-graph coverage: release checks reject app modules that
-  are missing from the offline shell. The current shell contains 60 assets.
+  are missing from the source offline shell.
 - Settings remembers the last tab and removes both `dialog` and `tab` from the
   URL when the dialog closes.
 - Retro evidence was moved from tracked `.agent/retro/` to ignored
   `docs-internal/retro/`. Do not restore `.agent/retro/`.
 
+Round 8 additions and their limits:
+
+- Step 07 has pointer-frame coalescing, cached viewport geometry, named event
+  handlers, and explicit editor/PWA/panel teardown. A browser journey proves a
+  non-persisted `pagehide` blocks a later pointer stroke.
+- Step 08 has image admission limits, Blob/IndexedDB recovery, URL/history
+  cleanup, corrupt-record confirmation, and a quota-failure PNG-download path.
+  Browser fixtures keep the open image intact while exercising those failures.
+- Step 10 has a deliberately scoped `checkJs` baseline (`npm run typecheck`).
+- The measured `esbuild` production output is code-split/minified. Its generated
+  worker uses a content-fingerprinted cache name *and* build-specific script URL,
+  giving the browser a distinct candidate on its next online load; its 12-file
+  local shell controls an offline reload. A deployed two-build update is still
+  an external proof gate.
+- Desktop local Lighthouse is P100 / A96 / BP100 / SEO100. The local throttled
+  mobile diagnostic is P76, so mobile P90+ remains an open optimization gate.
+- Step 12 provider and Step 13 session/recovery foundations exist, as do Phase
+  3 message-catalog and notepad-store foundations. None is yet a visible,
+  end-to-end canvas/UI workflow.
+
 Current verification:
 
-- `npm test` passes 5/5 test files.
+- `npm test` passes 12/12 test files, including shortcut persistence and local-server contract tests.
+- `npm run typecheck` and `npm run build` pass.
 - `npm run verify:docs` passes.
 - `npm run verify:release` passes version, syntax, tests, shell assets,
   import-graph coverage, docs, and `git diff --check`.
-- `npm run audit:runtime` writes the Step 07/08 runtime audit.
-- Local Chromium evidence proves empty-text behavior, Settings URL/tab
-  behavior, offline preparation, and offline reload. Curated evidence is in
-  `output/playwright/phase-2/playwright-cli/round2-offline-settings.json`.
-- Browser evidence recorded 49 local JavaScript module requests and 0
-  Fetch/XHR requests in the measured journey. Keep the dependency-free native
-  ES-module architecture unless a measured performance experiment proves a
-  bundler is worthwhile.
+- `npm run audit:runtime` verifies Step 07/08 contracts without writing an artifact. Use `npm run audit:snapshot` only for an intentional historical JSON refresh.
+- Local Chromium evidence proves empty-text behavior, Settings URL/tab behavior,
+  offline preparation, recovery failure paths, teardown, and a generated-build
+  offline reload. Curated Round 8 evidence is in
+  `output/playwright/phase-2/local-audit-20260920/production-build-runtime.json`.
+- Keep source modules readable and dependency-light. The measured production
+  build now uses code splitting/minification; do not revert to a multi-module
+  source-network graph without comparing real browser measurements.
 
 ## Read these files before planning
 
 Required product/plan context:
 
 1. `docs/work2/phase-2/PHASE-2-STATUS.md`
-2. `docs/work2/phase-2/PHASE-2-STATUS_7.md`
+2. `docs/work2/phase-2/PHASE-2-STATUS_8.md`
 3. `docs/work2/phase-2/PLAN-OVERVIEW.md`
 4. `docs/work2/phase-2/PLAN-DETAILS.md`
 5. `docs/work2/phase-2/DECISIONS.md`
@@ -107,109 +130,87 @@ Relevant implementation surfaces:
 - `js/canvas/CanvasManager.js`, `js/history/HistoryManager.js`, `js/storage.js`
 - `js/pwa/PwaInstallManager.js`, `js/app.js`, `sw.js`, `manifest.json`
 - `scripts/release-check.mjs`, `scripts/docs-consistency.mjs`,
-  `scripts/runtime-audit.mjs`
+  `scripts/runtime-audit.mjs`, `scripts/build.mjs`,
+  `scripts/lighthouse-budget.mjs`
+- `js/background/BackgroundRemovalProvider.js`,
+  `js/session/SessionService.js`, `js/session/RecoveryService.js`,
+  `js/i18n/messages.js`, `js/notepad/NotepadStore.js`
 - `tests/contracts.test.js`, `tests/smoke.test.js`, `tests/text-layer.test.js`,
   `tests/transparency.test.js`, `tests/shape-layer.test.js`
 
 ## Recommended continuation order
 
-### Gate A — close remaining Phase 2 release gaps first
+### Gate A - finish the external Phase 2 launch evidence
 
-Do not begin a broad new feature until the following gaps are measured or
-explicitly accepted by the user:
+The local implementation gates are closed. Before claiming release-ready PWA
+status, measure or explicitly accept these remaining gaps:
 
-1. Step 07: pointermove/rAF coalescing, cached viewport geometry, telemetry
-   pause/resume and destroy, broader EventBus adoption, and runtime teardown
-   evidence.
-2. Step 08: Blob/object-URL history, object-URL revocation, import/paste pixel
-   limits, quota-exceeded “Download now” recovery, IndexedDB corruption/open
-   recovery, and large-canvas browser fixtures.
-3. Step 10: `checkJs`, subsystem coverage, transparent PNG/import fixtures, and
-   storage recovery/error-path fixtures.
-4. Step 11: improve Lighthouse Performance from 84 toward 90 without hiding
-   categories, then run production-host HTTPS/install/update evidence and a
-   real desktop/mobile device matrix. Localhost evidence is useful but is not
-   production PWA proof.
+1. Repeat touch/stylus and sustained large-canvas memory/teardown stress on
+   real hardware. The current teardown proof is a useful browser fixture, not a
+   long-run memory benchmark.
+2. Deploy the generated `dist/` folder to public HTTPS and prove native
+   install, offline launch, an update from an older deployed worker, and safe
+   update behavior with real user data.
+3. Run a real desktop/mobile-device matrix, including touch input and an
+   install/update journey. Localhost/headless Chromium is not that proof.
+4. Improve and remeasure the local throttled mobile Lighthouse P76 diagnostic
+   toward the agreed P90+ target. The desktop P100 budget is already enforced
+   in CI; do not relabel it as a mobile result.
+5. Expand the deliberately scoped Step 10 `checkJs` boundary only when the
+   next subsystem is ready to be typed. Do not convert the current passing
+   scoped baseline into a claim that the whole application is checked.
 
 Keep the current 64 MiB in-memory history cap separate from browser storage
 quota. Never use a larger browser quota estimate as permission to raise the
 memory budget.
 
-### Gate B — Step 12: optional advanced background removal
+### Gate B - Step 12: integrate the delivered background-removal foundation
 
-Implement this as a spike and provider boundary, not as a mandatory Python
-dependency:
+`BackgroundRemovalProvider`, the local color-key provider, and the opt-in
+advanced-loader boundary are delivered and tested. The next slice is not a
+second provider abstraction; it is a small user-visible workflow:
 
-1. Define a small cancellable provider contract, for example:
+1. Add a visible action with progress, cancellation, timeout, input-pixel
+   limits, and a clear fallback/error state.
+2. Keep the local JavaScript color-key provider as the default. Require an
+   explicit, privacy-explained choice before loading any advanced provider.
+3. Before choosing Pyodide/WASM, a self-hosted service, or a remote API,
+   record bundle/model size, memory, latency, privacy, offline behavior,
+   deployment, and cancellation trade-offs. Never silently download a model.
+4. Verify normal drawing, PNG export, undo/redo, and base offline behavior are
+   unchanged when the optional provider is unavailable or disabled.
 
-   `remove(imageBlob, options, signal) -> result`
+### Gate C - Step 13: integrate the delivered session/recovery foundation
 
-2. Keep the existing local JavaScript color-key/alpha removal as the default
-   and safe fallback.
-3. Compare Pyodide/WebAssembly, a separately deployed/local Python service,
-   and a remote API for bundle/model size, memory, latency, privacy, offline
-   behavior, deployment, and cancellation. Record the decision before adding
-   a runtime.
-4. Load the advanced provider only after explicit user choice. In this current
-   no-build app, use native `dynamic import()` plus a dedicated Worker; if a
-   bundler is later introduced, make it a separate tree-shaken chunk.
-5. Add progress, cancellation, timeout, max input pixels, memory/wall-time
-   limits, worker termination, failure messaging, and no-image-upload-without-
-   consent behavior.
-6. Self-host and version any runtime/model assets, or clearly identify a local
-   service. Do not silently download a large model on first page load.
-7. Decide how the Settings offline preparation feature handles this optional
-   runtime. The base editor must remain fully offline; the advanced provider
-   may require an explicit separate download/preparation step and must say so.
-8. If budgets or privacy are poor, ship the JS fallback and postpone Python.
+`SessionService` and `RecoveryService` now provide the bounded document model,
+active pane/document state, dirty state, close/undo, and recovery shell. The
+next slice should connect that model rather than replace it:
 
-Step 12 is complete only when the provider can be disabled without affecting
-normal drawing, PNG export, undo/redo, or offline base-app behavior.
+1. Add an accessible `TabBar` (maximum 10 documents, at least one document,
+   create/close/switch, dirty indicators, focus restoration, and undo-close).
+2. Integrate canvas ownership and IndexedDB records with a tested migration
+   from the current single-canvas record. Preserve v1 records and make restore
+   and reset explicit.
+3. Add a responsive, keyboard/touch-operable `SplitView` only after tabs have
+   independent canvas ownership.
+4. Release canvases, ImageBitmaps, Blobs, object URLs, listeners, and workers
+   as documents close or are evicted. Prove two-document edit/reload/close
+   behavior in a browser before calling the feature complete.
 
-### Gate C — Step 13: tabs, split, and recovery
+### Gate D - Phase 3 integration after the external launch gate
 
-Build this only after document/storage ownership is stable:
+Phase 3.1's English fallback catalog, locale registry/controller, and Phase
+3.3's bounded local notepad store are delivered foundations. Follow the phase
+plan for the remaining visible work:
 
-1. Add `SessionService` with `Map<docId, PaintDocument>`, active document,
-   tab order, and active pane state.
-2. Add `TabStore` with per-document keys and a migration path from the current
-   single-canvas storage. Preserve old records and test v1 compatibility.
-3. Add `RecoveryService` with session snapshot, crash flag, TTL trash/recovery,
-   safe restore prompt, malformed-record handling, and explicit reset path.
-4. Add a keyboard-accessible `TabBar`: maximum 10 tabs, at least one tab,
-   create/close/switch, dirty indicators, focus restoration, and undo-close
-   toast.
-5. Add a reusable `SplitView` with mouse/touch/keyboard divider support,
-   minimum pane sizes, responsive narrow/mobile behavior, and visible focus.
-6. Compress inactive-document snapshots and keep per-document history bounded.
-   Release canvases, ImageBitmaps, Blobs, object URLs, listeners, and workers
-   when documents close or are evicted.
-7. Do not build tabs/recovery around fragile text coordinates. Text object
-   editing remains gated by partial-overlap, undo/redo, and reload proofs.
-
-Step 13 is complete only when two documents can be edited independently,
-recovered after a simulated crash/reload, and closed without listener,
-object-URL, worker, or canvas-memory leaks.
-
-### Gate D — Phase 3 after the Phase 2 gates
-
-Follow this order from `docs/work2/phase-3/`:
-
-1. **3.1 catalog:** one English fallback catalog in `js/i18n/messages.js`,
-   stable `t(key, variables)`, interpolation, markup annotations, and a
-   missing-key coverage check.
-2. **3.2 language/RTL:** language preference, `html.lang` and `html.dir` set
-   together, logical CSS properties, unchanged canvas/image coordinates, and
-   LTR/RTL browser checks at desktop, 320px, and 200% zoom.
-3. **3.3 notepad core:** a functional right-panel seam, plain-text textarea,
-   dedicated versioned storage, bounded payload, safe normalization, debounced
-   persistence, pagehide/visibility flush, and recovery/quota status.
-4. **3.4 notepad tabs:** add/rename/switch/delete, active-tab persistence,
-   native tab semantics, roving focus, Delete confirmation, Escape cancel,
-   focus restoration, and a named maximum tab limit.
-5. **3.5 release hardening:** integrate catalog and notepad with settings,
-   PWA shell, offline preparation, reduced motion, mobile/200% zoom evidence,
-   Lighthouse, and release notes.
+1. **3.2 language/RTL:** add reviewed non-English catalogs, use logical CSS,
+   and prove LTR/RTL at desktop, 320px, and 200% zoom without changing
+   canvas/image coordinates. The preference selector and `html.lang`/`dir`
+   update seam are already wired.
+2. **3.3/3.4 UI:** connect the notepad store to a plain-text, accessible panel
+   and tabs with focused keyboard behavior and recovery/quota messaging.
+3. **3.5 hardening:** integrate settings/PWA/offline preparation, reduced
+   motion, mobile/zoom evidence, Lighthouse, and release notes.
 
 Do not add rich text, attachments, collaboration, sync, search, or encrypted
 export to the first notepad version.

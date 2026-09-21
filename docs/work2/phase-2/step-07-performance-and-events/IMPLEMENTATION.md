@@ -17,11 +17,22 @@
   `js/ui/ActionMenuController.js` seam. It owns positioning, direction,
   outside-click/Escape close, and `aria-expanded` state for static and dynamic
   menus, including the palette context menu.
+- Added the production runtime path: `ToolManager` coalesces pointer frames,
+  uses pointer capture with cancel/lost-capture cleanup, and flushes its final
+  sample before pointer-up. `ViewportManager` caches geometry and invalidates it
+  only when needed.
+- Made listener ownership explicit across telemetry, panel layout, action menus,
+  PWA installation/update controls, text-selection helpers, history resources,
+  and the editor composition root. `destroyEditor()` is invoked on a
+  non-persisted pagehide before the EventBus is destroyed.
+- Added contract coverage for listener release and status-bar write avoidance.
+  The local production-build browser journey verified that an actual pointer
+  stroke works before teardown and a later pointer event cannot paint after it.
 
-## Remaining gate
+## Remaining follow-up
 
-Pointermove coalescing, cached geometry, telemetry pause/resume, and broad
-`paint:*` adoption still require a browser trace and listener teardown audit.
-The ActionMenuController extraction is the first Step 09 modularization slice;
-the next slices must preserve the same behavior-test and listener-ownership
-evidence.
+The local cleanup proof is complete. Still collect a sustained large-canvas
+memory trace and repeat the interaction matrix with touch and stylus hardware;
+these are not covered by a localhost mouse journey. The ActionMenuController
+seam remains a Step 09 ownership boundary and must retain its behavior and
+teardown coverage as it evolves.

@@ -33,7 +33,9 @@ export const createEyedropperTool = () => {
     
     // Position balloon
     balloon.style.display = 'block';
-    balloon.style.left = (e.clientX + 15) + 'px';
+    const isRtl = document.documentElement?.dir === 'rtl';
+    balloon.style.left = isRtl ? 'auto' : (e.clientX + 15) + 'px';
+    balloon.style.right = isRtl ? (window.innerWidth - e.clientX + 15) + 'px' : 'auto';
     balloon.style.top = (e.clientY + 15) + 'px';
     
     // Draw 9x9 zoomed grid

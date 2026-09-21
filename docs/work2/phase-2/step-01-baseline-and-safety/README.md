@@ -1,4 +1,4 @@
-# Step 01 — Baseline and Safety Gate
+# Step 01 - Baseline and Safety Gate
 
 ## Goal
 

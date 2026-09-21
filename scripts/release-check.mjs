@@ -87,9 +87,11 @@ appModules.forEach((module) => {
   if (!shellAssetSet.has(asset)) errors.push(`Service-worker shell omits app module: ${asset}`);
 });
 
-const sourceFiles = [...walk('js'), ...walk('scripts'), ...walk('tests')].filter((file) => file.endsWith('.js'));
+const sourceFiles = [...walk('js'), ...walk('scripts'), ...walk('tests')]
+  .filter((file) => file.endsWith('.js') || file.endsWith('.mjs'));
 sourceFiles.forEach((file) => run(process.execPath, ['--check', file], `Syntax check ${file}`));
 run(process.execPath, ['scripts/docs-consistency.mjs'], 'Documentation consistency');
+run(process.execPath, ['scripts/runtime-audit.mjs'], 'Runtime/storage contract audit');
 run(process.execPath, ['--test', ...walk('tests').filter((file) => file.endsWith('.test.js'))], 'Node test suite');
 
 try {

@@ -11,6 +11,14 @@
 	--w10-active: #cce4f7;
 	--w10-active-border: #99ccee;
 	--w10-accent: #0078d4;
+	--w10-search-accent: #a855f7;
+	--w10-search-accent-strong: #7e22ce;
+	--w10-search-bg: #f1e5ff;
+	--w10-search-bg-active: #dec3ff;
+	--w10-search-badge: #d8b4fe;
+	--w10-search-focus: #ead7ff;
+	--w10-search-text: #581c87;
+	--w10-search-cancel-filter: invert(34%) sepia(58%) saturate(1792%) hue-rotate(250deg) brightness(90%);
 	--w10-text: #1a1a1a;
 	--w10-text-dim: #595959;
 	--w10-canvas-bg: #808080;
@@ -31,6 +39,14 @@ body.dark-mode {
 	--w10-active: #4a4a4a;
 	--w10-active-border: #666;
 	--w10-accent: #4cc2ff;
+	--w10-search-accent: #d8b4fe;
+	--w10-search-accent-strong: #e9d5ff;
+	--w10-search-bg: #3d2852;
+	--w10-search-bg-active: #563b70;
+	--w10-search-badge: #76539a;
+	--w10-search-focus: #4b3560;
+	--w10-search-text: #f3e8ff;
+	--w10-search-cancel-filter: invert(91%) sepia(24%) saturate(1162%) hue-rotate(212deg) brightness(102%);
 	--w10-text: #ffffff;
 	--w10-text-dim: #b0b0b0;
 	--w10-canvas-bg: #292929;
@@ -60,6 +76,7 @@ body {
 /* ===================== RIBBON ===================== */
 
 .ribbon {
+	position: relative;
 	display: flex;
 	align-items: stretch;
 	background: var(--w10-ribbon-bg);
@@ -74,6 +91,29 @@ body {
 	-ms-overflow-style: none;
 	min-height: 0;
 	max-height: var(--ribbon-compact-height);
+}
+.ribbon-loading-mask {
+	position: absolute;
+	inset: 0;
+	z-index: 20;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: var(--w10-ribbon-bg);
+	color: var(--w10-text-dim);
+	font-size: 20px;
+	letter-spacing: 0.02em;
+	pointer-events: auto;
+	cursor: progress;
+	animation: ribbon-loading-pulse 2s ease-in-out infinite;
+}
+.ribbon:not(.ribbon-loading) .ribbon-loading-mask {
+	display: none;
+}
+@keyframes ribbon-loading-pulse {
+	0%,
+	100% { opacity: 0.8; }
+	50% { opacity: 1; }
 }
 .ribbon::-webkit-scrollbar {
 	display: none;
@@ -173,7 +213,7 @@ body {
 	height: 24px;
 }
 
-.rbtn:hover {
+.rbtn:hover, .rbtn.cell.text-tool-menu-arrow:hover {
 	background: var(--w10-hover);
 	border-color: var(--w10-hover-border);
 }
@@ -300,7 +340,7 @@ body {
 	min-width: 16px;
 	padding: 0 2px;
 	border: 0;
-	border-left: 1px solid var(--w10-border-strong);
+	border-inline-start: 1px solid var(--w10-border-strong);
 	border-radius: 0;
 	background: var(--w10-ribbon-bg);
 }
@@ -308,7 +348,7 @@ body {
 .text-tool-menu-arrow:focus-visible,
 .text-tool-menu-arrow[aria-expanded="true"] {
 	background: var(--w10-hover);
-	border-left-color: var(--w10-accent);
+	border-inline-start-color: var(--w10-accent);
 	color: var(--w10-text);
 	outline: none;
 }
@@ -327,7 +367,7 @@ body {
 }
 .menu-checkbox-disabled {
 	color: var(--w10-text-dim);
-	opacity: .82;
+	opacity: 0.82;
 }
 .menu-option-note {
 	display: block;
@@ -418,7 +458,7 @@ body {
 	background: transparent;
 	color: var(--w10-text);
 	cursor: pointer;
-	text-align: left;
+	text-align: start;
 	font-size: 12px;
 }
 .recent-style:hover {
@@ -611,13 +651,13 @@ body {
 }
 .swatch.primary {
 	top: 0;
-	left: 0;
+	inset-inline-start: 0;
 	z-index: 2;
 	background: #000;
 }
 .swatch.secondary {
 	bottom: 0;
-	right: 0;
+	inset-inline-end: 0;
 	z-index: 1;
 	background: #fff;
 }
@@ -661,10 +701,14 @@ body {
 	height: 10px;
 	display: inline-block;
 	background-color: #fff;
-	background-image: linear-gradient(45deg, #d7d7d7 25%, transparent 25%, transparent 75%, #d7d7d7 75%), linear-gradient(45deg, #d7d7d7 25%, transparent 25%, transparent 75%, #d7d7d7 75%);
-	background-position: 0 0, 4.25px 4.25px;
+	background-image:
+		linear-gradient(45deg, #d7d7d7 25%, transparent 25%, transparent 75%, #d7d7d7 75%),
+		linear-gradient(45deg, #d7d7d7 25%, transparent 25%, transparent 75%, #d7d7d7 75%);
+	background-position:
+		0 0,
+		4.25px 4.25px;
 	background-size: 10px 10px;
-	border: 1px solid rgba(0, 0, 0, .28);
+	border: 1px solid rgba(0, 0, 0, 0.28);
 }
 .swatch-alpha-menu-items {
 	grid-template-columns: minmax(190px, 1fr);
@@ -733,6 +777,9 @@ body {
 .palette-grid button:hover {
 	outline: 1px solid var(--w10-accent);
 }
+.palette-grid button[data-bootstrap-palette] {
+	pointer-events: none;
+}
 .color-palette-context-menu {
 	z-index: 120;
 }
@@ -746,7 +793,7 @@ body {
 	border: 1px solid transparent;
 	background: transparent;
 	color: var(--w10-text);
-	text-align: left;
+	text-align: start;
 	cursor: pointer;
 	font: inherit;
 	font-size: 11px;
@@ -989,7 +1036,7 @@ body {
 }
 #app.ribbon-float .ribbon-drag-handle {
 	position: sticky;
-	left: 0;
+	inset-inline-start: 0;
 	z-index: 1;
 }
 .ribbon-drag-handle {
@@ -1012,7 +1059,7 @@ body {
 .ribbon-restore-bar {
 	position: fixed;
 	top: 8px;
-	right: 40px;
+	inset-inline-end: 40px;
 	display: flex;
 	gap: 4px;
 	z-index: 100;
@@ -1064,7 +1111,11 @@ body {
 		linear-gradient(45deg, #d7d7d7 25%, transparent 25%), linear-gradient(-45deg, #d7d7d7 25%, transparent 25%),
 		linear-gradient(45deg, transparent 75%, #d7d7d7 75%), linear-gradient(-45deg, transparent 75%, #d7d7d7 75%);
 	background-size: 20px 20px;
-	background-position: 0 0, 0 10px, 10px -10px, -10px 0;
+	background-position:
+		0 0,
+		0 10px,
+		10px -10px,
+		-10px 0;
 }
 
 .canvas-viewport.bg-grid {
@@ -1080,14 +1131,14 @@ body {
 	max-width: min(42vw, 420px);
 	flex: 0 1 auto;
 	background: var(--w10-bg);
-	border-left: 1px solid var(--w10-border-strong);
+	border-inline-start: 1px solid var(--w10-border-strong);
 	display: flex;
 	flex-direction: column;
 	min-height: 0;
 }
 .sidebar-resizer {
 	position: absolute;
-	left: -4px;
+	inset-inline-start: -4px;
 	top: 0;
 	bottom: 0;
 	width: 8px;
@@ -1141,7 +1192,7 @@ body {
 	align-items: center;
 	justify-content: flex-start;
 	gap: 8px;
-	width: 100%;
+	width: fit-content;
 	min-height: 28px;
 	margin: 0;
 }
@@ -1187,6 +1238,31 @@ body {
 .sidebar-content .checkbox-row input {
 	flex: 0 0 auto;
 	margin: 0;
+}
+
+/* Keep the row's whitespace inert: only the input and its explicit label are
+   interactive, so the pointer communicates the real hit target. */
+.checkbox-row {
+	display: flex;
+	align-items: center;
+	justify-content: flex-start;
+	gap: 2px;
+	width: fit-content;
+	cursor: default;
+}
+.checkbox-row input:not(:disabled),
+.checkbox-row > label {
+	cursor: pointer;
+}
+.checkbox-row > label {
+	display: inline-flex;
+	align-items: center;
+	margin: 0;
+	justify-content: flex-start;
+	gap: 0;
+}
+.history-checkbox-row {
+	margin-bottom: 8px;
 }
 
 /* History Content */
@@ -1432,7 +1508,7 @@ body.dark-mode #history-clear-btn {
 .history-delete {
 	position: absolute;
 	top: 6px;
-	right: 6px;
+	inset-inline-end: 6px;
 	width: 28px;
 	height: 28px;
 	display: grid;
@@ -1457,7 +1533,7 @@ body.dark-mode #history-clear-btn {
 .history-save {
 	position: absolute;
 	top: 6px;
-	right: 40px;
+	inset-inline-end: 40px;
 	width: 28px;
 	height: 28px;
 	display: grid;
@@ -1605,7 +1681,7 @@ body.dark-mode #history-clear-btn {
 .canvas-stage {
 	/* Outer scroll box. Its width/height are set from JS (ViewportManager) to
      the *scaled* canvas size so the viewport's scrollbars always match the
-     visible canvas — no dead gray space when zoomed out. */
+     visible canvas - no dead gray space when zoomed out. */
 	position: relative;
 	box-shadow:
 		0 0 0 1px #555,
@@ -1698,13 +1774,15 @@ body.dark-mode #history-clear-btn {
 	border-style: solid;
 	border-width: 2px;
 	background: color-mix(in srgb, var(--w10-accent) 14%, transparent);
-	box-shadow: 0 0 0 1px #fff, 0 0 0 3px var(--w10-accent);
+	box-shadow:
+		0 0 0 1px #fff,
+		0 0 0 3px var(--w10-accent);
 	cursor: move;
 	outline: none;
 	pointer-events: auto;
 }
 .text-object-focus-target.selected::after {
-	content: '✥';
+	content: "✥";
 	position: absolute;
 	left: 50%;
 	top: 50%;
@@ -1761,6 +1839,37 @@ body.dark-mode #history-clear-btn {
 	border: 1.5px solid #fff;
 }
 
+/* Direction is an independent presentation preference. Logical borders mirror
+   surrounding controls while canvas edge handles stay tied to pixel geometry. */
+html[dir="rtl"] .settings-header {
+	margin-inline: 0 4px;
+}
+html[dir="rtl"] .settings-search {
+	margin-inline-start: 0;
+	margin-inline-end: 52px;
+}
+/* The workspace follows RTL layout while the bitmap keeps its natural pixel
+   orientation. Anchoring the scale at the inline end keeps zoom and scroll
+   geometry aligned with the RTL canvas edge without flipping image content. */
+html[dir="rtl"] .canvas-viewport,
+html[dir="rtl"] .canvas-stage,
+html[dir="rtl"] .canvas-scale {
+	direction: rtl;
+}
+html[dir="rtl"] .canvas-scale {
+	transform-origin: top right;
+}
+html[dir="rtl"] .handle-right {
+	right: auto;
+	left: -4px;
+}
+html[dir="rtl"] .handle-corner {
+	right: auto;
+	left: -14px;
+	transform-origin: top right;
+	cursor: nesw-resize;
+}
+
 .resize-ghost {
 	display: none;
 	position: absolute;
@@ -1770,6 +1879,10 @@ body.dark-mode #history-clear-btn {
 	background: rgba(0, 120, 212, 0.06);
 	pointer-events: none;
 	z-index: 4;
+}
+html[dir="rtl"] .resize-ghost {
+	right: 0;
+	left: auto;
 }
 
 .text-editor-shell {
@@ -1968,6 +2081,50 @@ dialog h3 {
 	color: var(--w10-text);
 	font: inherit;
 }
+.background-removal-dialog {
+	width: min(460px, calc(100vw - 32px));
+}
+.background-removal-dialog form {
+	display: grid;
+	gap: 10px;
+}
+.background-removal-dialog p {
+	margin: 0;
+	color: var(--w10-text-dim);
+	font-size: 13px;
+	line-height: 1.45;
+}
+.background-removal-preview {
+	display: grid;
+	place-items: center;
+	min-height: 100px;
+	max-height: 280px;
+	overflow: auto;
+	border: 1px solid var(--w10-border);
+	background-color: var(--w10-bg);
+	background-image:
+		linear-gradient(45deg, color-mix(in srgb, var(--w10-border) 55%, transparent) 25%, transparent 25%),
+		linear-gradient(-45deg, color-mix(in srgb, var(--w10-border) 55%, transparent) 25%, transparent 25%),
+		linear-gradient(45deg, transparent 75%, color-mix(in srgb, var(--w10-border) 55%, transparent) 75%),
+		linear-gradient(-45deg, transparent 75%, color-mix(in srgb, var(--w10-border) 55%, transparent) 75%);
+	background-size: 16px 16px;
+	background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+}
+.background-removal-preview img {
+	display: block;
+	max-width: 100%;
+	max-height: 270px;
+	object-fit: contain;
+}
+.background-removal-dialog progress {
+	width: 100%;
+	accent-color: var(--w10-accent);
+}
+.background-removal-dialog output {
+	min-height: 18px;
+	color: var(--w10-text-dim);
+	font-size: 12px;
+}
 .ai-connection-dialog {
 	width: min(470px, calc(100vw - 32px));
 	max-width: calc(100vw - 32px);
@@ -2001,48 +2158,136 @@ dialog h3 {
 
 .settings-shell {
 	display: grid;
-	grid-template-columns: 112px minmax(260px, 1fr);
-	width: 560px;
+	grid-template-columns: minmax(96px, 112px) minmax(0, 1fr);
+	width: min(560px, calc(100vw - 24px));
 	height: min(470px, 88vh);
-	max-width: min(560px, 80vw);
+	max-width: 100%;
 	max-height: min(470px, 88vh);
 	position: relative;
 }
 .settings-shell {
-	grid-template-rows: 30px 1fr 36px;
+	grid-template-rows: minmax(42px, auto) minmax(0, 1fr) 36px;
 }
 .settings-header {
 	grid-column: 1 / -1;
 	display: flex;
 	align-items: center;
-	justify-content: space-between;
+	gap: 8px;
+	margin: 0 0 8px 4px;
 	font-size: 12px;
 	font-weight: 700;
 	color: var(--w10-text-dim);
 }
+.settings-search {
+	display: flex;
+	align-items: center;
+	gap: 5px;
+	min-width: 0;
+	margin-inline-start: 52px;
+	margin-bottom: 0px;
+	font-weight: 400;
+}
+.settings-search input {
+	width: 190px;
+	min-width: 0;
+	padding: 4px 7px;
+	border: 1px solid var(--w10-border-strong);
+	border-radius: 3px;
+	background: var(--w10-bg);
+	color: var(--w10-text);
+	font: inherit;
+}
+.settings-search output {
+	min-width: 28px;
+	color: var(--w10-text-dim);
+	font-size: 10px;
+	white-space: nowrap;
+	text-align: center;
+}
+.settings-search-nav {
+	width: 18px;
+	height: 18px;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	color: var(--w10-text-dim);
+	font-size: 13px;
+	line-height: 16px;
+	cursor: pointer;
+}
+.settings-search-nav:hover,
+.settings-search-nav:focus-visible {
+	color: var(--w10-search-accent-strong);
+	background: var(--w10-search-bg-active);
+	outline: 1px solid var(--w10-search-accent);
+}
+.settings-search input:focus-visible {
+	outline: 1px solid var(--w10-search-accent);
+	outline-offset: 1px;
+}
+.settings-search:focus-within input,
+.settings-search-has-results input {
+	border-color: var(--w10-search-accent);
+	box-shadow: 0 0 0 2px var(--w10-search-focus);
+}
+.settings-search input::-webkit-search-cancel-button {
+	cursor: pointer;
+	filter: var(--w10-search-cancel-filter);
+}
+.dialog-search-match {
+	border-radius: 3px;
+	background: var(--w10-search-bg) !important;
+	box-shadow: 0 0 0 2px var(--w10-search-accent);
+}
+.dialog-search-active {
+	background: var(--w10-search-bg-active) !important;
+	color: var(--w10-search-text) !important;
+}
+.dialog-search-tab-match {
+	position: relative;
+	background: var(--w10-search-bg);
+	box-shadow: inset 3px 0 var(--w10-search-accent);
+	color: var(--w10-search-text);
+}
+.dialog-search-tab-match::after {
+	content: attr(data-search-match-count);
+	position: absolute;
+	right: 2px;
+	bottom: 2px;
+	min-width: 10px;
+	padding: 0 1px;
+	border-radius: 8px;
+	background: var(--w10-search-badge);
+	color: var(--w10-search-text);
+	font-size: 10px;
+	line-height: 12px;
+	text-align: center;
+}
 .settings-body {
 	min-height: 0;
+	min-width: 0;
 	overflow: auto;
-	padding-bottom: 20px;
+	padding-block: 0 8px;
+	padding-inline: 10px 6px;
 }
 .settings-footer {
 	grid-column: 2;
 	grid-row: 3;
 	display: flex;
 	justify-content: flex-end;
-	align-items: center;
+	align-items: flex-end;
 	border-top: 1px solid var(--w10-border);
 }
 .settings-footer-nav {
 	grid-column: 1;
 	border-top: 1px solid var(--w10-border);
-	border-right: 1px solid var(--w10-border);
+	border-inline-end: 1px solid var(--w10-border);
 }
 .settings-general-options {
 	display: grid;
 	grid-template-columns: repeat(2, minmax(0, 1fr));
 	gap: 4px 10px;
-	margin-bottom: 10px;
+	margin-bottom: 8px;
 }
 .settings-general-options .checkbox-row {
 	min-width: 0;
@@ -2056,8 +2301,8 @@ dialog h3 {
 }
 .settings-close {
 	position: absolute;
-	top: -4px;
-	right: -4px;
+	top: 0px;
+	inset-inline-end: 0;
 	z-index: 2;
 	width: 30px;
 	height: 30px;
@@ -2079,24 +2324,32 @@ dialog h3 {
 	display: flex;
 	flex-direction: column;
 	gap: 2px;
-	border-right: 1px solid var(--w10-border);
+	border-inline-end: 1px solid var(--w10-border);
 }
 .settings-tab {
 	border: 0;
-	border-left: 3px solid transparent;
+	border-inline-start: 3px solid transparent;
 	background: transparent;
 	color: var(--w10-text-dim);
 	padding: 10px 4px;
-	text-align: left;
+	text-align: start;
 	cursor: pointer;
 	font-size: 11px;
 	font-weight: 700;
 }
+.settings-tab.dialog-search-tab-match:not(.active) {
+	border-inline-start-color: var(--w10-search-accent);
+}
 .settings-tab.active,
 .settings-tab:hover {
-	border-left-color: var(--w10-accent);
+	border-inline-start-color: var(--w10-accent);
 	background: var(--w10-hover);
 	color: var(--w10-text);
+}
+.settings-tab.dialog-search-tab-active {
+	/* Search focus is additive: the selected tab keeps its blue state while
+	   the purple inset ring identifies the current search result. */
+	box-shadow: inset 0 0 0 2px var(--w10-search-accent);
 }
 .feedback-actions {
 	display: flex;
@@ -2155,7 +2408,7 @@ dialog h3 {
 	color: var(--w10-accent);
 }
 .settings-panel {
-	padding-left: 18px;
+	padding: 6px 6px 6px 10px;
 }
 .settings-panel[hidden] {
 	display: none;
@@ -2182,10 +2435,47 @@ dialog h3 {
 	grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
 	gap: 8px;
 }
+.shortcut-settings-list {
+	display: grid;
+	gap: 4px;
+	margin-top: 10px;
+}
+.shortcut-setting-row {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) minmax(120px, 180px) max-content;
+	align-items: center;
+	gap: 8px;
+	min-height: 32px;
+	padding: 3px 0;
+}
+.shortcut-setting-row label {
+	min-width: 0;
+	font-size: 12px;
+}
+.shortcut-setting-input {
+	width: 100%;
+	min-height: 28px;
+	padding: 4px 7px;
+	border: 1px solid var(--w10-border-strong);
+	background: var(--w10-input-bg, var(--w10-ribbon-bg));
+	color: var(--w10-text);
+	font: inherit;
+	font-size: 12px;
+	text-align: center;
+	cursor: pointer;
+}
+.shortcut-setting-input:focus {
+	border-color: var(--w10-accent);
+	outline: 2px solid color-mix(in srgb, var(--w10-accent) 35%, transparent);
+}
+.shortcut-reset {
+	min-height: 28px;
+	padding: 4px 7px;
+}
 .settings-field {
 	display: flex;
 	flex-direction: column;
-	gap: 4px;
+	gap: 2px 8px;
 	margin-bottom: 10px;
 }
 .settings-field select {
@@ -2193,6 +2483,33 @@ dialog h3 {
 }
 .choice-field {
 	align-items: stretch;
+}
+.inline-choice-field {
+	flex-direction: row;
+	align-items: center;
+	flex-wrap: wrap;
+}
+.inline-choice-field > label {
+	white-space: nowrap;
+	margin-bottom: 0;
+}
+.inline-choice-field > select {
+	flex: 0 1 180px;
+	width: 180px;
+	min-width: 0;
+}
+.inline-choice-field > .settings-help {
+	flex: 1 0 100%;
+	margin: 0;
+}
+@media (max-width: 420px) {
+	.inline-choice-field {
+		align-items: stretch;
+	}
+	.inline-choice-field > select {
+		flex-basis: 100%;
+		width: auto;
+	}
 }
 .choice-summary {
 	display: flex;
@@ -2246,7 +2563,7 @@ dialog h3 {
 	width: 1px;
 	height: 1px;
 	op: auto;
-	left: -10000px;
+	inset-inline-start: -10000px;
 	overflow: hidden;
 }
 .resize-presets {
@@ -2312,6 +2629,11 @@ dialog h3 {
 }
 #settings-dialog {
 	padding: 10px;
+	max-width: calc(100vw - 24px);
+	overflow: hidden;
+}
+.settings-shell {
+	min-width: 0;
 }
 .resize-dimension-row {
 	display: grid;
@@ -2416,7 +2738,7 @@ dialog h3 {
 .action-menu-items {
 	position: fixed;
 	top: 0;
-	left: 0;
+	inset-inline-start: 0;
 	z-index: 30;
 	display: none;
 	min-width: 64px;
@@ -2428,7 +2750,7 @@ dialog h3 {
 }
 .menu-arrow {
 	display: inline-block;
-	margin-left: 2px;
+	margin-inline-start: 2px;
 	color: var(--w10-text-dim);
 	font-size: 10px;
 	line-height: 1;
@@ -2447,7 +2769,7 @@ dialog h3 {
 	border: 2px solid transparent;
 	color: var(--w10-text);
 	font-size: 13px;
-	text-align: left;
+	text-align: start;
 	cursor: pointer;
 	white-space: nowrap;
 }
@@ -2462,7 +2784,7 @@ dialog h3 {
 	border-color: var(--w10-hover-border);
 }
 .action-menu-items button .menu-shortcut {
-	margin-left: 14px;
+	margin-inline-start: 14px;
 	color: var(--w10-text-dim);
 	font-size: 11px;
 }
@@ -2486,7 +2808,7 @@ dialog h3 {
 	color: var(--w10-text);
 	font: inherit;
 	font-size: 13px;
-	text-align: left;
+	text-align: start;
 	cursor: pointer;
 }
 .action-submenu-trigger:hover,
@@ -2499,6 +2821,15 @@ dialog h3 {
 	color: var(--w10-text-dim);
 	font-size: 16px;
 	line-height: 1;
+}
+html[dir="rtl"] .submenu-arrow {
+	transform: scaleX(-1);
+}
+.action-submenu[data-submenu-direction="left"] .submenu-arrow {
+	transform: scaleX(-1);
+}
+.action-submenu[data-submenu-direction="right"] .submenu-arrow {
+	transform: none;
 }
 .action-submenu-items {
 	grid-template-columns: minmax(160px, 1fr);
@@ -2613,9 +2944,16 @@ dialog h3 {
 	padding: 7px 10px;
 	font-size: 12px;
 	white-space: nowrap;
+	width: fit-content;
+	cursor: default;
 }
-.menu-checkbox input {
+.menu-checkbox input,
+.menu-checkbox > label {
 	margin: 0;
+	cursor: pointer;
+}
+.menu-checkbox > label {
+	display: inline;
 }
 .text-style-picker {
 	padding: 7px 10px;
@@ -2698,8 +3036,13 @@ dialog label {
 	margin-bottom: 10px;
 	font-size: 13px;
 }
-dialog label.checkbox-row {
+dialog .checkbox-row {
 	justify-content: flex-start;
+}
+dialog .checkbox-row > label {
+	display: inline-flex;
+	margin: 0;
+	font-size: 13px;
 }
 dialog input[type="number"] {
 	width: 90px;
@@ -2829,5 +3172,9 @@ dialog input[type="number"] {
 		height: 18px;
 		right: -18px;
 		bottom: -18px;
+	}
+	html[dir="rtl"] .handle-corner {
+		right: auto;
+		left: -18px;
 	}
 }

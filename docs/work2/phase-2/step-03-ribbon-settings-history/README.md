@@ -1,4 +1,4 @@
-# Step 03 — Ribbon, Settings, and History UX
+# Step 03 - Ribbon, Settings, and History UX
 
 ## Goal
 

@@ -1,4 +1,6 @@
 z-next
+node_modules/
+dist/
 
 # Playwright CLI snapshots/logs are ephemeral; curated evidence lives under
 # output/playwright/phase-2/playwright-cli/.
@@ -11,6 +13,12 @@ z-next
 # Use docs-internal for future local-only engineering notes in any docs tree.
 /docs-internal/
 **/docs-internal/
+
+# Keep raw timestamped browser traces and superseded Lighthouse iterations out
+# of the public evidence tree; retain only named artifacts documented in
+# output/README.md.
+output/playwright/phase-2/playwright-cli/page-*
+output/quality/lighthouse-round*.json
 
 # Agent-generated retrospectives and memory are workspace-internal.
 /.agent/

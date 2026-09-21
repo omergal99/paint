@@ -117,7 +117,7 @@
     - generic [ref=f2e205]:
       - generic "Committed text objects"
   - contentinfo [ref=f2e211]:
-    - generic [ref=f2e212]: "Pointer: —"
+    - generic [ref=f2e212]: "Pointer: -"
     - generic [ref=f2e214]:
       - img "Paint icon" [ref=f2e215] [cursor=pointer]
       - generic [ref=f2e216]: paint

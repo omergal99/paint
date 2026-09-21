@@ -9,6 +9,16 @@
     "version:patch": "npm version patch --no-git-tag-version && npm run version:sync",
     "verify:docs": "node scripts/docs-consistency.mjs",
     "verify:release": "node scripts/release-check.mjs",
-    "audit:runtime": "node scripts/runtime-audit.mjs"
+    "check:i18n": "node scripts/i18n-check.mjs",
+    "audit:runtime": "node scripts/runtime-audit.mjs",
+    "audit:snapshot": "node scripts/runtime-audit.mjs --output output/quality/step-07-08-runtime-audit.json",
+    "build": "node scripts/build.mjs",
+    "preview": "node scripts/serve.mjs --directory dist --port 4174",
+    "serve": "node scripts/serve.mjs --port 4173",
+    "typecheck": "tsc --project jsconfig.json"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2",
+    "typescript": "^7.0.2"
   }
 }

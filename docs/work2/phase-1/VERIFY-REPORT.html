@@ -1,7 +1,7 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>Paint — Verification & Completion Report</title>
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>Paint - Verification & Completion Report</title>
 <style>body{font-family:"Segoe UI",Arial,sans-serif;max-width:980px;margin:24px auto;padding:0 16px;color:#1a1a1a;line-height:1.5}h1{font-size:24px}h2{font-size:18px;margin-top:28px;border-bottom:2px solid #0078d4;padding-bottom:4px}table{border-collapse:collapse;width:100%;font-size:13px}th,td{border:1px solid #ccc;padding:6px 8px;text-align:left;vertical-align:top}th{background:#f0f6fc}.ok{display:inline-block;background:#e6f6e8;border:1px solid #6fbf7f;color:#14532d;border-radius:4px;padding:2px 10px;font-weight:700}.badge{display:inline-block;border-radius:4px;padding:1px 8px;font-size:12px;font-weight:600}.done{background:#e6f6e8;color:#14532d}.plan{background:#e4f1fd;color:#0c3d75}code{background:#f4f4f4;padding:1px 5px;border-radius:3px;font-size:12px}li{margin-bottom:6px}.check{list-style:none;padding:0}.check li:before{content:"☐ "}</style>
 </head><body>
-<h1>Paint — Verification &amp; Completion Report <span class="ok">BUILD GOOD ✅ 33/33</span></h1>
+<h1>Paint - Verification &amp; Completion Report <span class="ok">BUILD GOOD ✅ 33/33</span></h1>
 <p><b>Date:</b> 2026-09-15 · <b>Scope:</b> P0 + P1 (#1–#6, #8) · #7 tabs/split planned, not started.</p>
 <h2>1. Build status</h2>
 <table><tr><th>Check</th><th>Result</th><th>Evidence</th></tr>
@@ -18,14 +18,14 @@
 <tr><td>6</td><td>No-change skip; History/Session tabs; 2-col; colors</td><td>Undo + save dedup; Session = in-memory steps; responsive grid; green/blue/red buttons</td></tr>
 <tr><td>8</td><td>Quota + compressed thumbs</td><td>About Used/Free/bar; IDB v2 thumbs webp ≤160px; 90% quota guard (OOM-safe)</td></tr>
 <tr><td>+</td><td>Undo/redo shortcuts</td><td>Ctrl/Cmd+Z, Ctrl+Y, Ctrl+Shift+Z (skipped while typing)</td></tr></table>
-<h2>3. Self-review loop — bugs found &amp; fixed</h2>
+<h2>3. Self-review loop - bugs found &amp; fixed</h2>
 <ol>
-<li><b>SelectTool guard inversion</b> (<code>if (this._start)</code> → <code>if (!this._start)</code>) — would have frozen selection moves.</li>
-<li><b>Toolbar <code>label</code> undefined</b> — reordered definition before use.</li>
-<li><b>index.html malformed nesting</b> — About rows + tab indent broke <code>&lt;dl&gt;</code>; repaired.</li>
-<li><b>SW missing new modules</b> — added precache + cache bump so offline keeps working.</li>
-<li><b>Smoke test nesting bug</b> — P0 test was nested inside another test; moved top-level → clean 33/33.</li>
-<li><b>Loose assertion</b> — multiline regex failed; tightened + added SW/cursor assertions.</li></ol>
+<li><b>SelectTool guard inversion</b> (<code>if (this._start)</code> → <code>if (!this._start)</code>) - would have frozen selection moves.</li>
+<li><b>Toolbar <code>label</code> undefined</b> - reordered definition before use.</li>
+<li><b>index.html malformed nesting</b> - About rows + tab indent broke <code>&lt;dl&gt;</code>; repaired.</li>
+<li><b>SW missing new modules</b> - added precache + cache bump so offline keeps working.</li>
+<li><b>Smoke test nesting bug</b> - P0 test was nested inside another test; moved top-level → clean 33/33.</li>
+<li><b>Loose assertion</b> - multiline regex failed; tightened + added SW/cursor assertions.</li></ol>
 <h2>4. Manual QA checklist (~5 min)</h2>
 <ul class="check">
 <li>V drag anchors at pointer; toggle ON makes shape movable after draw</li>

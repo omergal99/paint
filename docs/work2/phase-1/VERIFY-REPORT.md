@@ -1,4 +1,4 @@
-# Paint — Verification & Completion Report
+# Paint - Verification & Completion Report
 
 **Date:** 2026-09-15 · **Branch work:** P0 quick wins + P1 history/storage (#1–#6, #8) · **#7 tabs/split:** planned, not started (agreed last)
 
@@ -27,12 +27,12 @@
 
 ## 3. Self-review loop (bugs I found & fixed before handing over)
 
-1. **SelectTool guard inversion** — my first edit wrote `if (this._start) return;` which would freeze selection moves; corrected to `if (!this._start) return;` + persist after move.
-2. **Toolbar `label` undefined** — refactored title block referenced `label` before definition; fixed by defining `const label` first.
-3. **index.html malformed nesting** — About `Free space/Usage` rows and settings-tab indent broke `<dl>` nesting; repaired to valid `<div><dt><dd>` rows.
-4. **SW missing new modules** — `SliderControl.js` + `releaseNotes.js` weren't precached → offline would 404; added + cache bump.
-5. **Smoke test nesting bug** — new P0 test landed inside the community-standards test (showing 32 pass w/ hidden subtest); moved to top-level → clean 33/33.
-6. **Loose assertion** — `aria-label.*slider` regex failed on multiline HTML; tightened to `/Font size slider/` + added `cursor:pointer` + SW assertions.
+1. **SelectTool guard inversion** - my first edit wrote `if (this._start) return;` which would freeze selection moves; corrected to `if (!this._start) return;` + persist after move.
+2. **Toolbar `label` undefined** - refactored title block referenced `label` before definition; fixed by defining `const label` first.
+3. **index.html malformed nesting** - About `Free space/Usage` rows and settings-tab indent broke `<dl>` nesting; repaired to valid `<div><dt><dd>` rows.
+4. **SW missing new modules** - `SliderControl.js` + `releaseNotes.js` weren't precached → offline would 404; added + cache bump.
+5. **Smoke test nesting bug** - new P0 test landed inside the community-standards test (showing 32 pass w/ hidden subtest); moved to top-level → clean 33/33.
+6. **Loose assertion** - `aria-label.*slider` regex failed on multiline HTML; tightened to `/Font size slider/` + added `cursor:pointer` + SW assertions.
 
 ## 4. Manual QA checklist (for you, ~5 min)
 
@@ -47,4 +47,4 @@
 
 ## 5. Left for next round (#7, agreed last)
 
-Tabs ≤10 + split view + `js/session/` service, per-doc storage keys, crash recovery, `.skills/` research docs. Blocked on nothing — ready when you say go.
+Tabs ≤10 + split view + `js/session/` service, per-doc storage keys, crash recovery, `.skills/` research docs. Blocked on nothing - ready when you say go.

@@ -137,7 +137,7 @@
         - 'button "Focus text: Round two" [ref=f1e267]'
         - 'button "Focus text: Selected text" [ref=f1e268]'
   - contentinfo [ref=f1e211]:
-    - generic [ref=f1e212]: "Pointer: —"
+    - generic [ref=f1e212]: "Pointer: -"
     - generic [ref=f1e214]:
       - img "Paint icon" [ref=f1e215] [cursor=pointer]
       - generic [ref=f1e216]: paint

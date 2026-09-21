@@ -1,8 +1,8 @@
-# Paint — Plan Details (per-item specs)
+# Paint - Plan Details (per-item specs)
 
 > Companion to `PLAN-OVERVIEW.md`. All paths under `paint/`.
 
-## #1 — V-shape anchor + create-then-move toggle
+## #1 - V-shape anchor + create-then-move toggle
 
 **Problem:** `drawNormalizedV()` (`ShapeTool.js:149-154`) centers via
 `squareBounds(x,y,w,h)`. Drag direction shifts the square, so V jumps,
@@ -19,19 +19,19 @@ unlike X/rectangle which use raw x,y,w,h.
 
 **Accept:** toggle ON lets user reposition right after draw; OFF = today.
 
-## #2 — First paste on fresh New goes to 0,0
+## #2 - First paste on fresh New goes to 0,0
 
 **Current:** `ClipboardManager:45-47` pastes at `statusBar.currentPointer`
 if present, else 0,0. After restart the stale pointer misplaces first paste.
 
-**Plan:** add `isFreshDoc` flag — set true on `newFile()` / cold load with
+**Plan:** add `isFreshDoc` flag - set true on `newFile()` / cold load with
 no `omerpaint:last-canvas`; cleared on first draw/paste/resize/open.
 In `insertBitmapAsFloatingSelection`: if fresh → x=0,y=0, else pointer.
 ~5 lines, no storage change.
 
 **Accept:** cold-start → New → Ctrl+V lands at 0,0; later pastes follow cursor.
 
-## #3 — Font-size slider 1–120
+## #3 - Font-size slider 1–120
 
 **Current:** `#line-size` + `[data-size-option]` + `#custom-line-size`
 in `Toolbar._bindLineSize` (clamp 1–300).
@@ -43,17 +43,17 @@ number input + boxes on `input` event. Text clamps 1–120; brush keeps 1–300.
 **Accept:** drag updates textarea + committed text + label; persists via
 existing `_styles`. Add `aria-label`, 28px touch target.
 
-## #4 — Settings Release Notes tab
+## #4 - Settings Release Notes tab
 
 **Plan:** new tab `data-settings-tab="release"` + panel in `#settings-dialog`
 (`index.html:853-859`); static `RELEASE_NOTES` const in new
 `js/releaseNotes.js`, rendered by `main.js`. Start with 1.5.0 + Unreleased.
 Reuses `.settings-panel`; keep `?dialog=settings&tab=release` deep-link.
 
-## #5 — tool-status-btn hover affordance
+## #5 - tool-status-btn hover affordance
 
 
-## #6 — History upgrade
+## #6 - History upgrade
 
 ### 6.0 Skip no-change saves
 Hash/sample pixels (dims + dataURL length or 32px sample) vs last saved in
@@ -64,7 +64,7 @@ Wrap `#history-grid` with `[History|Session]` tab bar.
 History = IndexedDB persistent (honors lifecycle/all/manual).
 Session = in-memory `HistoryManager.undoStack+redoStack+current`
 (every stroke; click restores via `_restore` with confirm; dies on reload).
-Undo/Redo stays session-scoped MAX 20 — unchanged, correct per request.
+Undo/Redo stays session-scoped MAX 20 - unchanged, correct per request.
 CSS: `grid-template-columns: repeat(auto-fill,minmax(120px,1fr))`;
 1 col narrow → 2 cols when `.right-sidebar` wide/resized.
 
@@ -72,7 +72,7 @@ CSS: `grid-template-columns: repeat(auto-fill,minmax(120px,1fr))`;
 Save=light green, Clear=light red, Export=light blue (pastel bg + dark-mode
 variants); keep `.danger` semantics.
 
-## #8 — Quota + compressed thumbs (do before #6)
+## #8 - Quota + compressed thumbs (do before #6)
 
 About (`main.js:1184`): show `Used X · Free Y · Quota Z` + bar from
 `navigator.storage.estimate()`; fallback Unavailable.
@@ -81,7 +81,7 @@ load/export uses full; fallback to full on encode fail. Compress on
 `addSession` (off hot path). IDB v1→v2 migration adds `thumb`+`docId`.
 Quota guard: >80% → drop oldest + flash.
 
-## #7 — Tabs (max 10) + split + session service [XL, last]
+## #7 - Tabs (max 10) + split + session service [XL, last]
 
 ### UX
 TabBar above viewport: `+`, chips with dirty dot, x per tab,

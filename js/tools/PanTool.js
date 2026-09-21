@@ -55,6 +55,11 @@ export const createPanTool = () => {
     setPanningState(viewportFor(ctx), false);
   };
 
+  const onCancel = (_point, ctx) => {
+    drag = null;
+    setPanningState(viewportFor(ctx), false);
+  };
+
   return {
     name: 'pan',
     cursor: 'grab',
@@ -63,5 +68,6 @@ export const createPanTool = () => {
     onDown,
     onMove,
     onUp,
+    onCancel,
   };
 };

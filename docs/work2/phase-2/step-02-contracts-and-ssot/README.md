@@ -1,4 +1,4 @@
-# Step 02 — Contracts and SSOT
+# Step 02 - Contracts and SSOT
 
 ## Goal
 

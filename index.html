@@ -68,18 +68,21 @@
 	<div id="app">
 
 		<!-- ===================== RIBBON ===================== -->
-		<header class="ribbon" id="ribbon">
+		<header class="ribbon ribbon-loading" id="ribbon" data-tag="ribbon">
+			<div class="ribbon-loading-mask" data-tag="ribbon-loading-mask" aria-hidden="true">
+				<span data-i18n="ui.loading">Loading…</span>
+			</div>
 			<button type="button" class="ribbon-drag-handle" id="ribbon-drag-handle" title="Drag floating ribbon">⠿</button>
 
 			<!-- File group -->
-			<section class="ribbon-group ribbon-group-file">
+			<section class="ribbon-group ribbon-group-file" data-ribbon-key="file">
 				<div class="rbtn-row">
 					<button class="rbtn" id="btn-new" data-tag="btn-new" title="New (Ctrl+N)">
 						<svg class="icon size5" viewBox="0 0 20 20">
 							<rect x="4" y="2" width="11" height="16" rx="1" />
 							<path d="M11 2v4h4" fill="none" />
 						</svg>
-						<span><u>N</u>ew</span></button>
+						<span data-i18n="common.actions.new">New</span></button>
 					<div class="rbtn-stack">
 						<div class="action-menu">
 							<button class="rbtn small action-menu-trigger" id="btn-open-menu" data-tag="btn-open-menu"
@@ -87,7 +90,7 @@
 								<svg class="icon size4" viewBox="0 0 20 20">
 									<path d="M2 6h4l2 2h10v9a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6z" />
 								</svg>
-								<span><u>O</u>pen <span class="menu-arrow" aria-hidden="true">▾</span></span></button>
+								<span><span data-i18n="common.actions.open">Open</span> <span class="menu-arrow" aria-hidden="true">▾</span></span></button>
 							<div class="action-menu-items" role="menu" aria-label="Open options">
 								<button type="button" id="btn-open" data-tag="btn-open" role="menuitem" title="Open (Ctrl+O)">
 									<svg class="icon" viewBox="0 0 20 20">
@@ -112,7 +115,7 @@
 								<rect class="op-cut" x="6" y="3" width="8" height="5" />
 								<rect class="op-cut" x="6" y="12" width="8" height="5" />
 							</svg>
-							<span><u>S</u>ave</span></button>
+							<span data-i18n="common.actions.save">Save</span></button>
 					</div>
 				</div>
 				<input type="file" id="file-input" accept="image/*" hidden aria-hidden="true" tabindex="-1">
@@ -122,7 +125,7 @@
 			<div class="separator separator-after-file"></div>
 
 			<!-- Clipboard group -->
-			<section class="ribbon-group ribbon-group-clipboard">
+			<section class="ribbon-group ribbon-group-clipboard" data-ribbon-key="clipboard">
 				<div class="rbtn-row">
 					<button class="rbtn big" id="btn-paste" data-tag="btn-paste" title="Paste (Ctrl+V)">
 						<svg class="icon size5" viewBox="0 0 20 20">
@@ -156,7 +159,7 @@
 			<div class="separator separator-after-clipboard"></div>
 
 			<!-- Image group -->
-			<section class="ribbon-group ribbon-group-image">
+			<section class="ribbon-group ribbon-group-image" data-ribbon-key="image">
 				<div class="rbtn-row">
 					<button class="rbtn tool-btn" data-tool="select" data-tag="tool-select" title="Select (S)">
 						<svg class="icon size5" viewBox="0 0 20 20">
@@ -174,43 +177,58 @@
 							<button class="rbtn small action-menu-trigger" id="btn-image-more" data-tag="btn-image-more"
 								title="More image actions" aria-haspopup="menu" aria-label="More image actions">
 								<svg class="icon size4" viewBox="0 0 20 20" aria-hidden="true">
-									<circle cx="4" cy="10" r="1.5" fill="currentColor" /><circle cx="10" cy="10" r="1.5" fill="currentColor" /><circle cx="16" cy="10" r="1.5" fill="currentColor" />
+									<circle cx="4" cy="10" r="1.5" fill="currentColor" />
+									<circle cx="10" cy="10" r="1.5" fill="currentColor" />
+									<circle cx="16" cy="10" r="1.5" fill="currentColor" />
 								</svg>
-								<span>More <span class="menu-arrow" aria-hidden="true">▾</span></span></button>
+							<span><span data-i18n="ribbon.annotations.more">More</span> <span class="menu-arrow" aria-hidden="true">▾</span></span></button>
 							<div class="action-menu-items image-more-menu-items" role="menu" aria-label="More image actions">
 								<div class="action-menu action-submenu">
-									<button class="action-menu-trigger action-submenu-trigger" id="btn-crop-menu" type="button" role="menuitem" aria-haspopup="menu" aria-expanded="false" aria-label="Crop options">
+									<button class="action-menu-trigger action-submenu-trigger" id="btn-crop-menu" type="button"
+										role="menuitem" aria-haspopup="menu" aria-expanded="false" aria-label="Crop options">
 										<span>Crop</span><span class="submenu-arrow" aria-hidden="true">›</span>
 									</button>
 									<div class="action-menu-items action-submenu-items" role="menu" aria-label="Crop options">
-										<button type="button" id="btn-crop" role="menuitem" title="Crop to selection"><span>Crop to selection</span></button>
-										<button type="button" id="btn-remove-bg" role="menuitem" title="Remove background by color key"><span>Remove Background (Color Key)</span></button>
+										<button type="button" id="btn-crop" role="menuitem" title="Crop to selection"><span>Crop to
+												selection</span></button>
+										<button type="button" id="btn-remove-bg" role="menuitem"
+											title="Remove background by color key"><span>Remove Background (Color Key)</span></button>
 									</div>
 								</div>
 								<div class="action-menu action-submenu">
-									<button class="action-menu-trigger action-submenu-trigger" id="btn-rotate" data-tag="btn-rotate" type="button" role="menuitem" aria-haspopup="menu" aria-expanded="false" aria-label="Rotate options">
+									<button class="action-menu-trigger action-submenu-trigger" id="btn-rotate" data-tag="btn-rotate"
+										type="button" role="menuitem" aria-haspopup="menu" aria-expanded="false"
+										aria-label="Rotate options">
 										<span>Rotate</span><span class="submenu-arrow" aria-hidden="true">›</span>
 									</button>
 									<div class="action-menu-items action-submenu-items" role="menu" aria-label="Rotate options">
-										<button type="button" id="btn-rotate-90" role="menuitem" title="Rotate 90°"><span>Rotate 90</span></button>
-										<button type="button" id="btn-rotate-180" role="menuitem" title="Rotate 180°"><span>Rotate 180</span></button>
-										<button type="button" id="btn-rotate-270" role="menuitem" title="Rotate 270°"><span>Rotate 270</span></button>
-										<button type="button" id="btn-rotate-free" role="menuitem" title="Free rotate by angle"><span>Free Rotate</span></button>
-										<label class="menu-checkbox"><input type="checkbox" id="rotate-selection-toggle" checked> Show Rotate in selection</label>
+										<button type="button" id="btn-rotate-90" role="menuitem" title="Rotate 90°"><span>Rotate
+												90</span></button>
+										<button type="button" id="btn-rotate-180" role="menuitem" title="Rotate 180°"><span>Rotate
+												180</span></button>
+										<button type="button" id="btn-rotate-270" role="menuitem" title="Rotate 270°"><span>Rotate
+												270</span></button>
+										<button type="button" id="btn-rotate-free" role="menuitem" title="Free rotate by angle"><span>Free
+												Rotate</span></button>
+										<div class="menu-checkbox"><input type="checkbox" id="rotate-selection-toggle" checked> <label
+												for="rotate-selection-toggle">Show Rotate in selection</label></div>
 									</div>
 								</div>
 								<div class="action-menu action-submenu">
-									<button class="action-menu-trigger action-submenu-trigger" id="btn-flip" data-tag="btn-flip" type="button" role="menuitem" aria-haspopup="menu" aria-expanded="false" aria-label="Flip options">
+									<button class="action-menu-trigger action-submenu-trigger" id="btn-flip" data-tag="btn-flip"
+										type="button" role="menuitem" aria-haspopup="menu" aria-expanded="false" aria-label="Flip options">
 										<span>Flip</span><span class="submenu-arrow" aria-hidden="true">›</span>
 									</button>
 									<div class="action-menu-items action-submenu-items" role="menu" aria-label="Flip options">
-										<button type="button" id="btn-flip-horizontal" role="menuitem" title="Flip horizontal"><span>Flip Horizontal</span></button>
-										<button type="button" id="btn-flip-vertical" role="menuitem" title="Flip vertical"><span>Flip Vertical</span></button>
+										<button type="button" id="btn-flip-horizontal" role="menuitem" title="Flip horizontal"><span>Flip
+												Horizontal</span></button>
+										<button type="button" id="btn-flip-vertical" role="menuitem" title="Flip vertical"><span>Flip
+												Vertical</span></button>
 									</div>
 								</div>
 							</div>
 						</div>
-				</div>
+					</div>
 				</div>
 				<div class="ribbon-group-title">Image</div>
 			</section>
@@ -218,7 +236,7 @@
 			<div class="separator separator-after-image"></div>
 
 			<!-- Tools group -->
-			<section class="ribbon-group ribbon-group-tools">
+			<section class="ribbon-group ribbon-group-tools" data-ribbon-key="tools">
 				<div class="tool-access-row">
 					<div class="quick-tools-row" data-tag="wrap-quick-tools">
 						<div class="tool-grid">
@@ -249,28 +267,34 @@
 							</button>
 							<div class="action-menu text-tool-menu">
 								<div class="text-tool-split">
-									<button class="rbtn cell tool-btn text-tool-main" data-tool="text" data-tag="tool-text" title="Text (T)">
+									<button class="rbtn cell tool-btn text-tool-main" data-tool="text" data-tag="tool-text"
+										title="Text (T)">
 										<svg class="icon size5" viewBox="0 0 20 20">
 											<path d="M4 4h12M10 4v13" stroke-linecap="round" />
 										</svg>
 									</button>
 									<button type="button" class="rbtn cell action-menu-trigger text-tool-menu-arrow" id="btn-text-menu"
-										title="Text options" aria-label="Text options"><span class="menu-arrow" aria-hidden="true">▾</span></button>
+										title="Text options" aria-label="Text options"><span class="menu-arrow"
+											aria-hidden="true">▾</span></button>
 								</div>
 								<div class="action-menu-items text-tool-menu-items" role="menu" aria-label="Text options">
-									<label class="menu-checkbox" title="Show or hide recent text controls in the editor">
-										<input type="checkbox" id="text-history-toolbar-toggle" /> Show Recent text toolbar
-									</label>
-									<label class="menu-checkbox" title="Focus the committed text object after drawing">
-										<input type="checkbox" id="text-select-after-draw" /> Select text after draw
-									</label>
-									<span class="menu-option-note" id="text-select-after-draw-note">Focus targets are safe; editing existing text remains deferred.</span>
+									<div class="menu-checkbox" title="Show or hide recent text controls in the editor">
+										<input type="checkbox" id="text-history-toolbar-toggle" /> <label
+											for="text-history-toolbar-toggle">Show Recent text toolbar</label>
+									</div>
+									<div class="menu-checkbox" title="Focus the committed text object after drawing">
+										<input type="checkbox" id="text-select-after-draw" /> <label for="text-select-after-draw">Select
+											text after draw</label>
+									</div>
+									<span class="menu-option-note" id="text-select-after-draw-note">Focus targets are safe; editing
+										existing text remains deferred.</span>
 									<div class="text-style-picker" aria-label="Text styles">
 										<div class="text-style-picker-heading">
 											<span>Text style</span>
 											<span class="text-style-preview" id="text-style-preview">Aa</span>
 										</div>
-										<div class="text-style-options" id="text-style-options" role="group" aria-label="Toggle text styles">
+										<div class="text-style-options" id="text-style-options" role="group"
+											aria-label="Toggle text styles">
 											<button type="button" class="text-style-option" data-text-style="outline"><span
 													class="style-sample">Aa</span><span>Outline</span></button>
 											<button type="button" class="text-style-option" data-text-style="black-outline"><span
@@ -312,9 +336,10 @@
 							</svg>
 						</button>
 						<button class="rbtn small action-menu-trigger tools-menu-arrow" id="btn-tools-menu"
-							title="More tools"><span>More</span>
+								title="More" data-i18n-attr="title:ribbon.annotations.more"><span data-i18n="ribbon.annotations.more">More</span>
 							<span class="menu-arrow">▾</span></button>
-						<div class="action-menu-items" role="menu" aria-label="More tools">
+						<div class="action-menu-items" role="menu" aria-label="More tools"
+							data-i18n-attr="aria-label:ribbon.annotations.moreTools">
 							<button type="button" class="rbtn small tool-menu-item tool-btn" data-tool="pencil"
 								role="menuitem">Pencil</button>
 							<button type="button" class="rbtn small tool-menu-item tool-btn" data-tool="fill"
@@ -325,10 +350,12 @@
 								role="menuitem">Color picker</button>
 							<button type="button" class="rbtn small tool-menu-item tool-btn" data-tool="zoom"
 								role="menuitem">Magnifier</button>
-							<button type="button" class="rbtn small tool-menu-item tool-btn" data-tool="pan"
-								role="menuitem" title="Hand / Pan (H)">
+							<button type="button" class="rbtn small tool-menu-item tool-btn" data-tool="pan" role="menuitem"
+								title="Hand / Pan (H)">
 								<svg class="icon" viewBox="0 0 20 20" aria-hidden="true">
-									<path d="M6.5 9V4.5a1 1 0 0 1 2 0V9V3.5a1 1 0 0 1 2 0V9V4.5a1 1 0 0 1 2 0V9V6a1 1 0 0 1 2 0v5.2c0 3.2-2.1 5.3-5.1 5.3H8.6c-1.6 0-2.8-.8-3.6-2.1L3.6 12a1.2 1.2 0 0 1 2.1-1.1L6.5 12V9Z" fill="none" stroke="currentColor" stroke-linejoin="round" />
+									<path
+										d="M6.5 9V4.5a1 1 0 0 1 2 0V9V3.5a1 1 0 0 1 2 0V9V4.5a1 1 0 0 1 2 0V9V6a1 1 0 0 1 2 0v5.2c0 3.2-2.1 5.3-5.1 5.3H8.6c-1.6 0-2.8-.8-3.6-2.1L3.6 12a1.2 1.2 0 0 1 2.1-1.1L6.5 12V9Z"
+										fill="none" stroke="currentColor" stroke-linejoin="round" />
 								</svg>
 								<span>Hand / Pan</span>
 							</button>
@@ -345,7 +372,7 @@
 			<div class="separator separator-after-tools"></div>
 
 			<!-- Shapes group -->
-			<section class="ribbon-group ribbon-group-shapes">
+			<section class="ribbon-group ribbon-group-shapes" data-ribbon-key="shapes">
 				<div class="rbtn-row">
 					<div class="action-menu shapes-menu">
 						<button class="rbtn cell shapes-menu-trigger shapes-menu-current" id="btn-shapes-current"
@@ -488,9 +515,9 @@
 								<span class="shape-menu-setting-label">Emoji</span>
 								<div class="shape-emoji-grid" id="shape-emoji-grid" role="listbox" aria-label="Choose emoji"></div>
 							</div>
-							<label class="menu-checkbox shape-after-draw-row"
+							<div class="menu-checkbox shape-after-draw-row"
 								title="Keep shape selected after drawing so it can be moved"><input type="checkbox"
-									id="shape-select-after-draw" /> Select after draw</label>
+									id="shape-select-after-draw" /> <label for="shape-select-after-draw">Select after draw</label></div>
 							<div class="shape-menu-settings" aria-label="Fill mode settings">
 								<span class="shape-menu-setting-label">Fill</span>
 								<div class="fillmode-col">
@@ -572,36 +599,104 @@
 			<div class="separator separator-after-shapes"></div>
 
 			<!-- Color group -->
-			<section class="ribbon-group ribbon-group-colors">
+			<section class="ribbon-group ribbon-group-colors" data-ribbon-key="colors">
 				<div class="rbtn-row">
 					<div class="color-swatches-column">
 						<div class="swatch-stack" title="Click to edit colors" data-tag="swatch-stack">
-							<button id="primary-swatch" class="swatch primary" data-tag="primary-swatch" aria-label="Edit foreground color"></button>
-							<button id="secondary-swatch" class="swatch secondary" data-tag="secondary-swatch" aria-label="Edit background color"></button>
+							<button id="primary-swatch" class="swatch primary" data-tag="primary-swatch"
+								style="background-color: #a349a4;" aria-label="Edit foreground color"></button>
+							<button id="secondary-swatch" class="swatch secondary" data-tag="secondary-swatch"
+								style="background-color: #ffffff;" aria-label="Edit background color"></button>
 						</div>
 						<div class="action-menu swatch-alpha-controls">
 							<button type="button" class="rbtn swatch-alpha-trigger action-menu-trigger" id="swatch-alpha-menu"
-								aria-haspopup="menu" aria-expanded="false" aria-label="Color opacity options" title="Color opacity options">
-								<span class="transparency-icon" aria-hidden="true"></span><span class="menu-arrow" aria-hidden="true">▾</span>
+								aria-haspopup="menu" aria-expanded="false" aria-label="Color opacity options"
+								title="Color opacity options">
+								<span class="transparency-icon" aria-hidden="true"></span><span class="menu-arrow"
+									aria-hidden="true">▾</span>
 							</button>
 							<div class="action-menu-items swatch-alpha-menu-items" role="menu" aria-label="Color opacity options">
 								<div class="swatch-alpha-control" title="Foreground opacity; 0% is transparent">
 									<label for="primary-alpha">Foreground</label>
-									<input type="range" id="primary-alpha" min="0" max="100" step="1" value="100" aria-label="Foreground opacity" />
+									<input type="range" id="primary-alpha" min="0" max="100" step="1" value="100"
+										aria-label="Foreground opacity" />
 									<output id="primary-alpha-output" for="primary-alpha">100%</output>
-									<button type="button" data-opacity-action="transparent" id="primary-alpha-transparent" aria-label="Make foreground transparent" title="Make foreground transparent">0%</button>
+									<button type="button" data-opacity-action="transparent" id="primary-alpha-transparent"
+										aria-label="Make foreground transparent" title="Make foreground transparent">0%</button>
 								</div>
 								<div class="swatch-alpha-control" title="Background opacity; 0% is transparent">
 									<label for="secondary-alpha">Background</label>
-									<input type="range" id="secondary-alpha" min="0" max="100" step="1" value="100" aria-label="Background opacity" />
+									<input type="range" id="secondary-alpha" min="0" max="100" step="1" value="100"
+										aria-label="Background opacity" />
 									<output id="secondary-alpha-output" for="secondary-alpha">100%</output>
-									<button type="button" data-opacity-action="transparent" id="secondary-alpha-transparent" aria-label="Make background transparent" title="Make background transparent">0%</button>
+									<button type="button" data-opacity-action="transparent" id="secondary-alpha-transparent"
+										aria-label="Make background transparent" title="Make background transparent">0%</button>
 								</div>
 							</div>
 						</div>
-						<input type="color" id="color-picker" class="hidden-color-input" data-tag="color-picker" aria-label="Custom color value" />
+						<input type="color" id="color-picker" class="hidden-color-input" data-tag="color-picker"
+							aria-label="Custom color value" />
 					</div>
-					<div class="palette-grid" id="palette-grid" data-tag="palette-grid"></div>
+					<div class="palette-grid" id="palette-grid" data-tag="palette-grid" aria-label="Default color palette">
+						<!-- Static first-paint palette; ColorPalette replaces these with the
+						     persisted palette and interactive handlers after startup. -->
+						<button type="button" data-bootstrap-palette tabindex="-1" aria-hidden="true"
+							style="background:#000000"></button>
+						<button type="button" data-bootstrap-palette tabindex="-1" aria-hidden="true"
+							style="background:#7f7f7f"></button>
+						<button type="button" data-bootstrap-palette tabindex="-1" aria-hidden="true"
+							style="background:#880015"></button>
+						<button type="button" data-bootstrap-palette tabindex="-1" aria-hidden="true"
+							style="background:#ed1c24"></button>
+						<button type="button" data-bootstrap-palette tabindex="-1" aria-hidden="true"
+							style="background:#ff7f27"></button>
+						<button type="button" data-bootstrap-palette tabindex="-1" aria-hidden="true"
+							style="background:#fff200"></button>
+						<button type="button" data-bootstrap-palette tabindex="-1" aria-hidden="true"
+							style="background:#22b14c"></button>
+						<button type="button" data-bootstrap-palette tabindex="-1" aria-hidden="true"
+							style="background:#00a2e8"></button>
+						<button type="button" data-bootstrap-palette tabindex="-1" aria-hidden="true"
+							style="background:#3f48cc"></button>
+						<button type="button" data-bootstrap-palette tabindex="-1" aria-hidden="true"
+							style="background:#a349a4"></button>
+						<button type="button" data-bootstrap-palette tabindex="-1" aria-hidden="true"
+							style="background:#ffffff"></button>
+						<button type="button" data-bootstrap-palette tabindex="-1" aria-hidden="true"
+							style="background:#c3c3c3"></button>
+						<button type="button" data-bootstrap-palette tabindex="-1" aria-hidden="true"
+							style="background:#b97a57"></button>
+						<button type="button" data-bootstrap-palette tabindex="-1" aria-hidden="true"
+							style="background:#ffc90e"></button>
+						<button type="button" data-bootstrap-palette tabindex="-1" aria-hidden="true"
+							style="background:#efe4b0"></button>
+						<button type="button" data-bootstrap-palette tabindex="-1" aria-hidden="true"
+							style="background:#b5e61d"></button>
+						<button type="button" data-bootstrap-palette tabindex="-1" aria-hidden="true"
+							style="background:#99d9ea"></button>
+						<button type="button" data-bootstrap-palette tabindex="-1" aria-hidden="true"
+							style="background:#7092be"></button>
+						<button type="button" data-bootstrap-palette tabindex="-1" aria-hidden="true"
+							style="background:#c8bfe7"></button>
+						<button type="button" data-bootstrap-palette tabindex="-1" aria-hidden="true"
+							style="background:#ffaec9"></button>
+						<button type="button" data-bootstrap-palette tabindex="-1" aria-hidden="true"
+							style="background:#ffd700"></button>
+						<button type="button" data-bootstrap-palette tabindex="-1" aria-hidden="true"
+							style="background:#80ff80"></button>
+						<button type="button" data-bootstrap-palette tabindex="-1" aria-hidden="true" aria-label="Default cyan"
+							style="background:#80ffff"></button>
+						<button type="button" data-bootstrap-palette tabindex="-1" aria-hidden="true"
+							style="background:#8080ff"></button>
+						<button type="button" data-bootstrap-palette tabindex="-1" aria-hidden="true"
+							style="background:#ff80ff"></button>
+						<button type="button" data-bootstrap-palette tabindex="-1" aria-hidden="true"
+							style="background:#d2691e"></button>
+						<button type="button" data-bootstrap-palette tabindex="-1" aria-hidden="true"
+							style="background:#708090"></button>
+						<button type="button" data-bootstrap-palette tabindex="-1" aria-hidden="true"
+							style="background:#deb887"></button>
+					</div>
 				</div>
 				<div class="ribbon-group-title">Colors</div>
 			</section>
@@ -609,7 +704,7 @@
 			<div class="separator separator-after-colors"></div>
 
 			<!-- Undo/Redo/History -->
-			<section class="ribbon-group ribbon-group-history">
+			<section class="ribbon-group ribbon-group-history" data-ribbon-key="history">
 				<div class="rbtn-stack">
 					<div style="display:flex;">
 						<button class="rbtn" id="btn-undo" data-tag="btn-undo" title="Undo (Ctrl+Z)" disabled>
@@ -637,9 +732,10 @@
 			<div class="separator separator-after-history"></div>
 
 			<!-- AI & Settings -->
-			<section class="ribbon-group ribbon-group-extras">
+			<section class="ribbon-group ribbon-group-extras" data-ribbon-key="extras">
 				<div class="rbtn-row">
-					<button class="rbtn" id="btn-ai-chat" data-tag="btn-ai-chat" title="AI Chat">
+					<!-- AI Chat is opt-in; keep the first paint aligned with DEFAULT_SETTINGS. -->
+					<button class="rbtn" id="btn-ai-chat" data-tag="btn-ai-chat" title="AI Chat" style="display: none;">
 						<svg class="icon size4" viewBox="0 0 20 20">
 							<path d="M2 10a8 8 0 1 1 16 0c0 4.418-4 8-8 8H4l1.5-3A8 8 0 0 1 2 10z" fill="none" />
 							<circle cx="7" cy="9" r="1" fill="currentColor" />
@@ -673,7 +769,7 @@
 						</svg>
 					</button>
 					<span class="ci-field">
-						<code id="ci-hex" data-tag="ci-hex" style="user-select: text;">—</code>
+						<code id="ci-hex" data-tag="ci-hex" style="user-select: text;">#a349a4</code>
 						<button class="ci-copy" data-copy-target="ci-hex" data-tag="ci-copy-hex" title="Copy HEX">⧉</button>
 					</span>
 					<button type="button" class="ci-toggle" id="ci-toggle" aria-label="Collapse color inspector"
@@ -684,7 +780,7 @@
 
 				<span class="ci-field">
 					<!-- RGB  -->
-					<code id="ci-rgb" data-tag="ci-rgb" style="user-select: text;">—</code>
+					<code id="ci-rgb" data-tag="ci-rgb" style="user-select: text;">rgb(163, 73, 164)</code>
 					<button class="ci-copy" data-copy-target="ci-rgb" data-tag="ci-copy-rgb" title="Copy RGB">⧉</button>
 				</span>
 			</div>
@@ -708,13 +804,14 @@
 				<!-- Outer box: sized to the scaled canvas so scrollbars match the
              visible canvas exactly (no dead gray space when zoomed out,
              full panning room when zoomed in). -->
-				<div class="canvas-stage" id="canvas-stage" data-tag="canvas-stage">
+				<div class="canvas-stage" id="canvas-stage" data-tag="canvas-stage" style="width: 800px; height: 600px;">
 					<!-- Inner box: keeps image-pixel coordinates; the zoom transform is
                applied here by ViewportManager. -->
-					<div class="canvas-scale" id="canvas-scale" data-tag="canvas-scale">
-						<canvas id="paint-canvas" data-tag="paint-canvas"></canvas>
-						<canvas id="text-layer-canvas" class="text-layer-canvas" data-tag="text-layer-canvas" aria-hidden="true"></canvas>
-						<canvas id="overlay-canvas" data-tag="overlay-canvas"></canvas>
+					<div class="canvas-scale" id="canvas-scale" data-tag="canvas-scale" style="width: 800px; height: 600px;">
+						<canvas id="paint-canvas" data-tag="paint-canvas" width="800" height="600"></canvas>
+						<canvas id="text-layer-canvas" class="text-layer-canvas" data-tag="text-layer-canvas" width="800"
+							height="600" aria-hidden="true"></canvas>
+						<canvas id="overlay-canvas" data-tag="overlay-canvas" width="800" height="600"></canvas>
 						<div class="resize-handle handle-right" id="handle-right" data-tag="handle-right"></div>
 						<div class="resize-handle handle-bottom" id="handle-bottom" data-tag="handle-bottom"></div>
 						<div class="resize-handle handle-corner" id="handle-corner" data-tag="handle-corner"></div>
@@ -773,14 +870,16 @@
 							Actions: History
 						</div>
 						<div class="history-actions">
-							<button type="button" id="history-save-current-btn" title="Save current paint to history">Save Current</button>
-							<button type="button" id="history-export-all-btn" title="Export the whole history to your computer">Export All</button>
+							<button type="button" id="history-save-current-btn" title="Save current paint to history">Save
+								Current</button>
+							<button type="button" id="history-export-all-btn" title="Export the whole history to your computer">Export
+								All</button>
 							<button type="button" id="history-clear-btn" title="Clear all saved history">Clear All</button>
 						</div>
 					</div>
 					<div class="history-view-tabs" id="history-view-tabs" role="tablist" aria-label="History views">
-						<button type="button" class="history-view-tab active" data-history-view="history"
-							role="tab" aria-selected="true">History</button>
+						<button type="button" class="history-view-tab active" data-history-view="history" role="tab"
+							aria-selected="true">History</button>
 						<button type="button" class="history-view-tab" data-history-view="session" role="tab"
 							aria-selected="false">Session</button>
 					</div>
@@ -815,7 +914,7 @@
 		<!-- ===================== STATUS BAR ===================== -->
 		<footer class="status-bar">
 			<div>
-				<span class="status-item location" id="status-pointer" data-tag="status-pointer">Pointer: —</span>
+				<span class="status-item location" id="status-pointer" data-tag="status-pointer">Pointer: -</span>
 				<span class="status-item" id="status-selection" data-tag="status-selection"></span>
 				<span class="status-item" id="status-flash" data-tag="status-flash"></span>
 				<span class="status-spacer"></span>
@@ -831,8 +930,10 @@
 
 				<span class="status-item zoom-controls">
 					<button id="zoom-out" data-tag="zoom-out" title="Zoom out">−</button>
-					<input type="range" id="zoom-slider" data-tag="zoom-slider" min="10" max="800" step="10" value="100" aria-label="Zoom percentage slider" />
-					<input type="number" id="zoom-input" data-tag="zoom-input" min="10" max="800" value="100" aria-label="Zoom percentage" />
+					<input type="range" id="zoom-slider" data-tag="zoom-slider" min="10" max="800" step="10" value="100"
+						aria-label="Zoom percentage slider" />
+					<input type="number" id="zoom-input" data-tag="zoom-input" min="10" max="800" value="100"
+						aria-label="Zoom percentage" />
 					<span>%</span>
 					<button id="zoom-in" title="Zoom in">+</button>
 				</span>
@@ -856,25 +957,37 @@
 			<h3>Resize canvas</h3>
 			<div class="resize-presets" id="resize-presets">
 				<span class="resize-presets-title">Quick sizes</span>
-				<button type="button" data-resize-preset="800x600"><span class="resize-preset-name">800 × 600</span><span class="resize-preset-size">800 × 600 px</span></button>
-				<button type="button" data-resize-preset="1024x768"><span class="resize-preset-name">1024 × 768</span><span class="resize-preset-size">1024 × 768 px</span></button>
-				<button type="button" data-resize-preset="1000x1000"><span class="resize-preset-name">Square</span><span class="resize-preset-size">1000 × 1000 px</span></button>
-				<button type="button" data-resize-preset="1123x794"><span class="resize-preset-name">A4 landscape</span><span class="resize-preset-size">1123 × 794 px</span></button>
-				<button type="button" data-resize-preset="794x1123"><span class="resize-preset-name">A4 portrait</span><span class="resize-preset-size">794 × 1123 px</span></button>
-				<button type="button" data-resize-preset="1600x1200"><span class="resize-preset-name">1600 × 1200</span><span class="resize-preset-size">1600 × 1200 px</span></button>
-				<button type="button" data-resize-preset="1920x1080"><span class="resize-preset-name">Full HD</span><span class="resize-preset-size">1920 × 1080 px</span></button>
-				<button type="button" data-resize-preset="2560x1440"><span class="resize-preset-name">2K</span><span class="resize-preset-size">2560 × 1440 px</span></button>
-				<button type="button" data-resize-preset="3840x2160"><span class="resize-preset-name">4K</span><span class="resize-preset-size">3840 × 2160 px</span></button>
+				<button type="button" data-resize-preset="800x600"><span class="resize-preset-name">800 × 600</span><span
+						class="resize-preset-size">800 × 600 px</span></button>
+				<button type="button" data-resize-preset="1024x768"><span class="resize-preset-name">1024 × 768</span><span
+						class="resize-preset-size">1024 × 768 px</span></button>
+				<button type="button" data-resize-preset="1000x1000"><span class="resize-preset-name">Square</span><span
+						class="resize-preset-size">1000 × 1000 px</span></button>
+				<button type="button" data-resize-preset="1123x794"><span class="resize-preset-name">A4 landscape</span><span
+						class="resize-preset-size">1123 × 794 px</span></button>
+				<button type="button" data-resize-preset="794x1123"><span class="resize-preset-name">A4 portrait</span><span
+						class="resize-preset-size">794 × 1123 px</span></button>
+				<button type="button" data-resize-preset="1600x1200"><span class="resize-preset-name">1600 × 1200</span><span
+						class="resize-preset-size">1600 × 1200 px</span></button>
+				<button type="button" data-resize-preset="1920x1080"><span class="resize-preset-name">Full HD</span><span
+						class="resize-preset-size">1920 × 1080 px</span></button>
+				<button type="button" data-resize-preset="2560x1440"><span class="resize-preset-name">2K</span><span
+						class="resize-preset-size">2560 × 1440 px</span></button>
+				<button type="button" data-resize-preset="3840x2160"><span class="resize-preset-name">4K</span><span
+						class="resize-preset-size">3840 × 2160 px</span></button>
 			</div>
-			<label class="resize-dimension-row" for="resize-width"><span>Width (px)</span><input type="number" id="resize-width" data-tag="resize-width" min="1" max="10000" /></label>
-			<label class="resize-dimension-row" for="resize-height"><span>Height (px)</span><input type="number" id="resize-height" data-tag="resize-height" min="1" max="10000" /></label>
+			<label class="resize-dimension-row" for="resize-width"><span>Width (px)</span><input type="number"
+					id="resize-width" data-tag="resize-width" min="1" max="10000" /></label>
+			<label class="resize-dimension-row" for="resize-height"><span>Height (px)</span><input type="number"
+					id="resize-height" data-tag="resize-height" min="1" max="10000" /></label>
 			<div class="resize-scale-row">
 				<label for="resize-percent">Scale (%)</label>
 				<input type="number" id="resize-percent" data-tag="resize-percent" min="1" max="1000" step="1" value="100" />
 				<span id="resize-target-status" role="status">Whole canvas</span>
 			</div>
-			<label class="checkbox-row"><input type="checkbox" id="resize-keep-aspect" data-tag="resize-keep-aspect" checked />
-				Maintain aspect ratio</label>
+			<div class="checkbox-row" data-tag="resize-keep-aspect-row"><input type="checkbox" id="resize-keep-aspect" data-tag="resize-keep-aspect" checked />
+				<label for="resize-keep-aspect">Maintain aspect ratio</label>
+			</div>
 			<div class="dialog-actions">
 				<button type="button" id="resize-cancel" data-tag="resize-cancel">Cancel</button>
 				<button type="submit" id="resize-ok" data-tag="resize-ok">OK</button>
@@ -885,10 +998,25 @@
 	<!-- ===================== Settings dialog ===================== -->
 	<dialog id="settings-dialog" data-tag="settings-dialog">
 		<div class="settings-shell">
-			<header class="settings-header"><span>Settings</span><button type="button" class="settings-close"
-					id="settings-close" aria-label="Close settings" title="Close settings">×</button></header>
+			<header class="settings-header">
+				<span data-i18n="settings.title">Settings</span>
+				<label class="settings-search" for="settings-search-input">
+					<input id="settings-search-input" type="search"
+						data-i18n-attr="placeholder:settings.search,aria-label:settings.search" placeholder="Search settings"
+						aria-label="Search settings" autocomplete="off" />
+					<output id="settings-search-status" aria-live="polite"></output>
+					<button type="button" class="settings-search-nav" id="settings-search-prev" aria-label="Previous result"
+						title="Previous result" hidden>↑</button>
+					<button type="button" class="settings-search-nav" id="settings-search-next" aria-label="Next result"
+						title="Next result" hidden>↓</button>
+				</label>
+				<button type="button" class="settings-close" id="settings-close"
+					data-i18n-attr="aria-label:common.actions.close,title:common.actions.close" aria-label="Close"
+					title="Close">×</button>
+			</header>
 			<nav class="settings-tabs" aria-label="Settings sections">
 				<button type="button" class="settings-tab active" data-settings-tab="general">GENERAL</button>
+				<button type="button" class="settings-tab" data-settings-tab="shortcuts">SHORTCUTS</button>
 				<button type="button" class="settings-tab" data-settings-tab="history">HISTORY</button>
 				<button type="button" class="settings-tab" data-settings-tab="ribbon">RIBBON</button>
 				<button type="button" class="settings-tab" data-settings-tab="release">RELEASE NOTES</button>
@@ -897,14 +1025,28 @@
 				<button type="button" class="settings-tab" data-settings-tab="feedback">FEEDBACK</button>
 			</nav>
 			<form method="dialog" id="settings-form" class="settings-panel settings-body" data-settings-panel="general">
-				<h3>General</h3>
+				<h3 data-i18n="settings.general">General</h3>
 				<div class="settings-general-options" aria-label="General display options">
-					<label class="checkbox-row"><input type="checkbox" id="setting-dark-mode" /> Dark Mode</label>
-					<label class="checkbox-row"><input type="checkbox" id="setting-show-status-bar" checked /> Show Status
-						Bar</label>
-					<label class="checkbox-row"><input type="checkbox" id="setting-show-color-inspector" checked /> Show Color
-						Inspector</label>
-					<label class="checkbox-row"><input type="checkbox" id="setting-show-ai-chat" /> Show AI Chat</label>
+					<div class="checkbox-row" data-tag="setting-dark-mode-row"><input type="checkbox" id="setting-dark-mode" data-tag="setting-dark-mode" /> <label for="setting-dark-mode" data-tag="setting-dark-mode-label">Dark
+							Mode</label></div>
+					<div class="checkbox-row" data-tag="setting-show-status-bar-row"><input type="checkbox" id="setting-show-status-bar" data-tag="setting-show-status-bar" checked /> <label
+						for="setting-show-status-bar" data-tag="setting-show-status-bar-label">Show Status Bar</label></div>
+					<div class="checkbox-row" data-tag="setting-show-color-inspector-row"><input type="checkbox" id="setting-show-color-inspector" data-tag="setting-show-color-inspector" checked /> <label
+						for="setting-show-color-inspector" data-tag="setting-show-color-inspector-label">Show Color Inspector</label></div>
+					<div class="checkbox-row" data-tag="setting-show-ai-chat-row"><input type="checkbox" id="setting-show-ai-chat" data-tag="setting-show-ai-chat" /> <label
+						for="setting-show-ai-chat" data-tag="setting-show-ai-chat-label">Show AI Chat</label></div>
+				</div>
+				<div class="settings-field choice-field inline-choice-field">
+					<label for="setting-locale" data-i18n="settings.language">Language</label>
+					<select id="setting-locale"></select>
+				</div>
+				<div class="settings-field choice-field inline-choice-field">
+					<label for="setting-direction" data-i18n="ui.interfaceDirection">Interface direction</label>
+					<select id="setting-direction">
+						<option value="auto" data-i18n="ui.directionAuto">Automatic</option>
+						<option value="ltr" data-i18n="ui.directionLtr">Left to right</option>
+						<option value="rtl" data-i18n="ui.directionRtl">Right to left</option>
+					</select>
 				</div>
 				<div class="settings-field choice-field"><span>Canvas Background</span>
 					<select id="setting-canvas-bg">
@@ -916,7 +1058,8 @@
 					<div class="choice-summary" id="setting-canvas-bg-choice" data-select-id="setting-canvas-bg">
 						<span class="choice-summary-label">Selected: <strong data-selected-label></strong>
 							<span class="choice-custom-inputs" data-solid-color-control hidden>
-								<input type="color" id="setting-solid-background-color" value="#ffffff" aria-label="Solid canvas background color" />
+								<input type="color" id="setting-solid-background-color" value="#ffffff"
+									aria-label="Solid canvas background color" />
 							</span>
 						</span>
 					</div>
@@ -930,12 +1073,15 @@
 						<option value="794x1123">A4 portrait (794 × 1123)</option>
 						<option value="custom">Custom</option>
 					</select>
-					<div class="choice-summary" id="setting-default-canvas-size-choice" data-select-id="setting-default-canvas-size">
+					<div class="choice-summary" id="setting-default-canvas-size-choice"
+						data-select-id="setting-default-canvas-size">
 						<span class="choice-summary-label">Selected: <strong data-selected-label></strong>
 							<span class="choice-custom-inputs">
-								<input type="number" id="setting-default-canvas-width" min="1" max="10000" value="800" aria-label="Custom canvas width" />
+								<input type="number" id="setting-default-canvas-width" min="1" max="10000" value="800"
+									aria-label="Custom canvas width" />
 								<span class="choice-custom-separator" aria-hidden="true">×</span>
-								<input type="number" id="setting-default-canvas-height" min="1" max="10000" value="600" aria-label="Custom canvas height" />
+								<input type="number" id="setting-default-canvas-height" min="1" max="10000" value="600"
+									aria-label="Custom canvas height" />
 							</span>
 						</span>
 					</div>
@@ -953,16 +1099,27 @@
 					<div class="choice-summary" id="setting-default-zoom-choice" data-select-id="setting-default-zoom">
 						<span class="choice-summary-label">Selected: <strong data-selected-label></strong>
 							<span class="choice-custom-inputs">
-								<input type="number" id="setting-default-zoom-custom" min="10" max="800" step="1" value="100" aria-label="Custom initial zoom percentage" />%
+								<input type="number" id="setting-default-zoom-custom" min="10" max="800" step="1" value="100"
+									aria-label="Custom initial zoom percentage" />%
 							</span>
 						</span>
 					</div>
 				</div>
 			</form>
+			<section class="settings-panel settings-body" data-settings-panel="shortcuts" hidden>
+				<h3>Keyboard shortcuts</h3>
+				<p>Focus a shortcut field, press the keys you want, then leave the field. Changes are saved in this browser.</p>
+				<p id="shortcut-settings-status" class="pwa-status" role="status" aria-live="polite">Defaults are active.</p>
+				<div id="shortcut-settings-list" class="shortcut-settings-list"></div>
+			</section>
 			<section class="settings-panel settings-body" data-settings-panel="history" hidden>
 				<h3>History</h3>
-				<label class="checkbox-row"><input type="checkbox" id="setting-history-auto-save" checked /> Auto-save to
-					history</label>
+				<div class="checkbox-row history-checkbox-row" data-tag="setting-history-auto-save-row"><input type="checkbox" id="setting-history-auto-save" data-tag="setting-history-auto-save" checked /> <label
+						for="setting-history-auto-save" data-tag="setting-history-auto-save-label">Auto-save to history</label></div>
+				<div class="checkbox-row history-checkbox-row" data-tag="setting-restore-last-image-row"><input type="checkbox" id="setting-restore-last-image" data-tag="setting-restore-last-image" /> <label
+						for="setting-restore-last-image" data-tag="setting-restore-last-image-label">Load last image on startup</label></div>
+				<p class="settings-help">Off starts with a blank canvas. Turn it on when you want Paint to restore the last
+					working image automatically.</p>
 				<div class="settings-field choice-field"><span>Auto-save when</span>
 					<select id="setting-history-auto-save-mode">
 						<option value="lifecycle">Exit, refresh or new image</option>
@@ -995,7 +1152,8 @@
 			<section class="settings-panel settings-body" data-settings-panel="ribbon" hidden>
 				<h3>Ribbon</h3>
 				<p>Choose which ribbon groups are visible. Detailed group options open in the sidebar.</p>
-				<label class="checkbox-row"><input type="checkbox" id="setting-show-ribbon" checked /> Show ribbon</label>
+				<div class="checkbox-row" data-tag="setting-show-ribbon-row"><input type="checkbox" id="setting-show-ribbon" data-tag="setting-show-ribbon" checked /> <label
+						for="setting-show-ribbon" data-tag="setting-show-ribbon-label">Show ribbon</label></div>
 				<div class="settings-field ribbon-position-row">
 					<span id="ribbon-position-label">Ribbon position</span>
 					<div class="ribbon-position-options" role="radiogroup" aria-labelledby="ribbon-position-label">
@@ -1046,19 +1204,22 @@
 			</section>
 			<section class="settings-panel settings-body" data-settings-panel="app" hidden>
 				<h3>Install &amp; updates</h3>
-				<p>Install paint as an app for a focused window, quick launch, and offline use. The browser decides when direct installation is available.</p>
+				<p>Install paint as an app for a focused window, quick launch, and offline use. The browser decides when direct
+					installation is available.</p>
 				<div class="pwa-install-card">
 					<button type="button" class="settings-link-button" id="pwa-install-button">Install paint</button>
 					<p id="pwa-install-status" class="pwa-status" role="status" aria-live="polite">Checking install options…</p>
 				</div>
 				<div class="pwa-update-card">
 					<strong>Version updates</strong>
-					<p>When a new version is published, the service worker checks for it and applies it automatically on the next safe reload.</p>
+					<p>When a new version is published, the service worker checks for it and applies it automatically on the next
+						safe reload.</p>
 					<button type="button" class="settings-link-button" id="pwa-update-button">Check for updates</button>
 				</div>
 				<div class="pwa-offline-card">
 					<strong>Offline use</strong>
-					<p>Prepare every current Paint feature for use without an internet connection. Future optional features may add a separate download step.</p>
+					<p>Prepare every current Paint feature for use without an internet connection. Future optional features may
+						add a separate download step.</p>
 					<button type="button" class="settings-link-button" id="pwa-offline-button">Prepare offline use</button>
 					<p id="pwa-offline-status" class="pwa-status" role="status" aria-live="polite">Checking offline shell…</p>
 				</div>
@@ -1068,7 +1229,7 @@
 				<p>Your feedback is important because it helps prioritize fixes, accessibility improvements, and features that
 					make paint useful in real workflows.</p>
 				<p>If something feels broken or confusing, please open a GitHub issue with what you expected, what happened,
-					and—when possible—steps to reproduce it.</p>
+					and-when possible-steps to reproduce it.</p>
 				<div class="feedback-actions">
 					<a class="settings-link-button" href="https://github.com/omergal99/paint/issues/new" target="_blank"
 						rel="noopener noreferrer">Open a new GitHub issue</a>
@@ -1089,6 +1250,25 @@
 			<div class="dialog-actions">
 				<button type="button" id="new-file-cancel">Cancel</button>
 				<button type="button" id="new-file-ok" class="danger">New Image</button>
+			</div>
+		</form>
+	</dialog>
+
+	<!-- ===================== Background-removal dialog ===================== -->
+	<dialog id="background-removal-dialog" class="app-dialog background-removal-dialog" data-tag="background-removal-dialog"
+		aria-labelledby="background-removal-title">
+		<form method="dialog" id="background-removal-form">
+			<h3 id="background-removal-title" data-i18n="ui.removeBackground">Remove Background (Color Key)</h3>
+			<p id="background-removal-message" data-tag="background-removal-message">The image stays unchanged until you choose Apply.</p>
+			<div class="background-removal-preview" data-tag="background-removal-preview-wrap">
+				<img id="background-removal-preview" data-tag="background-removal-preview" alt="Background-removal preview" hidden />
+			</div>
+			<progress id="background-removal-progress" data-tag="background-removal-progress" max="100" value="0" hidden></progress>
+			<output id="background-removal-phase" data-tag="background-removal-phase" aria-live="polite">Ready</output>
+			<div class="dialog-actions">
+				<button type="button" id="background-removal-cancel" data-tag="background-removal-cancel" data-i18n="common.actions.cancel">Cancel</button>
+				<button type="button" id="background-removal-close" data-tag="background-removal-close" data-i18n="common.actions.close" hidden>Close</button>
+				<button type="button" id="background-removal-apply" data-tag="background-removal-apply" data-i18n="common.actions.apply" disabled>Apply</button>
 			</div>
 		</form>
 	</dialog>

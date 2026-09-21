@@ -1,8 +1,8 @@
-# paint — Next-Steps Roadmap (prioritized)
+# paint - Next-Steps Roadmap (prioritized)
 
 > Reviewed: `docs/future_ideas.md` + `docs/future_ideas2.md`.
 > Each candidate is rated by effort (S ≤ ½ day, M 1–2 days, L ≈ a week, XL 2+ weeks)
-> and impact (H/M/L). __Quick wins__ are cheap and clearly valuable — do them first.
+> and impact (H/M/L). __Quick wins__ are cheap and clearly valuable - do them first.
 
 ---
 
@@ -42,31 +42,31 @@
 
 ## 2. New ideas (proposed)
 
-- **N1 — Space-drag / middle-drag panning.** Natural for a paint app: hold
+- **N1 - Space-drag / middle-drag panning.** Natural for a paint app: hold
   `Space` (or middle mouse) and drag to pan. Complements the new native-scroll
   fix and is far more precise than scrollbars.
-- **N2 — Smart shape modifiers.** `Shift` while dragging a shape constrains
+- **N2 - Smart shape modifiers.** `Shift` while dragging a shape constrains
   line/arrow to 45° steps and rectangle/ellipse to perfect square/circle;
   `Alt` draws from the center. Classic Paint behavior, tiny code change.
-- **N3 — Fit-to-window zoom (`Ctrl+0`).** One-click "fit" that computes the
+- **N3 - Fit-to-window zoom (`Ctrl+0`).** One-click "fit" that computes the
   zoom % so the whole canvas is visible (today you must slide the zoom bar).
-- **N4 — "Open history copy as new image"** button alongside the existing
+- **N4 - "Open history copy as new image"** button alongside the existing
   per-item save/export in the History panel (idea 1 remainder).
-- **N5 — Keyboard-shortcut reference dialog (`F1` / `?`).** Lists every
+- **N5 - Keyboard-shortcut reference dialog (`F1` / `?`).** Lists every
   shortcut and ribbon letter; improves discoverability massively.
-- **N6 — Save-success toast + page title sync.** Green toast "Saved to <file>" and
+- **N6 - Save-success toast + page title sync.** Green toast "Saved to <file>" and
   `document.title` shows the filename (idea 9 remainder).
-- **N7 — Lock canvas size toggle** on the ribbon/resize area (idea 12 remainder)
+- **N7 - Lock canvas size toggle** on the ribbon/resize area (idea 12 remainder)
   so the drag-handles disappear until unlocked.
-- **N8 — Stroke style presets** (solid / dashed / dotted) for freehand and the
-  line/arrow shapes — cheap and noticeable.
-- **N9 — Selection toolbar for floating selections** (rotate, duplicate, flip,
-  crop-as-new) — picks up idea 10 / future_ideas2 5 fully.
-- **N10 — SW update banner** (future_ideas2 2): when a new worker is waiting, show
+- **N8 - Stroke style presets** (solid / dashed / dotted) for freehand and the
+  line/arrow shapes - cheap and noticeable.
+- **N9 - Selection toolbar for floating selections** (rotate, duplicate, flip,
+  crop-as-new) - picks up idea 10 / future_ideas2 5 fully.
+- **N10 - SW update banner** (future_ideas2 2): when a new worker is waiting, show
   a toast with Reload, preserving the canvas first.
-- **N11 — Rulers + optional grid overlay** on the viewport edges (settings-gated).
-- **N12 — Text outline/stroke options** for the Text tool (fill vs stroke).
-- **N13 — Background-removal refinement mode** — after auto/keying, brush to
+- **N11 - Rulers + optional grid overlay** on the viewport edges (settings-gated).
+- **N12 - Text outline/stroke options** for the Text tool (fill vs stroke).
+- **N13 - Background-removal refinement mode** - after auto/keying, brush to
   keep/erase, like Word's mark-areas UX.
 ---
 
@@ -101,7 +101,7 @@
 
 1. **Now (this sprint):** Q1–Q3 + Q6. All small, no shared-file risk, high touch.
 2. **Next:** Q5, Q7, Q9, then **M1 (selection toolbar)** and **M4 (bg-remove refine)**
-   — the two most "finish the feature" investments.
+   - the two most "finish the feature" investments.
 3. **When ready for a bigger push:** L1 (mobile view) and L2 (real AI) unlock new
    audiences; both deserve their own focused session.
-- **N14 — Magnifier preview while panning/zooming at high % + zoom-to-selection.**
+- **N14 - Magnifier preview while panning/zooming at high % + zoom-to-selection.**

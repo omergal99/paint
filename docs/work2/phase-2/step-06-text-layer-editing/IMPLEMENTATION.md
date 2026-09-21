@@ -31,11 +31,11 @@ requires undo/redo and reload proof before those features are enabled.
 
 ## Verification
 
-- `npm test` — all 5 top-level test files passed, including the bounded
+- `npm test` - all 5 top-level test files passed, including the bounded
   history contract, renderer contract, and existing shape-layer coverage.
-- `node --check` — passed for the changed JavaScript modules.
-- `git diff --check` — passed.
-- Browser smoke — local headless Chrome opened the real Text tool, committed
+- `node --check` - passed for the changed JavaScript modules.
+- `git diff --check` - passed.
+- Browser smoke - local headless Chrome opened the real Text tool, committed
   text, restored it through Recent text, and cleared history while the textarea
   stayed open. A second pass verified the enabled checkbox, moved the selected
   target by `+100,+50` while pixel-selection status stayed empty, and cleared

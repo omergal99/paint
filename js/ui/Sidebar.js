@@ -127,9 +127,10 @@ export class Sidebar {
 		if (this.saveToHistoryBtn) {
 			this.saveToHistoryBtn.addEventListener('click', async () => {
 				if (this.historyView === HISTORY_VIEWS.session) {
-					this.historyManager?.snapshot?.();
+					this.historyManager?.snapshot?.({ force: true });
+					await this.historyManager?.waitForPendingSnapshots?.();
 					this.historyManager?.persistSession?.();
-					this.refreshHistory();
+					await this.refreshHistory();
 					this.statusBar?.flash?.('Saved to session');
 					return;
 				}
@@ -255,7 +256,7 @@ export class Sidebar {
 	}
 
 	async _loadHistoryWithRetry() {
-		// Session view has no IDB count to converge on — render once directly.
+		// Session view has no IDB count to converge on - render once directly.
 		if (this.historyView === HISTORY_VIEWS.session) {
 			await this.refreshHistory();
 			return;
@@ -408,17 +409,24 @@ export class Sidebar {
 
 		this.groupSettingsContainer.innerHTML = '';
 
-		const toggleGroup = document.createElement('label');
+		const toggleGroup = document.createElement('div');
 		toggleGroup.className = 'checkbox-row';
+		toggleGroup.dataset.tag = 'sidebar-group-visibility-row';
 		const cbGroup = document.createElement('input');
 		cbGroup.type = 'checkbox';
+		cbGroup.id = 'sidebar-group-visibility';
+		cbGroup.dataset.tag = 'sidebar-group-visibility';
+		const groupLabel = document.createElement('label');
+		groupLabel.htmlFor = cbGroup.id;
+		groupLabel.dataset.tag = 'sidebar-group-visibility-label';
+		groupLabel.textContent = 'Show Entire Group';
 		const isExtras = groupSection.classList.contains('ribbon-group-extras');
 		if (isExtras) cbGroup.disabled = true;
 		cbGroup.checked = [...groupSection.children]
 			.filter((child) => !child.classList.contains('ribbon-group-title') && child.id !== 'file-input')
 			.some((child) => !child.hidden && child.style.display !== 'none');
 		toggleGroup.appendChild(cbGroup);
-		toggleGroup.appendChild(document.createTextNode(' Show Entire Group'));
+		toggleGroup.append(cbGroup, groupLabel);
 		cbGroup.addEventListener('change', (e) => {
 			if (isExtras) return;
 			const groupContent = [...groupSection.children]
@@ -438,17 +446,23 @@ export class Sidebar {
 		this.groupSettingsContainer.appendChild(toggleGroup);
 
 		if (groupSection.classList.contains('ribbon-group-tools')) {
-			const currentToolToggle = document.createElement('label');
+			const currentToolToggle = document.createElement('div');
 			currentToolToggle.className = 'checkbox-row';
+			currentToolToggle.dataset.tag = 'sidebar-current-tool-row';
 			const currentToolCheckbox = document.createElement('input');
 			currentToolCheckbox.type = 'checkbox';
 			currentToolCheckbox.id = 'show-current-tool-toggle';
+			currentToolCheckbox.dataset.tag = 'show-current-tool-toggle';
 			try { currentToolCheckbox.checked = localStorage.getItem('paint:show-current-tool') !== 'false'; } catch { currentToolCheckbox.checked = true; }
 			currentToolCheckbox.addEventListener('change', (event) => {
 				window.dispatchEvent(new CustomEvent('paint:show-current-tool-change', { detail: event.target.checked }));
 				this._saveRibbonButtonState();
 			});
-			currentToolToggle.append(currentToolCheckbox, document.createTextNode(' Show Current tool'));
+			const currentToolLabel = document.createElement('label');
+			currentToolLabel.htmlFor = currentToolCheckbox.id;
+			currentToolLabel.dataset.tag = 'show-current-tool-label';
+			currentToolLabel.textContent = 'Show Current tool';
+			currentToolToggle.append(currentToolCheckbox, currentToolLabel);
 			this.groupSettingsContainer.appendChild(currentToolToggle);
 		}
 
@@ -463,15 +477,21 @@ export class Sidebar {
 		// .filter((btn) => btn.id !== 'btn-remove-bg' && !btn.closest('.action-menu-items'))
 		const buttons = [...groupSection.querySelectorAll('.rbtn')]
 			.filter((btn) => btn.id !== 'btn-remove-bg' && btn.id !== 'btn-settings' && btn.id !== 'tool-status' && !btn.closest('.action-menu-items'));
-		buttons.forEach(btn => {
+		buttons.forEach((btn, index) => {
 			let btnLabel = btn.title || btn.dataset.tool || btn.dataset.shape || btn.textContent.trim();
-			const toggleBtn = document.createElement('label');
+			const toggleBtn = document.createElement('div');
 			toggleBtn.className = 'checkbox-row';
+			toggleBtn.dataset.tag = `sidebar-button-visibility-row-${index}`;
 			const cbBtn = document.createElement('input');
 			cbBtn.type = 'checkbox';
+			cbBtn.id = `sidebar-button-visibility-${index}`;
+			cbBtn.dataset.tag = cbBtn.id;
 			cbBtn.checked = !btn.hidden && btn.style.display !== 'none';
-			toggleBtn.appendChild(cbBtn);
-			toggleBtn.appendChild(document.createTextNode(' Show ' + btnLabel));
+			const buttonLabel = document.createElement('label');
+			buttonLabel.htmlFor = cbBtn.id;
+			buttonLabel.dataset.tag = `${cbBtn.id}-label`;
+			buttonLabel.textContent = `Show ${btnLabel}`;
+			toggleBtn.append(cbBtn, buttonLabel);
 			cbBtn.addEventListener('change', (e) => {
 				btn.hidden = !e.target.checked;
 				btn.style.display = e.target.checked ? '' : 'none';
@@ -565,7 +585,9 @@ export class Sidebar {
 		});
 		resizer.addEventListener('pointermove', (e) => {
 			if (!isResizing || e.pointerId !== pointerId) return;
-			const dx = startX - e.clientX;
+			const dx = document.documentElement?.dir === 'rtl'
+				? e.clientX - startX
+				: startX - e.clientX;
 			const newWidth = Math.max(220, Math.min(startWidth + dx, window.innerWidth * 0.8));
 			this.sidebar.style.width = `${newWidth}px`;
 		});
@@ -656,12 +678,21 @@ export class Sidebar {
 	}
 
 	async refreshHistory() {
+		const generation = (this._historyRefreshGeneration || 0) + 1;
+		this._historyRefreshGeneration = generation;
+		const scrollTop = this.historyGrid.scrollTop;
 		this.historyGrid.innerHTML = '';
-		if (this.historyView === HISTORY_VIEWS.session) return this._renderSessionView();
+		if (this.historyView === HISTORY_VIEWS.session) {
+			const count = await this._renderSessionView();
+			if (generation === this._historyRefreshGeneration) this.historyGrid.scrollTop = scrollTop;
+			return count;
+		}
 		const sessions = await this.globalHistory.getSessions();
+		if (generation !== this._historyRefreshGeneration) return 0;
 		if (sessions.length === 0) {
 			const message = this.globalHistory.historyEnabled ? 'No history found' : 'History saving is off';
 			this.historyGrid.innerHTML = `<div class="history-empty">${message}</div>`;
+			this.historyGrid.scrollTop = scrollTop;
 			return 0;
 		}
 
@@ -698,7 +729,7 @@ export class Sidebar {
 			const deleteButton = document.createElement('button');
 			deleteButton.type = 'button';
 			deleteButton.className = 'history-delete';
-			deleteButton.innerHTML = '<span style="position: relative; right: 2px;" aria-hidden="true">🗑</span>';
+			deleteButton.innerHTML = '<span style="position: relative; inset-inline-end: 2px;" aria-hidden="true">🗑</span>';
 			deleteButton.setAttribute('aria-label', `Delete history image ${index + 1} of ${sessions.length}`);
 			deleteButton.title = 'Delete this saved image';
 			deleteButton.addEventListener('click', async (event) => {
@@ -725,6 +756,7 @@ export class Sidebar {
 
 			this.historyGrid.appendChild(item);
 		});
+		this.historyGrid.scrollTop = scrollTop;
 		return sessions.length;
 	}
 
@@ -734,7 +766,7 @@ export class Sidebar {
 	async _renderSessionView() {
 		const entries = this.historyManager?.getSessionEntries?.() || [];
 		if (entries.length === 0) {
-			this.historyGrid.innerHTML = '<div class="history-empty">No session steps yet — draw something first</div>';
+			this.historyGrid.innerHTML = '<div class="history-empty">No session steps yet - draw something first</div>';
 			return 0;
 		}
 		entries.forEach((entry, index) => {
@@ -767,7 +799,7 @@ export class Sidebar {
 			const deleteButton = document.createElement('button');
 			deleteButton.type = 'button';
 			deleteButton.className = 'history-delete';
-			deleteButton.innerHTML = '<span style="position: relative; right: 2px;" aria-hidden="true">🗑</span>';
+			deleteButton.innerHTML = '<span style="position: relative; inset-inline-end: 2px;" aria-hidden="true">🗑</span>';
 			deleteButton.setAttribute('aria-label', entry.kind === 'current'
 				? 'Hide current session image'
 				: `Delete session step ${index + 1} of ${entries.length}`);

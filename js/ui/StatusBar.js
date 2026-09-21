@@ -5,7 +5,7 @@ export const createStatusBar = ({ pointerEl, selectionEl, canvasSizeEl, flashEl 
 
   const setPointer = (pt) => {
     currentPointer = pt;
-    pointerEl.textContent = pt ? `Pointer: ${Math.round(pt.x)}, ${Math.round(pt.y)}px` : 'Pointer: —';
+    pointerEl.textContent = pt ? `Pointer: ${Math.round(pt.x)}, ${Math.round(pt.y)}px` : 'Pointer: -';
   }
 
   const setSelection = (region) => {
@@ -13,7 +13,11 @@ export const createStatusBar = ({ pointerEl, selectionEl, canvasSizeEl, flashEl 
   }
 
   const setCanvasSize = (w, h) => {
-    canvasSizeEl.textContent = `${w} × ${h}px`;
+    const label = `${w} × ${h}px`;
+    // The HTML shell already declares the default 800 × 600 label. Avoid
+    // replacing its text node with identical content at startup: it causes an
+    // unnecessary paint and can become the late LCP candidate on slow devices.
+    if (canvasSizeEl.textContent !== label) canvasSizeEl.textContent = label;
   }
 
   const flash = (message, ms = 2200) => {

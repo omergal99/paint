@@ -3,10 +3,12 @@
 These concise notes are the project contract for future agents. Read the
 relevant note before editing; read `AGENTS.md` first for the required baseline.
 
-- [`coding.md`](coding.md) — clean code, KISS, SSOT, no duplication.
-- [`architecture.md`](architecture.md) — logic/data/UI separation and module boundaries.
-- [`ui-components.md`](ui-components.md) — reusable, responsive infrastructure UI.
-- [`performance.md`](performance.md) — browser/canvas performance rules.
-- [`seo.md`](seo.md) — metadata, accessibility, and discoverability.
-- [`validation.md`](validation.md) — tests, smoke checks, and safe handoff.
-- [`community-standards-audit/SKILL.md`](community-standards-audit/SKILL.md) — open-source community, security, documentation, and contribution readiness.
+- [`coding.md`](coding.md) - clean code, KISS, SSOT, no duplication.
+- [`architecture.md`](architecture.md) - logic/data/UI separation and module boundaries.
+- [`ui-components.md`](ui-components.md) - reusable, responsive infrastructure UI.
+- [`performance.md`](performance.md) - browser/canvas performance rules.
+- [`rtl-browser-audit.md`](rtl-browser-audit.md) - whole-app direction,
+  positioning, keyboard, responsive, and browser-matrix checks.
+- [`seo.md`](seo.md) - metadata, accessibility, and discoverability.
+- [`validation.md`](validation.md) - tests, smoke checks, and safe handoff.
+- [`community-standards-audit/SKILL.md`](community-standards-audit/SKILL.md) - open-source community, security, documentation, and contribution readiness.

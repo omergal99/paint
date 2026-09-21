@@ -1,6 +1,6 @@
 # Phase 2 Progress Log
 
-## 2026-09-19 — planning pass
+## 2026-09-19 - planning pass
 
 - Read the private initialization brief completely; the source brief and
   processed working notes are intentionally excluded from the public tree.
@@ -18,13 +18,47 @@
   workspaces. No `paint/js`, `paint/css`, `paint/index.html`, test, or workflow
   implementation file was changed.
 
+## 2026-09-21 - Round 9 RTL matrix and cross-surface audit
+
+- Added the reusable `.skills/rtl-browser-audit.md` checklist and linked it
+  from `AGENTS.md` and the local skills index. The checklist requires a whole-
+  app inventory of physical coordinates, logical CSS, pointer math, keyboard
+  behavior, responsive layouts, persistence, and teardown before shared UI
+  changes are considered complete.
+- Added `NEXT-PLAN-STATUS.md` as the short execution queue for the remaining
+  launch gates and Steps 12–13; the existing numbered status files remain
+  historical evidence.
+- Ran Chrome 151 against the production build at LTR 1280×900, RTL 1280×900,
+  RTL 375×812, and a RTL 200%-zoom layout emulation (640×450 CSS pixels at
+  device scale 2). Image More, nested Crop, and Shapes menus stayed within the
+  viewport; RTL submenu fallback and canvas-handle reachability passed.
+- Evidence: `output/playwright/phase-2/local-audit-20260920/rtl-browser-matrix-20260921.json`.
+- Verification: `npm run verify:docs`, `npm test` (12/12), TypeScript check,
+  i18n check, production build, `npm run verify:release`, and `git diff --check`.
+- Real-device, HTTPS deployment, 200% zoom, and mobile performance evidence
+  remain open and are not claimed by this local matrix.
+
+## 2026-09-21 - Step 12 visible local workflow
+
+- Replaced the direct synchronous Remove Background transform with a reusable
+  `BackgroundRemovalController`. Crop → Remove Background now prepares a
+  bounded local-provider preview, reports phase/progress, supports Escape/
+  Cancel, and applies only after explicit confirmation.
+- Whole-canvas and active-selection inputs are supported. Apply takes a forced
+  history snapshot, flattens composite layers only after confirmation, persists
+  the result, and releases the preview object URL. Advanced providers remain
+  unloaded and opt-in only.
+- Added controller contract coverage to `background-provider.test.js` and ran
+  a Chrome 151 preview/cancel/apply smoke journey. Evidence is recorded in
+  `output/playwright/phase-2/local-audit-20260920/background-removal-browser-20260921.json`.
+
 ## Handoff rule
 
 When implementation begins, append one entry per step with files changed,
 commands run, test results, unresolved browser-only checks, and any decision
 that changed from `DECISIONS.md`.
 
-## 2026-09-19 — review reconciliation and skill pruning
+## 2026-09-19 - review reconciliation and skill pruning
 
 - Corrected the plan's canonical standards path to
   `docs/work1/COMMUNITY_STANDARDS.md` and classified the old reference as
@@ -40,7 +74,7 @@ that changed from `DECISIONS.md`.
   and `playwright` to relevant local workflows while preserving symlink targets
 and legal/metadata files.
 
-## 2026-09-19 — Round 6 customer handoff hardening
+## 2026-09-19 - Round 6 customer handoff hardening
 
 - Added the functional Hand/Pan tool, H shortcut, viewport cursor states, and
   a More Tools menu entry for mouse/touch panning.
@@ -58,7 +92,7 @@ and legal/metadata files.
 - Verification: npm run version:sync, npm test (5/5), syntax checks,
   git diff --check, live PWA update check, and focused interaction journeys.
 
-## 2026-09-19 — Steps 01–04 implementation
+## 2026-09-19 - Steps 01–04 implementation
 
 - Step 01: corrected standards and code-of-conduct references, captured
   `step-01-baseline-and-safety/BASELINE.md`,
@@ -76,7 +110,7 @@ and legal/metadata files.
   syntax checks and `git diff --check` passed. Full alpha file round trips and
   all Ribbon layout measurements remain later browser-matrix work.
 
-## 2026-09-19 — UI refinement and Steps 05–08 foundations
+## 2026-09-19 - UI refinement and Steps 05–08 foundations
 
 - Settings refinement: reduced `.settings-shell` height/max-height to 470px,
   set `#settings-dialog` padding to 10px, added the requested area dividers,
@@ -99,7 +133,7 @@ and legal/metadata files.
   byte cap for in-memory undo/redo data URLs, separate from storage quota.
 - Added contract tests and service-worker entries for the new modules.
 
-## 2026-09-19 — Step 06 narrowed to the safe text slice
+## 2026-09-19 - Step 06 narrowed to the safe text slice
 
 - Kept select-after-draw within the verified shape-layer boundary.
 - Added a bounded, closure-based `TextHistoryStore` with newest-first
@@ -114,7 +148,7 @@ and legal/metadata files.
 - Verification: `npm test`, changed-file `node --check`, `git diff --check`,
   and a local headless Chrome smoke flow all passed.
 
-## 2026-09-19 — UI refinement and arrow-function consistency
+## 2026-09-19 - UI refinement and arrow-function consistency
 
 - Added the requested Settings layout refinements: a left footer divider box,
   6px dialog-heading spacing, two-column General checkboxes, grid Ribbon rows,
@@ -132,7 +166,7 @@ and legal/metadata files.
   and text history persisted/restored. Node tests, syntax checks, and diff
   checks remained green.
 
-## 2026-09-19 — Steps 01–08 completeness audit
+## 2026-09-19 - Steps 01–08 completeness audit
 
 - Confirmed that the requested transparency/opacity control in
   `.ribbon-group-colors` belongs to Step 05, while Step 04 owns transparent
@@ -148,7 +182,7 @@ and legal/metadata files.
   is the complete control → RGBA drawing/composition → persistence/pixel/export
   test path.
 
-## 2026-09-19 — Step 05 alpha controls and Steps 01–08 scorecard
+## 2026-09-19 - Step 05 alpha controls and Steps 01–08 scorecard
 
 - Implemented the missing Ribbon Colors alpha path: independent foreground and
   background sliders, explicit `0%` transparent actions, checkerboard swatches,
@@ -169,7 +203,7 @@ and legal/metadata files.
   2 row in `PHASE-2-STATUS.md`. Steps 09–11 are re-sequenced as modular slices
   after the remaining Step 07/08 gates, then quality gates, then PWA/accessibility.
 
-## 2026-09-19 — Stabilization pass and first Steps 09–11 slices
+## 2026-09-19 - Stabilization pass and first Steps 09–11 slices
 
 - Replaced the visible alpha sliders in the Colors ribbon with a compact
   checkerboard transparency icon and arrow menu. Foreground/background options
@@ -193,7 +227,7 @@ and legal/metadata files.
   the offline app can boot the same path. Unit tests and browser verification
   passed.
 
-## 2026-09-19 — Round 2 stabilization and Steps 09–11 continuation
+## 2026-09-19 - Round 2 stabilization and Steps 09–11 continuation
 
 - Applied the requested alpha sizing: `.swatch-alpha-trigger` is horizontal at
   `30px × 16px`, `.swatch-stack` is `32px × 32px`, and the unused
@@ -224,7 +258,7 @@ and legal/metadata files.
   seam and added a fake-context behavior test proving a floating layer is drawn
   at alpha `1` with `source-over`, then the caller state is restored.
 
-## 2026-09-19 — Round 3 fixes and Steps 09.1–11.1
+## 2026-09-19 - Round 3 fixes and Steps 09.1–11.1
 
 - Fixed the palette context menu lifecycle: it now uses the shared functional
   action-menu controller, opens beside the right-clicked swatch, clamps to the
@@ -253,7 +287,7 @@ and legal/metadata files.
   keyboard/layout matrix passed. Remaining quality gates are analyzer output,
   `git diff --check`, checkJs/coverage, Lighthouse, and offline update checks.
 
-## 2026-09-19 — Round 4 shared contracts, text handoff, and release planning
+## 2026-09-19 - Round 4 shared contracts, text handoff, and release planning
 
 - Unified normal, submenu, and pointer-positioned menus behind one measured,
   viewport-clamped placement contract. Representative Size, Text, Image More,
@@ -279,7 +313,7 @@ and legal/metadata files.
 - Verification: `npm test` 4/4, changed-module syntax, `git diff --check`,
   analyzer 0 issues/0 warnings, live browser console errors 0.
 
-## 2026-09-19 — Round 5 text-layer boundary, release 1.6.0, and PWA quick wins
+## 2026-09-19 - Round 5 text-layer boundary, release 1.6.0, and PWA quick wins
 
 - Replaced the text commit’s direct paint-canvas write with a transparent
   `TextLayerService` and shared `TextLayerRenderer`. Text selection targets now
@@ -295,11 +329,12 @@ and legal/metadata files.
 - Browser evidence: text focus movement and outside-clear pass; service worker
   is activated and controls an offline reload; manifest/icon fetches pass;
   reduced-motion is detected; 320px Ribbon is 74px and internally scrollable.
-- Added [`PHASE-2-STATUS_5.md`](PHASE-2-STATUS_5.md) and its white-theme HTML
-  companion. Steps 12–13 remain planned until the 1.6.0 release boundary and
+- Added the historical Round 5 status and its white-theme HTML; those superseded
+  artifacts now live in the ignored internal archive. Steps 12–13 remain planned
+  until the 1.6.0 release boundary and
   remaining Step 11 audit gates are approved.
 
-## 2026-09-19 — Retro Round 1: repeatable gates and evidence discipline
+## 2026-09-19 - Retro Round 1: repeatable gates and evidence discipline
 
 - Confirmed the clean `1.6.0` baseline: `npm test` passes all 5 test files and
   the current numbered status is Round 6.
@@ -324,7 +359,7 @@ and legal/metadata files.
   guidance. Step 12, Step 13, and unsafe full text editing remain explicitly
   deferred.
 
-## 2026-09-20 — Round 7 hardening round: empty-text guard, clean Settings URL, and offline preparation
+## 2026-09-20 - Round 7 hardening round: empty-text guard, clean Settings URL, and offline preparation
 
 - Fixed the empty-editor edge case: an empty text placement is discarded without
   activating Select, so the Text tool remains ready for the next placement.
@@ -339,3 +374,31 @@ and legal/metadata files.
   offline reload containing Paint, `#app`, and the text layer.
 - Moved retro memory/report artifacts to ignored `docs-internal/retro/` and
   released these customer-facing fixes as version `1.6.1`.
+
+## 2026-09-20 - Round 8 local release-candidate evidence
+
+- Step 07 now has explicit runtime ownership and teardown: coalesced pointer
+  work, cached viewport geometry, pointer-capture fallback, visibility-aware
+  telemetry, and editor/controller disposal. A production-build browser journey
+  drew normally, then confirmed that a later pointer event could not draw after
+  a non-persisted `pagehide`, with zero console errors.
+- Step 08 now stores the working canvas as a versioned PNG `Blob` and protects
+  import/resize/load paths with dimension and pixel admission limits. Local
+  browser fixtures rejected a 5000 × 7000 request before allocation, presented
+  corrupt-autosave discard, and completed an injected-quota recovery download.
+- Added the production build path and deployed-artifact workflow: `npm run
+  build` produces a code-split `dist/` tree and a content-fingerprinted service
+  worker shell. The local production build was served and audited rather than
+  treating the source-development server as release evidence.
+- Local desktop Lighthouse for that build recorded **Performance 100,
+  Accessibility 96, Best Practices 100, and SEO 100**. The local slow-mobile
+  diagnostic recorded **Performance 76**, so mobile 90+ remains open.
+- Verification at this checkpoint: `npm test` **10/10**, scoped type checking,
+  runtime audit, production-build browser recovery journeys, and the desktop
+  Lighthouse budget. Evidence is retained under
+  `output/playwright/phase-2/local-audit-20260920/` and `output/quality/`.
+- This is deliberately not a public-launch claim. Production HTTPS install and
+  update behavior, a deployed-host journey, real desktop/mobile-device checks,
+  sustained large-canvas memory growth, and touch/stylus stress remain open.
+  Step 12, Step 13, and Phase 3 only provide tested foundations so far; their
+  visible UI workflows remain later integration work.

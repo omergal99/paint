@@ -1,4 +1,4 @@
-# Paint Online — Phase 2 Plan Overview
+# Paint Online - Phase 2 Plan Overview
 
 ## Outcome
 
@@ -25,7 +25,7 @@ settings, events, storage, editable text, and future multi-document sessions.
 
 | Priority | Step | Result | Depends on |
 |---|---:|---|---|
-| P0 | 01 | Green baseline, evidence, safe release gate | — |
+| P0 | 01 | Green baseline, evidence, safe release gate | - |
 | P0 | 02 | SSOT contracts for events, settings, documents, and storage | 01 |
 | P0 | 03 | History/session, settings, ribbon, menu, and alignment fixes | 02 |
 | P0 | 04 | Resize percentage/ratio/selection behavior and transparent PNG foundation | 02 |
@@ -41,14 +41,14 @@ settings, events, storage, editable text, and future multi-document sessions.
 
 ## Milestones
 
-1. **M0 — trusted baseline:** tests green, evidence captured, no hidden red gate.
-2. **M1 — daily-use UX:** history/session and ribbon/settings requests work.
-3. **M2 — safe canvas:** resize selection, alpha, PNG export, and memory limits work.
-4. **M3 — safe text workflow:** textarea history is bounded and reusable;
+1. **M0 - trusted baseline:** tests green, evidence captured, no hidden red gate.
+2. **M1 - daily-use UX:** history/session and ribbon/settings requests work.
+3. **M2 - safe canvas:** resize selection, alpha, PNG export, and memory limits work.
+4. **M3 - safe text workflow:** textarea history is bounded and reusable;
    durable editable text remains gated by overlap proof.
-5. **M4 — maintainable runtime:** event/listener and module boundaries are explicit.
-6. **M5 — launch-ready:** browser QA, Lighthouse, PWA, and accessibility gates pass.
-7. **M6 — future workspace:** tabs/split/recovery can be added without another rewrite.
+5. **M4 - maintainable runtime:** event/listener and module boundaries are explicit.
+6. **M5 - launch-ready:** browser QA, Lighthouse, PWA, and accessibility gates pass.
+7. **M6 - future workspace:** tabs/split/recovery can be added without another rewrite.
 
 ## Working rule
 

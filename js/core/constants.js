@@ -47,6 +47,69 @@ export const KEYBOARD_KEYS = Object.freeze({
 	horizontalArrows: Object.freeze(['ArrowLeft', 'ArrowRight']),
 });
 
+const shortcut = (action, label, defaultBinding, aliases = []) => Object.freeze({
+	action,
+	label,
+	defaultBinding,
+	aliases: Object.freeze(aliases),
+});
+
+export const SHORTCUT_ACTIONS = Object.freeze({
+	undo: 'undo',
+	redo: 'redo',
+	selectAll: 'selectAll',
+	copy: 'copy',
+	cut: 'cut',
+	paste: 'paste',
+	save: 'save',
+	open: 'open',
+	newFile: 'newFile',
+	deleteSelection: 'deleteSelection',
+	selectTool: 'selectTool',
+	pencilTool: 'pencilTool',
+	brushTool: 'brushTool',
+	fillTool: 'fillTool',
+	eraserTool: 'eraserTool',
+	textTool: 'textTool',
+	eyedropperTool: 'eyedropperTool',
+	zoomTool: 'zoomTool',
+	panTool: 'panTool',
+	nudgeUp: 'nudgeUp',
+	nudgeDown: 'nudgeDown',
+	nudgeLeft: 'nudgeLeft',
+	nudgeRight: 'nudgeRight',
+});
+
+export const SHORTCUT_DEFINITIONS = Object.freeze([
+	shortcut(SHORTCUT_ACTIONS.undo, 'Undo', 'mod+z'),
+	shortcut(SHORTCUT_ACTIONS.redo, 'Redo', 'mod+y', ['mod+shift+z']),
+	shortcut(SHORTCUT_ACTIONS.selectAll, 'Select all', 'mod+a'),
+	shortcut(SHORTCUT_ACTIONS.copy, 'Copy', 'mod+c'),
+	shortcut(SHORTCUT_ACTIONS.cut, 'Cut', 'mod+x'),
+	shortcut(SHORTCUT_ACTIONS.paste, 'Paste', 'mod+v'),
+	shortcut(SHORTCUT_ACTIONS.save, 'Save', 'mod+s'),
+	shortcut(SHORTCUT_ACTIONS.open, 'Open', 'mod+o'),
+	shortcut(SHORTCUT_ACTIONS.newFile, 'New image', 'mod+n'),
+	shortcut(SHORTCUT_ACTIONS.deleteSelection, 'Delete selection', 'delete', ['backspace']),
+	shortcut(SHORTCUT_ACTIONS.selectTool, 'Select tool', 's'),
+	shortcut(SHORTCUT_ACTIONS.pencilTool, 'Pencil tool', 'p'),
+	shortcut(SHORTCUT_ACTIONS.brushTool, 'Brush tool', 'b'),
+	shortcut(SHORTCUT_ACTIONS.fillTool, 'Fill tool', 'f'),
+	shortcut(SHORTCUT_ACTIONS.eraserTool, 'Eraser tool', 'e'),
+	shortcut(SHORTCUT_ACTIONS.textTool, 'Text tool', 't'),
+	shortcut(SHORTCUT_ACTIONS.eyedropperTool, 'Eyedropper tool', 'k'),
+	shortcut(SHORTCUT_ACTIONS.zoomTool, 'Zoom tool', 'z'),
+	shortcut(SHORTCUT_ACTIONS.panTool, 'Pan tool', 'h'),
+	shortcut(SHORTCUT_ACTIONS.nudgeUp, 'Nudge selection up', 'arrowup', ['shift+arrowup']),
+	shortcut(SHORTCUT_ACTIONS.nudgeDown, 'Nudge selection down', 'arrowdown', ['shift+arrowdown']),
+	shortcut(SHORTCUT_ACTIONS.nudgeLeft, 'Nudge selection left', 'arrowleft', ['shift+arrowleft']),
+	shortcut(SHORTCUT_ACTIONS.nudgeRight, 'Nudge selection right', 'arrowright', ['shift+arrowright']),
+]);
+
+export const DEFAULT_SHORTCUT_BINDINGS = Object.freeze(
+	Object.fromEntries(SHORTCUT_DEFINITIONS.map(({ action, defaultBinding }) => [action, defaultBinding])),
+);
+
 export const HISTORY_VIEWS = Object.freeze({
 	history: 'history',
 	session: 'session',
@@ -70,6 +133,7 @@ export const SCHEMA_VERSIONS = Object.freeze({
 	settings: 1,
 	document: 1,
 	globalHistory: 2,
+	workingCanvas: 1,
 });
 
 export const DEFAULT_SETTINGS = Object.freeze({
@@ -77,14 +141,17 @@ export const DEFAULT_SETTINGS = Object.freeze({
 	showStatusBar: true,
 	showColorInspector: true,
 	showAiChat: false,
+	interfaceDirection: 'auto',
 	canvasBackground: 'none',
 	solidBackgroundColor: '#ffffff',
 	defaultCanvasSize: '800x600',
 	defaultZoom: 100,
 	historyAutoSave: true,
 	historyAutoSaveMode: 'all',
+	restoreLastImage: false,
 	ribbonLayout: null,
 	ribbonVisibility: {},
 	buttonVisibility: {},
 	showRotateInSelection: true,
+	shortcuts: DEFAULT_SHORTCUT_BINDINGS,
 });

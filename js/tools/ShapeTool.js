@@ -1,5 +1,5 @@
 // js/tools/ShapeTool.js
-// One tool, many shapes — `ctx.getShapeKind()` and `ctx.getShapeFillMode()` read
+// One tool, many shapes - `ctx.getShapeKind()` and `ctx.getShapeFillMode()` read
 // the current ribbon selection. Drag previews live on the overlay; releasing
 // the mouse commits the final shape onto the real canvas.
 
@@ -32,7 +32,7 @@ export const createShapeTool = () => {
     // Optional "select after draw": lift the shape as a floating *layer* and
     // leave the main canvas untouched. The pixels behind it keep their original
     // values (no background patch, no erased artwork underneath) and the shape
-    // is only composited when the selection is committed — a tool switch or a
+    // is only composited when the selection is committed - a tool switch or a
     // click outside, via ctx.commitFloatingSelection(). After that one relocation
     // the shape is placed and the shape tool stays active so you can draw another
     // shape immediately; using Select afterward is up to the user.
@@ -47,6 +47,11 @@ export const createShapeTool = () => {
 
     ctx.historyManager.snapshot();
     draw(ctx.canvasManager.ctx, ctx, start, pt, button);
+  }
+
+  const onCancel = (_pt, ctx) => {
+    state.start = null;
+    ctx.canvasManager.clearOverlay();
   }
 
   /**
@@ -209,6 +214,7 @@ export const createShapeTool = () => {
     onDown,
     onMove,
     onUp,
+    onCancel,
     _liftAsSelection: liftAsSelection,
     _draw: draw,
   };
@@ -245,7 +251,7 @@ const V_MARK = {
 
 const drawNormalizedV = (g, x, y, w, h) => {
   // Check-mark "V". Every point is scaled with a SINGLE factor, so both arms
-  // keep a constant angle whatever the drag shape is — scaling the two axes
+  // keep a constant angle whatever the drag shape is - scaling the two axes
   // independently (the old per-axis width/height fractions) is what used to
   // make the arms skew while drawing. It lives in the same square box as the X,
   // so the start point never drifts (identical contract to X and rectangle).

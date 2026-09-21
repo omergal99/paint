@@ -1,4 +1,4 @@
-# Step 09 — Modularization
+# Step 09 - Modularization
 
 ## Goal
 

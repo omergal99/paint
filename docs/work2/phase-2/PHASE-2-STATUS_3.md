@@ -1,4 +1,4 @@
-# Paint Phase 2 — Round 3 Status
+# Paint Phase 2 - Round 3 Status
 
 Last updated: 2026-09-19
 

@@ -1,4 +1,4 @@
-# Step 05 — Colors and Palette
+# Step 05 - Colors and Palette
 
 ## Goal
 

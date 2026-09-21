@@ -10,10 +10,13 @@ const closeMenu = (menu) => {
   const items = menu.querySelector('.action-menu-items');
   items?.style.removeProperty('top');
   items?.style.removeProperty('left');
+  items?.style.removeProperty('right');
   if (items) delete items.dataset.direction;
+  delete menu.dataset.submenuDirection;
 };
 
 export const createActionMenuController = ({ root = document } = {}) => {
+  let bound = false;
   const ancestorsOf = (menu) => {
     const ancestors = [];
     let parent = menu.parentElement;
@@ -39,6 +42,26 @@ export const createActionMenuController = ({ root = document } = {}) => {
 
   const clamp = (value, min, max) => Math.min(Math.max(min, value), Math.max(min, max));
 
+  const isRtl = () => (root.documentElement?.dir || globalThis.document?.documentElement?.dir) === 'rtl';
+
+  // Position from the physical left edge internally, then write the matching
+  // physical side. This keeps pointer/context coordinates stable while making
+  // RTL menus use `right` instead of accidentally inheriting a left anchor.
+  const applyMenuPosition = (menuItems, { left, top, width, height, viewportWidth, viewportHeight }) => {
+    const margin = 8;
+    const maxLeft = viewportWidth - width - margin;
+    const clampedLeft = Math.round(clamp(left, margin, maxLeft));
+    const clampedTop = Math.round(clamp(top, margin, viewportHeight - height - margin));
+    menuItems.style.left = '';
+    menuItems.style.right = '';
+    if (isRtl()) {
+      menuItems.style.right = `${Math.round(viewportWidth - clampedLeft - width)}px`;
+    } else {
+      menuItems.style.left = `${clampedLeft}px`;
+    }
+    menuItems.style.top = `${clampedTop}px`;
+  };
+
   const positionMenu = (menu, menuItems, {
     x,
     y,
@@ -59,24 +82,32 @@ export const createActionMenuController = ({ root = document } = {}) => {
         : anchor;
       const parentBounds = anchor.closest?.('.action-menu-items')?.getBoundingClientRect();
       if (placement === 'submenu') {
-        const openLeft = anchorBounds.right + 2 + menuWidth > viewportWidth - margin;
+        const rtl = isRtl();
+        const canOpenLeft = anchorBounds.left - menuWidth - 2 >= margin;
+        const canOpenRight = anchorBounds.right + 2 + menuWidth <= viewportWidth - margin;
+        const openLeft = rtl ? canOpenLeft : !canOpenRight && canOpenLeft;
         requestedX = openLeft ? anchorBounds.left - menuWidth - 2 : anchorBounds.right + 2;
         requestedY = parentBounds?.top ? Math.max(parentBounds.top, anchorBounds.top) : anchorBounds.top;
         direction = openLeft ? 'left' : 'right';
       } else {
         const openAbove = viewportHeight - anchorBounds.bottom < menuHeight + margin
           && anchorBounds.top >= menuHeight + margin;
-        requestedX = anchorBounds.left;
+        requestedX = isRtl() ? anchorBounds.right - menuWidth : anchorBounds.left;
         requestedY = openAbove ? anchorBounds.top - menuHeight - 2 : anchorBounds.bottom + 2;
         direction = openAbove ? 'up' : 'down';
       }
     }
 
-    const maxX = viewportWidth - menuWidth - margin;
-    const maxY = viewportHeight - menuHeight - margin;
-    menuItems.style.left = `${Math.round(clamp(requestedX, margin, maxX))}px`;
-    menuItems.style.top = `${Math.round(clamp(requestedY, margin, maxY))}px`;
+    applyMenuPosition(menuItems, {
+      left: requestedX,
+      top: requestedY,
+      width: menuWidth,
+      height: menuHeight,
+      viewportWidth,
+      viewportHeight,
+    });
     menuItems.dataset.direction = direction;
+    if (placement === 'submenu') menu.dataset.submenuDirection = direction;
   };
 
   const openMenuAt = (menu, point = {}) => {
@@ -133,16 +164,20 @@ export const createActionMenuController = ({ root = document } = {}) => {
     const menu = trigger.closest('.action-menu');
     if (!menu) return;
 
-    if (event.key === KEYBOARD_KEYS.arrowRight || event.key === KEYBOARD_KEYS.arrowDown) {
-      const isSubmenu = menu.classList.contains('action-submenu');
-      if (event.key === KEYBOARD_KEYS.arrowRight && !isSubmenu) return;
+    const isSubmenu = menu.classList.contains('action-submenu');
+    const isArrowLeft = event.key === KEYBOARD_KEYS.arrowLeft;
+    const isArrowRight = event.key === KEYBOARD_KEYS.arrowRight;
+    const openSubmenuKey = isRtl() ? KEYBOARD_KEYS.arrowLeft : KEYBOARD_KEYS.arrowRight;
+    const closeSubmenuKey = isRtl() ? KEYBOARD_KEYS.arrowRight : KEYBOARD_KEYS.arrowLeft;
+    if (event.key === KEYBOARD_KEYS.arrowDown || event.key === openSubmenuKey) {
+      if (event.key === openSubmenuKey && !isSubmenu) return;
       event.preventDefault();
       if (!menu.classList.contains('open')) toggleMenu(trigger);
       firstMenuItem(menu)?.focus();
       return;
     }
 
-    if (event.key === KEYBOARD_KEYS.arrowLeft && menu.classList.contains('action-submenu')) {
+    if ((isArrowLeft || isArrowRight) && event.key === closeSubmenuKey && isSubmenu) {
       event.preventDefault();
       const submenuTrigger = directTrigger(menu);
       closeMenu(menu);
@@ -150,17 +185,34 @@ export const createActionMenuController = ({ root = document } = {}) => {
     }
   };
 
+  const handleRootClick = () => closeAll();
+  const handleOpenAt = (event) => {
+    const { menu, x, y } = event.detail || {};
+    openMenuAt(menu, { x, y });
+  };
+
   const bind = () => {
+    if (bound) return;
+    bound = true;
     root.querySelectorAll('.action-menu-trigger').forEach((trigger) => {
       trigger.addEventListener('click', toggle);
     });
-    root.addEventListener('click', () => closeAll());
+    root.addEventListener('click', handleRootClick);
     root.addEventListener('keydown', handleKeyboard);
-    root.addEventListener('paint:action-menu-open-at', (event) => {
-      const { menu, x, y } = event.detail || {};
-      openMenuAt(menu, { x, y });
-    });
+    root.addEventListener('paint:action-menu-open-at', handleOpenAt);
   };
 
-  return Object.freeze({ bind, closeAll, toggle, openAt: openMenuAt });
+  const destroy = () => {
+    if (!bound) return;
+    root.querySelectorAll('.action-menu-trigger').forEach((trigger) => {
+      trigger.removeEventListener('click', toggle);
+    });
+    root.removeEventListener('click', handleRootClick);
+    root.removeEventListener('keydown', handleKeyboard);
+    root.removeEventListener('paint:action-menu-open-at', handleOpenAt);
+    closeAll();
+    bound = false;
+  };
+
+  return Object.freeze({ bind, closeAll, toggle, openAt: openMenuAt, destroy });
 };

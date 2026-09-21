@@ -10,6 +10,8 @@
 //          fallback. A last-copied in-app blob keeps paste working even when
 //          the OS clipboard API is denied.
 
+import { assessImageAdmission } from '../storage/ImageAdmission.js';
+
 export class ClipboardManager {
   constructor({ canvasManager, historyManager, getSelection, setSelection, statusBar, setActiveTool, commitFloatingSelection }) {
     this.canvasManager = canvasManager;
@@ -19,7 +21,7 @@ export class ClipboardManager {
     this.statusBar = statusBar;
     this.setActiveTool = setActiveTool;
     this.commitFloatingSelection = commitFloatingSelection;
-    // Last PNG we produced ourselves — fallback when the OS clipboard is blocked.
+    // Last PNG we produced ourselves - fallback when the OS clipboard is blocked.
     this.lastCopiedBlob = null;
   }
 
@@ -34,12 +36,6 @@ export class ClipboardManager {
   }
 
   async insertBitmapAsFloatingSelection(bitmap, { sourceLabel = 'Pasted' } = {}) {
-    // Commit any active floating selection first so the new image does not stack
-    // on top of an uncommitted edit.
-    this.commitFloatingSelection?.();
-
-    this.historyManager.snapshot();
-
     // A clean New canvas (no paint, no image yet) always pastes at 0,0 so a
     // cold-start paste is visible and predictable. Otherwise anchor at cursor.
     const isClean = this.canvasManager.isCleanDocument?.() === true;
@@ -51,24 +47,41 @@ export class ClipboardManager {
 
     const neededWidth = Math.max(this.canvasManager.width, x + w);
     const neededHeight = Math.max(this.canvasManager.height, y + h);
-    if (neededWidth !== this.canvasManager.width || neededHeight !== this.canvasManager.height) {
-      this.canvasManager.resize(neededWidth, neededHeight);
+    const admission = assessImageAdmission({
+      width: w,
+      height: h,
+      targetWidth: neededWidth,
+      targetHeight: neededHeight,
+    });
+    if (!admission.ok) {
+      bitmap.close?.();
+      this.statusBar?.flash(admission.message);
+      return null;
     }
 
-    const fCanvas = document.createElement('canvas');
-    fCanvas.width = w;
-    fCanvas.height = h;
-    fCanvas.getContext('2d').drawImage(bitmap, 0, 0);
-    this.canvasManager.floatingCanvas = fCanvas;
+    try {
+      // Commit any active floating selection only after this new image is known
+      // safe, so a rejected import never mutates the current work.
+      this.commitFloatingSelection?.();
+      this.historyManager.snapshot();
+      if (neededWidth !== this.canvasManager.width || neededHeight !== this.canvasManager.height) {
+        if (!this.canvasManager.resize(neededWidth, neededHeight)) return null;
+      }
 
-    this.setActiveTool?.('select');
-    this.setSelection({ x, y, w, h });
-    this.canvasManager.persistToStorage();
+      const fCanvas = document.createElement('canvas');
+      fCanvas.width = w;
+      fCanvas.height = h;
+      fCanvas.getContext('2d').drawImage(bitmap, 0, 0);
+      this.canvasManager.floatingCanvas = fCanvas;
 
-    if (bitmap.close) bitmap.close();
-
-    this.statusBar?.flash(`${sourceLabel} ${w}×${h}px image as floating selection`);
-    return { x, y, w, h };
+      this.setActiveTool?.('select');
+      this.setSelection({ x, y, w, h });
+      this.canvasManager.persistToStorage();
+      this.statusBar?.flash(`${sourceLabel} ${w}×${h}px image as floating selection`);
+      return { x, y, w, h };
+    } finally {
+      bitmap.close?.();
+    }
   }
 
   async copy() {
@@ -86,7 +99,7 @@ export class ClipboardManager {
       blob = this._pngBlobFromCanvas(regionCanvas);
     } catch (err) {
       console.error('Copy failed:', err);
-      this.statusBar?.flash('Copy failed — could not encode image');
+      this.statusBar?.flash('Copy failed - could not encode image');
       return false;
     }
     this.lastCopiedBlob = blob;
@@ -98,7 +111,7 @@ export class ClipboardManager {
     } catch (err) {
       console.error('OS clipboard write failed:', err);
       // The image is kept in-app, so paste within this tab still works.
-      this.statusBar?.flash('Copied internally — OS clipboard unavailable');
+      this.statusBar?.flash('Copied internally - OS clipboard unavailable');
     }
     return true;
   }
@@ -122,8 +135,14 @@ export class ClipboardManager {
   }
 
   async insertImageBlob(blob, { sourceLabel = 'Pasted' } = {}) {
-    const bitmap = await createImageBitmap(blob);
-    return this.insertBitmapAsFloatingSelection(bitmap, { sourceLabel });
+    try {
+      const bitmap = await createImageBitmap(blob);
+      return await this.insertBitmapAsFloatingSelection(bitmap, { sourceLabel });
+    } catch (error) {
+      console.error('Image import failed:', error);
+      this.statusBar?.flash('Image could not be decoded');
+      return null;
+    }
   }
 
   async paste() {
@@ -139,7 +158,7 @@ export class ClipboardManager {
       this.statusBar?.flash('Clipboard has no image to paste');
     } catch (err) {
       console.error('Paste failed:', err);
-      // OS clipboard read denied — fall back to the last image copied here.
+      // OS clipboard read denied - fall back to the last image copied here.
       if (this.lastCopiedBlob) {
         try {
           await this.insertImageBlob(this.lastCopiedBlob, { sourceLabel: 'Pasted (in-app)' });
@@ -148,7 +167,7 @@ export class ClipboardManager {
           console.error('In-app paste fallback failed:', fallbackErr);
         }
       }
-      this.statusBar?.flash('Paste failed — clipboard permission denied');
+      this.statusBar?.flash('Paste failed - clipboard permission denied');
     }
   }
 }

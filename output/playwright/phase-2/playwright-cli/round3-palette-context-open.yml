@@ -123,7 +123,7 @@
       - generic [ref=e205]:
         - generic "Committed text objects"
     - contentinfo [ref=e211]:
-      - generic [ref=e212]: "Pointer: —"
+      - generic [ref=e212]: "Pointer: -"
       - generic [ref=e214]:
         - img "Paint icon" [ref=e215] [cursor=pointer]
         - generic [ref=e216]: paint

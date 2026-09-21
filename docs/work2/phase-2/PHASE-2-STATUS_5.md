@@ -1,4 +1,4 @@
-# Paint — Round 5 delivery status
+# Paint - Round 5 delivery status
 
 Last updated: 2026-09-19  
 Customer release: **1.6.0**  

@@ -1,0 +1,41 @@
+{
+  "date": "2026-09-21",
+  "scope": "Local production-build browser validation; not HTTPS or real-device evidence.",
+  "browser": "Google Chrome 151.0.7922.137",
+  "cases": [
+    {
+      "direction": "ltr",
+      "viewport": "1280x900",
+      "menusWithinViewport": true,
+      "submenuDirection": "right",
+      "canvasHandlesReachable": true
+    },
+    {
+      "direction": "rtl",
+      "viewport": "1280x900",
+      "menusWithinViewport": true,
+      "submenuDirection": "left",
+      "canvasHandlesReachable": true
+    },
+    {
+      "direction": "rtl",
+      "viewport": "375x812",
+      "menusWithinViewport": true,
+      "submenuDirection": "right-fallback",
+      "canvasHandlesReachable": true
+    },
+    {
+      "direction": "rtl",
+      "viewport": "640x450",
+      "deviceScaleFactor": 2,
+      "scenario": "200-percent-zoom-layout-emulation",
+      "menusWithinViewport": true,
+      "canvasHandlesReachable": true
+    }
+  ],
+  "notExercised": [
+    "Physical iOS/Android devices and touch-specific browser behavior",
+    "HTTPS install/update journey",
+    "Physical browser zoom UI and low-end device performance"
+  ]
+}
