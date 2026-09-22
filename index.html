@@ -957,9 +957,9 @@
 					<div class="sidebar-content" id="sidebar-history-content" style="display: none;">
 						<div class="history-controls">
 							<div class="history-preferences" aria-live="polite">
-								<div>Auto-save: <strong id="history-auto-status">Exit, refresh or new image</strong></div>
-								<div>Save limit: <strong id="history-limit-status">50 images</strong></div>
-								<button type="button" id="history-settings-link">Open History Settings</button>
+								<div><span data-i18n="ui.autoSaveLabel">Auto-save:</span> <strong id="history-auto-status">Exit, refresh or new image</strong></div>
+								<div><span data-i18n="ui.saveLimitLabel">Save limit:</span> <strong id="history-limit-status">50 images</strong></div>
+								<button type="button" id="history-settings-link" data-i18n="ui.openHistorySettings">Open History Settings</button>
 							</div>
 							<!-- Hidden mirrors keep the existing settings/state contract while the
 						     sidebar presents a read-only summary. -->
@@ -975,7 +975,7 @@
 							<!-- Label sits above the action buttons and mirrors the active tab
 					     (History / Session), so "Save Current / Export All / Clear All"
 				 		always read as actions on the currently shown store. -->
-							<div class="history-actions-label" id="history-actions-label" aria-live="polite">
+							<div class="history-actions-label" id="history-actions-label" aria-live="polite" data-i18n="ui.actionsHistory">
 								Actions: History
 							</div>
 							<div class="history-actions">
@@ -984,13 +984,13 @@
 								<button type="button" id="history-export-all-btn"
 									title="Export the whole history to your computer">Export
 									All</button>
-								<button type="button" id="history-clear-btn" title="Clear all saved history">Clear All</button>
+								<button type="button" id="history-clear-btn" title="Clear all saved history" data-i18n="history.clearAll">Clear All</button>
 							</div>
 						</div>
 						<div class="history-view-tabs" id="history-view-tabs" role="tablist" aria-label="History views">
-							<button type="button" class="history-view-tab active" data-history-view="history" role="tab"
+									<button type="button" class="history-view-tab active" data-history-view="history" role="tab" data-i18n="history.title"
 								aria-selected="true">History</button>
-							<button type="button" class="history-view-tab" data-history-view="session" role="tab"
+									<button type="button" class="history-view-tab" data-history-view="session" role="tab" data-i18n="history.session"
 								aria-selected="false">Session</button>
 						</div>
 						<div class="history-grid" id="history-grid"></div>
@@ -1140,22 +1140,23 @@
 				<h3 data-i18n="settings.general">General</h3>
 				<div class="settings-general-options" aria-label="General display options">
 					<div class="checkbox-row" data-tag="setting-dark-mode-row"><input type="checkbox" id="setting-dark-mode"
-							data-tag="setting-dark-mode" /> <label for="setting-dark-mode" data-tag="setting-dark-mode-label">Dark
+							data-tag="setting-dark-mode" /> <label for="setting-dark-mode" data-tag="setting-dark-mode-label" data-i18n="ui.darkMode">Dark
 							Mode</label></div>
 					<div class="checkbox-row" data-tag="setting-show-status-bar-row"><input type="checkbox"
 							id="setting-show-status-bar" data-tag="setting-show-status-bar" checked /> <label
-							for="setting-show-status-bar" data-tag="setting-show-status-bar-label">Show Status Bar</label></div>
+							for="setting-show-status-bar" data-tag="setting-show-status-bar-label" data-i18n="ui.showStatusBar">Show Status Bar</label></div>
 					<div class="checkbox-row" data-tag="setting-show-color-inspector-row"><input type="checkbox"
 							id="setting-show-color-inspector" data-tag="setting-show-color-inspector" checked /> <label
-							for="setting-show-color-inspector" data-tag="setting-show-color-inspector-label">Show Color
+							for="setting-show-color-inspector" data-tag="setting-show-color-inspector-label" data-i18n="ui.showColorInspector">Show Color
 							Inspector</label></div>
 					<div class="checkbox-row" data-tag="setting-show-ai-chat-row"><input type="checkbox" id="setting-show-ai-chat"
 							data-tag="setting-show-ai-chat" /> <label for="setting-show-ai-chat"
-							data-tag="setting-show-ai-chat-label">Show AI Chat</label></div>
+							data-tag="setting-show-ai-chat-label" data-i18n="ui.showAiChat">Show AI Chat</label></div>
 				</div>
 				<div class="settings-field choice-field inline-choice-field">
 					<label for="setting-locale" data-i18n="settings.language">Language</label>
 					<select id="setting-locale"></select>
+					<small id="browser-language-status" class="settings-help" aria-live="polite"></small>
 				</div>
 				<div class="settings-field choice-field inline-choice-field">
 					<label for="setting-direction" data-i18n="ui.interfaceDirection">Interface direction</label>
@@ -1165,15 +1166,15 @@
 						<option value="rtl" data-i18n="ui.directionRtl">Right to left</option>
 					</select>
 				</div>
-				<div class="settings-field choice-field"><span>Canvas Background</span>
+								<div class="settings-field choice-field"><span data-i18n="ui.canvasBackground">Canvas Background</span>
 					<select id="setting-canvas-bg">
-						<option value="none">Solid Color</option>
-						<option value="transparent">Transparent</option>
-						<option value="checkerboard">Transparent Checkerboard</option>
-						<option value="grid">Gridlines</option>
+										<option value="none" data-i18n="ui.solidColor">Solid Color</option>
+										<option value="transparent" data-i18n="ui.transparent">Transparent</option>
+										<option value="checkerboard" data-i18n="ui.transparentCheckerboard">Transparent Checkerboard</option>
+										<option value="grid" data-i18n="ui.gridlines">Gridlines</option>
 					</select>
 					<div class="choice-summary" id="setting-canvas-bg-choice" data-select-id="setting-canvas-bg">
-						<span class="choice-summary-label">Selected: <strong data-selected-label></strong>
+										<span class="choice-summary-label"><span data-i18n="ui.selected">Selected:</span> <strong data-selected-label></strong>
 							<span class="choice-custom-inputs" data-solid-color-control hidden>
 								<input type="color" id="setting-solid-background-color" value="#ffffff"
 									aria-label="Solid canvas background color" />
@@ -1181,18 +1182,18 @@
 						</span>
 					</div>
 				</div>
-				<div class="settings-field choice-field"><span>Default new image</span>
+								<div class="settings-field choice-field"><span data-i18n="ui.defaultNewImage">Default new image</span>
 					<select id="setting-default-canvas-size">
 						<option value="800x600">800 × 600</option>
 						<option value="1024x768">1024 × 768</option>
-						<option value="1000x1000">1000 × 1000 (square)</option>
-						<option value="1123x794">A4 landscape (1123 × 794)</option>
-						<option value="794x1123">A4 portrait (794 × 1123)</option>
-						<option value="custom">Custom</option>
+						<option value="1000x1000" data-i18n="ui.squareCanvasSize">1000 × 1000 (square)</option>
+						<option value="1123x794" data-i18n="ui.a4LandscapeCanvasSize">A4 landscape (1123 × 794)</option>
+						<option value="794x1123" data-i18n="ui.a4PortraitCanvasSize">A4 portrait (794 × 1123)</option>
+										<option value="custom" data-i18n="ui.custom">Custom</option>
 					</select>
 					<div class="choice-summary" id="setting-default-canvas-size-choice"
 						data-select-id="setting-default-canvas-size">
-						<span class="choice-summary-label">Selected: <strong data-selected-label></strong>
+										<span class="choice-summary-label"><span data-i18n="ui.selected">Selected:</span> <strong data-selected-label></strong>
 							<span class="choice-custom-inputs">
 								<input type="number" id="setting-default-canvas-width" min="1" max="10000" value="800"
 									aria-label="Custom canvas width" />
@@ -1203,7 +1204,7 @@
 						</span>
 					</div>
 				</div>
-				<div class="settings-field choice-field"><span>Initial zoom</span>
+								<div class="settings-field choice-field"><span data-i18n="ui.initialZoom">Initial zoom</span>
 					<select id="setting-default-zoom">
 						<option value="50">50%</option>
 						<option value="75">75%</option>
@@ -1211,10 +1212,10 @@
 						<option value="125">125%</option>
 						<option value="150">150%</option>
 						<option value="200">200%</option>
-						<option value="custom">Custom</option>
+						<option value="custom" data-i18n="ui.custom">Custom</option>
 					</select>
 					<div class="choice-summary" id="setting-default-zoom-choice" data-select-id="setting-default-zoom">
-						<span class="choice-summary-label">Selected: <strong data-selected-label></strong>
+						<span class="choice-summary-label"><span data-i18n="ui.selected">Selected:</span> <strong data-selected-label></strong>
 							<span class="choice-custom-inputs">
 								<input type="number" id="setting-default-zoom-custom" min="10" max="800" step="1" value="100"
 									aria-label="Custom initial zoom percentage" />%
@@ -1224,72 +1225,73 @@
 				</div>
 			</form>
 			<section class="settings-panel settings-body" data-settings-panel="shortcuts" hidden>
-				<h3>Keyboard shortcuts</h3>
-				<p>Focus a shortcut field, press the keys you want, then leave the field. Changes are saved in this browser.</p>
-				<p id="shortcut-settings-status" class="pwa-status" role="status" aria-live="polite">Defaults are active.</p>
+				<h3 data-i18n="ui.keyboardShortcuts">Keyboard shortcuts</h3>
+				<p data-i18n="ui.shortcutHelp">Focus a shortcut field, press the keys you want, then leave the field. Changes are saved in this browser.</p>
+				<p id="shortcut-settings-status" class="pwa-status" role="status" aria-live="polite" data-i18n="ui.defaultsActive">Defaults are active.</p>
 				<div id="shortcut-settings-list" class="shortcut-settings-list"></div>
 			</section>
 			<section class="settings-panel settings-body" data-settings-panel="history" hidden>
-				<h3>History</h3>
+				<h3 data-i18n="history.title">History</h3>
 				<div class="checkbox-row history-checkbox-row" data-tag="setting-history-auto-save-row"><input type="checkbox"
 						id="setting-history-auto-save" data-tag="setting-history-auto-save" checked /> <label
-						for="setting-history-auto-save" data-tag="setting-history-auto-save-label">Auto-save to history</label>
+						for="setting-history-auto-save" data-tag="setting-history-auto-save-label" data-i18n="ui.autoSaveHistory">Auto-save to history</label>
 				</div>
 				<div class="checkbox-row history-checkbox-row" data-tag="setting-restore-last-image-row"><input type="checkbox"
 						id="setting-restore-last-image" data-tag="setting-restore-last-image" /> <label
-						for="setting-restore-last-image" data-tag="setting-restore-last-image-label">Load last image on
+						for="setting-restore-last-image" data-tag="setting-restore-last-image-label" data-i18n="ui.restoreLastImage">Load last image on
 						startup</label></div>
-				<p class="settings-help">Off starts with a blank canvas. Turn it on when you want Paint to restore the last
+				<p class="settings-help" data-i18n="ui.restoreHelp">Off starts with a blank canvas. Turn it on when you want Paint to restore the last
 					working image automatically.</p>
-				<div class="settings-field choice-field"><span>Auto-save when</span>
+				<div class="settings-field choice-field"><span data-i18n="ui.autoSaveWhen">Auto-save when</span>
 					<select id="setting-history-auto-save-mode">
-						<option value="lifecycle">Exit, refresh or new image</option>
-						<option value="all">All automatic events</option>
-						<option value="manual">Only manually (Save Current button)</option>
+						<option value="lifecycle" data-i18n="ui.autoSaveLifecycle">Exit, refresh or new image</option>
+						<option value="all" data-i18n="ui.allAutomaticEvents">All automatic events</option>
+						<option value="manual" data-i18n="ui.onlyManual">Only manually (Save Current button)</option>
 					</select>
 					<div class="choice-summary" id="setting-history-auto-save-mode-choice"
 						data-select-id="setting-history-auto-save-mode">
-						<span class="choice-summary-label">Selected: <strong data-selected-label></strong></span>
+						<span class="choice-summary-label"><span data-i18n="ui.selected">Selected:</span> <strong data-selected-label></strong></span>
 					</div>
 				</div>
-				<div class="settings-field choice-field"><span>Save limit</span>
+				<div class="settings-field choice-field"><span data-i18n="ui.saveLimit">Save limit</span>
 					<select id="setting-history-save-limit">
-						<option value="0">Off</option>
-						<option value="10">10 images</option>
-						<option value="20">20 images</option>
-						<option value="50">50 images</option>
-						<option value="100">100 images</option>
+						<option value="0" data-i18n="ui.off">Off</option>
+						<option value="10" data-i18n="ui.tenImages">10 images</option>
+						<option value="20" data-i18n="ui.twentyImages">20 images</option>
+						<option value="50" data-i18n="ui.fiftyImages">50 images</option>
+						<option value="100" data-i18n="ui.hundredImages">100 images</option>
 					</select>
 					<div class="choice-summary" id="setting-history-save-limit-choice"
 						data-select-id="setting-history-save-limit">
-						<span class="choice-summary-label">Selected: <strong data-selected-label></strong></span>
+						<span class="choice-summary-label"><span data-i18n="ui.selected">Selected:</span> <strong data-selected-label></strong></span>
 					</div>
 				</div>
 				<div class="dialog-actions">
-					<button type="button" id="settings-history-export-all">Export All History</button>
-					<button type="button" id="settings-history-clear" class="danger">Clear All</button>
+					<button type="button" id="settings-history-export-all" data-i18n="ui.exportAllHistory">Export All History</button>
+					<button type="button" id="settings-history-clear" class="danger" data-i18n="history.clearAll">Clear All</button>
 				</div>
 			</section>
 			<section class="settings-panel settings-body" data-settings-panel="ribbon" hidden>
-				<h3>Ribbon</h3>
-				<p>Choose which ribbon groups are visible. Detailed group options open in the sidebar.</p>
+				<h3 data-i18n="ui.ribbon">Ribbon</h3>
+				<p data-i18n="ui.ribbonHelp">Choose which ribbon groups are visible. Detailed group options open in the sidebar.</p>
 				<div class="checkbox-row" data-tag="setting-show-ribbon-row"><input type="checkbox" id="setting-show-ribbon"
 						data-tag="setting-show-ribbon" checked /> <label for="setting-show-ribbon"
-						data-tag="setting-show-ribbon-label">Show ribbon</label></div>
+						data-tag="setting-show-ribbon-label" data-i18n="ui.showRibbon">Show ribbon</label></div>
 				<div class="settings-field ribbon-position-row">
-					<span id="ribbon-position-label">Ribbon position</span>
+					<span id="ribbon-position-label" data-i18n="ui.ribbonPosition">Ribbon position</span>
 					<div class="ribbon-position-options" role="radiogroup" aria-labelledby="ribbon-position-label">
-						<button type="button" data-ribbon-position="top" role="radio">Top</button>
-						<button type="button" data-ribbon-position="left" role="radio">Left</button>
-						<button type="button" data-ribbon-position="bottom" role="radio">Bottom</button>
-						<button type="button" data-ribbon-position="float" role="radio">Floating</button>
+						<button type="button" data-ribbon-position="top" role="radio" data-i18n="ui.top">Top</button>
+						<button type="button" data-ribbon-position="left" role="radio" data-i18n="ui.left">Left</button>
+						<button type="button" data-ribbon-position="bottom" role="radio" data-i18n="ui.bottom">Bottom</button>
+						<button type="button" data-ribbon-position="float" role="radio" data-i18n="ui.floating">Floating</button>
 					</div>
 				</div>
 				<div id="ribbon-settings-list" class="ribbon-settings-list"></div>
 			</section>
 			<section class="settings-panel settings-body" data-settings-panel="about" hidden>
-				<h3>About paint</h3>
-				<p>paint is a local-first browser drawing workspace built for fast, private image editing.</p>
+				<h3 data-i18n="ui.aboutPaint">About paint</h3>
+				<p data-i18n="ui.aboutPaintText">paint is a local-first browser drawing workspace built for fast, private image editing.</p>
+				<p class="settings-help" data-i18n="ui.storageQuota">Browser storage quota estimate</p>
 				<p id="about-loading-state" class="about-loading-state" data-i18n="ui.loading" role="status">Loading…</p>
 				<dl class="about-stats">
 					<div>
@@ -1301,15 +1303,15 @@
 						<dd id="about-activity" data-about-value></dd>
 					</div>
 					<div>
-						<dt>Stored data</dt>
+						<dt data-i18n="ui.storedData">Stored data</dt>
 						<dd id="about-storage" data-about-value></dd>
 					</div>
 					<div>
-						<dt>Free space</dt>
+						<dt data-i18n="ui.freeSpace">Free space</dt>
 						<dd id="about-storage-free" data-about-value></dd>
 					</div>
 					<div>
-						<dt>Usage</dt>
+						<dt data-i18n="ui.usage">Usage</dt>
 						<dd>
 							<div class="about-storage-bar" aria-hidden="true"><span id="about-storage-bar-fill"></span></div>
 						</dd>
@@ -1321,8 +1323,8 @@
 				</div>
 			</section>
 			<section class="settings-panel settings-body" data-settings-panel="release" hidden>
-				<h3>Release notes</h3>
-				<p>What is new in each version. Newest first.</p>
+				<h3 data-i18n="ui.releaseNotes">Release notes</h3>
+				<p data-i18n="ui.releaseNotesHelp">What is new in each version. Newest first.</p>
 				<div id="release-notes-list" class="release-notes-list"></div>
 			</section>
 			<section class="settings-panel settings-body" data-settings-panel="app" hidden>

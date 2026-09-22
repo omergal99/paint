@@ -19,7 +19,7 @@ export const SUPPORTED_LOCALES = Object.freeze([
 export const LOCALE_METADATA = Object.freeze({
 	en: Object.freeze({ label: 'English', nativeLabel: 'English', direction: 'ltr', status: 'ready' }),
 	es: Object.freeze({ label: 'Spanish', nativeLabel: 'Español', direction: 'ltr', status: 'ready' }),
-	'pt-br': Object.freeze({ label: 'Portuguese (Brazil)', nativeLabel: 'Português (Brasil)', direction: 'ltr', status: 'ready' }),
+	'pt-br': Object.freeze({ label: 'Portuguese', nativeLabel: 'Português', direction: 'ltr', status: 'ready' }),
 	fr: Object.freeze({ label: 'French', nativeLabel: 'Français', direction: 'ltr', status: 'ready' }),
 	de: Object.freeze({ label: 'German', nativeLabel: 'Deutsch', direction: 'ltr', status: 'ready' }),
 	ar: Object.freeze({ label: 'Arabic', nativeLabel: 'العربية', direction: 'rtl', status: 'ready' }),

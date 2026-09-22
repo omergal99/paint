@@ -90,6 +90,7 @@ export const EN_MESSAGES = deepFreeze({
 	settings: {
 		title: 'Settings',
 		language: 'Language',
+		browserLanguage: 'Browser: {language}',
 		languageDescription: 'Choose the language used by the Paint interface. More languages appear after review.',
 		appearance: 'Appearance',
 		storage: 'Storage',
@@ -98,6 +99,9 @@ export const EN_MESSAGES = deepFreeze({
 			search: 'Search settings',
 			languageReady: '{language} is ready',
 			languagePlanned: '{language} is planned',
+			resetConfirm: 'Reset all settings to their defaults? Colors, layout, tools, zoom, history preferences and other preferences will be reset. Saved images and history entries will not be deleted.',
+			clearDataTitle: 'Clear all saved data',
+			clearDataConfirm: 'Clear the saved canvas, workspace data, settings, and history? This cannot be undone.',
 	},
 	ui: {
 		crop: 'Crop', removeBackground: 'Remove Background', backgroundRemovalMode: 'Removal mode', backgroundRemovalColorKey: 'Color key (all matching pixels)', backgroundRemovalFloodFill: 'Flood fill (connected background)', backgroundRemovalSoftEdge: 'Soft edge (feathered alpha)', backgroundRemovalTolerance: 'Tolerance', backgroundRemovalSoftness: 'Edge softness', backgroundRemovalColor: 'Background color', backgroundRemovalSample: 'Sample', preview: 'Preview', noSelectionCrop: 'No Selection Area to Crop', openBackgroundRemovalOptions: 'Open background removal options', rotate: 'Rotate', rotate90: 'Rotate 90',
@@ -114,7 +118,7 @@ export const EN_MESSAGES = deepFreeze({
 		actionsHistory: 'Actions: History', aiProvider: 'AI provider', connectionDetails: 'Connection details',
 		aiHelp: 'Use Quick actions or type a supported command. I will show exactly what I apply.', send: 'Send',
 		resizeCanvas: 'Resize canvas', quickSizes: 'Quick sizes', square: 'Square', a4Landscape: 'A4 landscape', a4Portrait: 'A4 portrait',
-		fullHd: 'Full HD', widthPx: 'Width (px)', heightPx: 'Height (px)', scalePercent: 'Scale (%)', wholeCanvas: 'Whole canvas', keepAspect: 'Maintain aspect ratio',
+		fullHd: 'Full HD', squareCanvasSize: '1000 × 1000 (square)', a4LandscapeCanvasSize: 'A4 landscape (1123 × 794)', a4PortraitCanvasSize: 'A4 portrait (794 × 1123)', widthPx: 'Width (px)', heightPx: 'Height (px)', scalePercent: 'Scale (%)', wholeCanvas: 'Whole canvas', keepAspect: 'Maintain aspect ratio',
 		tabGeneral: 'GENERAL', tabShortcuts: 'SHORTCUTS', tabHistory: 'HISTORY', tabRibbon: 'RIBBON', tabReleaseNotes: 'RELEASE NOTES',
 		tabAbout: 'ABOUT', tabApp: 'APP', tabFeedback: 'FEEDBACK', darkMode: 'Dark Mode', showStatusBar: 'Show Status Bar', showColorInspector: 'Show Color Inspector',
 		canvasBackground: 'Canvas Background', solidColor: 'Solid Color', transparent: 'Transparent', transparentCheckerboard: 'Transparent Checkerboard',
@@ -126,7 +130,7 @@ export const EN_MESSAGES = deepFreeze({
 		exportAllHistory: 'Export All History', ribbon: 'Ribbon', ribbonHelp: 'Choose which ribbon groups are visible. Detailed group options open in the sidebar.',
 		ribbonPosition: 'Ribbon position', top: 'Top', left: 'Left', bottom: 'Bottom', floating: 'Floating', aboutPaint: 'About paint',
 		aboutPaintText: 'paint is a local-first browser drawing workspace built for fast, private image editing.', version: 'Version', loading: 'Loading…',
-		activity: 'Activity', storedData: 'Stored data', freeSpace: 'Free space', usage: 'Usage', resetSettings: 'Reset Settings', clearData: 'Clear Data',
+		activity: 'Activity', storedData: 'Stored data', freeSpace: 'Free space', usage: 'Usage', storageQuota: 'Browser storage quota estimate', resetSettings: 'Reset Settings', clearData: 'Clear Data',
 		releaseNotes: 'Release notes', releaseNotesHelp: 'What is new in each version. Newest first.', installUpdates: 'Install & updates',
 		installHelp: 'Install paint as an app for a focused window, quick launch, and offline use. The browser decides when direct installation is available.',
 		installPaint: 'Install paint', checkingInstall: 'Checking install options…', versionUpdates: 'Version updates',
@@ -144,6 +148,7 @@ export const EN_MESSAGES = deepFreeze({
 		openIssue: 'Open a new GitHub issue', browseIssues: 'Browse existing issues', startNewImage: 'Start new image?', unsavedChanges: 'Unsaved changes will be lost.',
 		pleaseConfirm: 'Please confirm', continue: 'Continue', providerPrivacy: 'Paint never asks for, stores, or receives your provider password or API key.',
 		openProvider: 'Open provider website', copyCurrentImage: 'Copy current image',
+		showLabel: 'Show {label}', settingsAlwaysVisible: '{group} (Settings always visible)', details: 'Details', countImages: '{count} images', onlyManualShort: 'Only manually', freeRotatePrompt: 'Enter the rotation angle in degrees.',
 	},
 	history: {
 		title: 'History',
@@ -156,6 +161,8 @@ export const EN_MESSAGES = deepFreeze({
 		noSessionSteps: 'No session steps yet - draw something first',
 		restoreSessionStep: 'Restore session step',
 		deleteSessionStep: 'Delete session step',
+		clearTitle: 'Clear history',
+		clearConfirm: 'Are you sure you want to permanently delete all saved history? This cannot be undone.',
 	},
 	notepad: {
 		title: 'Notes',
@@ -180,6 +187,30 @@ export const EN_MESSAGES = deepFreeze({
 		storageError: 'Could not save your work. Your image is still open.',
 		undoSnapshotSkipped: 'Undo snapshot skipped to protect memory.',
 		downloadReady: 'Download ready',
+		historySaved: 'History image saved',
+		historyCleared: 'History cleared',
+	},
+	releaseNotes: {
+		v1_6_1: {
+			h1: 'Empty text placement stays in Text mode until text is actually entered',
+			h2: 'Settings remembers the last tab while closing with a clean URL',
+			h3: 'Offline preparation now verifies and warms every current app feature',
+			h4: 'Offline shell coverage now follows the app import graph in release checks',
+		},
+		v1_6_0: {
+			h1: 'Reliable menus with viewport-aware placement and outside-click/Escape closing',
+			h2: 'Independent opacity controls, transparent color support, and safer shape placement',
+			h3: 'History and Settings improvements with keyboard-friendly tabs and Ribbon controls',
+			h4: 'Recent text history, optional text selection, and movable text-layer selections',
+			h5: 'Hand/Pan navigation, responsive Ribbon layouts, and install/update controls for the offline app',
+		},
+		v1_5_0: {
+			h1: 'Shapes gallery with fill modes, arrows, V/X marks',
+			h2: 'Shared line/text size control with presets',
+			h3: 'IndexedDB history with auto-save modes and export',
+			h4: 'Settings dialog with ribbon/history/about sections',
+			h5: 'Offline support via service worker',
+		},
 	},
 });
 

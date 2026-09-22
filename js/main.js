@@ -50,6 +50,8 @@ import { createActionMenuController } from './ui/ActionMenuController.js';
 import { createDialogSearch } from './ui/DialogSearch.js';
 import { createSettingsDialog } from './ui/SettingsDialog.js';
 import { createLocaleController } from './i18n/LocaleController.js';
+import { t } from './i18n/messages.js';
+import { formatUnambiguousDate, formatUnambiguousDateTime } from './utils/datetime.js';
 import { createPwaInstallManager } from './pwa/PwaInstallManager.js';
 import { assessImageAdmission } from './storage/ImageAdmission.js';
 import { createEventBus } from './core/EventBus.js';
@@ -1113,11 +1115,11 @@ document.getElementById('btn-rotate-180').addEventListener('click', () => applyT
 document.getElementById('btn-rotate-270').addEventListener('click', () => applyTransformation(c => rotateCanvas(c, 3)));
 document.getElementById('btn-rotate-free').addEventListener('click', async () => {
 	const value = await dialogService.prompt({
-		title: 'Free rotation',
-		message: 'Enter the rotation angle in degrees.',
+		title: t('ui.freeRotate'),
+		message: t('ui.freeRotatePrompt'),
 		value: '15',
 		type: 'number',
-		confirmLabel: 'Rotate',
+		confirmLabel: t('ui.rotate'),
 	});
 	const degrees = Number.parseFloat(value);
 	if (Number.isFinite(degrees)) applyTransformation(c => rotateCanvasByAngle(c, degrees));
@@ -1495,6 +1497,7 @@ settingsSearch.bind();
 // it can evolve into lazy-loaded catalogs without changing paint preferences.
 const localeController = createLocaleController({
 	select: document.getElementById('setting-locale'),
+	browserLanguageStatus: document.getElementById('browser-language-status'),
 });
 localeController.bind();
 
@@ -1591,6 +1594,7 @@ const segmentedChoices = [...document.querySelectorAll('.choice-summary')].map((
 	select: document.getElementById(root.dataset.selectId),
 }));
 const renderSegmentedChoices = () => { segmentedChoices.forEach((choice) => choice.render()); }
+document.documentElement?.addEventListener('paint:locale-change', renderSegmentedChoices);
 
 const readSettings = () => {
 	return settingsStore.get();
@@ -1681,8 +1685,8 @@ const syncHistoryControls = (saved) => {
 	if (m) m.value = prefs.mode;
 	if (restore) restore.checked = readSettings().restoreLastImage === true;
 	const status = document.getElementById('history-auto-status');
-	const labels = { lifecycle: 'Exit, refresh or new image', all: 'All automatic events', manual: 'Only manually' };
-	if (status) status.textContent = prefs.autoSave ? (labels[prefs.mode] || prefs.mode) : 'Off';
+	const labels = { lifecycle: t('ui.autoSaveLifecycle'), all: t('ui.allAutomaticEvents'), manual: t('ui.onlyManualShort') };
+	if (status) status.textContent = prefs.autoSave ? (labels[prefs.mode] || prefs.mode) : t('ui.off');
 	renderSegmentedChoices();
 }
 
@@ -1692,7 +1696,7 @@ const syncHistoryLimitSelect = (value) => {
 	if (sidebarSel) sidebarSel.value = String(value);
 	if (settingsSel) settingsSel.value = String(value);
 	const limitStatus = document.getElementById('history-limit-status');
-	if (limitStatus) limitStatus.textContent = value > 0 ? `${value} images` : 'Off';
+	if (limitStatus) limitStatus.textContent = value > 0 ? t('ui.countImages', { count: value }) : t('ui.off');
 	renderSegmentedChoices();
 }
 
@@ -1949,7 +1953,7 @@ const updateAboutStats = async () => {
 	const version = document.getElementById('about-version');
 	const activity = document.getElementById('about-activity');
 	if (version) version.textContent = APP_VERSION;
-	if (activity) activity.textContent = new Date().toLocaleString();
+	if (activity) activity.textContent = formatUnambiguousDateTime(new Date());
 		// Storage numbers are estimates, not disk truth. Read a fresh validated
 	// browser estimate every time the About tab is opened.
 	const MB = 1024 * 1024;
@@ -2011,13 +2015,15 @@ const renderReleaseNotes = () => {
 		if (note.date) {
 			const date = document.createElement('span');
 			date.className = 'release-note-date';
-			date.textContent = note.date;
+			date.textContent = /^\d{4}-\d{2}-\d{2}$/.test(note.date)
+				? formatUnambiguousDate(new Date(`${note.date}T00:00:00`))
+				: note.date;
 			head.appendChild(date);
 		}
 		const list = document.createElement('ul');
-		for (const item of note.highlights) {
+		for (const key of note.highlightKeys) {
 			const li = document.createElement('li');
-			li.textContent = item;
+			li.textContent = t(key);
 			list.appendChild(li);
 		}
 		card.append(head, list);
@@ -2138,13 +2144,13 @@ const populateRibbonSettings = () => {
 			if (separator?.classList.contains('separator')) separator.style.display = checkbox.checked ? '' : 'none';
 			saveSettings();
 		});
-		checkboxLabel.textContent = isExtras ? `${title.textContent} (Settings always visible)` : title.textContent;
+		checkboxLabel.textContent = isExtras ? t('ui.settingsAlwaysVisible', { group: title.textContent }) : title.textContent;
 		label.append(checkbox, checkboxLabel);
 		const details = document.createElement('button');
 		details.type = 'button';
 		details.className = 'ribbon-setting-details';
 		details.dataset.tag = `ribbon-group-details-${groups.indexOf(groupSection)}`;
-		details.textContent = 'Details';
+		details.textContent = t('ui.details');
 		details.addEventListener('click', () => sidebar.showGroupSettings(title.textContent, groupSection));
 		row.append(label, details);
 		container.appendChild(row);
@@ -2155,9 +2161,9 @@ populateRibbonSettings();
 
 document.getElementById('settings-reset').addEventListener('click', async () => {
 	const confirmed = await dialogService.confirm({
-		title: 'Reset settings',
-		message: 'Reset all settings to their defaults? Colors, layout, tools, zoom, history preferences and other preferences will be reset. Saved images and history entries will not be deleted.',
-		confirmLabel: 'Reset settings',
+		title: t('ui.resetSettings'),
+		message: t('settings.resetConfirm'),
+		confirmLabel: t('ui.resetSettings'),
 		danger: true,
 	});
 	if (!confirmed) return;
@@ -2180,9 +2186,9 @@ directionSelect?.addEventListener('change', () => {
 
 document.getElementById('settings-clear-data').addEventListener('click', async () => {
 	const confirmed = await dialogService.confirm({
-		title: 'Clear all saved data',
-		message: 'Clear the saved canvas, workspace data, settings, and history? This cannot be undone.',
-		confirmLabel: 'Clear data',
+		title: t('settings.clearDataTitle'),
+		message: t('settings.clearDataConfirm'),
+		confirmLabel: t('settings.clearData'),
 		danger: true,
 	});
 	if (!confirmed) return;
@@ -2267,20 +2273,20 @@ defaultCanvasHeightInput?.addEventListener('input', () => {
 document.getElementById('history-export-all-btn')?.addEventListener('click', () => exportAllHistory());
 window.addEventListener('paint:history-export-item', (e) => {
 	exportHistoryItem(e.detail.session, e.detail.index);
-	statusBar.flash('History image saved');
+	statusBar.flash(t('status.historySaved'));
 });
 document.getElementById('settings-history-export-all')?.addEventListener('click', () => exportAllHistory());
 document.getElementById('settings-history-clear')?.addEventListener('click', async () => {
 	const confirmed = await dialogService.confirm({
-		title: 'Clear history',
-		message: 'Are you sure you want to permanently delete all saved history? This cannot be undone.',
-		confirmLabel: 'Clear history',
+		title: t('history.clearTitle'),
+		message: t('history.clearConfirm'),
+		confirmLabel: t('history.clearTitle'),
 		danger: true,
 	});
 	if (!confirmed) return;
 	await sidebar.globalHistory.clearAll();
 	if (sidebar.activeTab === HISTORY_VIEWS.history) await sidebar.refreshHistory();
-	statusBar.flash('History cleared');
+	statusBar.flash(t('status.historyCleared'));
 });
 
 document.getElementById('btn-settings').addEventListener('click', () => openSettingsDialog());
@@ -2684,6 +2690,7 @@ const destroyEditor = () => {
 	canvasResizer.destroy();
 	viewportManager.destroy();
 	directionEventTarget.removeEventListener('paint:locale-change', refreshCanvasDirectionGeometry);
+	document.documentElement?.removeEventListener('paint:locale-change', renderSegmentedChoices);
 	ribbonLayoutManager.destroy();
 	actionMenuController.destroy();
 	backgroundRemovalController.destroy();

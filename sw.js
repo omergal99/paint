@@ -30,6 +30,7 @@ const SHELL = [
   './js/i18n/catalogs/ar.js',
   './js/i18n/catalogs/ja.js',
   './js/i18n/catalogs/he.js',
+  './js/utils/datetime.js',
   './js/i18n/LocaleController.js',
   './js/core/constants.js',
   './js/core/EventBus.js',

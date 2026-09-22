@@ -209,6 +209,8 @@ export const UI_TEXT_KEYS = Object.freeze({
 	'Paint never asks for, stores, or receives your provider password or API key.': 'ui.providerPrivacy',
 	'Open provider website': 'ui.openProvider',
 	'Copy current image': 'ui.copyCurrentImage',
+	Details: 'ui.details',
+	'Only manually': 'ui.onlyManualShort',
 });
 
 // Interpolated labels are kept as patterns so a locale change can re-render
@@ -218,4 +220,6 @@ export const UI_TEXT_PATTERNS = Object.freeze([
 	Object.freeze({ pattern: /^Imported (.+)$/, key: 'status.imageImported', variables: (match) => ({ name: match[1] }) }),
 	Object.freeze({ pattern: /^Pointer: (.*)$/, key: 'status.pointer', variables: (match) => ({ position: match[1] }) }),
 	Object.freeze({ pattern: /^Selection: (.*)$/, key: 'status.selection', variables: (match) => ({ selection: match[1] }) }),
+	Object.freeze({ pattern: /^Show (.+)$/, key: 'ui.showLabel', variables: (match) => ({ label: match[1] }) }),
+	Object.freeze({ pattern: /^(\d+) images$/, key: 'ui.countImages', variables: (match) => ({ count: match[1] }) }),
 ]);

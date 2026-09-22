@@ -4,6 +4,7 @@ import {
 	SUPPORTED_LOCALES,
 	getLocaleMetadata,
 	isLocaleReady,
+	isSupportedLocale,
 	normalizeLocale,
 	resolveLocale,
 } from './localeRegistry.js';
@@ -102,6 +103,7 @@ const applyTranslations = (root, i18n) => {
 export const createLocaleController = ({
 	root = globalThis.document?.documentElement,
 	select = null,
+	browserLanguageStatus = null,
 	status = null,
 	storage = globalThis.localStorage,
 	catalogs = MESSAGE_CATALOGS,
@@ -141,6 +143,13 @@ export const createLocaleController = ({
 			{ language: metadata.nativeLabel },
 		);
 	};
+	const renderBrowserLanguage = () => {
+		if (!browserLanguageStatus) return;
+		const browserLocale = normalizeLocale(globalThis.navigator?.language || DEFAULT_LOCALE);
+		const metadata = getLocaleMetadata(browserLocale);
+		const language = isSupportedLocale(browserLocale) ? metadata.nativeLabel : browserLocale;
+		browserLanguageStatus.textContent = i18n.t('settings.browserLanguage', { language });
+	};
 
 	const apply = (locale = i18n.getLocale(), { persist = true } = {}) => {
 		const normalized = normalizeLocale(locale);
@@ -162,12 +171,14 @@ export const createLocaleController = ({
 		}
 		if (select) select.value = activeLocale;
 		updateStatus(metadata);
+		renderBrowserLanguage();
 		safeDispatch(root, activeLocale, metadata, resolveDirection(metadata));
 		return activeLocale;
 	};
 
 	const bind = () => {
 		renderOptions();
+		renderBrowserLanguage();
 		apply();
 		select?.addEventListener('change', () => apply(select.value));
 		if (root && globalThis.MutationObserver && typeof root.querySelectorAll === 'function') {

@@ -3,6 +3,8 @@ import { GlobalHistory } from '../history/GlobalHistory.js';
 import { AI_PROVIDERS } from '../ai/AiConnectionStore.js';
 import { HISTORY_VIEWS } from '../core/constants.js';
 import { createHistoryPanel } from './HistoryPanel.js';
+import { t } from '../i18n/messages.js';
+import { formatUnambiguousDate, formatUnambiguousTime } from '../utils/datetime.js';
 
 export class Sidebar {
 	constructor({ canvasManager, statusBar, palette, aiCommandService = null, dialogService, aiConnectionStore = null, historyManager = null }) {
@@ -401,7 +403,7 @@ export class Sidebar {
 	showGroupSettings(titleText, groupSection) {
 		if (!this.groupSettingsContent) return;
 		this.activeTab = 'group-' + titleText;
-		this.title.textContent = titleText + ' Settings';
+		this.title.textContent = `${titleText} ${t('settings.title')}`;
 		this.historyContent.style.display = 'none';
 		this.aiContent.style.display = 'none';
 		this.groupSettingsContent.style.display = 'block';
@@ -419,7 +421,7 @@ export class Sidebar {
 		const groupLabel = document.createElement('label');
 		groupLabel.htmlFor = cbGroup.id;
 		groupLabel.dataset.tag = 'sidebar-group-visibility-label';
-		groupLabel.textContent = 'Show Entire Group';
+		groupLabel.textContent = t('ui.showEntireGroup');
 		const isExtras = groupSection.classList.contains('ribbon-group-extras');
 		if (isExtras) cbGroup.disabled = true;
 		cbGroup.checked = [...groupSection.children]
@@ -461,7 +463,7 @@ export class Sidebar {
 			const currentToolLabel = document.createElement('label');
 			currentToolLabel.htmlFor = currentToolCheckbox.id;
 			currentToolLabel.dataset.tag = 'show-current-tool-label';
-			currentToolLabel.textContent = 'Show Current tool';
+			currentToolLabel.textContent = t('ui.showCurrentTool');
 			currentToolToggle.append(currentToolCheckbox, currentToolLabel);
 			this.groupSettingsContainer.appendChild(currentToolToggle);
 		}
@@ -490,7 +492,7 @@ export class Sidebar {
 			const buttonLabel = document.createElement('label');
 			buttonLabel.htmlFor = cbBtn.id;
 			buttonLabel.dataset.tag = `${cbBtn.id}-label`;
-			buttonLabel.textContent = `Show ${btnLabel}`;
+			buttonLabel.textContent = t('ui.showLabel', { label: btnLabel });
 			toggleBtn.append(cbBtn, buttonLabel);
 			cbBtn.addEventListener('change', (e) => {
 				btn.hidden = !e.target.checked;
@@ -723,7 +725,7 @@ export class Sidebar {
 			const info = document.createElement('div');
 			info.className = 'history-info';
 			const d = new Date(session.timestamp);
-			info.textContent = `${index + 1}/${sessions.length} · ${d.toLocaleDateString()} ${d.toLocaleTimeString()} · ${session.width}x${session.height}`;
+			info.textContent = `${index + 1}/${sessions.length} · ${formatUnambiguousDate(d)}, ${formatUnambiguousTime(d)} · ${session.width}x${session.height}`;
 			item.appendChild(info);
 
 			const deleteButton = document.createElement('button');
