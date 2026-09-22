@@ -2063,7 +2063,9 @@ const renderReleaseNotes = () => {
 const refreshAboutOnLocaleChange = () => {
 	if (!document.querySelector('[data-settings-panel="about"]')?.hidden) void updateAboutStats();
 };
+const refreshReleaseNotesOnLocaleChange = () => renderReleaseNotes();
 document.documentElement?.addEventListener('paint:locale-change', refreshAboutOnLocaleChange);
+document.documentElement?.addEventListener('paint:locale-change', refreshReleaseNotesOnLocaleChange);
 renderReleaseNotes();
 
 const shortcutSettingsStatus = document.getElementById('shortcut-settings-status');
@@ -2727,6 +2729,7 @@ const destroyEditor = () => {
 	directionEventTarget.removeEventListener('paint:locale-change', refreshCanvasDirectionGeometry);
 	document.documentElement?.removeEventListener('paint:locale-change', renderSegmentedChoices);
 	document.documentElement?.removeEventListener('paint:locale-change', refreshAboutOnLocaleChange);
+	document.documentElement?.removeEventListener('paint:locale-change', refreshReleaseNotesOnLocaleChange);
 	ribbonLayoutManager.destroy();
 	actionMenuController.destroy();
 	backgroundRemovalController.destroy();
