@@ -1,4 +1,5 @@
-import assert from 'node:assert/strict';
+import quieterAssert from './helpers/quieter-assert.mjs';
+const assert = quieterAssert;
 import test from 'node:test';
 
 import { createPaintDocument } from '../js/core/DocumentContract.js';

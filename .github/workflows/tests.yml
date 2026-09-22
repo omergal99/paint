@@ -19,6 +19,25 @@ jobs:
         run: npm ci
       - name: Run tests and localization coverage
         run: |
-          npm test
-          npm run check:i18n
-          npm run verify:release
+          set -o pipefail
+          npm test 2>&1 | tee /tmp/test-output.log
+          npm run check:i18n 2>&1 | tee /tmp/coverage-output.log
+          npm run verify:release 2>&1 | tee /tmp/verify-output.log
+      - name: Report failures with annotations
+        if: failure()
+        run: |
+          failures=$(grep -hE '^not ok [0-9]+ - ' /tmp/test-output.log /tmp/verify-output.log 2>/dev/null | sed 's/^not ok [0-9]* - //' | sort -u | head -20)
+          reasons=$(awk '/Release verification: FAIL/{flag=1; next} flag && /^- /{sub(/^- /, ""); print}' /tmp/verify-output.log 2>/dev/null | head -10)
+          printf '%s\n' "$failures" | while IFS= read -r name; do
+            [ -n "$name" ] && echo "::error title=Failing test::$name"
+          done
+          printf '%s\n' "$reasons" | while IFS= read -r reason; do
+            [ -n "$reason" ] && echo "::error title=Release verification::$reason"
+          done
+          if [ -n "$failures" ] || [ -n "$reasons" ]; then
+            {
+              echo '## ❌ What failed'
+              printf '%s\n' "$failures" | sed 's/^/- 🧪 /'
+              printf '%s\n' "$reasons" | sed 's/^/- 📦 /'
+            } > "${GITHUB_STEP_SUMMARY}"
+          fi
