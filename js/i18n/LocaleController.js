@@ -37,7 +37,7 @@ const resolveText = (source) => {
 };
 
 const translateLeaf = (element, i18n) => {
-	if (!element || SKIP_TAGS.has(element.tagName)) return;
+	if (!element || SKIP_TAGS.has(element.tagName) || element.hasAttribute?.('data-i18n-ignore')) return;
 	const explicitKey = element.getAttribute?.('data-i18n');
 	const runtimeKey = element.getAttribute?.('data-i18n-runtime');
 	const runtimeSource = element.getAttribute?.('data-i18n-runtime-source') || trimText(element.textContent);
@@ -55,7 +55,7 @@ const translateLeaf = (element, i18n) => {
 };
 
 const translateDirectTextNodes = (element, i18n) => {
-	if (!element || SKIP_TAGS.has(element.tagName) || !element.children?.length) return;
+	if (!element || SKIP_TAGS.has(element.tagName) || element.hasAttribute?.('data-i18n-ignore') || !element.children?.length) return;
 	const nodes = [...element.childNodes].filter((node) => node.nodeType === 3);
 	nodes.forEach((node) => {
 		const source = trimText(node.nodeValue);
@@ -69,7 +69,7 @@ const translateDirectTextNodes = (element, i18n) => {
 };
 
 const translateAttributes = (element, i18n) => {
-	if (!element || SKIP_TAGS.has(element.tagName)) return;
+	if (!element || SKIP_TAGS.has(element.tagName) || element.hasAttribute?.('data-i18n-ignore')) return;
 	const explicit = new Map();
 	(element.getAttribute?.('data-i18n-attr')?.split(',') || []).forEach((mapping) => {
 		const separator = mapping.indexOf(':');

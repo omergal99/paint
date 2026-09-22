@@ -136,7 +136,7 @@ export const initializeFr = (english) => {
     "ui.freeSpace": "Espace libre",
     "ui.usage": "Utilisation",
     "ui.usagePercent": "Utilisation ({percent} %)",
-    "ui.storageQuota": "Quota de stockage du navigateur (pas l’espace disque)",
+    "ui.storageQuota": "Quota de stockage du navigateur (estimation)",
     "ui.resetSettings": "Réinitialiser les paramètres",
     "ui.clearData": "Effacer les données",
     "ui.releaseNotes": "Notes de version",
@@ -177,5 +177,8 @@ export const initializeFr = (english) => {
     "status.copied": "Copié",
     "status.pasted": "Collé",
     "status.downloadReady": "Téléchargement prêt",
+    "releaseNotes.unreleasedSep2026.h1": "L’hébreu et d’autres langues d’interface révisées sont maintenant disponibles avec RTL et une couverture complète des catalogues",
+    "releaseNotes.unreleasedSep2026.h2": "Les paramètres, l’historique, le ruban, la barre latérale, les notes de version et le stockage suivent maintenant la langue active",
+    "releaseNotes.unreleasedSep2026.h3": "L’affichage du stockage du navigateur sépare maintenant l’utilisation estimée du quota et présente le pourcentage honnêtement",
   });
 };

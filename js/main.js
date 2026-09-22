@@ -65,12 +65,28 @@ import { createSessionService } from './session/SessionService.js';
 // ---------- DOM refs ----------
 // Every addressable UI element gets a stable inspection hook. Explicit
 // data-tag values remain authoritative; id values provide the safe fallback.
+const dataTagCounts = new Map();
 const ensureDataTags = (root = document) => {
-	root.querySelectorAll?.('[id]').forEach((element) => {
-		if (!element.dataset.tag) element.dataset.tag = element.id;
+	const elements = root.matches?.('*') ? [root, ...root.querySelectorAll('*')] : [...(root.querySelectorAll?.('*') || [])];
+	elements.forEach((element) => {
+		if (element.dataset.tag) return;
+		const base = element.id || element.tagName.toLowerCase();
+		if (element.id) {
+			element.dataset.tag = base;
+			return;
+		}
+		const count = (dataTagCounts.get(base) || 0) + 1;
+		dataTagCounts.set(base, count);
+		element.dataset.tag = `dom-${base}-${count}`;
 	});
 };
 ensureDataTags();
+const dataTagObserver = globalThis.MutationObserver ? new MutationObserver((records) => {
+	records.flatMap((record) => [...record.addedNodes])
+		.filter((node) => node.nodeType === 1)
+		.forEach((node) => ensureDataTags(node));
+}) : null;
+dataTagObserver?.observe(document.documentElement, { childList: true, subtree: true });
 
 const isEmbeddedPaint = new URLSearchParams(globalThis.location?.search || '').get('embedded') === '1';
 document.documentElement.classList.toggle('embedded-paint-app', isEmbeddedPaint);
@@ -1966,6 +1982,13 @@ const updateAboutStats = async () => {
 			: ['B', 1];
 		return `${(value / units[1]).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${units[0]}`;
 	};
+	const formatQuota = (bytes) => {
+		const value = Number(bytes);
+		if (!Number.isFinite(value) || value < 0) return 'Unavailable';
+		const GiB = 1024 ** 3;
+		if (value >= GiB) return `≈${(value / GiB).toLocaleString('en-US', { maximumFractionDigits: 0 })} GiB`;
+		return formatBytes(value);
+	};
 	try {
 		const estimate = await getStorageEstimate();
 		const usageBytes = estimate?.usage || 0;
@@ -1977,7 +2000,7 @@ const updateAboutStats = async () => {
 		if (storage) storage.textContent = estimate ? formatBytes(usageBytes) : 'Unavailable';
 		const quotaEl = document.getElementById('about-storage-quota');
 		if (quotaEl) {
-			quotaEl.textContent = estimate ? formatBytes(quotaBytes) : 'Unavailable';
+			quotaEl.textContent = estimate ? formatQuota(quotaBytes) : 'Unavailable';
 		}
 		const fill = document.getElementById('about-storage-bar-fill');
 		const usageLabel = document.getElementById('about-storage-usage-label');
@@ -1986,10 +2009,13 @@ const updateAboutStats = async () => {
 			if (estimate && quotaBytes > 0 && usageBytes > 0) {
 				pct = Math.min(100, Math.max(1, Math.ceil((usageBytes / quotaBytes) * 100)));
 			}
-			fill.style.width = `${pct}%`;
-			if (usageLabel) usageLabel.textContent = estimate
-				? t('ui.usagePercent', { percent: Math.round((usageBytes / quotaBytes) * 100) })
-				: t('ui.usage');
+			const viewPct = pct < 50 ? pct + 2 : pct; // keep the fill bar visible even at low usage
+			fill.style.width = `${viewPct}%`;
+			if (usageLabel) {
+				const ratio = estimate && quotaBytes > 0 ? (usageBytes / quotaBytes) * 100 : 0;
+				const percent = ratio > 0 && `~${String(Math.ceil(ratio))}`;
+				usageLabel.textContent = estimate ? t('ui.usagePercent', { percent }) : t('ui.usage');
+			}
 		}
 	} catch {
 		const storage = document.getElementById('about-storage');
@@ -2014,7 +2040,7 @@ const renderReleaseNotes = () => {
 		const head = document.createElement('div');
 		head.className = 'release-note-head';
 		const ver = document.createElement('strong');
-		ver.textContent = note.version === 'Unreleased' ? 'Unreleased' : `v${note.version}`;
+		ver.textContent = `v${note.version}`;
 		head.appendChild(ver);
 		if (note.date) {
 			const date = document.createElement('span');
@@ -2692,6 +2718,7 @@ const destroyEditor = () => {
 	// makes a future document/tab host safe to dispose without retaining canvas
 	// pointer handlers, geometry observers, history Blob URLs, or panel frames.
 	historyManager.persistSession();
+	dataTagObserver?.disconnect();
 	destroySelectionHandleBindings();
 	destroyRotateSelectionHandleBinding();
 	toolManager.destroy();

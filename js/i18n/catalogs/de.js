@@ -136,7 +136,7 @@ export const initializeDe = (english) => {
     "ui.freeSpace": "Freier Speicher",
     "ui.usage": "Verwendung",
     "ui.usagePercent": "Verwendung ({percent} %)",
-    "ui.storageQuota": "Browser-Speicherquote (kein Speicherplatz auf der Festplatte)",
+    "ui.storageQuota": "Browser-Speicherquote (Schätzung)",
     "ui.resetSettings": "Einstellungen zurücksetzen",
     "ui.clearData": "Daten löschen",
     "ui.releaseNotes": "Versionshinweise",
@@ -177,5 +177,8 @@ export const initializeDe = (english) => {
     "status.copied": "Kopiert",
     "status.pasted": "Eingefügt",
     "status.downloadReady": "Download bereit",
+    "releaseNotes.unreleasedSep2026.h1": "Hebräisch und weitere geprüfte Oberflächensprachen sind jetzt mit RTL-Unterstützung und vollständiger Katalogabdeckung verfügbar",
+    "releaseNotes.unreleasedSep2026.h2": "Einstellungen, Verlauf, Menüband, Seitenleiste, Versionshinweise und Speicherbezeichnungen folgen jetzt der aktiven Sprache",
+    "releaseNotes.unreleasedSep2026.h3": "Die Browser-Speicheranzeige trennt jetzt geschätzte Nutzung und Browserquote und zeigt den Prozentsatz ehrlich an",
   });
 };

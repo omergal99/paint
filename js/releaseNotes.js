@@ -2,8 +2,20 @@ import { APP_VERSION } from './version.js';
 
 // Per-version highlights are message keys so every ready locale can render the
 // customer-facing release history. Keep newest first; the renderer resolves
-// them through `t()` with the English fallback for unreleased catalogs.
+// them through `t()` with the English fallback for incomplete catalogs. The
+// newest entry derives its version from APP_VERSION, which is synchronized
+// from package.json by `npm run version:sync`.
 export const RELEASE_NOTES = Object.freeze([
+	{
+		version: APP_VERSION,
+		date: '2026-09-22',
+		commitIds: ['26ca1c8', '94d9e78', '06cc1f1'],
+		highlightKeys: [
+			'releaseNotes.unreleasedSep2026.h1',
+			'releaseNotes.unreleasedSep2026.h2',
+			'releaseNotes.unreleasedSep2026.h3',
+		],
+	},
 	{
 		version: '1.6.1',
 		date: '2026-09-20',

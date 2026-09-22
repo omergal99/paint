@@ -136,7 +136,7 @@ export const initializeJa = (english) => {
     "ui.freeSpace": "空き容量",
     "ui.usage": "使用量",
     "ui.usagePercent": "使用量（{percent}%）",
-    "ui.storageQuota": "ブラウザーのストレージ割り当て（ディスク容量ではありません）",
+    "ui.storageQuota": "ブラウザーのストレージ割り当て（推定）",
     "ui.resetSettings": "設定をリセット",
     "ui.clearData": "データを消去",
     "ui.releaseNotes": "リリースノート",
@@ -178,5 +178,8 @@ export const initializeJa = (english) => {
     "status.copied": "コピーしました",
     "status.pasted": "貼り付けました",
     "status.downloadReady": "ダウンロードの準備完了",
+    "releaseNotes.unreleasedSep2026.h1": "ヘブライ語と確認済みの追加インターフェース言語を、RTL対応と完全なカタログ網羅で利用できるようにしました",
+    "releaseNotes.unreleasedSep2026.h2": "設定、履歴、リボン、サイドバー、リリースノート、ストレージの表示がアクティブな言語に従うようになりました",
+    "releaseNotes.unreleasedSep2026.h3": "ブラウザーのストレージ表示で推定使用量とブラウザーの割り当てを分離し、割合を正確に表示するようにしました",
   });
 };

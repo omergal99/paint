@@ -134,7 +134,7 @@ export const initializeAr = (english) => {
     "ui.freeSpace": "المساحة الحرة",
     "ui.usage": "الاستخدام",
     "ui.usagePercent": "الاستخدام ({percent}٪)",
-    "ui.storageQuota": "حصة تخزين المتصفح (ليست مساحة القرص)",
+    "ui.storageQuota": "حصة تخزين المتصفح (تقدير)",
     "ui.resetSettings": "إعادة ضبط الإعدادات",
     "ui.clearData": "مسح البيانات",
     "ui.releaseNotes": "ملاحظات الإصدار",
@@ -175,5 +175,8 @@ export const initializeAr = (english) => {
     "status.copied": "تم النسخ",
     "status.pasted": "تم اللصق",
     "status.downloadReady": "التنزيل جاهز",
+    "releaseNotes.unreleasedSep2026.h1": "أصبحت العبرية ولغات الواجهة الأخرى المراجعة متاحة الآن مع دعم RTL وتغطية كاملة للكتالوجات",
+    "releaseNotes.unreleasedSep2026.h2": "تتبع الإعدادات والسجل والشريط والشريط الجانبي وملاحظات الإصدار وتسميات التخزين اللغة النشطة الآن",
+    "releaseNotes.unreleasedSep2026.h3": "يفصل تقرير تخزين المتصفح الآن بين الاستخدام التقديري وحصة المتصفح ويعرض النسبة بصدق",
   });
 };

@@ -140,7 +140,7 @@ export const initializePtBr = (english) => {
     "ui.freeSpace": "Espaço livre",
     "ui.usage": "Uso",
     "ui.usagePercent": "Uso ({percent}%)",
-    "ui.storageQuota": "Cota de armazenamento do navegador (não é espaço em disco)",
+    "ui.storageQuota": "Cota de armazenamento do navegador (estimativa)",
     "ui.resetSettings": "Redefinir configurações",
     "ui.clearData": "Limpar dados",
     "ui.releaseNotes": "Notas da versão",
@@ -181,5 +181,8 @@ export const initializePtBr = (english) => {
     "status.copied": "Copiado",
     "status.pasted": "Colado",
     "status.downloadReady": "Download pronto",
+    "releaseNotes.unreleasedSep2026.h1": "Hebraico e outros idiomas de interface revisados agora estão disponíveis com RTL e cobertura completa dos catálogos",
+    "releaseNotes.unreleasedSep2026.h2": "Configurações, histórico, faixa, barra lateral, notas da versão e armazenamento agora seguem o idioma ativo",
+    "releaseNotes.unreleasedSep2026.h3": "O armazenamento do navegador agora separa o uso estimado da cota e mostra a porcentagem de forma honesta",
   });
 };

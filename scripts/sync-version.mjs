@@ -15,7 +15,7 @@ const versionFile = path.join(root, 'js/version.js');
 fs.writeFileSync(versionFile, `export const APP_VERSION = '${version}';\n`);
 const serviceWorkerFile = path.join(root, 'sw.js');
 const serviceWorker = fs.readFileSync(serviceWorkerFile, 'utf8');
-const cacheVersion = version.replaceAll('.', '-');
+const cacheVersion = version.replace(/\./g, '-');
 const cacheMarker = /const CACHE_NAME = 'paint-shell-v[^']+';/;
 if (!cacheMarker.test(serviceWorker)) {
   throw new Error('Service-worker cache version marker is missing');

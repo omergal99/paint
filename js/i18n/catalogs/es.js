@@ -212,7 +212,7 @@ export const ES_MESSAGES = Object.freeze({
     freeSpace: "Espacio libre",
     usage: "Uso",
     usagePercent: "Uso ({percent}%)",
-    storageQuota: "Cuota de almacenamiento del navegador (no espacio del disco)",
+    storageQuota: "Cuota de almacenamiento del navegador (estimación)",
     resetSettings: "Restablecer configuración",
     clearData: "Borrar datos",
     releaseNotes: "Notas de versión",
@@ -313,5 +313,12 @@ export const ES_MESSAGES = Object.freeze({
     undoSnapshotSkipped:
       "Se omitió la captura de deshacer para proteger la memoria.",
     downloadReady: "Descarga lista",
+  },
+  releaseNotes: {
+    unreleasedSep2026: {
+      h1: "El hebreo y otros idiomas revisados ya están disponibles con RTL y cobertura completa del catálogo",
+      h2: "La configuración, el historial, la cinta, la barra lateral, las notas de versión y el almacenamiento siguen el idioma activo",
+      h3: "El almacenamiento del navegador separa ahora el uso estimado de la cuota y muestra el porcentaje de forma honesta",
+    },
   },
 });

@@ -130,7 +130,7 @@ export const EN_MESSAGES = deepFreeze({
 		exportAllHistory: 'Export All History', ribbon: 'Ribbon', ribbonHelp: 'Choose which ribbon groups are visible. Detailed group options open in the sidebar.',
 		ribbonPosition: 'Ribbon position', top: 'Top', left: 'Left', bottom: 'Bottom', floating: 'Floating', aboutPaint: 'About paint',
 		aboutPaintText: 'paint is a local-first browser drawing workspace built for fast, private image editing.', version: 'Version', loading: 'Loading…',
-		activity: 'Activity', storedData: 'Browser storage used (estimate)', freeSpace: 'Free space', usage: 'Usage', usagePercent: 'Usage ({percent}%)', storageQuota: 'Browser storage quota (not disk space)', resetSettings: 'Reset Settings', clearData: 'Clear Data',
+		activity: 'Activity', storedData: 'Browser storage used (estimate)', freeSpace: 'Free space', usage: 'Usage', usagePercent: 'Usage ({percent}%)', storageQuota: 'Browser storage quota (estimate)', resetSettings: 'Reset Settings', clearData: 'Clear Data',
 		releaseNotes: 'Release notes', releaseNotesHelp: 'What is new in each version. Newest first.', installUpdates: 'Install & updates',
 		installHelp: 'Install paint as an app for a focused window, quick launch, and offline use. The browser decides when direct installation is available.',
 		installPaint: 'Install paint', checkingInstall: 'Checking install options…', versionUpdates: 'Version updates',
@@ -191,6 +191,11 @@ export const EN_MESSAGES = deepFreeze({
 		historyCleared: 'History cleared',
 	},
 	releaseNotes: {
+		unreleasedSep2026: {
+			h1: 'Hebrew and additional reviewed interface languages are now available with RTL support and complete catalog coverage',
+			h2: 'Settings, history, ribbon, sidebar, release notes, and storage labels now follow the active language',
+			h3: 'Browser storage reporting now separates estimated usage from the browser quota and explains the percentage honestly',
+		},
 		v1_6_1: {
 			h1: 'Empty text placement stays in Text mode until text is actually entered',
 			h2: 'Settings remembers the last tab while closing with a clean URL',
