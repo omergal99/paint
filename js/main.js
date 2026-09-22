@@ -2223,7 +2223,7 @@ document.getElementById('settings-clear-data').addEventListener('click', async (
 	const confirmed = await dialogService.confirm({
 		title: t('settings.clearDataTitle'),
 		message: t('settings.clearDataConfirm'),
-		confirmLabel: t('settings.clearData'),
+		confirmLabel: t('ui.clearData'),
 		danger: true,
 	});
 	if (!confirmed) return;
