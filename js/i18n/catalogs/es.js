@@ -74,8 +74,14 @@ export const ES_MESSAGES = Object.freeze({
     about: "Acerca de",
     general: "General",
     search: "Buscar configuración",
+    browserLanguage: "Navegador: {language}",
     languageReady: "{language} está disponible",
     languagePlanned: "{language} está previsto",
+    resetConfirm:
+      "¿Restablecer toda la configuración a sus valores predeterminados? Se restablecerán los colores, el diseño, las herramientas, el zoom, las preferencias del historial y otras preferencias. Las imágenes guardadas y las entradas del historial no se eliminarán.",
+    clearDataTitle: "Borrar todos los datos guardados",
+    clearDataConfirm:
+      "¿Borrar el lienzo guardado, los datos del espacio de trabajo, la configuración y el historial? Esta acción no se puede deshacer.",
   },
   ui: {
     crop: "Recortar",
@@ -156,6 +162,9 @@ export const ES_MESSAGES = Object.freeze({
     a4Landscape: "A4 horizontal",
     a4Portrait: "A4 vertical",
     fullHd: "Full HD",
+    squareCanvasSize: "1000 × 1000 (cuadrado)",
+    a4LandscapeCanvasSize: "A4 horizontal (1123 × 794)",
+    a4PortraitCanvasSize: "A4 vertical (794 × 1123)",
     widthPx: "Ancho (px)",
     heightPx: "Alto (px)",
     scalePercent: "Escala (%)",
@@ -245,6 +254,12 @@ export const ES_MESSAGES = Object.freeze({
     actionsSession: "Acciones: Sesión",
     showEntireGroup: "Mostrar grupo completo",
     showCurrentTool: "Mostrar herramienta actual",
+    showLabel: "Mostrar {label}",
+    settingsAlwaysVisible: "{group} (siempre visible en Configuración)",
+    details: "Detalles",
+    countImages: "{count} imágenes",
+    onlyManualShort: "Solo manualmente",
+    freeRotatePrompt: "Introduce el ángulo de rotación en grados.",
     historyItemDeleted: "Elemento del historial eliminado",
     loadedFromHistory: "Cargado del historial",
     restoredSessionStep: "Paso de sesión restaurado",
@@ -286,6 +301,9 @@ export const ES_MESSAGES = Object.freeze({
     noSessionSteps: "Aún no hay pasos - dibuja algo primero",
     restoreSessionStep: "Restaurar paso de sesión",
     deleteSessionStep: "Eliminar paso de sesión",
+    clearTitle: "Borrar historial",
+    clearConfirm:
+      "¿Seguro que quieres eliminar permanentemente todo el historial guardado? Esta acción no se puede deshacer.",
   },
   notepad: {
     title: "Notas",
@@ -313,12 +331,34 @@ export const ES_MESSAGES = Object.freeze({
     undoSnapshotSkipped:
       "Se omitió la captura de deshacer para proteger la memoria.",
     downloadReady: "Descarga lista",
+    historySaved: "Imagen guardada en el historial",
+    historyCleared: "Historial borrado",
   },
   releaseNotes: {
     unreleasedSep2026: {
       h1: "El hebreo y otros idiomas revisados ya están disponibles con RTL y cobertura completa del catálogo",
       h2: "La configuración, el historial, la cinta, la barra lateral, las notas de versión y el almacenamiento siguen el idioma activo",
       h3: "El almacenamiento del navegador separa ahora el uso estimado de la cuota y muestra el porcentaje de forma honesta",
+    },
+    v1_6_1: {
+      h1: "El texto vacío permanece en modo Texto hasta que se introduzca texto",
+      h2: "La configuración recuerda la última pestaña y cierra con una URL limpia",
+      h3: "La preparación sin conexión ahora verifica y precarga todas las funciones actuales",
+      h4: "La cobertura del shell sin conexión sigue el grafo de importación de la aplicación en las comprobaciones de versión",
+    },
+    v1_6_0: {
+      h1: "Menús fiables con posición adaptada a la ventana y cierre al hacer clic fuera o pulsar Escape",
+      h2: "Controles de opacidad independientes, colores transparentes y colocación de formas más segura",
+      h3: "Mejoras en Historial y Configuración con pestañas accesibles por teclado y controles de la cinta",
+      h4: "Historial de texto reciente, selección de texto opcional y selecciones de capas de texto movibles",
+      h5: "Navegación con Mano/Desplazar, diseños adaptables de la cinta y controles de instalación/actualización sin conexión",
+    },
+    v1_5_0: {
+      h1: "Galería de formas con modos de relleno, flechas y marcas V/X",
+      h2: "Control compartido de tamaño de línea y texto con valores predeterminados",
+      h3: "Historial IndexedDB con guardado automático y exportación",
+      h4: "Diálogo de configuración con secciones de cinta, historial y acerca de",
+      h5: "Compatibilidad sin conexión mediante service worker",
     },
   },
 });

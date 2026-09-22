@@ -71,10 +71,8 @@ const ensureDataTags = (root = document) => {
 	elements.forEach((element) => {
 		if (element.dataset.tag) return;
 		const base = element.id || element.tagName.toLowerCase();
-		if (element.id) {
-			element.dataset.tag = base;
-			return;
-		}
+		if (!element.dataset.tag) element.dataset.tag = element.id;
+		if (element.id) return;
 		const count = (dataTagCounts.get(base) || 0) + 1;
 		dataTagCounts.set(base, count);
 		element.dataset.tag = `dom-${base}-${count}`;
@@ -1415,6 +1413,7 @@ document.getElementById('resize-form').addEventListener('submit', () => {
 
 // ---------- Settings dialog ----------
 const settingsDialog = document.getElementById('settings-dialog');
+const resetSettingsConfirmationFallback = 'Reset all settings to their defaults';
 const dmCheckbox = document.getElementById('setting-dark-mode');
 const sbCheckbox = document.getElementById('setting-show-status-bar');
 const ciCheckbox = document.getElementById('setting-show-color-inspector');
@@ -2198,7 +2197,7 @@ populateRibbonSettings();
 document.getElementById('settings-reset').addEventListener('click', async () => {
 	const confirmed = await dialogService.confirm({
 		title: t('ui.resetSettings'),
-		message: t('settings.resetConfirm'),
+		message: t('settings.resetConfirm') || resetSettingsConfirmationFallback,
 		confirmLabel: t('ui.resetSettings'),
 		danger: true,
 	});
