@@ -694,7 +694,7 @@ test('P0 quick wins: hover affordance, slider, release notes, fresh paste, undo 
   assert.match(css, /\.history-view-tab/);
   assert.match(css, /#history-save-current-btn/);
   assert.match(read('js/history/GlobalHistory.js'), /makeThumbnail/);
-  assert.match(html, /id="about-storage-free"/);
+  assert.match(html, /id="about-storage-quota"/);
 	assert.match(read('js/core/constants.js'), /mod\+shift\+z/);
 });
 
@@ -737,14 +737,15 @@ test('Round-2 fixes: V glyph, session persistence, view-aware actions, storage m
   // 3. taller settings dialog + compact ribbon rows
   assert.match(css, /height:\s*min\(470px,\s*88vh\)/);
   assert.match(css, /\.ribbon-setting-row:hover/);
-	// 3.2 storage math: validated raw bytes, fresh browser estimate, exact free
-	//     space, and a bounded percentage bar.
+  // 3.2 storage reporting: validated raw bytes, fresh browser estimate, the
+  //     browser quota is shown separately, and the percentage bar is bounded.
 	assert.doesNotMatch(main, /STORAGE_ESTIMATE_CACHE_TTL_MS/);
 	assert.match(main, /normalizeStorageEstimate/);
 	assert.match(main, /getStorageEstimate/);
 	assert.match(main, /minimumFractionDigits: 2/);
 	assert.match(main, /GiB/);
-	assert.match(main, /free of/);
+  assert.match(html, /data-i18n="ui.storageQuota"/);
+  assert.doesNotMatch(main, /quotaBytes - usageBytes/);
 	assert.match(main, /browser estimate/);
 	assert.match(main, /Math\.min\(100, Math\.max\(1, Math\.ceil/);
 });

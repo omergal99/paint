@@ -1975,25 +1975,29 @@ const updateAboutStats = async () => {
 		// never present a made-up fixed 10 GB capacity.
 		const storage = document.getElementById('about-storage');
 		if (storage) storage.textContent = estimate ? formatBytes(usageBytes) : 'Unavailable';
-		const freeEl = document.getElementById('about-storage-free');
-		if (freeEl) {
-			freeEl.textContent = estimate
-				? `${formatBytes(Math.max(0, quotaBytes - usageBytes))} free of ${formatBytes(quotaBytes)}`
-				: 'Unavailable';
+		const quotaEl = document.getElementById('about-storage-quota');
+		if (quotaEl) {
+			quotaEl.textContent = estimate ? formatBytes(quotaBytes) : 'Unavailable';
 		}
 		const fill = document.getElementById('about-storage-bar-fill');
+		const usageLabel = document.getElementById('about-storage-usage-label');
 		if (fill) {
 			let pct = 0;
 			if (estimate && quotaBytes > 0 && usageBytes > 0) {
 				pct = Math.min(100, Math.max(1, Math.ceil((usageBytes / quotaBytes) * 100)));
 			}
 			fill.style.width = `${pct}%`;
+			if (usageLabel) usageLabel.textContent = estimate
+				? t('ui.usagePercent', { percent: Math.round((usageBytes / quotaBytes) * 100) })
+				: t('ui.usage');
 		}
 	} catch {
 		const storage = document.getElementById('about-storage');
 		if (storage) storage.textContent = 'Unavailable';
-		const freeEl = document.getElementById('about-storage-free');
-		if (freeEl) freeEl.textContent = 'Unavailable';
+		const quotaEl = document.getElementById('about-storage-quota');
+		if (quotaEl) quotaEl.textContent = 'Unavailable';
+		const usageLabel = document.getElementById('about-storage-usage-label');
+		if (usageLabel) usageLabel.textContent = t('ui.usage');
 	} finally {
 		aboutValues.forEach((element) => element.removeAttribute('aria-busy'));
 		if (loading) loading.hidden = true;
@@ -2030,6 +2034,10 @@ const renderReleaseNotes = () => {
 		host.appendChild(card);
 	}
 }
+const refreshAboutOnLocaleChange = () => {
+	if (!document.querySelector('[data-settings-panel="about"]')?.hidden) void updateAboutStats();
+};
+document.documentElement?.addEventListener('paint:locale-change', refreshAboutOnLocaleChange);
 renderReleaseNotes();
 
 const shortcutSettingsStatus = document.getElementById('shortcut-settings-status');
@@ -2691,6 +2699,7 @@ const destroyEditor = () => {
 	viewportManager.destroy();
 	directionEventTarget.removeEventListener('paint:locale-change', refreshCanvasDirectionGeometry);
 	document.documentElement?.removeEventListener('paint:locale-change', renderSegmentedChoices);
+	document.documentElement?.removeEventListener('paint:locale-change', refreshAboutOnLocaleChange);
 	ribbonLayoutManager.destroy();
 	actionMenuController.destroy();
 	backgroundRemovalController.destroy();

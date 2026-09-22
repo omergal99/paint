@@ -130,7 +130,7 @@ export const EN_MESSAGES = deepFreeze({
 		exportAllHistory: 'Export All History', ribbon: 'Ribbon', ribbonHelp: 'Choose which ribbon groups are visible. Detailed group options open in the sidebar.',
 		ribbonPosition: 'Ribbon position', top: 'Top', left: 'Left', bottom: 'Bottom', floating: 'Floating', aboutPaint: 'About paint',
 		aboutPaintText: 'paint is a local-first browser drawing workspace built for fast, private image editing.', version: 'Version', loading: 'Loading…',
-		activity: 'Activity', storedData: 'Stored data', freeSpace: 'Free space', usage: 'Usage', storageQuota: 'Browser storage quota estimate', resetSettings: 'Reset Settings', clearData: 'Clear Data',
+		activity: 'Activity', storedData: 'Browser storage used (estimate)', freeSpace: 'Free space', usage: 'Usage', usagePercent: 'Usage ({percent}%)', storageQuota: 'Browser storage quota (not disk space)', resetSettings: 'Reset Settings', clearData: 'Clear Data',
 		releaseNotes: 'Release notes', releaseNotesHelp: 'What is new in each version. Newest first.', installUpdates: 'Install & updates',
 		installHelp: 'Install paint as an app for a focused window, quick launch, and offline use. The browser decides when direct installation is available.',
 		installPaint: 'Install paint', checkingInstall: 'Checking install options…', versionUpdates: 'Version updates',
