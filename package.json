@@ -3,6 +3,9 @@
   "version": "1.6.1",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
   "scripts": {
     "test": "node --test tests/**/*.test.js",
     "version:sync": "node scripts/sync-version.mjs",
