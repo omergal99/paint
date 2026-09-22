@@ -13,6 +13,7 @@ export const SUPPORTED_LOCALES = Object.freeze([
 	'de',
 	'ar',
 	'ja',
+	'he',
 ]);
 
 export const LOCALE_METADATA = Object.freeze({
@@ -23,6 +24,7 @@ export const LOCALE_METADATA = Object.freeze({
 	de: Object.freeze({ label: 'German', nativeLabel: 'Deutsch', direction: 'ltr', status: 'ready' }),
 	ar: Object.freeze({ label: 'Arabic', nativeLabel: 'العربية', direction: 'rtl', status: 'ready' }),
 	ja: Object.freeze({ label: 'Japanese', nativeLabel: '日本語', direction: 'ltr', status: 'ready' }),
+	he: Object.freeze({ label: 'Hebrew', nativeLabel: 'עברית', direction: 'rtl', status: 'ready' }),
 });
 
 const textValue = (value) => {

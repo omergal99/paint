@@ -12,6 +12,7 @@ import { FR_MESSAGES, initializeFr } from './catalogs/fr.js';
 import { DE_MESSAGES, initializeDe } from './catalogs/de.js';
 import { AR_MESSAGES, initializeAr } from './catalogs/ar.js';
 import { JA_MESSAGES, initializeJa } from './catalogs/ja.js';
+import { HE_MESSAGES, initializeHe } from './catalogs/he.js';
 
 export { DEFAULT_LOCALE, normalizeLocale } from './localeRegistry.js';
 export const I18N_LOCALE_STORAGE_KEY = 'paint:locale';
@@ -187,6 +188,7 @@ initializeFr(EN_MESSAGES);
 initializeDe(EN_MESSAGES);
 initializeAr(EN_MESSAGES);
 initializeJa(EN_MESSAGES);
+initializeHe(EN_MESSAGES);
 
 export const MESSAGE_CATALOGS = deepFreeze({
 	[DEFAULT_LOCALE]: EN_MESSAGES,
@@ -196,6 +198,7 @@ export const MESSAGE_CATALOGS = deepFreeze({
 	de: DE_MESSAGES,
 	ar: AR_MESSAGES,
 	ja: JA_MESSAGES,
+	he: HE_MESSAGES,
 });
 
 // This is the current markup/module usage contract. New data-i18n attributes

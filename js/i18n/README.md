@@ -21,7 +21,8 @@ sentence in a feature module. The locale controller keeps that shared `t()`
 locale synchronized when the user changes language.
 
 The reviewed catalog set is English, Spanish, Brazilian Portuguese, French,
-German, Arabic (RTL), and Japanese. Locale files inherit the English key shape
+German, Arabic (RTL), Japanese, and Hebrew (RTL). Locale files inherit the
+English key shape
 and override reviewed translations, so adding a key is safe and visible to the
 coverage check. The selected locale is stored under `paint:locale`; a missing
 runtime key still falls back to English.
