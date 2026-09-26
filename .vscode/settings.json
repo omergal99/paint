@@ -1,0 +1,32 @@
+{
+  "workbench.colorCustomizations": {
+    // Title Bar (top)
+    "titleBar.activeBackground": "#fdfeed",
+    "titleBar.activeForeground": "#1f1f1f",
+    "titleBar.inactiveBackground": "#e2e2e2",
+    "titleBar.inactiveForeground": "#888888",
+    // Activity Bar (left vertical bar with icons)
+    "activityBar.background": "#d5ce4c",
+    "activityBar.foreground": "#1475e3",
+		"activityBar.inactiveForeground": "#4d3f3f",
+    "activityBarBadge.background": "#4fc3f7",
+    "activityBarBadge.foreground": "#000000",
+    // Side Bar (file explorer area)
+    "sideBar.background": "#eceeee",
+    "sideBar.foreground": "#080808",
+    "sideBarSectionHeader.background": "#eeeef0",
+    "sideBarSectionHeader.foreground": "#0f2731",
+    // Tabs (optional but usually part of the “top” look)
+    "tab.activeBackground": "#6363da",
+    "tab.inactiveBackground": "#f2f2f5",
+    "tab.activeBorderTop": "#81d7ff"
+  },
+  "liveServer.settings.multiRootWorkspaceName": "ai-3-DevEx-proj",
+  "accessibility.signals.chatResponseReceived": {
+    "sound": "on"
+  },
+  "accessibility.signals.chatUserActionRequired": {
+    "sound": "on"
+	},
+	"liveServer.settings.port": 5510
+}

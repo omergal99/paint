@@ -523,7 +523,7 @@ body {
 
 .rbtn.cell {
 	min-width: 26px;
-	min-height: 24px;
+	min-height: 20px;
 	padding: 2px;
 }
 
@@ -3257,7 +3257,7 @@ html[dir="rtl"] .submenu-arrow {
 .shapes-menu-arrow {
 	border-radius: 0 2px 2px 0;
 	width: 100%;
-	height: 24px;
+	height: 20px;
 	width: 34px;
 	border: 1px solid var(--w10-border-strong);
 	background: var(--w10-ribbon-bg);
