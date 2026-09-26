@@ -610,9 +610,9 @@ body {
 }
 .rbtn.cell.text-tool-menu-arrow {
 	box-sizing: border-box;
-	width: 24px;
-	min-width: 24px;
-	min-height: 24px;
+	width: 22px;
+	min-width: 20px;
+	min-height: 22px;
 	padding: 0 2px;
 	border: 0;
 	border-inline-start: 1px solid var(--w10-border-strong);
@@ -629,7 +629,7 @@ body {
 }
 .text-tool-menu-arrow .menu-arrow {
 	margin: 0;
-	font-size: 10px;
+	font-size: 14px;
 }
 .text-tool-menu-items {
 	min-width: 286px;
@@ -2560,9 +2560,9 @@ dialog h3 {
 	display: grid;
 	grid-template-columns: minmax(96px, 112px) minmax(0, 1fr);
 	width: min(560px, calc(100vw - 24px));
-	height: min(470px, 88vh);
+	height: min(520px, 88vh);
 	max-width: 100%;
-	max-height: min(470px, 88vh);
+	max-height: min(520px, 88vh);
 	position: relative;
 }
 .settings-shell {
@@ -2808,7 +2808,7 @@ dialog h3 {
 	color: var(--w10-accent);
 }
 .settings-panel {
-	padding: 6px 6px 6px 10px;
+	padding: 4px 6px 8px 10px;
 }
 .settings-panel[hidden] {
 	display: none;
@@ -3147,7 +3147,7 @@ dialog h3 {
 	display: inline-block;
 	margin-inline-start: 2px;
 	color: var(--w10-text-dim);
-	font-size: 10px;
+	font-size: 12px;
 	line-height: 1;
 }
 .action-menu.open > .action-menu-items {
