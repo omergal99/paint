@@ -3231,14 +3231,13 @@ dialog h3 {
 .action-menu-items button {
 	display: flex;
 	align-items: center;
-	gap: 8px;
+	justify-content: center;
 	width: 100%;
-	border: 0;
 	padding: 1px;
 	background: transparent;
 	border: 2px solid transparent;
 	color: var(--w10-text);
-	font-size: 13px;
+	font-size: 16px;
 	text-align: start;
 	cursor: pointer;
 	white-space: nowrap;
