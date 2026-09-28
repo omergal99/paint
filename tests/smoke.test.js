@@ -721,6 +721,14 @@ test('Round-2 fixes: V glyph, session persistence, view-aware actions, storage m
   assert.match(read('js/ui/Toolbar.js'), /getSelectedEmoji/);
   assert.match(main, /hold Shift to keep the aspect ratio/);
   assert.match(read('css/styles.css'), /\.shape-emoji-grid/);
+  // Emoji tiles live inside `.action-menu-items`, so their rules must be scoped
+  // under `.shape-gallery` (0,2,0 > 0,1,1) to out-specify `.action-menu-items
+  // button` without leaking size/alignment into other menu items.
+  assert.match(css, /\.shape-gallery \.shape-emoji-btn\s*\{[^}]*font-size:\s*16px/s);
+  assert.match(css, /\.shape-gallery \.shape-emoji-btn\s*\{[^}]*justify-content:\s*center/s);
+  assert.match(css, /\.shape-gallery \.shape-emoji-btn:hover\s*\{/);
+  assert.match(css, /\.shape-gallery \.shape-emoji-btn\.active\s*\{/);
+  assert.doesNotMatch(css, /^\s*\.shape-emoji-btn\s*\{/m);
   // 2. Session survives refresh, dies with browser tab (sessionStorage)
   assert.match(history, /SESSION_BACKUP_KEY/);
   assert.match(history, /sessionStorage/);
