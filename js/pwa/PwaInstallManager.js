@@ -11,7 +11,9 @@ const isStandalone = () => (
 export const createPwaInstallManager = ({
   installButton,
   statusEl,
+  updateStatusEl,
   updateButton,
+  applyUpdateButton,
   offlineButton,
   offlineStatusEl,
   translate = (key, fallback) => fallback,
@@ -21,7 +23,9 @@ export const createPwaInstallManager = ({
   let deferredPrompt = null;
   let registration = null;
   let reloading = false;
-  let reloadPending = false;
+  // True only after the user explicitly asked to apply an update. Every other
+  // controller change is background noise and must never reload the page.
+  let applying = false;
   let reloadGuard = null;
   let hadController = Boolean(navigator.serviceWorker?.controller);
   let started = false;
@@ -49,22 +53,22 @@ export const createPwaInstallManager = ({
 
   const setReloadBlockedStatus = ({ reason }) => {
     if (reason === 'autosave-failed') {
-      setStatus('Update ready. Autosave has not finished safely. Resolve the storage warning or download a copy before updating.', 'update-blocked');
+      setUpdateStatus(translate('ui.updateBlockedAutosaveFailed', 'Update ready. Autosave has not finished safely. Resolve the storage warning or download a copy before updating.'), 'update-blocked');
       return;
     }
     if (reason === 'autosave-unavailable') {
-      setStatus('Update ready. Autosave is still starting. Try again in a moment.', 'update-blocked');
+      setUpdateStatus(translate('ui.updateBlockedAutosaveStarting', 'Update ready. Autosave is still starting. Try again in a moment.'), 'update-blocked');
       return;
     }
     if (reason === 'autosave-disabled') {
-      setStatus('Update ready. Automatic recovery is off. Save or download the image before updating.', 'update-blocked');
+      setUpdateStatus(translate('ui.updateBlockedAutosaveDisabled', 'Update ready. Automatic recovery is off. Save or download the image before updating.'), 'update-blocked');
       return;
     }
     if (reason === 'autosave-pending' || reason === 'autosave-saving') {
-      setStatus('Update ready. Saving the latest canvas change before applying it.', 'update-ready');
+      setUpdateStatus(translate('ui.updateSaving', 'Update ready. Saving the latest canvas change before applying it.'), 'update-ready');
       return;
     }
-    setStatus('Update ready. Finish the current edit, then reload to apply it.', 'update-ready');
+    setUpdateStatus(translate('ui.updateFinishEdit', 'Update ready. Finish the current edit, then reload to apply it.'), 'update-ready');
   };
 
   const prepareReload = async () => {
@@ -100,30 +104,46 @@ export const createPwaInstallManager = ({
     statusEl.hidden = false;
   };
 
+  const setUpdateStatus = (message, state = '') => {
+    const output = updateStatusEl || statusEl;
+    if (!output) return;
+    output.textContent = message;
+    output.dataset.state = state;
+    output.hidden = false;
+  };
+
   const setUpdateReadyStatus = () => {
-    setStatus('A new version is ready. Finish the current edit, then select Update now.', 'update-ready');
+    setUpdateStatus(translate('ui.updateReady', 'A new version is ready. Finish the current edit, then select Update now.'), 'update-ready');
   };
 
   const syncInstallUi = () => {
     const installed = isStandalone();
     if (installButton) {
       installButton.hidden = installed;
-      installButton.disabled = installed || !deferredPrompt;
+      installButton.disabled = installed;
     }
     if (installed) {
-      setStatus('Paint is installed on this device.', 'installed');
+      setStatus(translate('ui.installStatusInstalled', 'Paint is installed on this device.'), 'installed');
     } else if (deferredPrompt) {
-      setStatus('Ready to install from this browser.', 'ready');
+      setStatus(translate('ui.installStatusReady', 'Ready to install from this browser.'), 'ready');
     } else {
-      setStatus('Use your browser menu to install. On iPhone or iPad, use Share → Add to Home Screen.', 'manual');
+      setStatus(translate('ui.installStatusManual', 'Use your browser menu to install. On iPhone or iPad, use Share → Add to Home Screen.'), 'manual');
     }
   };
 
+  // The check control is a pure check: it never skip-waits and never reloads.
+  // Applying is a separate, user-initiated control that only appears once an
+  // update is actually waiting.
   const syncUpdateUi = ({ announceReady = true } = {}) => {
-    const waiting = registration?.waiting;
+    const waiting = Boolean(registration?.waiting);
     if (updateButton) {
       updateButton.disabled = !registration;
-      updateButton.textContent = waiting || reloadPending ? 'Update now' : 'Check for updates';
+      updateButton.textContent = translate('ui.checkUpdates', 'Check for updates');
+    }
+    if (applyUpdateButton) {
+      applyUpdateButton.hidden = !(waiting || applying);
+      applyUpdateButton.disabled = !registration;
+      applyUpdateButton.textContent = translate('ui.updateNow', 'Update now');
     }
     if (announceReady && waiting) setUpdateReadyStatus();
   };
@@ -134,7 +154,7 @@ export const createPwaInstallManager = ({
     if (!registration) {
       setOfflineStatus(translate('ui.offlineUse', 'Offline use'), 'unavailable');
     } else if (offlineStatusEl?.dataset.state === 'unavailable') {
-      setOfflineStatus('All current app features are included in the offline shell.', 'ready');
+      setOfflineStatus(translate('ui.offlineShellReady', 'All current app features are included in the offline shell.'), 'ready');
     }
   };
 
@@ -186,8 +206,14 @@ export const createPwaInstallManager = ({
       hadController = true;
       return;
     }
-    reloadPending = true;
-    if (!reloadIfSafe()) syncUpdateUi({ announceReady: false });
+    // A new worker taking control is only ever a reload signal when this
+    // session asked for it (Update now). Background activations just refresh
+    // the status text so the user keeps control of the reload.
+    if (!applying) {
+      syncUpdateUi({ announceReady: false });
+      return;
+    }
+    if (!reloadIfSafe()) applying = false;
   };
 
   /*
@@ -202,6 +228,7 @@ export const createPwaInstallManager = ({
     document.removeEventListener?.('visibilitychange', onVisibilityChange);
     installButton?.removeEventListener?.('click', install);
     updateButton?.removeEventListener?.('click', checkForUpdate);
+    applyUpdateButton?.removeEventListener?.('click', applyUpdate);
     offlineButton?.removeEventListener?.('click', prepareOffline);
     navigator.serviceWorker?.removeEventListener?.('controllerchange', onControllerChange);
     registration?.removeEventListener?.('updatefound', onUpdateFound);
@@ -209,7 +236,7 @@ export const createPwaInstallManager = ({
     watchedWorker = null;
     registration = null;
     reloadGuard = null;
-    reloadPending = false;
+    applying = false;
   };
 
   // The document host binds this after its autosave controller is installed.
@@ -223,10 +250,10 @@ export const createPwaInstallManager = ({
   const prepareOffline = async () => {
     const worker = registration?.active || navigator.serviceWorker?.controller;
     if (!worker) {
-      setOfflineStatus('Load Paint once while online before preparing offline use.', 'unavailable');
+      setOfflineStatus(translate('ui.offlineLoadFirst', 'Load Paint once while online before preparing offline use.'), 'unavailable');
       return false;
     }
-    setOfflineStatus('Preparing all Paint features for offline use…', 'checking');
+    setOfflineStatus(translate('ui.offlinePreparing', 'Preparing all Paint features for offline use…'), 'checking');
     try {
       const channel = new MessageChannel();
       const result = await new Promise((resolve, reject) => {
@@ -238,56 +265,77 @@ export const createPwaInstallManager = ({
         worker.postMessage({ type: 'CACHE_ALL' }, [channel.port2]);
       });
       if (!result?.ok) throw new Error('One or more app assets were unavailable');
-      setOfflineStatus('Offline use is ready. Paint can open without internet.', 'ready');
+      setOfflineStatus(translate('ui.offlinePrepared', 'Offline use is ready. Paint can open without internet.'), 'ready');
       return true;
     } catch {
-      setOfflineStatus('Offline preparation needs a connection. Try again while online.', 'error');
+      setOfflineStatus(translate('ui.offlineRetryOnline', 'Offline preparation needs a connection. Try again while online.'), 'error');
       return false;
     }
   };
 
   const install = async () => {
-    if (!deferredPrompt) return;
+    if (!deferredPrompt) {
+      if (!isStandalone()) {
+        setStatus(translate('ui.installNoPrompt', 'This browser does not offer a direct install prompt. Use its browser menu to install Paint.'), 'manual');
+      }
+      return false;
+    }
     const prompt = deferredPrompt;
     deferredPrompt = null;
     syncInstallUi();
     await prompt.prompt();
     const choice = await prompt.userChoice;
-    if (choice?.outcome === 'accepted') setStatus('Installing Paint…', 'installing');
+    if (choice?.outcome === 'accepted') setStatus(translate('ui.installing', 'Installing Paint…'), 'installing');
     else syncInstallUi();
   };
 
+  // Ask the browser whether sw.js changed. Reporting is the whole job: an
+  // up-to-date app keeps the page exactly as it is, and a waiting worker only
+  // reveals the Update now control.
   const checkForUpdate = async () => {
-    if (!registration) return;
-    if (reloadPending && !registration.waiting) {
-      const pendingDecision = await prepareReload();
-      if (!pendingDecision.ok) {
-        setReloadBlockedStatus(pendingDecision);
-        syncUpdateUi({ announceReady: false });
-        return false;
-      }
-      return reloadIfSafe();
+    if (!registration) {
+      setUpdateStatus(translate('ui.updateUnavailable', 'Update check is unavailable right now.'), 'error');
+      return false;
     }
-    setStatus('Checking for updates…', 'checking');
+    setUpdateStatus(translate('ui.checkingUpdates', 'Checking for updates…'), 'checking');
     try {
       await registration.update();
-      if (registration.waiting) {
-        const decision = await prepareReload();
-        if (!decision.ok) {
-          setReloadBlockedStatus(decision);
-          syncUpdateUi({ announceReady: false });
-          return false;
-        }
-        registration.waiting.postMessage({ type: 'SKIP_WAITING' });
-        setStatus('Applying the update…', 'updating');
-      } else {
-        setStatus('Paint is up to date.', 'current');
-      }
     } catch {
-      setStatus('Update check is unavailable right now.', 'error');
+      setUpdateStatus(translate('ui.updateUnavailable', 'Update check is unavailable right now.'), 'error');
+      syncUpdateUi({ announceReady: false });
+      return false;
     }
+    if (registration.waiting) setUpdateReadyStatus();
+    else setUpdateStatus(translate('ui.upToDate', 'Paint is up to date.'), 'current');
     syncUpdateUi({ announceReady: false });
     return true;
+  };
+
+  // The only path that activates a waiting worker or reloads the page, and it
+  // runs exclusively from the user's Update now click.
+  const applyUpdate = async () => {
+    if (!registration) return false;
+    if (!registration.waiting && !applying) {
+      setUpdateStatus(translate('ui.upToDate', 'Paint is up to date.'), 'current');
+      syncUpdateUi({ announceReady: false });
+      return false;
+    }
+    const decision = await prepareReload();
+    if (!decision.ok) {
+      setReloadBlockedStatus(decision);
+      syncUpdateUi({ announceReady: false });
+      return false;
+    }
+    applying = true;
+    if (registration.waiting) {
+      setUpdateStatus(translate('ui.updateApplying', 'Applying the update…'), 'updating');
+      registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+      syncUpdateUi({ announceReady: false });
+      return true;
+    }
+    // The worker already took control; only the reload is left.
+    if (!reloadIfSafe()) applying = false;
+    return applying;
   };
 
   const start = () => {
@@ -298,6 +346,7 @@ export const createPwaInstallManager = ({
     document.addEventListener('visibilitychange', onVisibilityChange);
     installButton?.addEventListener('click', install);
     updateButton?.addEventListener('click', checkForUpdate);
+    applyUpdateButton?.addEventListener('click', applyUpdate);
     offlineButton?.addEventListener('click', prepareOffline);
 
     if ('serviceWorker' in navigator) {
@@ -311,5 +360,5 @@ export const createPwaInstallManager = ({
     syncOfflineUi();
   };
 
-  return Object.freeze({ start, install, checkForUpdate, prepareOffline, attachRegistration, setReloadGuard, destroy });
+  return Object.freeze({ start, install, checkForUpdate, applyUpdate, prepareOffline, attachRegistration, setReloadGuard, destroy });
 };

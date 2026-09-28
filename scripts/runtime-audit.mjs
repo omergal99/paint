@@ -19,15 +19,19 @@ const storageSource = fs.readFileSync(path.join(root, 'js/storage.js'), 'utf8');
 const historySource = fs.readFileSync(path.join(root, 'js/history/HistoryManager.js'), 'utf8');
 const mainSource = fs.readFileSync(path.join(root, 'js/main.js'), 'utf8');
 const appSource = fs.readFileSync(path.join(root, 'js/app.js'), 'utf8');
+const toolbarSource = fs.readFileSync(path.join(root, 'js/ui/Toolbar.js'), 'utf8');
+const browserInfoSource = fs.readFileSync(path.join(root, 'js/ui/BrowserInfoPanel.js'), 'utf8');
+const checkboxRowsSource = fs.readFileSync(path.join(root, 'js/ui/CheckboxRowController.js'), 'utf8');
+const emojiSource = fs.readFileSync(path.join(root, 'js/tools/EmojiStore.js'), 'utf8');
 const count = (pattern) => (source.match(pattern) || []).length;
-const addEventListenerCalls = count(/\.addEventListener\s*\(/g);
-const removeEventListenerCalls = count(/\.removeEventListener\s*\(/g);
+const addEventListenerCalls = count(/\.addEventListener(?:\?\.)?\s*\(/g);
+const removeEventListenerCalls = count(/\.removeEventListener(?:\?\.)?\s*\(/g);
 const listenerFiles = files.map((file) => {
   const text = fs.readFileSync(path.join(root, file), 'utf8');
   return {
     file,
-    adds: (text.match(/\.addEventListener\s*\(/g) || []).length,
-    removes: (text.match(/\.removeEventListener\s*\(/g) || []).length,
+    adds: (text.match(/\.addEventListener(?:\?\.)?\s*\(/g) || []).length,
+    removes: (text.match(/\.removeEventListener(?:\?\.)?\s*\(/g) || []).length,
   };
 }).filter(({ adds }) => adds > 0);
 const teardownFiles = listenerFiles.filter(({ removes }) => removes > 0);
@@ -60,6 +64,17 @@ const result = {
         && viewportSource.includes('invalidateGeometry'),
       telemetryLifecycle: telemetrySource.includes('const pause = () =>')
         && telemetrySource.includes('const destroy = () =>'),
+      toolbarListenerTeardown: toolbarSource.includes('signal: this._eventController.signal')
+        && toolbarSource.includes('this._eventController.abort()')
+        && toolbarSource.includes('this._disposeEmojiGrid?.()'),
+      browserDiagnosticsTeardown: browserInfoSource.includes("windowRef.removeEventListener('pointermove', onPointerMove)")
+        && browserInfoSource.includes('windowRef.cancelAnimationFrame(pointerFrame)')
+        && browserInfoSource.includes('locationButton?.removeEventListener'),
+      checkboxRowDelegation: checkboxRowsSource.includes("root.addEventListener('click', onClick)")
+        && checkboxRowsSource.includes("root.removeEventListener('click', onClick)"),
+      emojiGridDelegation: emojiSource.includes('new WeakMap()')
+        && emojiSource.includes("container.addEventListener('click', binding.handleClick)")
+        && emojiSource.includes("container.removeEventListener('click', binding.handleClick)"),
       editorTeardown: mainSource.includes('const destroyEditor = () =>')
         && mainSource.includes('toolManager.destroy()')
         && mainSource.includes('viewportManager.destroy()')

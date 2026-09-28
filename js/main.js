@@ -49,6 +49,8 @@ import { createWorkspaceStripController } from './ui/WorkspaceStrip.js';
 import { createActionMenuController } from './ui/ActionMenuController.js';
 import { createDialogSearch } from './ui/DialogSearch.js';
 import { createSettingsDialog } from './ui/SettingsDialog.js';
+import { createBrowserInfoPanel } from './ui/BrowserInfoPanel.js';
+import { createCheckboxRowController } from './ui/CheckboxRowController.js';
 import { createLocaleController } from './i18n/LocaleController.js';
 import { t } from './i18n/messages.js';
 import { formatUnambiguousDate, formatUnambiguousDateTime } from './utils/datetime.js';
@@ -287,7 +289,9 @@ const setColorInspectorCollapsed = (collapsed) => {
 	const button = colorInspectorToggle;
 	button.innerHTML = `<svg viewBox="0 0 20 20" aria-hidden="true"><path d="${collapsed ? 'M14 4l-8 6 8 6' : 'M6 4l8 6-8 6'}" /></svg>`;
 	button.setAttribute('aria-expanded', String(!collapsed));
-	button.title = collapsed ? 'Expand color inspector' : 'Collapse color inspector';
+	const label = collapsed ? t('ui.expandColorInspector') : t('ui.collapseColorInspector');
+	button.title = label;
+	button.setAttribute('aria-label', label);
 	try { localStorage.setItem('paint:color-inspector-collapsed', String(collapsed)); } catch { }
 }
 let colorInspectorCollapsed = false;
@@ -1056,6 +1060,58 @@ const downloadPNG = async () => {
 	}
 }
 
+const SAVE_FORMATS = Object.freeze({
+	png: Object.freeze({ mime: 'image/png', extension: 'png' }),
+	jpeg: Object.freeze({ mime: 'image/jpeg', extension: 'jpg' }),
+	webp: Object.freeze({ mime: 'image/webp', extension: 'webp' }),
+});
+
+const saveImageAs = async (format) => {
+	if (format === 'png') return save();
+	const selectedFormat = SAVE_FORMATS[format];
+	if (!selectedFormat) return false;
+	commitFloatingSelection();
+	if (shouldAutoSaveHistory()) sidebar.saveCurrentToHistory();
+
+	try {
+		let source = canvasManager.canvas;
+		if (format === 'jpeg') {
+			const flattened = document.createElement('canvas');
+			flattened.width = canvasManager.width;
+			flattened.height = canvasManager.height;
+			const context = flattened.getContext('2d');
+			if (!context) throw new Error('Export canvas is unavailable');
+			context.fillStyle = '#fff';
+			context.fillRect(0, 0, flattened.width, flattened.height);
+			context.drawImage(source, 0, 0);
+			source = flattened;
+		}
+		const blob = await new Promise((resolve) => source.toBlob(resolve, selectedFormat.mime, 0.92));
+		if (!(blob instanceof Blob) || blob.type !== selectedFormat.mime) {
+			statusBar.flash(t('ui.exportFormatUnavailable'));
+			return false;
+		}
+		const url = URL.createObjectURL(blob);
+		try {
+			const link = document.createElement('a');
+			link.href = url;
+			link.download = `untitled.${selectedFormat.extension}`;
+			link.click();
+			persistSession();
+			const message = t('ui.exportedImage', { format: selectedFormat.extension.toUpperCase() });
+			statusBar.flash(message);
+			showToast(message, true);
+			return true;
+		} finally {
+			window.setTimeout(() => URL.revokeObjectURL(url), 0);
+		}
+	} catch (error) {
+		console.warn('Image export failed:', error);
+		statusBar.flash(t('ui.exportFailed'));
+		return false;
+	}
+}
+
 const showToast = (msg, success = true) => {
 	const toast = document.createElement('div');
 	toast.className = 'toast ' + (success ? 'toast-success' : 'toast-error');
@@ -1273,8 +1329,9 @@ const renderSelectionRotation = (rotationState) => {
 }
 const destroySelectionHandleBindings = bindSelectionHandles();
 
-document.querySelector('.shape-gallery')?.addEventListener('click', (event) => event.stopPropagation());
-document.querySelector('.text-tool-menu-items')?.addEventListener('click', (event) => event.stopPropagation());
+// Panels that keep their own controls open (Shapes gallery, Text options) are
+// declared in markup with .menu-stay-open. ActionMenuController owns that rule;
+// stopping propagation here would starve the ribbon's delegated handlers.
 
 // Native dialogs do not close on backdrop clicks by default. Keep the modal
 // interactions lightweight and predictable, like the ribbon menus.
@@ -1491,6 +1548,8 @@ const settingsDialogController = createSettingsDialog({
 	onChange: (tab) => {
 		try { localStorage.setItem(STORAGE_KEYS.settingsTab, tab); } catch {}
 		if (tab === 'about') updateAboutStats();
+		if (tab === 'browser') browserInfoPanel.activate();
+		else browserInfoPanel.deactivate();
 		if (settingsDialog.open) setDialogUrl('settings', { tab });
 	},
 });
@@ -1516,6 +1575,16 @@ const localeController = createLocaleController({
 });
 localeController.bind();
 
+const browserInfoPanel = createBrowserInfoPanel({
+	list: document.getElementById('browser-info-list'),
+	locationButton: document.getElementById('browser-location-button'),
+	locationStatus: document.getElementById('browser-location-status'),
+	translate: (key, variables) => localeController.i18n.t(key, variables),
+});
+document.documentElement?.addEventListener('paint:locale-change', browserInfoPanel.refresh);
+const checkboxRowController = createCheckboxRowController({ root: document });
+checkboxRowController.bind();
+
 const getLastSettingsTab = () => {
 	try {
 		return localStorage.getItem(STORAGE_KEYS.settingsTab) || 'general';
@@ -1526,14 +1595,17 @@ const getLastSettingsTab = () => {
 
 const pwaInstallManager = createPwaInstallManager({
 	installButton: document.getElementById('pwa-install-button'),
-	statusEl: document.getElementById('pwa-install-status'),
+	statusEl: document.getElementById('pwa-install-action-status'),
+	updateStatusEl: document.getElementById('pwa-install-status'),
 	updateButton: document.getElementById('pwa-update-button'),
+	applyUpdateButton: document.getElementById('pwa-apply-update-button'),
 	offlineButton: document.getElementById('pwa-offline-button'),
 	offlineStatusEl: document.getElementById('pwa-offline-status'),
 	translate: (key, fallback) => localeController.i18n.t(key) || fallback,
 	canReload: () => !document.querySelector('.text-editor-shell') && !canvasManager.floatingCanvas,
 	requireReloadGuard: true,
 });
+document.getElementById('pwa-current-version').textContent = APP_VERSION;
 pwaInstallManager.start();
 
 // app.js owns the working-canvas autosave lifecycle because it also owns
@@ -2211,6 +2283,7 @@ document.getElementById('settings-reset').addEventListener('click', async () => 
 });
 
 settingsDialog.addEventListener('close', () => {
+	browserInfoPanel.deactivate();
 	if (new URLSearchParams(window.location.search).get('dialog') === 'settings') setDialogUrl(null);
 });
 document.getElementById('settings-close').addEventListener('click', () => settingsDialog.close());
@@ -2234,8 +2307,11 @@ document.getElementById('settings-clear-data').addEventListener('click', async (
 	window.location.reload();
 });
 
-window.addEventListener('paint:ribbon-change', saveSettings);
-window.addEventListener('paint:ribbon-change', syncRibbonSettingsControls);
+const onRibbonChange = () => {
+	saveSettings();
+	syncRibbonSettingsControls();
+};
+window.addEventListener('paint:ribbon-change', onRibbonChange);
 
 // ---------- History controls wiring (sidebar + settings tab) ----------
 const autoSaveToggle = document.getElementById('history-auto-save-toggle');
@@ -2432,6 +2508,7 @@ const toolbar = new Toolbar({
 		openFile,
 		importFile,
 		save,
+		saveAs: saveImageAs,
 		paste: () => clipboardManager.paste(),
 		cut: () => clipboardManager.cut(),
 		copy: () => clipboardManager.copy(),
@@ -2727,12 +2804,17 @@ const destroyEditor = () => {
 	viewportManager.destroy();
 	directionEventTarget.removeEventListener('paint:locale-change', refreshCanvasDirectionGeometry);
 	document.documentElement?.removeEventListener('paint:locale-change', renderSegmentedChoices);
+	document.documentElement?.removeEventListener('paint:locale-change', browserInfoPanel.refresh);
 	document.documentElement?.removeEventListener('paint:locale-change', refreshAboutOnLocaleChange);
 	document.documentElement?.removeEventListener('paint:locale-change', refreshReleaseNotesOnLocaleChange);
+	window.removeEventListener('paint:ribbon-change', onRibbonChange);
 	ribbonLayoutManager.destroy();
 	actionMenuController.destroy();
 	backgroundRemovalController.destroy();
 	pwaInstallManager.destroy();
+	toolbar.destroy();
+	browserInfoPanel.destroy();
+	checkboxRowController.destroy();
 	textSelectionOverlay.destroy();
 	textLayerService.destroy();
 	historyManager.dispose();

@@ -14,6 +14,7 @@ export class Toolbar {
     this.root = root;
     this.toolManager = toolManager;
     this.handlers = handlers; // {newFile, openFile, importFile, save, saveAs, copy, cut, paste, crop, openResizeDialog, undo, redo}
+    this._eventController = new AbortController();
 
     this.toolButtons = [...root.querySelectorAll('.tool-btn')];
     this.shapeButtons = [...root.querySelectorAll('.shape-btn')];
@@ -35,14 +36,15 @@ export class Toolbar {
     this._bindFileButtons();
     this._bindUndoRedo();
 
-    toolManager.onToolChange = (name) => this._highlightTool(name);
+    this._onToolChange = (name) => this._highlightTool(name);
+    toolManager.onToolChange = this._onToolChange;
 
     this._activeTool = 'select';
     this._previousTool = 'select';
     this._styles = this._loadStyles();
     this._styleHistory = this._loadStyleHistory();
     this._renderStyleHistory();
-    window.addEventListener('paint:primary-color-change', (event) => {
+    this._listen(window, 'paint:primary-color-change', (event) => {
       const key = this._activeTool === 'eyedropper' ? this._styleKeyFor(this._previousTool) : this._styleKey();
       const detail = typeof event.detail === 'string' ? { hex: event.detail } : (event.detail || {});
       this._styles[key].color = detail.hex || this._styles[key].color;
@@ -50,13 +52,20 @@ export class Toolbar {
       this._saveStyles();
       this._recordStyle(key);
     });
-    window.addEventListener('paint:show-current-tool-change', (event) => {
+    this._listen(window, 'paint:show-current-tool-change', (event) => {
       this._showCurrentTool = event.detail !== false;
       try { localStorage.setItem('paint:show-current-tool', String(this._showCurrentTool)); } catch {}
       this._highlightTool(this._activeTool);
     });
 
     this._restoreShape();
+  }
+
+  _listen(target, type, listener, options = {}) {
+    target?.addEventListener?.(type, listener, {
+      ...(typeof options === 'object' ? options : {}),
+      signal: this._eventController.signal,
+    });
   }
 
   _bindTools() {
@@ -79,14 +88,14 @@ export class Toolbar {
       menuButton.removeAttribute('data-i18n-runtime');
       menuButton.removeAttribute('data-i18n-runtime-source');
     });
-    this.toolButtons.forEach((btn) => {
-      btn.addEventListener('click', () => {
+    this._listen(this.root, 'click', (event) => {
+      const btn = event.target.closest?.('.tool-btn');
+      if (!btn || !this.root.contains(btn)) return;
         if (btn.dataset.tool === 'eyedropper' && this._activeTool === 'eyedropper') {
           this.toolManager.setActive(this._previousTool || 'select');
           return;
         }
         this.toolManager.setActive(btn.dataset.tool);
-      });
     });
   }
 
@@ -142,10 +151,13 @@ export class Toolbar {
   }
 
   _bindShapes() {
-    this.shapeButtons.forEach((btn) => {
-      btn.addEventListener('click', () => this.selectShape(btn.dataset.shape, btn));
+    this._listen(this.root, 'click', (event) => {
+      const btn = event.target.closest?.('.shape-btn');
+      if (btn && this.root.contains(btn)) this.selectShape(btn.dataset.shape, btn);
     });
-    document.getElementById('btn-shapes-current')?.addEventListener('click', () => this.selectShape(this._shapeKind, document.getElementById('btn-shapes-current')));
+    this._listen(document.getElementById('btn-shapes-current'), 'click', () => {
+      this.selectShape(this._shapeKind, document.getElementById('btn-shapes-current'));
+    });
   }
 
   /**
@@ -193,11 +205,11 @@ export class Toolbar {
   }
 
   _bindFillModes() {
-    this.fillModeButtons.forEach((btn) => {
-      btn.addEventListener('click', () => {
-        this._fillMode = btn.dataset.fillmode;
-        this.fillModeButtons.forEach((b) => b.classList.toggle('active', b === btn));
-      });
+    this._listen(this.root, 'click', (event) => {
+      const btn = event.target.closest?.('.fillmode-btn');
+      if (!btn || !this.root.contains(btn)) return;
+      this._fillMode = btn.dataset.fillmode;
+      this.fillModeButtons.forEach((item) => item.classList.toggle('active', item === btn));
     });
   }
 
@@ -217,7 +229,7 @@ export class Toolbar {
     const historyToolbarToggle = this.root.querySelector('#text-history-toolbar-toggle');
     if (!historyToolbarToggle) return;
     historyToolbarToggle.checked = saved;
-    historyToolbarToggle.addEventListener('change', () => {
+    this._listen(historyToolbarToggle, 'change', () => {
       this._showTextHistoryToolbar = historyToolbarToggle.checked === true;
       try { localStorage.setItem(TEXT_HISTORY_TOOLBAR_KEY, String(this._showTextHistoryToolbar)); } catch {}
       window.dispatchEvent(new CustomEvent('paint:text-history-toolbar-change', {
@@ -233,7 +245,7 @@ export class Toolbar {
     const box = this.root.querySelector('#shape-select-after-draw');
     if (box) {
       box.checked = saved;
-      box.addEventListener('change', () => {
+      this._listen(box, 'change', () => {
         this._selectAfterDraw = box.checked === true;
         try { localStorage.setItem(SHAPE_AFTER_DRAW_KEY, String(this._selectAfterDraw)); } catch {}
       });
@@ -247,7 +259,7 @@ export class Toolbar {
       textBox.disabled = false;
       textBox.checked = textSaved;
       textBox.closest('.menu-checkbox')?.classList.remove('menu-checkbox-disabled');
-      textBox.addEventListener('change', () => {
+      this._listen(textBox, 'change', () => {
         this._textSelectAfterDraw = textBox.checked === true;
         try { localStorage.setItem(TEXT_AFTER_DRAW_KEY, String(this._textSelectAfterDraw)); } catch {}
       });
@@ -257,7 +269,7 @@ export class Toolbar {
   _bindEmojiPicker() {
     const grid = this.root.querySelector('#shape-emoji-grid');
     if (!grid) return;
-    renderEmojiGrid({
+    this._disposeEmojiGrid = renderEmojiGrid({
       container: grid,
       onPick: (emoji) => {
         setSelectedEmoji(emoji);
@@ -305,8 +317,11 @@ export class Toolbar {
       }
     };
 
-    sizeOptions.forEach((option) => option.addEventListener('click', () => applySize(option.dataset.sizeOption)));
-    customInput.addEventListener('input', () => applySize(customInput.value));
+    this._listen(this.root, 'click', (event) => {
+      const option = event.target.closest?.('[data-size-option]');
+      if (option && this.root.contains(option)) applySize(option.dataset.sizeOption);
+    });
+    this._listen(customInput, 'input', () => applySize(customInput.value));
     this._setLineWidth = setLineWidth;
     this._setFontSize = setFontSize;
     this._sizeSlider = this._mountSizeSlider(applySize);
@@ -328,7 +343,7 @@ export class Toolbar {
       if (Number.isFinite(cur) && cur >= 1 && cur <= 120
         && slider.getValue() !== cur) slider.setValue(cur);
     };
-    host.closest('.size-menu-items')?.addEventListener('pointerenter', sync);
+    this._listen(host.closest('.size-menu-items'), 'pointerenter', sync);
     return slider;
   }
 
@@ -367,21 +382,12 @@ export class Toolbar {
   _renderStyleHistory() {
     const list = this.root?.querySelector('#style-history-list');
     if (!list) return;
-    list.innerHTML = '';
-    this._styleHistory.forEach((entry) => {
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.className = 'recent-style';
-      button.title = `${entry.label}, ${entry.size}px`;
-      const swatch = document.createElement('span');
-      swatch.className = 'recent-style-swatch';
-      swatch.style.background = entry.color || 'var(--w10-accent)';
-      const label = document.createElement('span');
-      label.textContent = entry.label;
-      const size = document.createElement('small');
-      size.textContent = `${entry.size}px`;
-      button.append(swatch, label, size);
-      button.addEventListener('click', () => {
+    if (!this._styleHistoryClickBound) {
+      this._listen(list, 'click', (event) => {
+        const button = event.target.closest?.('.recent-style[data-style-index]');
+        if (!button || !list.contains(button)) return;
+        const entry = this._styleHistory[Number(button.dataset.styleIndex)];
+        if (!entry) return;
         if (entry.key.startsWith('shape:')) this.selectShape(entry.key.slice(6));
         else this.toolManager.setActive(entry.key);
         const style = this._styles[this._styleKey()];
@@ -391,6 +397,23 @@ export class Toolbar {
         this._saveStyles();
         this._applyRememberedStyle({ restoreColor: true });
       });
+      this._styleHistoryClickBound = true;
+    }
+    list.innerHTML = '';
+    this._styleHistory.forEach((entry, index) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'recent-style';
+      button.dataset.styleIndex = String(index);
+      button.title = `${entry.label}, ${entry.size}px`;
+      const swatch = document.createElement('span');
+      swatch.className = 'recent-style-swatch';
+      swatch.style.background = entry.color || 'var(--w10-accent)';
+      const label = document.createElement('span');
+      label.textContent = entry.label;
+      const size = document.createElement('small');
+      size.textContent = `${entry.size}px`;
+      button.append(swatch, label, size);
       list.appendChild(button);
     });
   }
@@ -418,20 +441,37 @@ export class Toolbar {
   getPreviousTool() { return this._previousTool || 'select'; }
 
   _bindFileButtons() {
-    document.getElementById('btn-new').addEventListener('click', () => this.handlers.newFile());
-    document.getElementById('btn-open').addEventListener('click', () => this.handlers.openFile());
-    document.getElementById('btn-import').addEventListener('click', () => this.handlers.importFile());
-    document.getElementById('btn-save').addEventListener('click', () => this.handlers.save());
-    document.getElementById('btn-paste').addEventListener('click', () => this.handlers.paste());
-    document.getElementById('btn-cut').addEventListener('click', () => this.handlers.cut());
-    document.getElementById('btn-copy').addEventListener('click', () => this.handlers.copy());
-    document.getElementById('btn-crop').addEventListener('click', () => this.handlers.crop());
-    document.getElementById('btn-canvas-size').addEventListener('click', () => this.handlers.openResizeDialog());
+    this._listen(document.getElementById('btn-new'), 'click', () => this.handlers.newFile());
+    this._listen(document.getElementById('btn-open'), 'click', () => this.handlers.openFile());
+    this._listen(document.getElementById('btn-import'), 'click', () => this.handlers.importFile());
+    this._onExportFormatClick = (event) => {
+      const option = event.target.closest?.('[data-export-format]');
+      if (!option || !this.root.contains(option)) return;
+      event.preventDefault();
+      this.handlers.saveAs?.(option.dataset.exportFormat);
+    };
+    this._listen(this.root, 'click', this._onExportFormatClick);
+    this._listen(document.getElementById('btn-paste'), 'click', () => this.handlers.paste());
+    this._listen(document.getElementById('btn-cut'), 'click', () => this.handlers.cut());
+    this._listen(document.getElementById('btn-copy'), 'click', () => this.handlers.copy());
+    this._listen(document.getElementById('btn-crop'), 'click', () => this.handlers.crop());
+    this._listen(document.getElementById('btn-canvas-size'), 'click', () => this.handlers.openResizeDialog());
   }
 
   _bindUndoRedo() {
-    document.getElementById('btn-undo').addEventListener('click', () => this.handlers.undo());
-    document.getElementById('btn-redo').addEventListener('click', () => this.handlers.redo());
+    this._listen(document.getElementById('btn-undo'), 'click', () => this.handlers.undo());
+    this._listen(document.getElementById('btn-redo'), 'click', () => this.handlers.redo());
+  }
+
+  destroy() {
+    if (this._eventController.signal.aborted) return;
+    this._eventController.abort();
+    this._disposeEmojiGrid?.();
+    this._disposeEmojiGrid = null;
+    if (this.toolManager.onToolChange === this._onToolChange) this.toolManager.onToolChange = null;
+    this._sizeSlider?.destroy?.();
+    this._sizeSlider?.element.remove();
+    this._onExportFormatClick = null;
   }
 
   setUndoRedoEnabled(canUndo, canRedo) {

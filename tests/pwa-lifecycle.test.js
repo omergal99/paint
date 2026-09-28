@@ -60,6 +60,46 @@ test('a waiting service-worker update is immediately described as ready', (t) =>
   assert.match(statusEl.textContent, /Update now/);
 });
 
+test('update status is shown beside the update control, not as install status', (t) => {
+  const restoreNavigator = replaceGlobal('navigator', { serviceWorker: { controller: {} } });
+  t.after(restoreNavigator);
+
+  const installStatusEl = { textContent: '', dataset: {}, hidden: true };
+  const updateStatusEl = { textContent: '', dataset: {}, hidden: true };
+  const registration = {
+    waiting: { postMessage() {} },
+    addEventListener() {},
+    update: async () => {},
+  };
+  const manager = createPwaInstallManager({ statusEl: installStatusEl, updateStatusEl });
+  manager.attachRegistration(registration);
+
+  assert.match(updateStatusEl.textContent, /new version is ready/i);
+  assert.equal(installStatusEl.textContent, '', 'checking for an update does not overwrite install guidance');
+});
+
+test('install remains actionable when the browser requires its own install menu', async (t) => {
+  const windowTarget = { ...eventTarget(), matchMedia: () => ({ matches: false }) };
+  const documentTarget = { ...eventTarget(), hidden: false };
+  const restoreWindow = replaceGlobal('window', windowTarget);
+  const restoreDocument = replaceGlobal('document', documentTarget);
+  const restoreNavigator = replaceGlobal('navigator', {});
+  t.after(() => {
+    restoreNavigator();
+    restoreDocument();
+    restoreWindow();
+  });
+
+  const installButton = eventTarget();
+  const statusEl = { textContent: '', dataset: {}, hidden: true };
+  const manager = createPwaInstallManager({ installButton, statusEl });
+  manager.start();
+  assert.equal(installButton.disabled, false);
+  await manager.install();
+  assert.match(statusEl.textContent, /does not offer a direct install prompt/i);
+  manager.destroy();
+});
+
 test('applying a waiting update keeps the applying status visible', async (t) => {
   const restoreNavigator = replaceGlobal('navigator', { serviceWorker: { controller: {} } });
   t.after(restoreNavigator);

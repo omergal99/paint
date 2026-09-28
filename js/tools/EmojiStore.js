@@ -3,11 +3,14 @@
 // (color emoji font), so no assets are needed. Persisted last-pick included.
 
 export const EMOJI_CATALOG = Object.freeze([
-  '😀', '😎', '😍', '🤣', '😮', '😢', '😡', '👍', '👏', '🙏',
-  '❤️', '🔥', '⭐', '🎉', '💡', '✅', '❌', '⚠️', '🚀', '🎨',
+  '😀','😎', '😍','😅','😂','😮','🙏','❤️','🔥','👍','💪','✅', '❌', '⚠️','😃', '😄', '😁', '😆', '😇','😢', '😭', '😡', '🤯', '🥳','🤣', '😊', '🙂', '😉',  '🥰', '😘',  '🤔', '🤗', '😴',
+   '👎', '👏', '🙌',  '🤝',  '✌️', '🤞', '👋', '🤟',  '🧡', '💛', '💚', '💙', '💜', '🖤', '🤍', '💔',
+  '🌈', '☀️', '🌙', '⭐', '🌟', '⚡',  '❄️', '🌊', '🌸', '🌻', '🍀', '🌴', '🐶', '🐱', '🐰', '🦊', '🐻', '🐼', '🐸', '🐵', '🦄', '🐝', '🦋', '🐢',
+  '🍎', '🍓', '🍕', '🍰', '☕', '🎨', '🖌️', '✏️', '📌', '💡',  '🚀', '🎉', '🎁', '💎', '🏆', '⚽', '🎵', '🎮', '📷', '💻',
 ]);
 
 const EMOJI_KEY = 'paint:selected-emoji';
+const emojiGridBindings = new WeakMap();
 
 export const getSelectedEmoji = () => {
   try {
@@ -23,6 +26,28 @@ export const setSelectedEmoji = (emoji) => {
 
 export const renderEmojiGrid = ({ container, onPick } = {}) => {
   if (!container) return;
+  let binding = emojiGridBindings.get(container);
+  if (!binding) {
+    binding = {
+      onPick,
+      handleClick: (event) => {
+        const button = event.target.closest?.('.shape-emoji-btn');
+        if (!button || !container.contains(button)) return;
+        event.stopPropagation();
+        const emoji = button.textContent;
+        setSelectedEmoji(emoji);
+        container.querySelectorAll('.shape-emoji-btn').forEach((item) => {
+          const selected = item === button;
+          item.classList.toggle('active', selected);
+          item.setAttribute('aria-selected', selected ? 'true' : 'false');
+        });
+        binding.onPick?.(emoji);
+      },
+    };
+    container.addEventListener('click', binding.handleClick);
+    emojiGridBindings.set(container, binding);
+  }
+  binding.onPick = onPick;
   container.innerHTML = '';
   const current = getSelectedEmoji();
   EMOJI_CATALOG.forEach((emoji) => {
@@ -34,16 +59,11 @@ export const renderEmojiGrid = ({ container, onPick } = {}) => {
     btn.setAttribute('aria-selected', emoji === current ? 'true' : 'false');
     btn.title = `Use ${emoji}`;
     if (emoji === current) btn.classList.add('active');
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      setSelectedEmoji(emoji);
-      container.querySelectorAll('.shape-emoji-btn').forEach((b) => {
-        const on = b.textContent === emoji;
-        b.classList.toggle('active', on);
-        b.setAttribute('aria-selected', on ? 'true' : 'false');
-      });
-      onPick?.(emoji);
-    });
     container.appendChild(btn);
   });
+  return () => {
+    if (emojiGridBindings.get(container) !== binding) return;
+    container.removeEventListener('click', binding.handleClick);
+    emojiGridBindings.delete(container);
+  };
 }

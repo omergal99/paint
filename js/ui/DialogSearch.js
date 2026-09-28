@@ -3,7 +3,7 @@
 // depending on Paint's Settings-specific markup.
 
 const SEARCHABLE_SELECTOR = [
-	'h2', 'h3', 'h4', 'p', 'li', 'label', 'legend', 'button', 'summary', 'strong',
+	'h2', 'h3', 'h4', 'p', 'li', 'label', 'legend', 'button', 'summary', 'strong', 'dt',
 	'.settings-field', '.checkbox-row', '.dialog-actions', '.pwa-install-card',
 	'.pwa-update-card', '.pwa-offline-card', '.feedback-actions', '.about-stats > div',
 	'.shortcut-setting-row', '.ribbon-setting-row',

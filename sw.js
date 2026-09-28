@@ -60,6 +60,8 @@ const SHELL = [
   './js/tools/SelectTool.js',
   './js/ui/ColorPalette.js',
   './js/ui/ActionMenuController.js',
+  './js/ui/BrowserInfoPanel.js',
+  './js/ui/CheckboxRowController.js',
   './js/ui/DialogSearch.js',
   './js/ui/HistoryPanel.js',
   './js/ui/SettingsDialog.js',

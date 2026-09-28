@@ -636,10 +636,6 @@ body {
 	max-width: min(360px, calc(100vw - 20px));
 	padding: 6px;
 }
-.text-tool-menu-items .menu-checkbox {
-	min-height: 28px;
-	padding: 5px 6px;
-}
 .menu-checkbox-disabled {
 	color: var(--w10-text-dim);
 	opacity: 0.82;
@@ -1106,21 +1102,39 @@ body {
 	align-items: center;
 	justify-content: center;
 	border: 1px solid var(--w10-border-strong);
-	background: var(--w10-hover2);
+	border-radius: 4px;
+	background: var(--w10-ribbon-bg);
 	color: var(--w10-accent);
-	width: 20px;
-	height: 20px;
+	width: 22px;
+	min-width: 22px;
+	height: 22px;
 	cursor: pointer;
 	font-weight: 700;
 }
-.ci-toggle svg {
-	width: 14px;
-	height: 14px;
-	fill: none;
-	stroke: currentColor;
-	stroke-width: 2;
-	stroke-linecap: round;
-	stroke-linejoin: round;
+.ci-toggle:hover,
+.ci-toggle:focus-visible {
+	border-color: var(--w10-accent);
+	background: var(--w10-hover);
+	outline: 2px solid color-mix(in srgb, var(--w10-accent) 35%, transparent);
+	outline-offset: 1px;
+}
+/* The toggle folds the inspector along the inline axis, so it reuses the
+   shared ▾ menu glyph rotated to point at the end it collapses toward. */
+.ci-toggle .menu-arrow {
+	display: block;
+	font-size: 13px;
+	line-height: 1;
+	transform: rotate(-90deg);
+	transition: transform 0.15s;
+}
+.ci-toggle[aria-expanded="false"] .menu-arrow {
+	transform: rotate(90deg);
+}
+html[dir="rtl"] .ci-toggle .menu-arrow {
+	transform: rotate(90deg);
+}
+html[dir="rtl"] .ci-toggle[aria-expanded="false"] .menu-arrow {
+	transform: rotate(-90deg);
 }
 .ci-label {
 	color: var(--w10-text-dim);
@@ -1520,15 +1534,24 @@ body {
 	margin: 0;
 }
 
-/* Keep the row's whitespace inert: only the input and its explicit label are
-   interactive, so the pointer communicates the real hit target. */
+/* The row's padding and checkbox-label gap share the same delegated hit target. */
 .checkbox-row {
 	display: flex;
 	align-items: center;
 	justify-content: flex-start;
 	gap: 2px;
+	min-height: 20px;
+	box-sizing: border-box;
+	padding: 2px 5px;
 	width: fit-content;
-	cursor: default;
+	max-width: 100%;
+	border-radius: 4px;
+	cursor: pointer;
+	user-select: none;
+}
+.checkbox-row:hover,
+.menu-checkbox:hover {
+	background: var(--w10-hover);
 }
 .checkbox-row input:not(:disabled),
 .checkbox-row > label {
@@ -1721,9 +1744,11 @@ body.dark-mode #history-clear-btn {
 .shape-after-draw-row {
 	display: flex;
 	align-items: center;
-	gap: 6px;
+	gap: 10px;
 	font-size: 12px;
-	padding: 6px 8px 0;
+	min-height: 34px;
+	margin-block: 2px;
+	padding: 5px 8px;
 	cursor: pointer;
 }
 /* Emoji picker inside the Shapes gallery footer */
@@ -1736,13 +1761,17 @@ body.dark-mode #history-clear-btn {
 }
 .shape-emoji-grid {
 	display: grid;
-	grid-template-columns: repeat(10, 1fr);
+	grid-template-columns: repeat(8, minmax(24px, 1fr));
 	gap: 2px;
+	max-height: 190px;
+	overflow-y: auto;
 }
 .shape-emoji-btn {
 	font-size: 18px;
 	line-height: 1.4;
-	padding: 1px;
+	min-width: 24px;
+	min-height: 24px;
+	padding: 2px;
 	background: transparent;
 	border: 1px solid transparent;
 	border-radius: 4px;
@@ -2767,6 +2796,19 @@ dialog h3 {
 	margin-top: 6px;
 	background: var(--w10-ribbon-bg);
 }
+.pwa-action-row {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+.pwa-action-row .pwa-status {
+	margin: 0;
+}
+.pwa-current-version {
+	font-size: 12px;
+	font-variant-numeric: tabular-nums;
+}
 .pwa-install-card p,
 .pwa-update-card p,
 .pwa-offline-card p {
@@ -2837,6 +2879,39 @@ dialog h3 {
 .about-stats dd {
 	margin: 0;
 	font-variant-numeric: tabular-nums;
+}
+.browser-info-list {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(min(100%, 270px), 1fr));
+	gap: 4px 18px;
+	margin: 12px 0;
+}
+.browser-info-list > div {
+	display: grid;
+	grid-template-columns: minmax(90px, 0.7fr) minmax(0, 1.3fr);
+	align-items: start;
+	gap: 8px;
+	padding: 6px 0;
+	border-bottom: 1px solid var(--w10-border);
+}
+.browser-info-list dt {
+	color: var(--w10-text-dim);
+}
+.browser-info-list dd {
+	min-width: 0;
+	margin: 0;
+	font-variant-numeric: tabular-nums;
+	text-align: end;
+	word-break: break-word;
+}
+.browser-info-location {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+.browser-info-location .settings-help {
+	margin: 0;
 }
 .ribbon-settings-list {
 	display: grid;
@@ -3288,7 +3363,7 @@ html[dir="rtl"] .submenu-arrow {
 }
 .shape-gallery {
 	min-width: 258px;
-	max-height: 440px;
+	max-height: 540px;
 	overflow-y: auto;
 	padding: 8px;
 	gap: 4px;
@@ -3346,12 +3421,16 @@ html[dir="rtl"] .submenu-arrow {
 .menu-checkbox {
 	display: flex;
 	align-items: center;
-	gap: 7px;
-	padding: 7px 10px;
+	gap: 2px;
+	min-height: 20px;
+	margin-block: 2px;
+	padding: 2px 5px;
 	font-size: 12px;
 	white-space: nowrap;
 	width: fit-content;
-	cursor: default;
+	border-radius: 4px;
+	cursor: pointer;
+	user-select: none;
 }
 .menu-checkbox input,
 .menu-checkbox > label {
@@ -3360,6 +3439,9 @@ html[dir="rtl"] .submenu-arrow {
 }
 .menu-checkbox > label {
 	display: inline;
+}
+.rbtn.small.history-panel-button {
+	justify-content: center;
 }
 .text-style-picker {
 	padding: 7px 10px;

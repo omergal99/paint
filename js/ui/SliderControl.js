@@ -56,12 +56,14 @@ export const createSliderControl = ({
       render();
       if (emit) api.onInput?.(n);
     },
+    destroy: () => input.removeEventListener('input', onInput),
   };
 
-  input.addEventListener('input', () => {
+  const onInput = () => {
     render();
     api.onInput?.(Number(input.value));
-  });
+  };
+  input.addEventListener('input', onInput);
 
   if (label) top.append(labelEl, valueEl);
   else top.append(valueEl);

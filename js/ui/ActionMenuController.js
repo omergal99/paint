@@ -185,7 +185,18 @@ export const createActionMenuController = ({ root = document } = {}) => {
     }
   };
 
-  const handleRootClick = () => closeAll();
+  // Stay-open panels (Shapes gallery, Text options) host controls that must
+  // keep working while the menu is visible, and a menu checkbox row toggles
+  // without selecting an action. Both are treated as "not an outside click".
+  const stayOpenTarget = (event) => event.target?.closest?.([
+    '.action-menu-items.menu-stay-open',
+    '.action-menu-items .menu-checkbox',
+  ].join(', '));
+
+  const handleRootClick = (event) => {
+    if (stayOpenTarget(event)) return;
+    closeAll();
+  };
   const handleOpenAt = (event) => {
     const { menu, x, y } = event.detail || {};
     openMenuAt(menu, { x, y });

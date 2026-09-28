@@ -126,12 +126,21 @@
 								<span>More <span class="menu-arrow" aria-hidden="true">▾</span></span>
 							</button>
 							<div class="action-menu-items" role="menu" aria-label="More file actions">
-								<button type="button" id="btn-save" data-tag="btn-save" role="menuitem" title="Save (Ctrl+S)">
-									<svg class="icon" viewBox="0 0 20 20" aria-hidden="true">
-										<path d="M3 3h11l3 3v11H3zM6 3v5h7V3M6 13h8v4H6z" fill="none" stroke="currentColor"
-											stroke-linejoin="round" />
-									</svg><span data-i18n="common.actions.save">Save</span>
-								</button>
+								<div class="action-menu action-submenu save-menu">
+									<button type="button" class="action-menu-trigger action-submenu-trigger" id="btn-save"
+										data-tag="btn-save" role="menuitem" data-i18n-attr="title:ui.saveAs" title="Save as" aria-haspopup="menu" aria-expanded="false">
+										<span class="submenu-label"><svg class="icon" viewBox="0 0 20 20" aria-hidden="true">
+											<path d="M3 3h11l3 3v11H3zM6 3v5h7V3M6 13h8v4H6z" fill="none" stroke="currentColor"
+												stroke-linejoin="round" />
+										</svg><span data-i18n="ui.saveAs">Save as</span></span>
+										<span class="submenu-arrow" aria-hidden="true">›</span>
+									</button>
+									<div class="action-menu-items action-submenu-items" role="menu" data-i18n-attr="aria-label:ui.saveImageAs" aria-label="Save image as">
+										<button type="button" role="menuitem" data-export-format="png" data-i18n="ui.formatPng">PNG image</button>
+										<button type="button" role="menuitem" data-export-format="jpeg" data-i18n="ui.formatJpeg">JPEG image</button>
+										<button type="button" role="menuitem" data-export-format="webp" data-i18n="ui.formatWebp">WebP image</button>
+									</div>
+								</div>
 								<button type="button" id="btn-manage-workspace" data-tag="btn-manage-workspace" role="menuitem"
 									title="Manage multiple Paint documents">
 									<svg class="icon" viewBox="0 0 20 20" aria-hidden="true">
@@ -385,7 +394,7 @@
 										title="Text options" aria-label="Text options"><span class="menu-arrow"
 											aria-hidden="true">▾</span></button>
 								</div>
-								<div class="action-menu-items text-tool-menu-items" role="menu" aria-label="Text options">
+								<div class="action-menu-items text-tool-menu-items menu-stay-open" role="menu" aria-label="Text options">
 									<div class="menu-checkbox" title="Show or hide recent text controls in the editor">
 										<input type="checkbox" id="text-history-toolbar-toggle" /> <label
 											for="text-history-toolbar-toggle">Show Recent text toolbar</label>
@@ -492,7 +501,7 @@
 						<button class="rbtn cell action-menu-trigger shapes-menu-arrow" id="btn-shapes-menu"
 							data-tag="btn-shapes-menu" title="Choose another shape"><span class="menu-arrow"
 								aria-hidden="true">▾</span></button>
-						<div class="action-menu-items shape-gallery" role="menu" aria-label="Shapes gallery">
+						<div class="action-menu-items shape-gallery menu-stay-open" role="menu" aria-label="Shapes gallery">
 							<div class="shape-gallery-grid">
 								<button type="button" class="rbtn cell shape-btn" data-shape="line" data-tag="shape-line" title="Line">
 									<svg class="icon" viewBox="0 0 20 20">
@@ -619,8 +628,7 @@
 									</svg><span>Emoji</span>
 								</button>
 							</div>
-							<div class="shape-emoji-row" aria-label="Emoji picker">
-								<span class="shape-menu-setting-label">Emoji</span>
+							<div class="shape-emoji-row" data-tag="dom-div-45" aria-label="Emoji picker">
 								<div class="shape-emoji-grid" id="shape-emoji-grid" role="listbox" aria-label="Choose emoji"></div>
 							</div>
 							<div class="menu-checkbox shape-after-draw-row"
@@ -828,7 +836,7 @@
 							</svg>
 							<span>Redo</span></button>
 					</div>
-					<button class="rbtn small" id="btn-history-panel" data-tag="btn-history-panel" title="Global History">
+					<button class="rbtn small history-panel-button" id="btn-history-panel" data-tag="btn-history-panel" title="Global History">
 						<svg class="icon size4" viewBox="0 0 20 20">
 							<path d="M10 2a8 8 0 1 0 8 8" fill="none" stroke-linecap="round" />
 							<path d="M10 5v5l3 3" fill="none" stroke-linecap="round" />
@@ -880,10 +888,10 @@
 						<code id="ci-hex" data-tag="ci-hex" style="user-select: text;">#a349a4</code>
 						<button class="ci-copy" data-copy-target="ci-hex" data-tag="ci-copy-hex" title="Copy HEX">⧉</button>
 					</span>
-					<button type="button" class="ci-toggle" id="ci-toggle" aria-label="Collapse color inspector"
-						title="Collapse color inspector" aria-expanded="true"><svg viewBox="0 0 20 20" aria-hidden="true">
-							<path d="M6 4l8 6-8 6" />
-						</svg></button>
+					<button type="button" class="ci-toggle" id="ci-toggle" data-tag="ci-toggle"
+						data-i18n-attr="aria-label:ui.collapseColorInspector,title:ui.collapseColorInspector"
+						aria-label="Collapse color inspector" title="Collapse color inspector" aria-expanded="true"><span
+							class="menu-arrow" aria-hidden="true">▾</span></button>
 				</div>
 
 				<span class="ci-field">
@@ -1126,13 +1134,14 @@
 					data-i18n-attr="aria-label:common.actions.close,title:common.actions.close" aria-label="Close"
 					title="Close">×</button>
 			</header>
-			<nav class="settings-tabs" aria-label="Settings sections">
+			<nav class="settings-tabs" data-tag="dom-nav-1" aria-label="Settings sections">
 				<button type="button" class="settings-tab active" data-settings-tab="general">GENERAL</button>
 				<button type="button" class="settings-tab" data-settings-tab="shortcuts">SHORTCUTS</button>
 				<button type="button" class="settings-tab" data-settings-tab="history">HISTORY</button>
 				<button type="button" class="settings-tab" data-settings-tab="ribbon">RIBBON</button>
 				<button type="button" class="settings-tab" data-settings-tab="release">RELEASE NOTES</button>
 				<button type="button" class="settings-tab" data-settings-tab="about">ABOUT</button>
+				<button type="button" class="settings-tab" data-settings-tab="browser" data-i18n="ui.tabBrowser">BROWSER DATA</button>
 				<button type="button" class="settings-tab" data-settings-tab="app">APP</button>
 				<button type="button" class="settings-tab" data-settings-tab="feedback">FEEDBACK</button>
 			</nav>
@@ -1327,26 +1336,54 @@
 				<p data-i18n="ui.releaseNotesHelp">What is new in each version. Newest first.</p>
 				<div id="release-notes-list" class="release-notes-list"></div>
 			</section>
+			<section class="settings-panel settings-body" data-settings-panel="browser" hidden>
+				<h3 data-i18n="ui.browserData">Browser &amp; device information</h3>
+				<p class="settings-help" data-i18n="ui.browserPrivacy">Shown locally on this device. Paint does not send this information anywhere.</p>
+				<dl id="browser-info-list" class="browser-info-list">
+					<div><dt data-i18n="ui.browserName">Browser</dt><dd data-browser-info="browser"></dd></div>
+					<div><dt data-i18n="ui.browserSystem">System</dt><dd data-browser-info="system"></dd></div>
+					<div><dt data-i18n="ui.browserDevice">Device type</dt><dd data-browser-info="device"></dd></div>
+					<div><dt data-i18n="ui.browserDisplay">Screen / viewport</dt><dd data-browser-info="display"></dd></div>
+					<div><dt data-i18n="ui.browserPixelRatio">Display scale</dt><dd data-browser-info="pixelRatio"></dd></div>
+					<div><dt data-i18n="ui.browserCapacity">CPU / memory estimate</dt><dd data-browser-info="capacity"></dd></div>
+					<div><dt data-i18n="ui.browserLanguageZone">Language / time zone</dt><dd data-browser-info="languageZone"></dd></div>
+					<div><dt data-i18n="ui.browserBattery">Battery</dt><dd data-browser-info="battery"></dd></div>
+					<div><dt data-i18n="ui.browserNetwork">Network status</dt><dd data-browser-info="online"></dd></div>
+					<div><dt data-i18n="ui.browserPointer">Live pointer position</dt><dd data-browser-info="pointer"></dd></div>
+					<div><dt data-i18n="ui.browserUserAgent">User agent</dt><dd data-browser-info="userAgent"></dd></div>
+				</dl>
+				<div class="browser-info-location">
+					<button type="button" id="browser-location-button" class="settings-link-button" data-i18n="ui.browserShowLocation">Show my location</button>
+					<p id="browser-location-status" class="settings-help" role="status" aria-live="polite" data-i18n-ignore="true">Location is only requested when you select this button.</p>
+				</div>
+				<p class="settings-help" data-i18n="ui.browserUnavailable">Web pages cannot read your IP address, ISP, running processes, or installed extensions. Paint does not create a browser fingerprint.</p>
+			</section>
 			<section class="settings-panel settings-body" data-settings-panel="app" hidden>
-				<h3>Install &amp; updates</h3>
-				<p>Install paint as an app for a focused window, quick launch, and offline use. The browser decides when direct
-					installation is available.</p>
+				<h3 data-i18n="ui.installUpdates">Install &amp; updates</h3>
+				<p data-i18n="ui.installHelp">Install Paint as an app for a focused window, quick launch, and offline use. The browser decides when direct installation is available.</p>
 				<div class="pwa-install-card">
-					<button type="button" class="settings-link-button" id="pwa-install-button">Install paint</button>
-					<p id="pwa-install-status" class="pwa-status" role="status" aria-live="polite" hidden></p>
+					<div class="pwa-action-row">
+						<button type="button" class="settings-link-button" id="pwa-install-button" data-tag="pwa-install-button" data-i18n="ui.installPaint">Install paint</button>
+						<p id="pwa-install-action-status" data-tag="pwa-install-action-status" data-i18n-ignore="true" class="pwa-status" role="status" aria-live="polite" hidden></p>
+					</div>
 				</div>
 				<div class="pwa-update-card">
-					<strong>Version updates</strong>
-					<p>When a new version is published, the service worker checks for it and applies it automatically on the next
-						safe reload.</p>
-					<button type="button" class="settings-link-button" id="pwa-update-button">Check for updates</button>
+					<strong data-i18n="ui.versionUpdates">Version updates</strong>
+					<p data-i18n="ui.updateHelp">Paint checks for a newer version and reports the result here. Nothing is applied until you select Update now.</p>
+					<div class="pwa-action-row">
+						<span class="pwa-current-version"><span data-i18n="ui.currentVersion">Current version:</span> <strong id="pwa-current-version" data-tag="pwa-current-version"></strong></span>
+						<button type="button" class="settings-link-button" id="pwa-update-button" data-tag="pwa-update-button" data-i18n="ui.checkUpdates">Check for updates</button>
+						<button type="button" class="settings-link-button" id="pwa-apply-update-button" data-tag="pwa-apply-update-button" data-i18n="ui.updateNow" hidden>Update now</button>
+						<p id="pwa-install-status" data-tag="pwa-install-status" data-i18n-ignore="true" class="pwa-status" role="status" aria-live="polite" hidden></p>
+					</div>
 				</div>
 				<div class="pwa-offline-card">
-					<strong>Offline use</strong>
-					<p>Prepare every current Paint feature for use without an internet connection. Future optional features may
-						add a separate download step.</p>
-					<button type="button" class="settings-link-button" id="pwa-offline-button">Prepare offline use</button>
-					<p id="pwa-offline-status" class="pwa-status" role="status" aria-live="polite" hidden></p>
+					<strong data-i18n="ui.offlineUse">Offline use</strong>
+					<p data-i18n="ui.offlineHelp">Prepare the app files currently available for use without an internet connection.</p>
+					<div class="pwa-action-row">
+						<button type="button" class="settings-link-button" id="pwa-offline-button" data-tag="pwa-offline-button" data-i18n="ui.prepareOffline">Prepare offline use</button>
+						<p id="pwa-offline-status" data-tag="pwa-offline-status" data-i18n-ignore="true" class="pwa-status" role="status" aria-live="polite" hidden></p>
+					</div>
 				</div>
 			</section>
 			<section class="settings-panel settings-body" data-settings-panel="feedback" hidden>
