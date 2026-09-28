@@ -27,6 +27,13 @@ const eventTarget = () => {
   };
 };
 
+// Controllers ask for optional targets with one comma-separated `closest()`
+// call. A browser parses that selector list itself, so these stubs do too
+// instead of comparing the raw string.
+const closestInList = (expected) => (selectorList) => (
+  String(selectorList).split(',').map((selector) => selector.trim()).includes(expected) ? {} : null
+);
+
 test('browser diagnostics use only browser-exposed values and do not infer private data', () => {
   const info = readBrowserInfo({
     navigatorRef: {
@@ -178,8 +185,10 @@ test('clicking a menu checkbox keeps its action menu open', () => {
   const controller = createActionMenuController({ root });
   controller.bind();
 
-  root.dispatch('click', { target: { closest: (selector) => selector === '.action-menu-items .menu-checkbox' ? {} : null } });
-  assert.equal(classes.has('open'), true);
+  root.dispatch('click', { target: { closest: closestInList('.action-menu-items .menu-checkbox') } });
+  assert.equal(classes.has('open'), true, 'a menu checkbox row keeps its menu open');
+  root.dispatch('click', { target: { closest: closestInList('.action-menu-items.menu-stay-open') } });
+  assert.equal(classes.has('open'), true, 'a stay-open panel keeps its menu open');
   root.dispatch('click', { target: { closest: () => null } });
   assert.equal(classes.has('open'), false, 'an outside click still closes the menu');
   controller.destroy();

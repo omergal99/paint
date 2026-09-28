@@ -125,7 +125,7 @@ behavior and its relevant browser or contract evidence are both complete.
 | Code design | 9/10 | Legacy class owners and the large composition root remain |
 | UI design | 9/10 | RTL/PWA polish and full visual regression remain |
 | Logic/data safety | 9.4/10 | Local storage-recovery fixtures now pass; editable text and real-device quota/memory pressure remain gated. |
-| Verification | 9.6/10 | Release verifier, production-build audit, runtime teardown/recovery journeys, current 13/13 tests, TypeScript 7 `checkJs`, and local desktop P100/A96/BP100/SEO100 pass. Mobile P76 and public device/deployment proof remain. |
+| Verification | 9.6/10 | Release verifier, production-build audit, runtime teardown/recovery journeys, current 14/14 tests, TypeScript 7 `checkJs`, and local desktop P100/A96/BP100/SEO100 pass. Mobile P76 and public device/deployment proof remain. |
 | Overall | **9/10** | Strong `1.6.1` local release candidate; final public PWA and device audit remains. |
 
 ## Updating this file

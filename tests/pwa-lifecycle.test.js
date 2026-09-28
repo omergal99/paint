@@ -44,17 +44,20 @@ test('a waiting service-worker update is immediately described as ready', (t) =>
 
   const statusEl = { textContent: '', dataset: {} };
   const updateButton = { disabled: false, textContent: '' };
+  const applyUpdateButton = { disabled: false, textContent: '', hidden: true };
   const registration = {
     waiting: { postMessage() {} },
     addEventListener() {},
     update: async () => {},
   };
 
-  const manager = createPwaInstallManager({ statusEl, updateButton });
+  const manager = createPwaInstallManager({ statusEl, updateButton, applyUpdateButton });
   manager.attachRegistration(registration);
 
   assert.equal(updateButton.disabled, false);
-  assert.equal(updateButton.textContent, 'Update now');
+  assert.equal(updateButton.textContent, 'Check for updates', 'the check control keeps its reporting label');
+  assert.equal(applyUpdateButton.hidden, false, 'a waiting worker reveals the apply control');
+  assert.equal(applyUpdateButton.textContent, 'Update now');
   assert.equal(statusEl.dataset.state, 'update-ready');
   assert.match(statusEl.textContent, /Finish the current edit/);
   assert.match(statusEl.textContent, /Update now/);
@@ -115,11 +118,18 @@ test('applying a waiting update keeps the applying status visible', async (t) =>
     addEventListener() {},
     update: async () => {},
   };
-  const manager = createPwaInstallManager({ statusEl, updateButton: { disabled: false, textContent: '' } });
+  const manager = createPwaInstallManager({
+    statusEl,
+    updateButton: { disabled: false, textContent: '' },
+    applyUpdateButton: { disabled: false, textContent: '', hidden: true },
+  });
   manager.attachRegistration(registration);
 
+  // The check control only reports: it must never activate the waiting worker.
   await manager.checkForUpdate();
+  assert.equal(skipWaitingCalls, 0, 'checking for an update never skip-waits');
 
+  assert.equal(await manager.applyUpdate(), true);
   assert.equal(skipWaitingCalls, 1);
   assert.equal(statusEl.dataset.state, 'updating');
   assert.match(statusEl.textContent, /Applying the update/);
@@ -143,11 +153,12 @@ test('a waiting update stays waiting while reloading would lose an active edit',
   const manager = createPwaInstallManager({
     statusEl,
     updateButton: { disabled: false, textContent: '' },
+    applyUpdateButton: { disabled: false, textContent: '', hidden: true },
     canReload: () => false,
   });
   manager.attachRegistration(registration);
 
-  assert.equal(await manager.checkForUpdate(), false);
+  assert.equal(await manager.applyUpdate(), false, 'an active edit blocks activation');
   assert.equal(skipWaitingCalls, 0);
   assert.equal(statusEl.dataset.state, 'update-ready');
   assert.match(statusEl.textContent, /Finish the current edit/);
@@ -173,6 +184,7 @@ test('a waiting update flushes a pending autosave before skip-waiting', async (t
   const manager = createPwaInstallManager({
     statusEl,
     updateButton: { disabled: false, textContent: '' },
+    applyUpdateButton: { disabled: false, textContent: '', hidden: true },
     requireReloadGuard: true,
   });
   manager.setReloadGuard({
@@ -186,7 +198,7 @@ test('a waiting update flushes a pending autosave before skip-waiting', async (t
   });
   manager.attachRegistration(registration);
 
-  assert.equal(await manager.checkForUpdate(), true);
+  assert.equal(await manager.applyUpdate(), true);
   assert.equal(prepareCalls, 1);
   assert.equal(skipWaitingCalls, 1, 'activation starts only after the guard reports a durable canvas');
   assert.equal(statusEl.dataset.state, 'updating');
@@ -214,7 +226,7 @@ test('a failed or unavailable autosave guard blocks skip-waiting', async (t) => 
   });
   manager.attachRegistration(registration);
 
-  assert.equal(await manager.checkForUpdate(), false, 'production hosts fail closed before autosave starts');
+  assert.equal(await manager.applyUpdate(), false, 'production hosts fail closed before autosave starts');
   assert.equal(skipWaitingCalls, 0);
   assert.match(statusEl.textContent, /Autosave is still starting/);
 
@@ -225,7 +237,7 @@ test('a failed or unavailable autosave guard blocks skip-waiting', async (t) => 
       return { ok: false, reason: 'autosave-failed' };
     },
   });
-  assert.equal(await manager.checkForUpdate(), false);
+  assert.equal(await manager.applyUpdate(), false);
   assert.equal(skipWaitingCalls, 0);
   assert.equal(statusEl.dataset.state, 'update-blocked');
   assert.match(statusEl.textContent, /Autosave has not finished safely/);
@@ -255,6 +267,11 @@ test('a controller change never reloads over an unsafe canvas', async (t) => {
   });
 
   const statusEl = { textContent: '', dataset: {} };
+  const registration = {
+    waiting: { postMessage() {} },
+    addEventListener() {},
+    update: async () => {},
+  };
   const manager = createPwaInstallManager({
     statusEl,
     requireReloadGuard: true,
@@ -265,9 +282,18 @@ test('a controller change never reloads over an unsafe canvas', async (t) => {
     prepareForReload: async () => ({ ok: false, reason: 'autosave-saving' }),
   });
   manager.start();
+  manager.attachRegistration(registration);
   serviceWorker.dispatch('controllerchange');
 
-  assert.equal(reloadCalls, 0);
+  // A background activation only refreshes the controls: it never reloads and
+  // it never overwrites the user-facing "ready" message.
+  assert.equal(reloadCalls, 0, 'a background activation never reloads the page');
+  assert.match(statusEl.textContent, /Finish the current edit/);
+
+  // The reload guard is consulted only by the user's apply click, which must
+  // report the pending save instead of activating the new worker.
+  assert.equal(await manager.applyUpdate(), false);
+  assert.equal(reloadCalls, 0, 'an unsafe autosave blocks the reload');
   assert.match(statusEl.textContent, /Saving the latest canvas change/);
   manager.destroy();
 });

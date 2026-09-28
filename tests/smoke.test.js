@@ -743,7 +743,7 @@ test('Round-2 fixes: V glyph, session persistence, view-aware actions, storage m
   assert.match(main, /exportSessionEntry/);
 	assert.match(main, /sidebar\.historyView === HISTORY_VIEWS\.session/);
   // 3. taller settings dialog + compact ribbon rows
-  assert.match(css, /height:\s*min\(470px,\s*88vh\)/);
+  assert.match(css, /height:\s*min\(520px,\s*88vh\)/);
   assert.match(css, /\.ribbon-setting-row:hover/);
   // 3.2 storage reporting: validated raw bytes, fresh browser estimate, the
   //     browser quota is shown separately, and the percentage bar is bounded.
