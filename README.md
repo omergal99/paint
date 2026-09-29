@@ -8,7 +8,7 @@ not require an account or API key.
 Project status: actively maintained, with a focused vanilla-JavaScript
 architecture and browser-native storage/clipboard features. The current
 community and security readiness status is tracked in
-[`docs/work1/COMMUNITY_STANDARDS.md`](./docs/work1/COMMUNITY_STANDARDS.md).
+[`docs/COMMUNITY_STANDARDS.md`](./docs/COMMUNITY_STANDARDS.md).
 
 ![omerpaint screenshot](./css/assets/screenshot.png)
 
@@ -41,7 +41,7 @@ reload once the new worker takes control.
 - [Code of conduct](./docs/CODE_OF_CONDUCT.md)
 - [Security policy](./SECURITY.md)
 - [Open an issue](https://github.com/omergal99/paint/issues/new)
-- [Community standards audit](./docs/work1/COMMUNITY_STANDARDS.md)
+- [Community standards audit](./docs/COMMUNITY_STANDARDS.md)
 
 The project does not yet declare an open-source license. That is an explicit
 maintainer decision still required before presenting the repository as

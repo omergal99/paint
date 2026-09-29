@@ -661,14 +661,14 @@ test('Community standards files and contributor templates are discoverable', () 
     '.github/pull_request_template.md',
     '.github/ISSUE_TEMPLATE/bug_report.md',
     '.github/ISSUE_TEMPLATE/feature_request.md',
-    'docs/work1/COMMUNITY_STANDARDS.md',
+    'docs/COMMUNITY_STANDARDS.md',
     '.skills/community-standards-audit/SKILL.md',
   ]) {
     assert.ok(fs.existsSync(path.join(root, file)), `Missing community file: ${file}`);
   }
   assert.match(read('README.md'), /CONTRIBUTING\.md/);
   assert.match(read('README.md'), /SECURITY\.md/);
-  assert.match(read('docs/work1/COMMUNITY_STANDARDS.md'), /Needs owner decision/);
+  assert.match(read('docs/COMMUNITY_STANDARDS.md'), /Needs owner decision/);
 });
 
 test('P0 quick wins: hover affordance, slider, release notes, fresh paste, undo keys', () => {

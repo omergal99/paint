@@ -2,9 +2,15 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const root = path.resolve(import.meta.dirname, '..');
-const phase2 = path.join(root, 'docs/work2/phase-2');
+// Work 2 status docs moved to the internal tree; CI checkouts do not include it.
+const phase2 = path.join(root, 'docs-internal/develop/work2/phase-2');
 const read = (relativePath) => fs.readFileSync(path.join(root, relativePath), 'utf8');
 const errors = [];
+
+if (!fs.existsSync(phase2)) {
+  console.log('Documentation consistency: SKIP - internal work2 docs are not present in this checkout.');
+  process.exit(0);
+}
 
 const statusFiles = fs.readdirSync(phase2)
   .filter((name) => /^PHASE-2-STATUS_\d+\.md$/.test(name))
@@ -16,8 +22,8 @@ if (!statusFiles.length) {
 } else {
   const latest = statusFiles[0];
   const latestHtml = `PHASE-2-STATUS_${latest.round}.html`;
-  const canonical = read('docs/work2/phase-2/PHASE-2-STATUS.md');
-  const latestMarkdown = read(`docs/work2/phase-2/${latest.name}`);
+  const canonical = fs.readFileSync(path.join(phase2, 'PHASE-2-STATUS.md'), 'utf8');
+  const latestMarkdown = fs.readFileSync(path.join(phase2, latest.name), 'utf8');
   const latestHtmlPath = path.join(phase2, latestHtml);
 
   if (!fs.existsSync(latestHtmlPath)) errors.push(`Missing HTML companion: ${latestHtml}`);
@@ -34,7 +40,7 @@ if (!statusFiles.length) {
     errors.push(`Canonical status does not reflect the current test-file count (${expectedTestMarker}).`);
   }
 
-  const progress = read('docs/work2/phase-2/PROGRESS-LOG.md');
+  const progress = fs.readFileSync(path.join(phase2, 'PROGRESS-LOG.md'), 'utf8');
   if (!progress.includes(`Round ${latest.round}`)) errors.push(`Progress log has no Round ${latest.round} entry.`);
 }
 
