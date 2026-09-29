@@ -2668,6 +2668,15 @@ const SHORTCUT_NUDGE_DELTAS = Object.freeze({
 	[SHORTCUT_ACTIONS.nudgeRight]: [1, 0],
 });
 
+// Only genuine text fields own the browser's native edit-undo stack. Range
+// sliders, checkboxes, color wells, and numeric spinners are drawing controls:
+// keyboard focus stays on them while the user keeps painting (the canvas
+// pointerdown is prevented), so they must never swallow Ctrl/Cmd+Z.
+const TEXT_EDITING_INPUT_TYPES = Object.freeze(['text', 'search', 'email', 'url', 'password', 'tel']);
+const ownsTextEditing = (element) => element instanceof HTMLTextAreaElement
+	|| Boolean(element?.isContentEditable)
+	|| (element instanceof HTMLInputElement && TEXT_EDITING_INPUT_TYPES.includes(element.type));
+
 window.addEventListener('keydown', (e) => {
 	if (e.defaultPrevented) return;
 	const tag = document.activeElement?.tagName;
@@ -2683,7 +2692,7 @@ window.addEventListener('keydown', (e) => {
 		&& activeElement.selectionStart !== activeElement.selectionEnd;
 
 	if (action === SHORTCUT_ACTIONS.undo || action === SHORTCUT_ACTIONS.redo) {
-		if (typing) return;
+		if (ownsTextEditing(activeElement)) return;
 		e.preventDefault();
 		discardFloatingSelection();
 		if (action === SHORTCUT_ACTIONS.undo) historyManager.undo();

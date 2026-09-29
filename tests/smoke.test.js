@@ -253,6 +253,16 @@ test('keyboard shortcuts are SSOT-backed, editable in Settings, and persisted', 
   assert.match(main, /shortcutManager\.resolve\(shortcut\)/);
 });
 
+test('canvas undo/redo is not swallowed by focused ribbon or status controls', () => {
+  assert.match(main, /const TEXT_EDITING_INPUT_TYPES = Object\.freeze\(\[/);
+  assert.match(main, /const ownsTextEditing = \(element\) => element instanceof HTMLTextAreaElement/);
+  assert.match(main, /if \(ownsTextEditing\(activeElement\)\) return;[\s\S]*historyManager\.undo\(\)/);
+  const undoBranch = main.match(/if \(action === SHORTCUT_ACTIONS\.undo[\s\S]*?\n\t\}/)?.[0] || '';
+  assert.ok(undoBranch, 'undo/redo branch must exist');
+  assert.doesNotMatch(undoBranch, /if \(typing\) return;/,
+    'sliders, checkboxes, and number spinners keep focus while painting, so undo must ignore them');
+});
+
 test('the first paint matches the default visual settings', () => {
   assert.match(html, /id="btn-ai-chat"[^>]*style="display: none;"/);
   assert.match(html, /id="primary-swatch"[^>]*background-color: #a349a4/);
