@@ -67,8 +67,8 @@ test('Clipboard, resize, and fill controls use clear line icons', () => {
 	const copy = html.match(/<button[^>]*id="btn-copy"[\s\S]*?<\/button>/)?.[0] || '';
 	const resize = html.match(/<button[^>]*id="btn-canvas-size"[\s\S]*?<\/button>/)?.[0] || '';
 	const fill = html.match(/<button[^>]*data-tool="fill"[^>]*data-tag="tool-fill"[\s\S]*?<\/button>/)?.[0] || '';
-	assert.match(copy, /stroke="currentColor"/);
-	assert.match(copy, /<rect[^>]+fill="none"/);
+	assert.match(html, /<symbol[^>]*id="icon-copy"[\s\S]*?stroke="currentColor"[\s\S]*?<rect[^>]+fill="none"/);
+	assert.match(copy, /<use[^>]+href="#icon-copy"/);
 	assert.match(resize, /stroke-linejoin="round"/);
 	assert.match(resize, /M14 6V3h3/);
 	assert.match(fill, /stroke-linecap="round"/);

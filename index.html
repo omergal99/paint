@@ -66,6 +66,19 @@
 
 <body>
 	<div id="app">
+		<!-- ============== SHARED ICON SPRITE (SSOT) ============== -->
+		<!-- Single source of truth for reused line icons. Reference with
+		     <svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><use href="#icon-copy" /></svg> -->
+		<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+			<defs>
+				<symbol id="icon-copy" viewBox="0 0 20 20">
+					<rect x="5" y="6" width="10" height="11" rx="1" fill="none" stroke="currentColor"
+						stroke-linejoin="round" />
+					<path d="M7.5 6V4a1.5 1.5 0 0 1 1.5-1.5h6A1.5 1.5 0 0 1 16.5 4v8a1.5 1.5 0 0 1-1.5 1.5h-1" fill="none"
+						stroke="currentColor" stroke-linejoin="round" />
+				</symbol>
+			</defs>
+		</svg>
 
 		<!-- ===================== RIBBON ===================== -->
 		<header class="ribbon ribbon-loading" id="ribbon" data-tag="ribbon">
@@ -197,10 +210,7 @@
 							<span>Cut</span></button>
 						<button class="rbtn small" id="btn-copy" data-tag="btn-copy" title="Copy (Ctrl+C)">
 							<svg class="icon size5" viewBox="0 0 20 20">
-								<rect x="5" y="6" width="10" height="11" rx="1" fill="none" stroke="currentColor"
-									stroke-linejoin="round" />
-								<path d="M7.5 6V4a1.5 1.5 0 0 1 1.5-1.5h6A1.5 1.5 0 0 1 16.5 4v8a1.5 1.5 0 0 1-1.5 1.5h-1" fill="none"
-									stroke="currentColor" stroke-linejoin="round" />
+								<use href="#icon-copy" />
 							</svg>
 							<span>Copy</span></button>
 					</div>
@@ -886,7 +896,9 @@
 					</button>
 					<span class="ci-field">
 						<code id="ci-hex" data-tag="ci-hex" style="user-select: text;">#a349a4</code>
-						<button class="ci-copy" data-copy-target="ci-hex" data-tag="ci-copy-hex" title="Copy HEX">⧉</button>
+						<button class="ci-copy" data-copy-target="ci-hex" data-tag="ci-copy-hex" title="Copy HEX"><svg class="icon" viewBox="0 0 20 20" aria-hidden="true" focusable="false">
+							<use href="#icon-copy" />
+						</svg></button>
 					</span>
 					<button type="button" class="ci-toggle" id="ci-toggle" data-tag="ci-toggle"
 						data-i18n-attr="aria-label:ui.collapseColorInspector,title:ui.collapseColorInspector"
@@ -897,7 +909,9 @@
 				<span class="ci-field">
 					<!-- RGB  -->
 					<code id="ci-rgb" data-tag="ci-rgb" style="user-select: text;">rgb(163, 73, 164)</code>
-					<button class="ci-copy" data-copy-target="ci-rgb" data-tag="ci-copy-rgb" title="Copy RGB">⧉</button>
+					<button class="ci-copy" data-copy-target="ci-rgb" data-tag="ci-copy-rgb" title="Copy RGB"><svg class="icon" viewBox="0 0 20 20" aria-hidden="true" focusable="false">
+							<use href="#icon-copy" />
+						</svg></button>
 				</span>
 			</div>
 

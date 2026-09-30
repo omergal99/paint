@@ -1163,9 +1163,17 @@ html[dir="rtl"] .ci-toggle[aria-expanded="false"] .menu-arrow {
 	background: transparent;
 	cursor: pointer;
 	border-radius: 3px;
-	padding: 1px 4px;
-	font-size: 12px;
+	padding: 1px 1px;
+	font-size: 16px;
 	width: 20px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	color: var(--w10-text);
+}
+.ci-copy .icon {
+	width: 16px;
+	height: 16px;
 }
 .ci-copy:hover {
 	background: var(--w10-hover);
