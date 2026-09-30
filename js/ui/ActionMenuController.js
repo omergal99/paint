@@ -42,11 +42,23 @@ export const createActionMenuController = ({ root = document } = {}) => {
     hoverClearTimer = 0;
   };
 
+  // A single persistent "clicked" marker on the pinned parent row. The hover
+  // preview only adds the transient `.open` styling, so this marker is what
+  // keeps the click state visible while the pointer previews another row and
+  // what lets both cues show at once when the pointer returns to it.
+  const syncPinnedIndicator = () => {
+    root.querySelectorAll('.action-submenu[data-submenu-pinned]').forEach((menu) => {
+      if (menu !== pinnedSubmenu) menu.removeAttribute('data-submenu-pinned');
+    });
+    pinnedSubmenu?.setAttribute('data-submenu-pinned', 'true');
+  };
+
   const resetSubmenuState = () => {
     cancelHoverClear();
     pinnedSubmenu = null;
     hoverSubmenu = null;
     hoverSuppressedTrigger = null;
+    syncPinnedIndicator();
   };
 
   const closeAll = (keep = []) => {
@@ -194,6 +206,7 @@ export const createActionMenuController = ({ root = document } = {}) => {
   // pointer rests on a parent row, and the click-pinned submenu is the state
   // everything else falls back to.
   const syncSubmenus = () => {
+    syncPinnedIndicator();
     const active = hoverSubmenu || pinnedSubmenu;
     const keep = active ? [active, ...ancestorsOf(active)] : [];
     root.querySelectorAll('.action-submenu.open').forEach((menu) => {

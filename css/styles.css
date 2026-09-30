@@ -3306,12 +3306,30 @@ dialog h3 {
 	background: var(--w10-hover);
 	outline: none;
 }
-/* Persistent "currently expanded" indicator for the parent row whose submenu
-   is open. It uses the active token so it stays distinguishable from the
-   transient hover style even when the pointer rests on another row. */
+/* Currently expanded submenu parent: a soft active tint marks the row whose
+   submenu panel is visible, whether it was opened by hover or by click. */
 .action-menu.action-submenu.open > .action-menu-trigger {
 	border-color: var(--w10-active-border);
 	background: var(--w10-active);
+}
+/* Clicked (pinned) submenu parent: a persistent accent bar, tint, and label
+   keep the "this one is selected" state visible even while the pointer
+   previews another row. The bar is a box-shadow so the shared hover rule below
+   can layer the hover cue on top and both states show at the same time. */
+.action-menu.action-submenu[data-submenu-pinned="true"] > .action-menu-trigger {
+	background: color-mix(in srgb, var(--w10-accent) 12%, transparent);
+	box-shadow: inset 3px 0 0 var(--w10-accent);
+	color: var(--w10-accent);
+}
+html[dir="rtl"] .action-menu.action-submenu[data-submenu-pinned="true"] > .action-menu-trigger {
+	box-shadow: inset -3px 0 0 var(--w10-accent);
+}
+/* Hovering the pinned row keeps both cues: the accent bar and label stay and
+   the standard hover background/border is layered on top. */
+.action-menu.action-submenu[data-submenu-pinned="true"] > .action-menu-trigger:hover,
+.action-menu.action-submenu[data-submenu-pinned="true"] > .action-menu-trigger:focus-visible {
+	background: var(--w10-hover);
+	border-color: var(--w10-hover-border);
 }
 .submenu-arrow {
 	margin-inline-start: auto;

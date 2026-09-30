@@ -913,8 +913,16 @@ test('Submenus pin on click, preview on hover, and show an open indicator', () =
   assert.match(actionMenu, /root\.removeEventListener\('pointerover', handlePointerOver\)/);
   assert.match(actionMenu, /const syncSubmenus = \(\) =>/);
   assert.match(actionMenu, /scheduleHoverClear\(\)/);
+  // The click state is a dedicated marker so it survives a hover preview of a
+  // different submenu; the pinned row and the hovered row are separate cues.
+  assert.match(actionMenu, /const syncPinnedIndicator = \(\) =>/);
+  assert.match(actionMenu, /data-submenu-pinned/);
   // The parent row whose submenu is open keeps a visible active indicator.
   assert.match(css, /\.action-menu\.action-submenu\.open > \.action-menu-trigger\s*\{[^}]*--w10-active/s);
+  // The pinned (clicked) row keeps its own accent marker and can show the
+  // hover cue at the same time.
+  assert.match(css, /\.action-menu\.action-submenu\[data-submenu-pinned="true"\] > \.action-menu-trigger\s*\{[^}]*--w10-accent/s);
+  assert.match(css, /\[data-submenu-pinned="true"\] > \.action-menu-trigger:hover/);
 });
 
 test('Canvas background choices stay in sync with pixels and the settings label', () => {
