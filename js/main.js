@@ -743,6 +743,22 @@ const backgroundMaskEditor = createBackgroundMaskEditor({
 	overlay: document.getElementById('background-removal-mask-overlay'),
 });
 
+// Removing the background of the whole page leaves only transparent pixels,
+// so the Canvas Background setting must follow what the user now sees: switch
+// it to Transparent and let the normal change pipeline apply the mode, save
+// the settings, and refresh the segmented "Selected:" label.
+const syncCanvasBackgroundAfterRemoval = (region) => {
+	const coversWholePage = !region
+		|| (region.x <= 0 && region.y <= 0
+			&& region.w >= canvasManager.width
+			&& region.h >= canvasManager.height);
+	// Checkerboard already behaves like Transparent, so only opaque choices
+	// need to move.
+	if (!coversWholePage || ['transparent', 'checkerboard'].includes(bgSelect.value)) return;
+	bgSelect.value = 'transparent';
+	bgSelect.dispatchEvent(new Event('change'));
+};
+
 const applyBackgroundRemovalResult = async (result) => {
 	historyManager.snapshot({ force: true });
 	if (result?.target === 'floating' && canvasManager.floatingCanvas && typeof createImageBitmap === 'function') {
@@ -764,6 +780,7 @@ const applyBackgroundRemovalResult = async (result) => {
 			setSelection(null);
 			canvasManager.markDocumentDirty();
 			persistSession();
+			syncCanvasBackgroundAfterRemoval(region);
 			statusBar.flash('Background preview applied to the active selection');
 			return true;
 		} catch {
@@ -777,7 +794,10 @@ const applyBackgroundRemovalResult = async (result) => {
 	canvasManager.flattenLayers();
 	if (!result?.region) {
 		const loaded = await canvasManager.loadImageBlob(result.imageBlob, result.width, result.height);
-		if (loaded) persistSession();
+		if (loaded) {
+			persistSession();
+			syncCanvasBackgroundAfterRemoval(null);
+		}
 		return loaded;
 	}
 	if (typeof createImageBitmap !== 'function') return false;
@@ -790,6 +810,7 @@ const applyBackgroundRemovalResult = async (result) => {
 		setSelection(null);
 		canvasManager.markDocumentDirty();
 		persistSession();
+		syncCanvasBackgroundAfterRemoval(result.region);
 		return true;
 	} catch {
 		return false;
@@ -1874,7 +1895,11 @@ const applyHistoryState = () => {
 
 const applyCanvasBackgroundMode = (mode) => {
 	const value = mode || 'none';
-	canvasManager.setBackgroundMode(value === 'transparent' ? 'transparent' : 'solid');
+	// Transparent and Transparent Checkerboard are the same pixel mode: both
+	// mean "no opaque background", so fills and New must clear instead of
+	// painting a solid color behind them.
+	const transparent = value === 'transparent' || value === 'checkerboard';
+	canvasManager.setBackgroundMode(transparent ? 'transparent' : 'solid');
 	const solidColorControl = document.querySelector('[data-solid-color-control]');
 	if (solidColorControl) solidColorControl.hidden = !['none', 'solid'].includes(value);
 	const viewport = document.getElementById('canvas-viewport');

@@ -458,7 +458,7 @@ test('status and menu UI avoid redundant startup work and release their listener
 	root.querySelectorAll = (selector) => selector === '.action-menu-trigger' ? [trigger] : [];
 	const menus = createActionMenuController({ root });
 	menus.bind();
-	assert.equal(root.listenerCount(), 3, 'the menu owner registers its three root handlers');
+	assert.equal(root.listenerCount(), 4, 'the menu owner registers click, pointerover, keydown, and open-at handlers');
 	assert.equal(trigger.listenerCount(), 1, 'the trigger is bound once');
 	menus.destroy();
 	assert.equal(root.listenerCount(), 0, 'menu destroy removes root handlers');

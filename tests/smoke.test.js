@@ -898,3 +898,36 @@ test('text focus owns a separate layer instead of the pixel-selection path', () 
   assert.match(canvas, /flattenLayers()/);
   assert.match(canvas, /toDataURL\(type = 'image\/png'/);
 });
+
+test('Submenus pin on click, preview on hover, and show an open indicator', () => {
+  const actionMenu = read('js/ui/ActionMenuController.js');
+  const css = read('css/styles.css');
+  // A second click on a submenu trigger closes only that submenu: the pin
+  // state, not the open class of the whole tree, decides what closes.
+  assert.match(actionMenu, /let pinnedSubmenu = null/);
+  assert.match(actionMenu, /pinnedSubmenu === menu/);
+  assert.match(actionMenu, /hoverSuppressedTrigger = trigger/);
+  // One delegated hover handler previews submenus for every menu in the app
+  // and is released with the rest of the controller.
+  assert.match(actionMenu, /root\.addEventListener\('pointerover', handlePointerOver\)/);
+  assert.match(actionMenu, /root\.removeEventListener\('pointerover', handlePointerOver\)/);
+  assert.match(actionMenu, /const syncSubmenus = \(\) =>/);
+  assert.match(actionMenu, /scheduleHoverClear\(\)/);
+  // The parent row whose submenu is open keeps a visible active indicator.
+  assert.match(css, /\.action-menu\.action-submenu\.open > \.action-menu-trigger\s*\{[^}]*--w10-active/s);
+});
+
+test('Canvas background choices stay in sync with pixels and the settings label', () => {
+  const segmented = read('js/ui/SegmentedChoice.js');
+  // Checkerboard behaves like Transparent: New clears instead of filling.
+  assert.match(main, /value === 'transparent' \|\| value === 'checkerboard'/);
+  assert.match(main, /const transparent = value === 'transparent'/);
+  // Whole-page background removal switches the saved setting to Transparent.
+  assert.match(main, /const syncCanvasBackgroundAfterRemoval = \(region\) =>/);
+  assert.match(main, /syncCanvasBackgroundAfterRemoval\(null\)/);
+  assert.match(main, /syncCanvasBackgroundAfterRemoval\(result\.region\)/);
+  assert.match(main, /syncCanvasBackgroundAfterRemoval\(region\)/);
+  // The "Selected:" label mirrors option text, so it must opt out of the i18n
+  // runtime-key observer that would otherwise revert every later render.
+  assert.match(segmented, /data-i18n-ignore/);
+});

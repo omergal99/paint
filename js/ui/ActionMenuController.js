@@ -17,6 +17,15 @@ const closeMenu = (menu) => {
 
 export const createActionMenuController = ({ root = document } = {}) => {
   let bound = false;
+  // Submenu visibility has two inputs: a click-pinned submenu persists while
+  // its parent menu is open, and a hover preview temporarily overrides it.
+  // The pinned submenu reappears as soon as no other parent row is hovered.
+  let pinnedSubmenu = null;
+  let hoverSubmenu = null;
+  let hoverSuppressedTrigger = null;
+  let hoverClearTimer = 0;
+  const HOVER_CLEAR_DELAY_MS = 250;
+
   const ancestorsOf = (menu) => {
     const ancestors = [];
     let parent = menu.parentElement;
@@ -27,9 +36,25 @@ export const createActionMenuController = ({ root = document } = {}) => {
     return ancestors;
   };
 
-  const closeAll = (keep = []) => root.querySelectorAll('.action-menu.open').forEach((menu) => {
-    if (!keep.includes(menu)) closeMenu(menu);
-  });
+  const cancelHoverClear = () => {
+    if (!hoverClearTimer) return;
+    clearTimeout(hoverClearTimer);
+    hoverClearTimer = 0;
+  };
+
+  const resetSubmenuState = () => {
+    cancelHoverClear();
+    pinnedSubmenu = null;
+    hoverSubmenu = null;
+    hoverSuppressedTrigger = null;
+  };
+
+  const closeAll = (keep = []) => {
+    root.querySelectorAll('.action-menu.open').forEach((menu) => {
+      if (!keep.includes(menu)) closeMenu(menu);
+    });
+    resetSubmenuState();
+  };
 
   const measureMenu = (menuItems) => {
     menuItems.style.visibility = 'hidden';
@@ -124,17 +149,35 @@ export const createActionMenuController = ({ root = document } = {}) => {
     const menu = trigger.closest('.action-menu');
     const menuItems = menu?.querySelector('.action-menu-items');
     if (!menu || !menuItems) return;
+
+    if (menu.classList.contains('action-submenu')) {
+      // Submenu triggers pin/unpin only their own submenu so a second click
+      // never closes the parent menu that hosts it.
+      cancelHoverClear();
+      hoverSubmenu = null;
+      if (pinnedSubmenu === menu) {
+        pinnedSubmenu = null;
+        // The pointer still rests on the trigger, so block the hover preview
+        // from reopening the submenu the user just closed.
+        hoverSuppressedTrigger = trigger;
+      } else {
+        pinnedSubmenu = menu;
+        hoverSuppressedTrigger = null;
+      }
+      syncSubmenus();
+      return;
+    }
+
     const shouldOpen = !menu.classList.contains('open');
     const keep = shouldOpen ? [menu, ...ancestorsOf(menu)] : [];
     closeAll(keep);
     trigger.setAttribute('aria-expanded', String(shouldOpen));
     if (!shouldOpen) return;
 
-    const isSubmenu = menu.classList.contains('action-submenu');
     menu.classList.add('open');
     positionMenu(menu, menuItems, {
       anchor: trigger,
-      placement: isSubmenu ? 'submenu' : 'below',
+      placement: 'below',
     });
   };
 
@@ -146,6 +189,50 @@ export const createActionMenuController = ({ root = document } = {}) => {
   const firstMenuItem = (menu) => menu?.querySelector('.action-menu-items [role="menuitem"]');
   const directTrigger = (menu) => [...(menu?.children || [])]
     .find((child) => child.classList?.contains('action-menu-trigger'));
+
+  // Show only the active submenu chain: the hover preview wins while the
+  // pointer rests on a parent row, and the click-pinned submenu is the state
+  // everything else falls back to.
+  const syncSubmenus = () => {
+    const active = hoverSubmenu || pinnedSubmenu;
+    const keep = active ? [active, ...ancestorsOf(active)] : [];
+    root.querySelectorAll('.action-submenu.open').forEach((menu) => {
+      if (!keep.includes(menu)) closeMenu(menu);
+    });
+    if (!active || active.classList.contains('open')) return;
+    if (!active.closest('.action-menu.open')) return;
+    const menuItems = active.querySelector('.action-menu-items');
+    const trigger = directTrigger(active);
+    if (!menuItems) return;
+    active.classList.add('open');
+    trigger?.setAttribute('aria-expanded', 'true');
+    positionMenu(active, menuItems, { anchor: trigger, placement: 'submenu' });
+  };
+
+  const setHoverSubmenu = (menu) => {
+    cancelHoverClear();
+    if (hoverSubmenu === menu) return;
+    hoverSubmenu = menu;
+    syncSubmenus();
+  };
+
+  const clearHoverSubmenu = () => {
+    cancelHoverClear();
+    if (!hoverSubmenu) return;
+    hoverSubmenu = null;
+    syncSubmenus();
+  };
+
+  // Leaving a parent row keeps the preview alive briefly so crossing the
+  // 2px gap to the submenu panel never makes it flicker.
+  const scheduleHoverClear = () => {
+    if (!hoverSubmenu || hoverClearTimer) return;
+    hoverClearTimer = setTimeout(() => {
+      hoverClearTimer = 0;
+      hoverSubmenu = null;
+      syncSubmenus();
+    }, HOVER_CLEAR_DELAY_MS);
+  };
 
   const handleKeyboard = (event) => {
     if (event.key === 'Escape') {
@@ -180,7 +267,11 @@ export const createActionMenuController = ({ root = document } = {}) => {
     if ((isArrowLeft || isArrowRight) && event.key === closeSubmenuKey && isSubmenu) {
       event.preventDefault();
       const submenuTrigger = directTrigger(menu);
+      resetSubmenuState();
       closeMenu(menu);
+      // Keep a pointer resting on the trigger from previewing the submenu
+      // right after the keyboard closed it.
+      hoverSuppressedTrigger = submenuTrigger || null;
       submenuTrigger?.focus();
     }
   };
@@ -197,6 +288,37 @@ export const createActionMenuController = ({ root = document } = {}) => {
     if (stayOpenTarget(event)) return;
     closeAll();
   };
+
+  // Delegated hover preview: resting on a submenu parent opens it without
+  // pinning, moving to another parent swaps the preview, and leaving the
+  // parent rows falls back to the click-pinned submenu after a short grace
+  // period. This is one handler for every menu in the app.
+  const handlePointerOver = (event) => {
+    const target = event.target;
+    if (!target?.closest) return;
+    if (hoverSuppressedTrigger && !hoverSuppressedTrigger.contains(target)) {
+      hoverSuppressedTrigger = null;
+    }
+    const trigger = target.closest('.action-submenu-trigger');
+    if (trigger && trigger !== hoverSuppressedTrigger && target.closest('.action-menu-items')) {
+      const menu = trigger.closest('.action-submenu');
+      if (menu?.closest('.action-menu.open')) {
+        setHoverSubmenu(menu);
+        return;
+      }
+    }
+    if (!hoverSubmenu) return;
+    const panel = target.closest('.action-menu-items');
+    if (!panel) {
+      clearHoverSubmenu();
+      return;
+    }
+    if (panel === hoverSubmenu.querySelector('.action-menu-items')) {
+      cancelHoverClear();
+      return;
+    }
+    scheduleHoverClear();
+  };
   const handleOpenAt = (event) => {
     const { menu, x, y } = event.detail || {};
     openMenuAt(menu, { x, y });
@@ -209,6 +331,7 @@ export const createActionMenuController = ({ root = document } = {}) => {
       trigger.addEventListener('click', toggle);
     });
     root.addEventListener('click', handleRootClick);
+    root.addEventListener('pointerover', handlePointerOver);
     root.addEventListener('keydown', handleKeyboard);
     root.addEventListener('paint:action-menu-open-at', handleOpenAt);
   };
@@ -219,6 +342,7 @@ export const createActionMenuController = ({ root = document } = {}) => {
       trigger.removeEventListener('click', toggle);
     });
     root.removeEventListener('click', handleRootClick);
+    root.removeEventListener('pointerover', handlePointerOver);
     root.removeEventListener('keydown', handleKeyboard);
     root.removeEventListener('paint:action-menu-open-at', handleOpenAt);
     closeAll();

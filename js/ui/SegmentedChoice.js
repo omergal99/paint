@@ -6,6 +6,11 @@ export const createSegmentedChoice = ({ root, select, selectedLabel } = {}) => {
   const label = selectedLabel || root?.querySelector('[data-selected-label]');
   if (!root || !select) return Object.freeze({ render() {} });
 
+  // The label mirrors the option text, which the select already translates
+  // through its own data-i18n entries. Keep LocaleController from tagging the
+  // label with a runtime key on its first text, or its mutation observer
+  // would revert every later render back to that original value.
+  label?.setAttribute('data-i18n-ignore', '');
   select.classList.add('visually-hidden-control');
 
   const render = () => {
