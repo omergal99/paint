@@ -287,7 +287,9 @@ const setColorInspectorCollapsed = (collapsed) => {
 	if (!colorInspectorEl || !colorInspectorToggle) return;
 	colorInspectorEl.classList.toggle('collapsed', collapsed);
 	const button = colorInspectorToggle;
-	button.innerHTML = `<svg viewBox="0 0 20 20" aria-hidden="true"><path d="${collapsed ? 'M14 4l-8 6 8 6' : 'M6 4l8 6-8 6'}" /></svg>`;
+	// The arrow is the shared `.menu-arrow` glyph; CSS points it along the
+	// collapse axis from `aria-expanded` and mirrors it under RTL, so the
+	// markup is never rewritten here (an inline SVG would ignore the direction).
 	button.setAttribute('aria-expanded', String(!collapsed));
 	const label = collapsed ? t('ui.expandColorInspector') : t('ui.collapseColorInspector');
 	button.title = label;

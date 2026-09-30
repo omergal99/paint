@@ -3,7 +3,7 @@ import test from 'node:test';
 import { createActionMenuController } from '../js/ui/ActionMenuController.js';
 import { createBrowserInfoPanel, readBrowserInfo } from '../js/ui/BrowserInfoPanel.js';
 import { createCheckboxRowController } from '../js/ui/CheckboxRowController.js';
-import { EMOJI_CATALOG, renderEmojiGrid } from '../js/tools/EmojiStore.js';
+import { EMOJI_CATALOG, renderEmojiGrid, syncEmojiSelection } from '../js/tools/EmojiStore.js';
 
 const eventTarget = () => {
   const listeners = new Map();
@@ -234,4 +234,88 @@ test('emoji picker renders many choices with one delegated, disposable listener'
   assert.equal(secondPick, 1);
   dispose();
   assert.equal(container.listenerCount(), 0);
+});
+
+test('picking an emoji then another shape clears the emoji-picker highlight', (t) => {
+  const store = new Map();
+  const storageStub = {
+    getItem: (key) => (store.has(key) ? store.get(key) : null),
+    setItem: (key, value) => { store.set(key, String(value)); },
+    removeItem: (key) => { store.delete(key); },
+  };
+  const previousStorage = globalThis.localStorage;
+  const previousDocument = globalThis.document;
+  const restore = (name, previous) => {
+    try {
+      globalThis[name] = previous;
+    } catch {
+      Object.defineProperty(globalThis, name, { value: previous, configurable: true, writable: true });
+    }
+  };
+  try {
+    globalThis.localStorage = storageStub;
+  } catch {
+    Object.defineProperty(globalThis, 'localStorage', { value: storageStub, configurable: true, writable: true });
+  }
+
+  // A button stub with real class/attribute bookkeeping, unlike the render-only
+  // stub above, because this test asserts the highlighted state itself.
+  const makeButton = () => {
+    const classes = new Set();
+    const attributes = new Map();
+    return {
+      textContent: '',
+      title: '',
+      dataset: {},
+      classList: {
+        contains: (name) => classes.has(name),
+        toggle: (name, force) => {
+          const on = force === undefined ? !classes.has(name) : force === true;
+          if (on) classes.add(name); else classes.delete(name);
+          return on;
+        },
+      },
+      setAttribute: (name, value) => attributes.set(name, value),
+      getAttribute: (name) => (attributes.has(name) ? attributes.get(name) : null),
+    };
+  };
+  globalThis.document = { createElement: () => makeButton() };
+  t.after(() => {
+    restore('localStorage', previousStorage);
+    restore('document', previousDocument);
+  });
+
+  const container = eventTarget();
+  let children = [];
+  Object.defineProperty(container, 'innerHTML', { set: () => { children = []; }, get: () => '' });
+  container.appendChild = (button) => { children.push(button); };
+  container.querySelectorAll = () => children;
+  container.contains = (button) => children.includes(button);
+
+  let picked = null;
+  renderEmojiGrid({ container, onPick: (emoji) => { picked = emoji; } });
+  // The grid never selects on its own; the toolbar owns the highlight.
+  assert.equal(children.some((child) => child.classList.contains('active')), false);
+
+  // 1. Pick an emoji: it becomes the one highlighted choice.
+  const emojiTile = children[2];
+  container.dispatch('click', {
+    target: { closest: (selector) => selector === '.shape-emoji-btn' ? emojiTile : null },
+    stopPropagation() {},
+  });
+  assert.equal(picked, emojiTile.textContent);
+  assert.equal(emojiTile.classList.contains('active'), true);
+  assert.equal(emojiTile.getAttribute('aria-selected'), 'true');
+
+  // 2. Choosing a non-emoji shape clears the picker highlight, so the gallery
+  //    cannot show the emoji and another tile as selected at the same time.
+  syncEmojiSelection(container, { active: false });
+  assert.equal(emojiTile.classList.contains('active'), false);
+  assert.equal(emojiTile.getAttribute('aria-selected'), 'false');
+
+  // 3. Returning to the emoji shape restores exactly the last-picked emoji.
+  syncEmojiSelection(container, { active: true });
+  assert.equal(children.filter((child) => child.classList.contains('active')).length, 1);
+  assert.equal(emojiTile.classList.contains('active'), true);
+  assert.equal(children[0].classList.contains('active'), false);
 });

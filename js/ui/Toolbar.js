@@ -1,6 +1,6 @@
 // js/ui/Toolbar.js
 import { createSliderControl } from './SliderControl.js';
-import { getSelectedEmoji, setSelectedEmoji, renderEmojiGrid } from '../tools/EmojiStore.js';
+import { getSelectedEmoji, setSelectedEmoji, renderEmojiGrid, syncEmojiSelection } from '../tools/EmojiStore.js';
 import { STORAGE_KEYS } from '../core/constants.js';
 const SHAPE_STORAGE_KEY = 'paint:selected-shape';
 const SHAPE_AFTER_DRAW_KEY = 'paint:shape-select-after-draw';
@@ -22,6 +22,7 @@ export class Toolbar {
 
     this._shapeKind = 'rectangle';
     this._fillMode = 'outline';
+    this._emojiGrid = null;
     this._showCurrentTool = this._loadShowCurrentTool();
     this.getShapeKind = () => this._shapeKind;
     this.getFillMode = () => this._fillMode;
@@ -161,11 +162,13 @@ export class Toolbar {
   }
 
   /**
-   * Pick a shape: store the kind, highlight the gallery tile, reflect the
-   * chosen shape's icon on the dropdown trigger button and switch to the
-   * shape tool. Persisted so a refresh keeps the last shape.
+   * The single writer for shape-selection state: the remembered kind, the
+   * gallery highlight, the dropdown icon, the emoji-picker highlight, and the
+   * persisted value. `activate` is true for a user pick; it is false while
+   * restoring on load because the active tool is restored separately so it can
+   * stay e.g. the pencil.
    */
-  selectShape(kind, btnEl = null) {
+  _applyShapeSelection(kind, btnEl = null, { activate = true } = {}) {
     if (!kind) return;
     this._shapeKind = kind;
     this.shapeButtons.forEach((b) => b.classList.toggle('active', b.dataset.shape === kind));
@@ -175,13 +178,26 @@ export class Toolbar {
       const tileSvg = btnEl ? btnEl.querySelector('svg') : this.shapeButtons.find((b) => b.dataset.shape === kind)?.querySelector('svg');
       if (tileSvg) this._setShapeMenuIcon(menuIcon, tileSvg);
     }
-    this.toolManager.setActive('shape');
-    this._applyRememberedStyle();
+    // Only the emoji shape owns the picker highlight; every other kind clears it
+    // so the gallery never shows two selected tiles at once.
+    syncEmojiSelection(this._emojiGrid, { active: kind === 'emoji' });
     try {
       localStorage.setItem(SHAPE_STORAGE_KEY, kind);
     } catch (err) {
       console.warn('Unable to save shape:', err);
     }
+    if (!activate) return;
+    this.toolManager.setActive('shape');
+    this._applyRememberedStyle();
+  }
+
+  /**
+   * Pick a shape: store the kind, highlight the gallery tile, reflect the
+   * chosen shape's icon on the dropdown trigger button and switch to the
+   * shape tool. Persisted so a refresh keeps the last shape.
+   */
+  selectShape(kind, btnEl = null) {
+    this._applyShapeSelection(kind, btnEl);
   }
 
   /** Restore the last chosen shape on load (kind + icon + highlight only - the
@@ -194,14 +210,10 @@ export class Toolbar {
     const btn = this.shapeButtons.find((b) => b.dataset.shape === kind);
     if (!btn) {
       const defaultBtn = this.shapeButtons.find((b) => b.dataset.shape === 'rectangle');
-      if (defaultBtn) this.selectShape('rectangle', defaultBtn);
+      if (defaultBtn) this._applyShapeSelection('rectangle', defaultBtn, { activate: false });
       return;
     }
-    this._shapeKind = kind;
-    this.shapeButtons.forEach((shapeButton) => shapeButton.classList.toggle('active', shapeButton.dataset.shape === kind));
-    document.getElementById('btn-shapes-current')?.classList.add('active-shape-status');
-    const menuIcon = document.getElementById('shape-menu-icon');
-    if (menuIcon) this._setShapeMenuIcon(menuIcon, btn.querySelector('svg'));
+    this._applyShapeSelection(kind, btn, { activate: false });
   }
 
   _bindFillModes() {
@@ -269,6 +281,7 @@ export class Toolbar {
   _bindEmojiPicker() {
     const grid = this.root.querySelector('#shape-emoji-grid');
     if (!grid) return;
+    this._emojiGrid = grid;
     this._disposeEmojiGrid = renderEmojiGrid({
       container: grid,
       onPick: (emoji) => {

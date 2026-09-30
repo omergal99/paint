@@ -939,3 +939,51 @@ test('Canvas background choices stay in sync with pixels and the settings label'
   // runtime-key observer that would otherwise revert every later render.
   assert.match(segmented, /data-i18n-ignore/);
 });
+
+test('Color-inspector toggle keeps the shared arrow and zoom buttons use SVG icons', () => {
+  const css = read('css/styles.css');
+  // The toggle renders the shared `.menu-arrow` glyph. Direction is owned by
+  // CSS from `aria-expanded` plus the document direction, so the runtime must
+  // not swap in its own inline SVG (which ignored RTL and the accent color).
+  const toggle = html.slice(html.indexOf('id="ci-toggle"'), html.indexOf('</button>', html.indexOf('id="ci-toggle"')));
+  assert.match(toggle, /class="menu-arrow"/);
+  assert.doesNotMatch(toggle, /<svg/);
+  const setter = main.slice(main.indexOf('const setColorInspectorCollapsed'), main.indexOf('let colorInspectorCollapsed'));
+  assert.doesNotMatch(setter, /innerHTML/);
+  assert.match(setter, /setAttribute\('aria-expanded'/);
+  assert.match(css, /\.ci-toggle \{[^}]*width: 20px/s);
+  assert.match(css, /\.ci-toggle \.menu-arrow\s*\{[^}]*rotate\(-90deg\)/s);
+  assert.match(css, /\.ci-toggle\[aria-expanded="false"\] \.menu-arrow\s*\{[^}]*rotate\(90deg\)/s);
+  assert.match(css, /html\[dir="rtl"\] \.ci-toggle \.menu-arrow\s*\{[^}]*rotate\(90deg\)/s);
+  assert.match(css, /html\[dir="rtl"\] \.ci-toggle\[aria-expanded="false"\] \.menu-arrow\s*\{[^}]*rotate\(-90deg\)/s);
+  // Both zoom buttons carry currentColor SVG icons and keep their selector
+  // contracts; the plain text glyphs are gone.
+  const zoomOut = html.slice(html.indexOf('id="zoom-out"'), html.indexOf('</button>', html.indexOf('id="zoom-out"')));
+  const zoomIn = html.slice(html.indexOf('id="zoom-in"'), html.indexOf('</button>', html.indexOf('id="zoom-in"')));
+  assert.match(zoomOut, /data-tag="zoom-out"/);
+  assert.match(zoomOut, /<svg[^>]*aria-hidden[^>]*>[\s\S]*currentColor/);
+  assert.doesNotMatch(zoomOut, />\s*−\s*</);
+  assert.match(zoomIn, /data-tag="zoom-in"/);
+  assert.match(zoomIn, /<svg[^>]*aria-hidden[^>]*>[\s\S]*currentColor/);
+  assert.doesNotMatch(zoomIn, />\s*\+\s*</);
+  assert.match(css, /\.zoom-controls button \.icon\s*\{[^}]*width: 12px/s);
+});
+
+test('Shape selection has one writer and clears the emoji highlight', () => {
+  const toolbar = read('js/ui/Toolbar.js');
+  const emojiStore = read('js/tools/EmojiStore.js');
+  // One writer owns the kind, the gallery highlight, the dropdown icon, the
+  // emoji-picker highlight, and persistence, so they can never disagree.
+  assert.match(toolbar, /_applyShapeSelection\(kind, btnEl = null, \{ activate = true \} = \{\}\)/);
+  assert.match(toolbar, /selectShape\(kind, btnEl = null\) \{\s*this\._applyShapeSelection\(kind, btnEl\);\s*\}/);
+  assert.match(toolbar, /_applyShapeSelection\(kind, btn, \{ activate: false \}\)/);
+  // Restoring on load must not steal the active tool back from the restored one.
+  assert.match(toolbar, /if \(!activate\) return;/);
+  // Only the emoji shape owns the picker highlight; any other kind clears it so
+  // the gallery never shows two selected tiles at once.
+  assert.match(toolbar, /syncEmojiSelection\(this\._emojiGrid, \{ active: kind === 'emoji' \}\)/);
+  // The grid renders unselected and syncEmojiSelection is the only writer.
+  assert.match(emojiStore, /export const syncEmojiSelection = \(container, \{ active = true \} = \{\}\) =>/);
+  assert.match(emojiStore, /syncEmojiSelection\(container, \{ active: true \}\)/);
+  assert.doesNotMatch(emojiStore, /btn\.classList\.add\('active'\)/);
+});

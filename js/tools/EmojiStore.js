@@ -24,6 +24,22 @@ export const setSelectedEmoji = (emoji) => {
   try { localStorage.setItem(EMOJI_KEY, emoji); } catch {}
 }
 
+/**
+ * Single owner of the emoji picker highlight. The grid cannot know whether the
+ * emoji shape is the one currently selected - only the toolbar does - so the
+ * grid renders unselected and the toolbar calls this after every shape change.
+ * `active: false` clears the highlight without changing the last-picked emoji.
+ */
+export const syncEmojiSelection = (container, { active = true } = {}) => {
+  if (!container) return;
+  const current = getSelectedEmoji();
+  container.querySelectorAll('.shape-emoji-btn').forEach((item) => {
+    const selected = active === true && item.textContent === current;
+    item.classList.toggle('active', selected);
+    item.setAttribute('aria-selected', selected ? 'true' : 'false');
+  });
+}
+
 export const renderEmojiGrid = ({ container, onPick } = {}) => {
   if (!container) return;
   let binding = emojiGridBindings.get(container);
@@ -36,11 +52,7 @@ export const renderEmojiGrid = ({ container, onPick } = {}) => {
         event.stopPropagation();
         const emoji = button.textContent;
         setSelectedEmoji(emoji);
-        container.querySelectorAll('.shape-emoji-btn').forEach((item) => {
-          const selected = item === button;
-          item.classList.toggle('active', selected);
-          item.setAttribute('aria-selected', selected ? 'true' : 'false');
-        });
+        syncEmojiSelection(container, { active: true });
         binding.onPick?.(emoji);
       },
     };
@@ -49,16 +61,14 @@ export const renderEmojiGrid = ({ container, onPick } = {}) => {
   }
   binding.onPick = onPick;
   container.innerHTML = '';
-  const current = getSelectedEmoji();
   EMOJI_CATALOG.forEach((emoji) => {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'shape-emoji-btn';
     btn.textContent = emoji;
     btn.setAttribute('role', 'option');
-    btn.setAttribute('aria-selected', emoji === current ? 'true' : 'false');
+    btn.setAttribute('aria-selected', 'false');
     btn.title = `Use ${emoji}`;
-    if (emoji === current) btn.classList.add('active');
     container.appendChild(btn);
   });
   return () => {
