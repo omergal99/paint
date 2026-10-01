@@ -382,7 +382,7 @@ test('History preferences row re-translates on locale and settings changes', () 
   assert.match(historyControls, /setLocalizedText\(limitStatus, 'ui\.off'\)/);
   assert.match(historyControls, /limitStatus\.removeAttribute\('data-i18n-runtime'\)/);
   // The locale listener re-runs both syncs so numbers/segmented controls agree.
-  assert.match(main, /addEventListener\('paint:locale-change', \(event\) => \{[\s\S]*?syncHistoryControls\(\);[\s\S]*?syncHistoryLimitSelect\(Number\(readSettings\(\)\.historyLimit/);
+  assert.match(read('js/app/settingsHydration.js'), /syncHistoryControls\(\);\s*\n\s*syncHistoryLimitSelect\(Number\(readSettings\(\)\.historyLimit/);
   // Settings changes keep flowing through the same owner.
   assert.match(historyControls, /const onAutoSaveChange = \(event\) => \{[\s\S]*?applyHistoryState\(\);/);
 });
@@ -516,7 +516,7 @@ test('the first paint matches the default visual settings', () => {
 	assert.match(html, /id="ci-hex"[^>]*>#a349a4</);
 	assert.match(html, /id="ci-rgb"[^>]*>rgb\(163, 73, 164\)</);
 	assert.equal((html.match(/data-bootstrap-palette/g) || []).length, 28);
-	assert.match(main, /applyAiChatVisibility\(aiCheckbox\?\.checked === true\)/);
+	assert.match(read('js/app/settingsHydration.js'), /applyAiChatVisibility\(saved\.showAiChat === true\)/);
 });
 
 test('Zoom is persisted so a refresh keeps the last zoom level', () => {
@@ -635,7 +635,7 @@ test('settings search keeps text intact and reports only deepest areas', () => {
   assert.match(read('js/app.js'), /paint:ready.*releaseRibbonStartupMask/s);
   assert.match(read('index.html'), /class="ribbon-group ribbon-group-file" data-ribbon-key="file"/);
   assert.match(main, /getRibbonGroupKey/);
-  assert.match(main, /ribbonVisibility\[stableKey\] \?\? ribbonVisibility\[legacyKey\]/);
+  assert.match(read('js/app/settingsHydration.js'), /ribbonVisibility\[stableKey\] \?\? ribbonVisibility\[legacyKey\]/);
   assert.doesNotMatch(main, /ribbonVisibility\[title\.textContent\.trim\(\)\]/);
   assert.match(read('css/styles.css'), /--w10-search-accent/);
   assert.match(read('css/styles.css'), /body\.dark-mode[\s\S]*--w10-search-accent/);
@@ -820,7 +820,7 @@ test('Mirrored preference checkboxes use the event source and persist together',
   assert.match(read('js/app/historyControls.js'), /const onAutoSaveChange = \(event\)/);
   assert.match(read('js/app/historyControls.js'), /const enabled = event\?\.target\?\.checked/);
   assert.match(main, /paint:ai-chat-visibility-change/);
-  assert.match(main, /applyAiChatVisibility\(aiCheckbox\?\.checked === true\)/);
+  assert.match(read('js/app/settingsHydration.js'), /applyAiChatVisibility\(saved\.showAiChat === true\)/);
 });
 
 test('Versioning has one source of truth and a release sync command', () => {
@@ -848,7 +848,7 @@ test('Settings includes a feedback path to GitHub issues', () => {
 test('New defaults are safe and configurable', () => {
   assert.match(read('js/history/GlobalHistory.js'), /DEFAULT_HISTORY_LIMIT = 50/);
   assert.match(html, /id="setting-show-ai-chat"[^>]*\/>/);
-  assert.match(main, /saved\.showAiChat === true/);
+  assert.match(read('js/app/settingsHydration.js'), /saved\.showAiChat === true/);
   assert.match(html, /id="rotate-selection-toggle" checked/);
   assert.match(main, /mode: s\.historyAutoSaveMode.*lifecycle/);
   assert.match(html, /id="setting-default-canvas-size"/);
@@ -857,7 +857,11 @@ test('New defaults are safe and configurable', () => {
 
 test('Ribbon layout and reusable segmented choices are wired', () => {
   assert.match(main, /new PanelLayoutManager/);
-  assert.match(main, /createSegmentedChoice/);
+  // One registry owns the segmented choices, so every surface (startup
+  // hydration, history controls, locale changes) renders the same controls.
+  assert.match(read('js/ui/segmentedChoices.js'), /createSegmentedChoice/);
+  assert.match(read('js/ui/segmentedChoices.js'), /export const renderSegmentedChoices/);
+  assert.match(main, /renderSegmentedChoices/);
   assert.match(read('js/ui/PanelLayoutManager.js'), /ribbon-(top|left|right|bottom|float)/);
   assert.match(html, /id="ribbon-restore-toggle"/);
   assert.match(main, /paint:pending-history-save/);
@@ -1213,8 +1217,8 @@ test('Canvas background choices stay in sync with pixels and the settings label'
   const segmented = read('js/ui/SegmentedChoice.js');
   const fileActions = read('js/app/fileActions.js');
   // Checkerboard behaves like Transparent: New clears instead of filling.
-  assert.match(main, /value === 'transparent' \|\| value === 'checkerboard'/);
-  assert.match(main, /const transparent = value === 'transparent'/);
+  assert.match(read('js/app/settingsHydration.js'), /value === 'transparent' \|\| value === 'checkerboard'/);
+  assert.match(read('js/app/settingsHydration.js'), /const transparent = value === 'transparent'/);
   // Whole-page background removal switches the saved setting to Transparent.
   assert.match(fileActions, /const syncCanvasBackgroundAfterRemoval = \(region\) =>/);
   assert.match(fileActions, /syncCanvasBackgroundAfterRemoval\(null\)/);

@@ -16,6 +16,7 @@ import { createPaintSettingsRegistry } from './app/settingsRegistry.js';
 import { initAboutPanel } from './app/aboutPanel.js';
 import { initShortcutSettings } from './app/shortcutSettings.js';
 import { initRibbonSettings } from './app/ribbonSettings.js';
+import { initSettingsHydration, getDefaultZoom } from './app/settingsHydration.js';
 import { markBoot } from './app/bootTiming.js';
 import { createPencilTool, createBrushTool, createEraserTool } from './tools/FreehandTools.js';
 import { createFillTool } from './tools/FillTool.js';
@@ -31,7 +32,6 @@ import { Toolbar } from './ui/Toolbar.js';
 import { Sidebar } from './ui/Sidebar.js';
 import { configureShapesFavorites, initRibbonShapeFavorites } from './ui/mirrors/shapesMirror.js';
 import { PanelLayoutManager } from './ui/PanelLayoutManager.js';
-import { createSegmentedChoice } from './ui/SegmentedChoice.js';
 import { createDialogService } from './ui/DialogService.js';
 import { createSettingsRegistry } from './settings/SettingsRegistry.js';
 import { createDeterministicCommandService } from './ai/DeterministicCommandService.js';
@@ -147,6 +147,34 @@ const getRibbonGroupKey = (groupSection) => groupSection?.dataset.ribbonKey
 	|| [...(groupSection?.classList || [])].find((name) => name.startsWith('ribbon-group-'))?.slice('ribbon-group-'.length)
 	|| groupSection?.querySelector('.ribbon-group-title')?.textContent.trim();
 
+// ---------- Settings controls read by saveSettings ----------
+// `saveSettings` is the widest-reaching writer in the app: every ribbon row,
+// Settings switch and theme change funnels through it, and its `catch` only
+// warns. So every binding it closes over must be initialised above it. These
+// live here rather than in the Settings-dialog section further down because
+// declaration order is what keeps this path free of temporal dead zone
+// failures - moving them back below would reintroduce them.
+const dmCheckbox = document.getElementById('setting-dark-mode');
+const sbCheckbox = document.getElementById('setting-show-status-bar');
+const ciCheckbox = document.getElementById('setting-show-color-inspector');
+const aiCheckbox = document.getElementById('setting-show-ai-chat');
+const directionSelect = document.getElementById('setting-direction');
+const solidBackgroundColorInput = document.getElementById('setting-solid-background-color');
+const defaultCanvasSizeSelect = document.getElementById('setting-default-canvas-size');
+const defaultCanvasWidthInput = document.getElementById('setting-default-canvas-width');
+const defaultCanvasHeightInput = document.getElementById('setting-default-canvas-height');
+const defaultZoomSelect = document.getElementById('setting-default-zoom');
+const defaultZoomCustomInput = document.getElementById('setting-default-zoom-custom');
+const { shortcutManager, renderShortcutSettings } = initShortcutSettings({ settingsStore });
+
+// `PanelLayoutManager` cannot be built here: its constructor calls `apply()`,
+// which invokes `onChange` synchronously, and that handler needs the ribbon
+// Settings controls defined further down. So `saveSettings` reads the layout
+// through this accessor, which is rebound to the real manager as soon as it
+// exists. The fallback mirrors the manager's own defaults for the case where
+// settings are saved during startup.
+let readRibbonLayout = () => ({ visible: true, position: 'top' });
+
 const saveSettings = () => {
 	try {
 		const ribbonVisibility = {};
@@ -181,7 +209,7 @@ const saveSettings = () => {
 			// Phase 3 / step-01: the limit is owned by the store, never by a select.
 			historyLimit: Number(readSettings().historyLimit ?? DEFAULT_SETTINGS.historyLimit),
 			restoreLastImage: document.getElementById('setting-restore-last-image')?.checked === true,
-			ribbonLayout: { ...ribbonLayoutManager.state },
+			ribbonLayout: readRibbonLayout(),
 			ribbonVisibility,
 			buttonVisibility,
 			showRotateInSelection: document.getElementById('rotate-selection-toggle')?.checked === true,
@@ -924,18 +952,6 @@ const { openResizeDialog } = initResizeDialog({
 // ---------- Settings dialog ----------
 const settingsDialog = document.getElementById('settings-dialog');
 const resetSettingsConfirmationFallback = 'Reset all settings to their defaults';
-const dmCheckbox = document.getElementById('setting-dark-mode');
-const sbCheckbox = document.getElementById('setting-show-status-bar');
-const ciCheckbox = document.getElementById('setting-show-color-inspector');
-const aiCheckbox = document.getElementById('setting-show-ai-chat');
-const directionSelect = document.getElementById('setting-direction');
-const solidBackgroundColorInput = document.getElementById('setting-solid-background-color');
-const defaultCanvasSizeSelect = document.getElementById('setting-default-canvas-size');
-const defaultCanvasWidthInput = document.getElementById('setting-default-canvas-width');
-const defaultCanvasHeightInput = document.getElementById('setting-default-canvas-height');
-const defaultZoomSelect = document.getElementById('setting-default-zoom');
-const defaultZoomCustomInput = document.getElementById('setting-default-zoom-custom');
-const { shortcutManager, renderShortcutSettings } = initShortcutSettings({ settingsStore });
 const settingsRegistry = createPaintSettingsRegistry({ colorPalette, sidebar });
 // Phase 2 step-03: the Shapes mirror and the ribbon favorites row subscribe to
 // this one SettingsStore value (favoriteShapes) - no second favorites source.
@@ -1061,6 +1077,8 @@ const applyAiChatVisibility = (visible) => {
 	if (!enabled && sidebar.activeTab === 'ai') sidebar.hide();
 }
 
+// Built here, not with the other early settings bindings: the constructor runs
+// `apply()` -> `onChange`, and `syncRibbonLayoutControls` only exists from here on.
 const ribbonLayoutManager = new PanelLayoutManager({
 	app: document.getElementById('app'),
 	panel: document.getElementById('ribbon'),
@@ -1073,6 +1091,8 @@ const ribbonLayoutManager = new PanelLayoutManager({
 		openSettingsDialog('ribbon');
 	},
 });
+readRibbonLayout = () => ({ ...ribbonLayoutManager.state });
+
 const settingsShowRibbon = document.getElementById('setting-show-ribbon');
 const settingsRibbonPositionButtons = [...document.querySelectorAll('[data-ribbon-position]')];
 document.getElementById('ribbon-restore-toggle')?.addEventListener('click', () => saveSettings());
@@ -1097,163 +1117,6 @@ settingsRibbonPositionButtons.forEach((button, index) => {
 		settingsRibbonPositionButtons[nextIndex]?.click();
 	});
 });
-
-const segmentedChoices = [...document.querySelectorAll('.choice-summary')].map((root) => createSegmentedChoice({
-	root,
-	select: document.getElementById(root.dataset.selectId),
-}));
-const renderSegmentedChoices = () => { segmentedChoices.forEach((choice) => choice.render()); }
-document.documentElement?.addEventListener('paint:locale-change', (event) => {
-renderSegmentedChoices();
-	// History preferences row: re-run both syncs so the auto-save state and the
-	// limit summary are rendered in the new language too.
-	syncHistoryControls();
-	syncHistoryLimitSelect(Number(readSettings().historyLimit ?? DEFAULT_SETTINGS.historyLimit));
-appState.dispatch({ type: 'locale/changed', payload: event.detail?.locale ?? null });
-appState.dispatch({ type: 'direction/changed', payload: event.detail?.direction ?? document.documentElement.dir });
-});
-
-const applyCanvasBackgroundMode = (mode) => {
-	const value = mode || 'none';
-	// Transparent and Transparent Checkerboard are the same pixel mode: both
-	// mean "no opaque background", so fills and New must clear instead of
-	// painting a solid color behind them.
-	const transparent = value === 'transparent' || value === 'checkerboard';
-	canvasManager.setBackgroundMode(transparent ? 'transparent' : 'solid');
-	const solidColorControl = document.querySelector('[data-solid-color-control]');
-	if (solidColorControl) solidColorControl.hidden = !['none', 'solid'].includes(value);
-	const viewport = document.getElementById('canvas-viewport');
-	viewport.classList.remove('bg-checkerboard', 'bg-grid', 'bg-transparent');
-	if (value === 'transparent') viewport.classList.add('bg-transparent');
-	else if (value === 'checkerboard') viewport.classList.add('bg-checkerboard');
-	else if (value === 'grid') viewport.classList.add('bg-grid');
-}
-
-const getDefaultZoom = () => {
-	const raw = defaultZoomSelect?.value === 'custom'
-		? defaultZoomCustomInput?.value
-		: defaultZoomSelect?.value;
-	const value = Number(raw);
-	return Number.isFinite(value) ? Math.min(800, Math.max(10, Math.round(value))) : 100;
-}
-
-const syncDefaultCanvasInputsFromSelect = () => {
-	const [width, height] = String(defaultCanvasSizeSelect?.value || '800x600').split('x').map(Number);
-	if (Number.isFinite(width) && width > 0 && defaultCanvasWidthInput) defaultCanvasWidthInput.value = width;
-	if (Number.isFinite(height) && height > 0 && defaultCanvasHeightInput) defaultCanvasHeightInput.value = height;
-}
-
-const syncDefaultZoomInputFromSelect = () => {
-	const value = Number(defaultZoomSelect?.value);
-	if (Number.isFinite(value) && value > 0 && defaultZoomCustomInput) defaultZoomCustomInput.value = value;
-}
-
-// ---------- Settings dialog ----------
-const applySavedSettings = () => {
-	const saved = readSettings();
-	dmCheckbox.checked = Boolean(saved.darkMode);
-	sbCheckbox.checked = saved.showStatusBar !== false;
-	ciCheckbox.checked = saved.showColorInspector !== false;
-	if (aiCheckbox) aiCheckbox.checked = saved.showAiChat === true;
-	if (directionSelect) directionSelect.value = ['auto', 'ltr', 'rtl'].includes(saved.interfaceDirection)
-		? saved.interfaceDirection : 'auto';
-	bgSelect.value = saved.canvasBackground || 'none';
-	const solidColor = /^#[0-9a-f]{6}$/i.test(saved.solidBackgroundColor || '')
-		? saved.solidBackgroundColor.toLowerCase()
-		: DEFAULT_SETTINGS.solidBackgroundColor;
-	if (solidBackgroundColorInput) solidBackgroundColorInput.value = solidColor;
-	canvasManager.setBackgroundColor(solidColor);
-	defaultCanvasSizeSelect.value = saved.defaultCanvasSize || '800x600';
-	const restoreLastImage = document.getElementById('setting-restore-last-image');
-	if (restoreLastImage) restoreLastImage.checked = saved.restoreLastImage === true;
-	if (![...defaultCanvasSizeSelect.options].some((option) => option.value === defaultCanvasSizeSelect.value)) {
-		defaultCanvasSizeSelect.value = 'custom';
-	}
-	if (Number.isFinite(Number(saved.defaultCanvasWidth)) && Number(saved.defaultCanvasWidth) > 0) {
-		defaultCanvasWidthInput.value = saved.defaultCanvasWidth;
-	}
-	if (Number.isFinite(Number(saved.defaultCanvasHeight)) && Number(saved.defaultCanvasHeight) > 0) {
-		defaultCanvasHeightInput.value = saved.defaultCanvasHeight;
-	}
-	if (defaultCanvasSizeSelect.value !== 'custom') syncDefaultCanvasInputsFromSelect();
-	const savedZoom = Number(saved.defaultZoom || 100);
-	defaultZoomSelect.value = [...defaultZoomSelect.options].some((option) => option.value === String(savedZoom))
-		? String(savedZoom)
-		: 'custom';
-	if (defaultZoomCustomInput) defaultZoomCustomInput.value = Math.min(800, Math.max(10, Math.round(savedZoom)));
-	applyCanvasBackgroundMode(bgSelect.value);
-	viewportManager.setInitialZoom(getDefaultZoom());
-	if (!localStorage.getItem('paint:zoom')) viewportManager.setZoom(getDefaultZoom());
-	// Startup begins from the configured blank size. app.js restores the
-	// canonical IndexedDB working record afterwards, so this must not inspect
-	// the retired localStorage canvas key or it can make restore timing depend
-	// on stale fallback data.
-	const { width, height } = getDefaultCanvasSize();
-	if (width !== canvasManager.width || height !== canvasManager.height) canvasManager.resize(width, height);
-	syncHistoryControls(saved);
-	document.body.classList.toggle('dark-mode', dmCheckbox.checked);
-	localeController.setDirection(directionSelect?.value || 'auto');
-	document.querySelector('.status-bar').style.display = sbCheckbox.checked ? 'grid' : 'none';
-	document.getElementById('color-inspector').style.display = ciCheckbox.checked ? 'flex' : 'none';
-	const ribbonVisibility = saved.ribbonVisibility || {};
-	document.querySelectorAll('.ribbon-group').forEach((groupSection) => {
-		const title = groupSection.querySelector('.ribbon-group-title');
-		if (!title) return;
-		const stableKey = getRibbonGroupKey(groupSection);
-		const legacyKey = title.textContent.trim();
-		const storedVisibility = ribbonVisibility[stableKey] ?? ribbonVisibility[legacyKey];
-		if (storedVisibility === undefined) return;
-		const visible = storedVisibility;
-		groupSection.hidden = !visible;
-		[...groupSection.children]
-			.filter((child) => !child.classList.contains('ribbon-group-title') && child.id !== 'file-input')
-			.forEach((child) => {
-				child.hidden = !visible;
-				child.style.display = visible ? '' : 'none';
-			});
-		const separator = groupSection.nextElementSibling;
-		if (separator?.classList.contains('separator')) separator.style.display = visible ? '' : 'none';
-	});
-	const buttonVisibility = saved.buttonVisibility || {};
-	document.querySelectorAll('.rbtn[id]').forEach((button) => {
-		if (buttonVisibility[button.id] === undefined) return;
-		button.hidden = !buttonVisibility[button.id];
-		button.style.display = buttonVisibility[button.id] ? '' : 'none';
-	});
-	const fileInput = document.getElementById('file-input');
-	if (fileInput) {
-		fileInput.hidden = true;
-		fileInput.style.display = 'none';
-	}
-	const rotateToggle = document.getElementById('rotate-selection-toggle');
-	if (rotateToggle) {
-		rotateToggle.checked = saved.showRotateInSelection !== false;
-	}
-	// Settings is the stable escape hatch for ribbon configuration.
-	const settingsButton = document.getElementById('btn-settings');
-	if (settingsButton) { settingsButton.hidden = false; settingsButton.style.display = ''; }
-	const extrasGroup = document.querySelector('.ribbon-group-extras');
-	if (extrasGroup) {
-		extrasGroup.hidden = false;
-		extrasGroup.style.display = '';
-		[...extrasGroup.children]
-			.filter((child) => !child.classList.contains('ribbon-group-title'))
-			.forEach((child) => { child.hidden = false; child.style.display = child.classList.contains('rbtn-row') ? 'flex' : ''; });
-	}
-	applyAiChatVisibility(aiCheckbox?.checked === true);
-	const inspectorSeparator = document.querySelector('.color-inspector')?.nextElementSibling;
-	if (inspectorSeparator?.classList.contains('separator')) {
-		inspectorSeparator.style.display = ciCheckbox.checked ? '' : 'none';
-	}
-	renderShortcutSettings();
-	const layout = saved.ribbonLayout || ribbonLayoutManager.state;
-	ribbonLayoutManager.setPosition(layout.position || 'top');
-	ribbonLayoutManager.setVisible(layout.visible !== false);
-	if (settingsShowRibbon) settingsShowRibbon.checked = ribbonLayoutManager.state.visible;
-	syncRibbonLayoutControls(ribbonLayoutManager.state);
-	renderSegmentedChoices();
-	syncRibbonSettingsControls();
-}
 
 const { updateAboutStats } = initAboutPanel();
 const { syncRibbonSettingsControls } = initRibbonSettings({ sidebar, saveSettings });
@@ -1314,7 +1177,6 @@ const historyControls = initHistoryControls({
 	readSettings,
 	getHistoryPrefs,
 	saveSettings,
-	renderSegmentedChoices,
 	setLocalizedText,
 });
 const {
@@ -1326,6 +1188,29 @@ const {
 	restoreHistoryLimit,
 	applyHistoryState,
 } = historyControls;
+const hydration = initSettingsHydration({
+	canvasManager,
+	viewportManager,
+	readSettings,
+	getRibbonGroupKey,
+	localeController,
+	applyAiChatVisibility,
+	ribbonLayoutManager,
+	settingsShowRibbon,
+	syncRibbonLayoutControls,
+	renderShortcutSettings,
+	syncHistoryControls,
+	syncHistoryLimitSelect,
+	syncRibbonSettingsControls,
+	getDefaultCanvasSize,
+});
+const {
+	applySavedSettings,
+	renderSegmentedChoices,
+	applyCanvasBackgroundMode,
+	syncDefaultCanvasInputsFromSelect,
+	syncDefaultZoomInputFromSelect,
+} = hydration;
 
 defaultZoomSelect?.addEventListener('change', () => {
 	syncDefaultZoomInputFromSelect();
@@ -1768,7 +1653,7 @@ const destroyEditor = () => {
 	canvasResizer.destroy();
 	viewportManager.destroy();
 	directionEventTarget.removeEventListener('paint:locale-change', refreshCanvasDirectionGeometry);
-	document.documentElement?.removeEventListener('paint:locale-change', renderSegmentedChoices);
+	hydration.destroy();
 	document.documentElement?.removeEventListener('paint:locale-change', browserInfoPanel.refresh);
 	document.documentElement?.removeEventListener('paint:locale-change', refreshAboutOnLocaleChange);
 	document.documentElement?.removeEventListener('paint:locale-change', refreshReleaseNotesOnLocaleChange);

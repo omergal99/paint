@@ -2,6 +2,7 @@
 // History preferences, the save-limit mirrors and history export/clear.
 // Phase 3 modularisation: Settings owns the values, this module owns every
 // control surface that writes or displays them.
+import { renderSegmentedChoices } from '../ui/segmentedChoices.js';
 import { t } from '../i18n/messages.js';
 import { DEFAULT_SETTINGS, HISTORY_LIMIT_OPTIONS, HISTORY_VIEWS } from '../core/constants.js';
 
@@ -16,7 +17,6 @@ export const initHistoryControls = ({
   readSettings,
   getHistoryPrefs,
   saveSettings,
-  renderSegmentedChoices,
   setLocalizedText,
 }) => {
 	const syncHistoryControls = (saved) => {

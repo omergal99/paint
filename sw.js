@@ -104,6 +104,8 @@ const SHELL = [
   './js/app/shortcutSettings.js',
   './js/app/bootTiming.js',
   './js/app/ribbonSettings.js',
+  './js/app/settingsHydration.js',
+  './js/ui/segmentedChoices.js',
   './css/assets/icon.svg',
   './css/assets/icon-192.png',
   './css/assets/icon-512.png',
