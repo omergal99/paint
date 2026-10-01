@@ -1409,6 +1409,9 @@ markBoot('boot:before-hydrate');
 applySavedSettings();
 markBoot('boot:after-hydrate');
 
+// Ribbon groups exist now, so a remembered sidebar panel can be reopened.
+sidebar.restorePendingPanel();
+
 const restoreDialogFromUrl = () => {
 	const { dialog, tab } = router.resolveDeepLink();
 	if (dialog === 'settings') openSettingsDialog(tab || getLastSettingsTab());
@@ -1417,44 +1420,17 @@ const restoreDialogFromUrl = () => {
 }
 restoreDialogFromUrl();
 
-const iconCopyFormats = ['SVG', 'PNG 26x26', 'PNG 100x100', 'PNG 300x300', 'PNG 500x500'];
-let iconCopyIndex = 0;
-const appIcon = document.querySelector('.app-icon');
-
-const copyAppIcon = async () => {
-	const format = iconCopyFormats[iconCopyIndex];
-	try {
-		const svgText = await fetch(appIcon.src).then((response) => response.text());
-		if (format === 'SVG') {
-			const svgBlob = new Blob([svgText], { type: 'image/svg+xml' });
-			await navigator.clipboard.write([
-				new ClipboardItem({
-					'image/svg+xml': svgBlob,
-					'text/plain': new Blob([svgText], { type: 'text/plain' }),
-				}),
-			]);
-		} else {
-			const size = Number(format.match(/\d+/)[0]);
-			const image = await createImageBitmap(new Blob([svgText], { type: 'image/svg+xml' }));
-			const output = document.createElement('canvas');
-			output.width = size;
-			output.height = size;
-			output.getContext('2d').drawImage(image, 0, 0, size, size);
-			const blob = await new Promise((resolve, reject) => output.toBlob((value) => value ? resolve(value) : reject(new Error('PNG encoding failed')), 'image/png'));
-			await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
-			image.close?.();
-		}
-		statusBar.flash(`Copied app icon as ${format}`);
-		showToast(`Copied ${format}`, true);
-	} catch (error) {
-		console.warn('Unable to copy app icon:', error);
-		statusBar.flash('Clipboard permission is required');
-	} finally {
-		iconCopyIndex = (iconCopyIndex + 1) % iconCopyFormats.length;
-	}
-}
-
-appIcon?.addEventListener('click', copyAppIcon);
+// The app icon and the app name open Settings ▸ About. They used to cycle
+// through icon formats on the clipboard, which surprised anyone who just wanted
+// to see the version.
+const appNameEntry = document.querySelector('.status-item.app-name');
+const openAboutFromAppIdentity = () => openSettingsDialog('about');
+appNameEntry?.addEventListener('click', openAboutFromAppIdentity);
+appNameEntry?.addEventListener('keydown', (event) => {
+	if (event.key !== 'Enter' && event.key !== ' ') return;
+	event.preventDefault();
+	openAboutFromAppIdentity();
+});
 
 const toolbar = new Toolbar({
 	root: document.getElementById('ribbon'),

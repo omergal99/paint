@@ -412,6 +412,7 @@ export class Sidebar {
 
 	showHistory() {
 		this.activeTab = HISTORY_VIEWS.history;
+		this.title.setAttribute('data-i18n-ignore', '');
 		this.title.textContent = 'History';
 		this.historyContent.style.display = 'block';
 		this.aiContent.style.display = 'none';
@@ -426,6 +427,7 @@ export class Sidebar {
 
 	showAi() {
 		this.activeTab = 'ai';
+		this.title.setAttribute('data-i18n-ignore', '');
 		this.title.textContent = 'AI Chat';
 		this.historyContent.style.display = 'none';
 		this.aiContent.style.display = 'block';
@@ -437,10 +439,19 @@ export class Sidebar {
 	// Phase 2 step-03 migration: replaces the legacy title-string group builder.
 	// The ribbon group section is the only input; the title and mirror
 	// descriptor resolve from it (data-ribbon-key -> descriptor table).
-	openGroupSettings(groupSection) {
+	openGroupSettings(groupSection, { remember = true } = {}) {
 		if (!this.groupSettingsContent || !groupSection) return;
 		const titleText = groupSection.querySelector('.ribbon-group-title')?.textContent ?? '';
-		this.activeTab = 'group-' + titleText;
+		// Stable key: the visible title is localised, so it cannot identify the
+		// panel across languages (or across a renamed group).
+		const mirrorKey = groupSection.dataset?.ribbonKey
+			|| [...groupSection.classList].find((name) => name.startsWith('ribbon-group-'))?.slice('ribbon-group-'.length)
+			|| titleText.trim();
+		this.activeTab = `group:${mirrorKey}`;
+		// The header must always describe the panel that is actually visible. The
+		// static `data-i18n` in the markup would otherwise re-assert the generic
+		// "Sidebar" label on the next locale pass and undo this update.
+		this.title.setAttribute('data-i18n-ignore', '');
 		this.title.textContent = `${titleText} ${t('settings.title')}`;
 		this.historyContent.style.display = 'none';
 		this.aiContent.style.display = 'none';
@@ -451,7 +462,6 @@ export class Sidebar {
 		this.ribbonMirrorTitle = titleText;
 		// Descriptor-driven option mirror mounts above the legacy visibility
 		// rows; actions click the ribbon control so the two never diverge.
-		const mirrorKey = groupSection.dataset?.ribbonKey || '';
 		const descriptorEntry = MIRROR_DESCRIPTORS[mirrorKey];
 		const mirrorDescriptor = (typeof descriptorEntry === 'function'
 			? descriptorEntry({
@@ -559,7 +569,8 @@ export class Sidebar {
 			});
 			this.groupSettingsContainer.appendChild(toggleBtn);
 		});
-		this._saveSidebarState();
+		// Restoring a remembered panel must not rewrite the state we just read.
+		if (remember) this._saveSidebarState();
 	}
 
 	// Keep mounted mirror controls truthful: disabled ribbon state (undo/redo,
@@ -724,21 +735,51 @@ export class Sidebar {
 			if (!stored) return;
 			const state = JSON.parse(stored);
 			if (!state.isOpen) return;
-
-			if (state.activeTab === HISTORY_VIEWS.history) {
-				// Just set the active tab, don't refresh yet - wait for finishInit()
-				this.activeTab = HISTORY_VIEWS.history;
-				this.title.textContent = 'History';
-				this.historyContent.style.display = 'block';
-				this.aiContent.style.display = 'none';
-				if (this.groupSettingsContent) this.groupSettingsContent.style.display = 'none';
-				this.sidebar.style.display = 'flex';
-			} else if (state.activeTab === 'ai') {
-				this.showAi();
-			}
+			this._pendingSidebarRestore = state.activeTab || null;
+			this._restoreSidebarPanel(state.activeTab);
 		} catch (err) {
 			console.warn('Unable to restore sidebar state:', err);
 		}
+	}
+
+	/**
+	 * Reopen the panel the user last had open. Every panel type is supported:
+	 * history, AI chat and the ribbon-group mirrors. Group mirrors resolve from
+	 * their stable ribbon key, because the group sections may not exist yet at
+	 * construction time — the retry runs once the ribbon is wired.
+	 */
+	_restoreSidebarPanel(activeTab) {
+		if (!activeTab) return false;
+		if (activeTab === HISTORY_VIEWS.history) {
+			// Just set the active tab, don't refresh yet - wait for finishInit()
+			this.activeTab = HISTORY_VIEWS.history;
+			this.title.textContent = 'History';
+			this.historyContent.style.display = 'block';
+			this.aiContent.style.display = 'none';
+			if (this.groupSettingsContent) this.groupSettingsContent.style.display = 'none';
+			this.sidebar.style.display = 'flex';
+			return true;
+		}
+		if (activeTab === 'ai') {
+			this.showAi();
+			return true;
+		}
+		if (activeTab.startsWith('group:')) {
+			const key = activeTab.slice('group:'.length);
+			const section = document.querySelector(`[data-ribbon-key="${key}"]`)
+				|| document.querySelector(`.ribbon-group-${key}`);
+			if (!section) return false;
+			this.openGroupSettings(section, { remember: false });
+			return true;
+		}
+		return false;
+	}
+
+	/** Called once the ribbon groups exist, so a remembered group panel can open. */
+	restorePendingPanel() {
+		const activeTab = this._pendingSidebarRestore;
+		if (!activeTab) return;
+		if (this._restoreSidebarPanel(activeTab)) this._pendingSidebarRestore = null;
 	}
 
 	_saveRibbonButtonState() {

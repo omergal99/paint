@@ -315,7 +315,7 @@ test('Sidebar groups mirror the Tools, Shapes, Colors, Extras, and History ribbo
     assert.match(sidebar, new RegExp(`${key}MirrorDescriptor`, 'i'));
   });
   assert.match(sidebar, /MIRROR_DESCRIPTORS/);
-  assert.match(sidebar, /openGroupSettings\(groupSection\)/);
+  assert.match(sidebar, /openGroupSettings\(groupSection, \{ remember = true \} = \{\}\)/);
   assert.doesNotMatch(sidebar, /showGroupSettings/, 'step-03 removes the legacy group builder');
   assert.match(main, /sidebar\.openGroupSettings\(groupSection\)/);
   assert.doesNotMatch(main, /showGroupSettings/);
@@ -1315,4 +1315,63 @@ test('the offline shell is generated from the import graph and version-synced', 
 
   // The sync script is the documented way to fix drift.
   assert.match(read('scripts/sync-service-worker-shell.mjs'), /--check/);
+});
+
+test('sidebar identity, panels and disclosure sections behave as one contract', () => {
+  const sidebar = read('js/ui/Sidebar.js');
+  const mirror = read('js/ui/RibbonMirror.js');
+  const css = read('css/styles.css');
+
+  // 1. App icon / app name open Settings ▸ About; the clipboard icon-copy cycle is gone.
+  assert.match(main, /const openAboutFromAppIdentity = \(\) => openSettingsDialog\('about'\);/);
+  assert.match(main, /appNameEntry\?\.addEventListener\('click', openAboutFromAppIdentity\);/);
+  assert.doesNotMatch(main, /copyAppIcon|iconCopyFormats/);
+  assert.match(html, /class="status-item app-name" role="button" tabindex="0"/);
+
+  // 2. Every sidebar panel persists, addressed by a stable key (never a localised title).
+  assert.match(sidebar, /this\.activeTab = `group:\$\{mirrorKey\}`;/);
+  assert.doesNotMatch(sidebar, /this\.activeTab = 'group-' \+ titleText;/);
+  assert.match(sidebar, /_restoreSidebarPanel\(activeTab\) \{/);
+  assert.match(sidebar, /if \(activeTab\.startsWith\('group:'\)\)/);
+  assert.match(sidebar, /document\.querySelector\(`\[data-ribbon-key="\$\{key\}"\]`\)/);
+  assert.match(sidebar, /restorePendingPanel\(\) \{/);
+  assert.match(main, /sidebar\.restorePendingPanel\(\);/);
+
+  // 3. The header describes whichever panel is visible.
+  assert.match(sidebar, /this\.title\.textContent = `\$\{titleText\} \$\{t\('settings\.title'\)\}`;/);
+  // The static data-i18n in the markup must not undo a dynamic header title.
+  assert.match(sidebar, /this\.title\.setAttribute\('data-i18n-ignore', ''\);/);
+
+  // 4. Disclosure sections open by default, remember their state, and rotate the chevron.
+  assert.match(mirror, /const applySectionState = \(details, id\) => \{[\s\S]*?details\.open = typeof remembered === 'boolean' \? remembered : true;/);
+  assert.match(mirror, /details\.addEventListener\('toggle', \(\) => writeSectionState\(id, details\.open\)\);/);
+  // Both section builders (descriptor sections and the visibility block) share it.
+  assert.match(mirror, /applySectionState\(details, section\.id\);/);
+  assert.match(mirror, /applySectionState\(mk\('details', 'mirror-section mirror-visibility'\), 'visibility'\)/);
+  assert.match(mirror, /const SECTION_STATE_KEY = 'paint:mirror-sections';/);
+  assert.match(css, /\.mirror-section\[open\] > \.mirror-section-title \.menu-arrow \{\s*transform: rotate\(0deg\);/);
+  assert.match(css, /html\[dir="rtl"\] \.mirror-section-title \.menu-arrow \{/);
+
+  // 5. Shortcuts is the last Settings tab.
+  const tabs = [...html.matchAll(/data-settings-tab="([a-z]+)"/g)].map((match) => match[1]);
+  assert.equal(tabs.at(-1), 'shortcuts', `tab order: ${tabs.join(', ')}`);
+});
+
+test('install prompt is captured and offered through Settings ▸ App', () => {
+  const manager = read('js/pwa/PwaInstallManager.js');
+  // The browser mini-infobar is suppressed on purpose, so the app must own the
+  // install surface: capture -> hold -> prompt() from a real user action.
+  assert.match(manager, /const onBeforeInstallPrompt = \(event\) => \{\s*event\.preventDefault\(\);\s*deferredPrompt = event;\s*syncInstallUi\(\);/);
+  assert.match(manager, /window\.addEventListener\('beforeinstallprompt', onBeforeInstallPrompt\);/);
+  assert.match(manager, /window\.addEventListener\('appinstalled', onAppInstalled\);/);
+  assert.match(manager, /installButton\?\.addEventListener\('click', install\);/);
+  assert.match(manager, /await prompt\.prompt\(\);/);
+  // Both listeners are removed on dispose (no leaked document handlers).
+  assert.match(manager, /window\.removeEventListener\?\.\('beforeinstallprompt', onBeforeInstallPrompt\);/);
+  assert.match(manager, /window\.removeEventListener\?\.\('appinstalled', onAppInstalled\);/);
+  // The control lives in the App tab and explains the manual fallback.
+  assert.match(html, /id="pwa-install-button"[^>]*data-i18n="ui\.installPaint"/);
+  assert.match(html, /id="pwa-install-action-status"[\s\S]*?aria-live="polite"/);
+  assert.match(manager, /ui\.installStatusManual/);
+  assert.match(manager, /ui\.installStatusReady/);
 });

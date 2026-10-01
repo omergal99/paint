@@ -1063,7 +1063,8 @@
 				<span class="status-spacer"></span>
 			</div>
 
-			<div class="status-item app-name">
+			<div class="status-item app-name" role="button" tabindex="0" data-tag="app-name-about"
+				 aria-label="About Paint" title="About Paint">
 				<img class="app-icon" src="css/assets/icon.svg" alt="Paint icon" />
 				<span class="status-item">paint</span>
 			</div>
@@ -1178,7 +1179,6 @@
 			</header>
 			<nav class="settings-tabs" data-tag="dom-nav-1" aria-label="Settings sections">
 				<button type="button" class="settings-tab active" data-settings-tab="general">GENERAL</button>
-				<button type="button" class="settings-tab" data-settings-tab="shortcuts">SHORTCUTS</button>
 				<button type="button" class="settings-tab" data-settings-tab="history">HISTORY</button>
 				<button type="button" class="settings-tab" data-settings-tab="ribbon">RIBBON</button>
 				<button type="button" class="settings-tab" data-settings-tab="release">RELEASE NOTES</button>
@@ -1186,6 +1186,7 @@
 				<button type="button" class="settings-tab" data-settings-tab="browser" data-i18n="ui.tabBrowser">BROWSER DATA</button>
 				<button type="button" class="settings-tab" data-settings-tab="app">APP</button>
 				<button type="button" class="settings-tab" data-settings-tab="feedback">FEEDBACK</button>
+				<button type="button" class="settings-tab" data-settings-tab="shortcuts">SHORTCUTS</button>
 			</nav>
 			<form method="dialog" id="settings-form" class="settings-panel settings-body" data-settings-panel="general">
 				<h3 data-i18n="settings.general">General</h3>

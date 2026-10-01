@@ -1560,6 +1560,22 @@ html[dir="rtl"] .ci-toggle[aria-expanded="false"] .menu-arrow {
 .mirror-section-title::-webkit-details-marker {
 	display: none;
 }
+/* The chevron points down when open and sideways when collapsed, mirroring the
+   color-inspector toggle so both disclosure affordances read the same way. */
+.mirror-section-title .menu-arrow {
+	display: inline-block;
+	transition: transform 120ms ease;
+	transform: rotate(-90deg);
+}
+.mirror-section[open] > .mirror-section-title .menu-arrow {
+	transform: rotate(0deg);
+}
+html[dir="rtl"] .mirror-section-title .menu-arrow {
+	transform: rotate(90deg);
+}
+html[dir="rtl"] .mirror-section[open] > .mirror-section-title .menu-arrow {
+	transform: rotate(0deg);
+}
 .mirror-items {
 	display: flex;
 	flex-direction: column;
