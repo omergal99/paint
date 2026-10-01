@@ -416,6 +416,11 @@ test('main.js stays a composition root as feature sections move into js/app/', (
   assert.match(main, /const settingsRegistry = createPaintSettingsRegistry\(\{ colorPalette, sidebar \}\);/);
   assert.match(main, /const \{ shortcutManager, renderShortcutSettings \} = initShortcutSettings\(\{ settingsStore \}\);/);
   assert.match(main, /const \{ updateAboutStats \} = initAboutPanel\(\);/);
+  const ribbonSettings = read('js/app/ribbonSettings.js');
+  assert.match(main, /const \{ syncRibbonSettingsControls \} = initRibbonSettings\(\{ sidebar, saveSettings \}\);/);
+  assert.match(ribbonSettings, /import \{ t \} from '\.\.\/i18n\/messages\.js';/);
+  assert.match(ribbonSettings, /const RIBBON_GROUP_ORDER = Object\.freeze\(\[/);
+  assert.doesNotMatch(main, /const RIBBON_GROUP_ORDER/);
   assert.match(settingsRegistry, /registry\.registerResetHandler\(\(\) => colorPalette\.resetToDefaults\(\)\);/);
   assert.match(settingsRegistry, /registry\.registerStorageKey\(STORAGE_KEYS\.settingsTab\);/);
   assert.doesNotMatch(main, /settingsRegistry\.registerResetHandler\(/);
@@ -597,9 +602,9 @@ test('checkbox rows keep empty whitespace inert and expose explicit hit targets'
   assert.match(read('css/styles.css'), /\.checkbox-row input:not\(:disabled\),[\s\S]*\.checkbox-row > label/);
   assert.match(read('css/styles.css'), /\.menu-checkbox input,[\s\S]*\.menu-checkbox > label/);
   assert.match(read('js/ui/Sidebar.js'), /htmlFor = cbGroup\.id/);
-  assert.match(main, /checkboxLabel\.htmlFor = checkbox\.id/);
+  assert.match(read('js/app/ribbonSettings.js'), /checkboxLabel\.htmlFor = checkbox\.id/);
   assert.match(read('js/ui/Sidebar.js'), /toggleGroup\.dataset\.tag/);
-  assert.match(main, /label\.dataset\.tag = `ribbon-group-visibility-row/);
+  assert.match(read('js/app/ribbonSettings.js'), /label\.dataset\.tag = `ribbon-group-visibility-row/);
   assert.match(main, /if \(!element\.dataset\.tag\) element\.dataset\.tag = element\.id/);
 });
 
@@ -1266,6 +1271,17 @@ test('Shape selection has one writer and clears the emoji highlight', () => {
   assert.match(emojiStore, /export const syncEmojiSelection = \(container, \{ active = true \} = \{\}\) =>/);
   assert.match(emojiStore, /syncEmojiSelection\(container, \{ active: true \}\)/);
   assert.doesNotMatch(emojiStore, /btn\.classList\.add\('active'\)/);
+});
+
+test('boot phases are measurable instead of guessed', () => {
+  const bootTiming = read('js/app/bootTiming.js');
+  assert.match(bootTiming, /export const markBoot = \(name, detail\) => \{/);
+  assert.match(bootTiming, /export const bootTiming = \(\) => marks\.slice\(\);/);
+  // The timeline must bracket the parts that decide when the app feels ready.
+  assert.match(main, /markBoot\('boot:start'\);/);
+  assert.match(main, /markBoot\('boot:before-hydrate'\);\s*\napplySavedSettings\(\);\s*\nmarkBoot\('boot:after-hydrate'\);/);
+  assert.match(read('js/app.js'), /markBoot\('boot:main-module-evaluated'\);/);
+  assert.match(read('js/app.js'), /markBoot\('boot:interactive'\);/);
 });
 
 test('the offline shell is generated from the import graph and version-synced', () => {

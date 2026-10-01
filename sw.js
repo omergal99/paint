@@ -103,6 +103,7 @@ const SHELL = [
   './js/app/settingsRegistry.js',
   './js/app/shortcutSettings.js',
   './js/app/bootTiming.js',
+  './js/app/ribbonSettings.js',
   './css/assets/icon.svg',
   './css/assets/icon-192.png',
   './css/assets/icon-512.png',

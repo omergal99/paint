@@ -15,6 +15,7 @@ import { initHistoryControls } from './app/historyControls.js';
 import { createPaintSettingsRegistry } from './app/settingsRegistry.js';
 import { initAboutPanel } from './app/aboutPanel.js';
 import { initShortcutSettings } from './app/shortcutSettings.js';
+import { initRibbonSettings } from './app/ribbonSettings.js';
 import { markBoot } from './app/bootTiming.js';
 import { createPencilTool, createBrushTool, createEraserTool } from './tools/FreehandTools.js';
 import { createFillTool } from './tools/FillTool.js';
@@ -1254,84 +1255,8 @@ const applySavedSettings = () => {
 	syncRibbonSettingsControls();
 }
 
-const syncRibbonSettingsControls = () => {
-	document.querySelectorAll('[data-ribbon-group-setting]').forEach((checkbox) => {
-		const group = document.querySelector(`.${checkbox.dataset.ribbonGroupSetting}`);
-		if (!group) return;
-		checkbox.checked = [...group.children]
-			.filter((child) => !child.classList.contains('ribbon-group-title') && child.id !== 'file-input')
-			.some((child) => !child.hidden && child.style.display !== 'none');
-	});
-}
-
 const { updateAboutStats } = initAboutPanel();
-const RIBBON_GROUP_ORDER = Object.freeze([
-	'ribbon-group-file',
-	'ribbon-group-clipboard',
-	'ribbon-group-image',
-	'ribbon-group-tools',
-	'ribbon-group-shapes',
-	'ribbon-group-colors',
-	'ribbon-group-history',
-	'ribbon-group-extras',
-]);
-
-const populateRibbonSettings = () => {
-	const container = document.getElementById('ribbon-settings-list');
-	if (!container) return;
-	container.innerHTML = '';
-	const groups = RIBBON_GROUP_ORDER.map((className) => document.querySelector(`.${className}`)).filter(Boolean);
-	document.querySelectorAll('.ribbon-group').forEach((groupSection) => {
-		if (!groups.includes(groupSection)) groups.push(groupSection);
-	});
-	groups.forEach((groupSection) => {
-		const title = groupSection.querySelector('.ribbon-group-title');
-		if (!title) return;
-		const row = document.createElement('div');
-		row.className = 'ribbon-setting-row';
-		const label = document.createElement('div');
-		label.className = 'checkbox-row';
-		label.dataset.tag = `ribbon-group-visibility-row-${groups.indexOf(groupSection)}`;
-		const checkbox = document.createElement('input');
-		checkbox.type = 'checkbox';
-		checkbox.id = `ribbon-group-visibility-${groups.indexOf(groupSection)}`;
-		checkbox.dataset.tag = checkbox.id;
-		const checkboxLabel = document.createElement('label');
-		checkboxLabel.htmlFor = checkbox.id;
-		checkboxLabel.dataset.tag = `${checkbox.id}-label`;
-		checkbox.dataset.ribbonGroupSetting = [...groupSection.classList].find((name) => name.startsWith('ribbon-group-')) || '';
-		checkbox.checked = [...groupSection.children]
-			.filter((child) => !child.classList.contains('ribbon-group-title') && child.id !== 'file-input')
-			.some((child) => !child.hidden && child.style.display !== 'none');
-		const isExtras = groupSection.classList.contains('ribbon-group-extras');
-		if (isExtras) checkbox.disabled = true;
-		checkbox.addEventListener('change', () => {
-			if (isExtras) return;
-			[...groupSection.children]
-				.filter((child) => !child.classList.contains('ribbon-group-title') && child.id !== 'file-input')
-				.forEach((child) => {
-					child.hidden = !checkbox.checked;
-					child.style.display = checkbox.checked ? '' : 'none';
-				});
-			const separator = groupSection.nextElementSibling;
-			groupSection.hidden = !checkbox.checked;
-			if (separator?.classList.contains('separator')) separator.style.display = checkbox.checked ? '' : 'none';
-			saveSettings();
-		});
-		checkboxLabel.textContent = isExtras ? t('ui.settingsAlwaysVisible', { group: title.textContent }) : title.textContent;
-		label.append(checkbox, checkboxLabel);
-		const details = document.createElement('button');
-		details.type = 'button';
-		details.className = 'ribbon-setting-details';
-		details.dataset.tag = `ribbon-group-details-${groups.indexOf(groupSection)}`;
-		details.textContent = t('ui.details');
-		details.addEventListener('click', () => sidebar.openGroupSettings(groupSection));
-		row.append(label, details);
-		container.appendChild(row);
-	});
-}
-
-populateRibbonSettings();
+const { syncRibbonSettingsControls } = initRibbonSettings({ sidebar, saveSettings });
 
 document.getElementById('settings-reset').addEventListener('click', async () => {
 	const confirmed = await dialogService.confirm({
