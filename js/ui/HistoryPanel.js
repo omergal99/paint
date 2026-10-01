@@ -45,6 +45,13 @@ export const createHistoryPanel = ({ root = document, onViewChange = () => {} } 
     onViewChange(activeView);
   };
 
+  // Phase 2 step-04: deep links (Extras -> History / Session) must move focus
+  // into the panel so keyboard users land on the requested tab.
+  const focusActiveView = () => {
+    const active = tabs.find((tab) => tab.dataset.historyView === activeView) || tabs[0];
+    active?.focus?.();
+  };
+
   const bind = () => {
     tabs.forEach((tab) => {
       tab.setAttribute('role', 'tab');
@@ -67,6 +74,7 @@ export const createHistoryPanel = ({ root = document, onViewChange = () => {} } 
     bind,
     sync,
     setView,
+    focusActiveView,
     getView: () => activeView,
   });
 };

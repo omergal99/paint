@@ -9,6 +9,7 @@ import { ClipboardManager } from '../js/clipboard/ClipboardManager.js';
 import { createPaintDocument, isPaintDocument } from '../js/core/DocumentContract.js';
 import { HistoryManager, MAX_HISTORY_SNAPSHOT_PIXELS } from '../js/history/HistoryManager.js';
 import { createSettingsStore } from '../js/settings/SettingsStore.js';
+import { matchShapeQuery, toggleFavoriteShape } from '../js/ui/mirrors/shapesMirror.js';
 import { createTextDocumentStore } from '../js/document/TextDocumentStore.js';
 import { createTextHistoryStore } from '../js/document/TextHistoryStore.js';
 import { createTelemetry } from '../js/telemetry.js';
@@ -29,7 +30,7 @@ import {
 	WORKING_CANVAS_MAX_AUTOSAVE_PIXELS,
 	WORKING_CANVAS_SCHEMA_VERSION,
 } from '../js/storage.js';
-import { EVENTS, LIMITS } from '../js/core/constants.js';
+import { DEFAULT_SETTINGS, EVENTS, HISTORY_LIMIT_OPTIONS, LIMITS } from '../js/core/constants.js';
 
 const memoryStorage = () => {
 	const values = new Map();
@@ -789,6 +790,64 @@ test('CanvasManager revokes a temporary object URL after loading a saved Blob', 
 	}
 });
 
+test('Clipboard paste keeps images first and routes text-only content to the text tool', async () => {
+	const routed = [];
+	const messages = [];
+	const originalClipboard = Object.getOwnPropertyDescriptor(globalThis.navigator, 'clipboard');
+	const setClipboard = (items) => {
+		Object.defineProperty(globalThis.navigator, 'clipboard', {
+			value: { read: async () => items },
+			configurable: true,
+		});
+	};
+	const makeClipboard = (routeText) => new ClipboardManager({
+		canvasManager: {
+			width: 100,
+			height: 100,
+			isCleanDocument: () => true,
+			resize: () => { throw new Error('paste must not resize'); },
+		},
+		historyManager: { snapshot: () => {} },
+		getSelection: () => null,
+		setSelection: () => {},
+		statusBar: { flash: (message) => messages.push(message) },
+		setActiveTool: () => {},
+		commitFloatingSelection: () => {},
+		routeText,
+	});
+
+	try {
+		// Text-only clipboard content opens the text tool with the pasted text.
+		const textClipboard = makeClipboard(async (text) => routed.push(text));
+		setClipboard([{ types: ['text/plain'], getType: async () => ({ text: async () => 'hello' }) }]);
+		await textClipboard.paste();
+		assert.deepEqual(routed, ['hello']);
+		assert.equal(messages.length, 0);
+
+		// An image still wins when both are present (contract unchanged).
+		let inserted = null;
+		const imageClipboard = makeClipboard(async (text) => routed.push(text));
+		imageClipboard.insertImageBlob = async (blob, options) => { inserted = { blob, options }; return {}; };
+		setClipboard([
+			{ types: ['text/plain'], getType: async () => ({ text: async () => 'ignored' }) },
+			{ types: ['image/png'], getType: async () => ({ type: 'image/png' }) },
+		]);
+		await imageClipboard.paste();
+		assert.equal(inserted?.options.sourceLabel, 'Pasted');
+		assert.deepEqual(routed, ['hello']);
+
+		// Neither image nor text keeps the unchanged status message.
+		const emptyClipboard = makeClipboard(async (text) => routed.push(text));
+		setClipboard([]);
+		await emptyClipboard.paste();
+		assert.equal(messages.at(-1), 'Clipboard has no image to paste');
+		assert.equal(routed.length, 1);
+	} finally {
+		if (originalClipboard) Object.defineProperty(globalThis.navigator, 'clipboard', originalClipboard);
+		else delete globalThis.navigator.clipboard;
+	}
+});
+
 test('ClipboardManager rejects an unsafe image before committing or snapshotting work', async () => {
 	let commits = 0;
 	let snapshots = 0;
@@ -998,4 +1057,85 @@ test('canvas autosave publishes a quota failure to the EventBus and callback', a
 	assert.equal(busFailures[0].kind, STORAGE_FAILURE_KINDS.quota);
 	assert.equal(callbackFailures[0].kind, STORAGE_FAILURE_KINDS.quota);
 	dispose();
+});
+
+test('historyLimit is a validated setting with one shared option list', () => {
+  assert.equal(DEFAULT_SETTINGS.historyLimit, 50);
+  assert.deepEqual([...HISTORY_LIMIT_OPTIONS], [0, 10, 20, 50, 100]);
+  const validators = { historyLimit: (value) => HISTORY_LIMIT_OPTIONS.includes(Number(value)) };
+  const storage = memoryStorage();
+  const store = createSettingsStore({ storage, key: 'test-limit', defaults: { historyLimit: DEFAULT_SETTINGS.historyLimit }, validators });
+  store.set({ historyLimit: 20 });
+  assert.equal(store.get().historyLimit, 20);
+  const reloaded = createSettingsStore({ storage, key: 'test-limit', defaults: { historyLimit: DEFAULT_SETTINGS.historyLimit }, validators });
+  assert.equal(reloaded.get().historyLimit, 20, 'the save limit survives a reload');
+  store.set({ historyLimit: 37 });
+  assert.equal(store.get().historyLimit, DEFAULT_SETTINGS.historyLimit, 'an unsupported value falls back to the default');
+});
+
+test('history state is published as one event instead of per-surface polling', async () => {
+  const events = [];
+  const eventTarget = {
+    addEventListener: () => {},
+    dispatchEvent: (event) => { events.push({ type: event.type, detail: event.detail }); return true; },
+  };
+  let marker = 'before';
+  const canvasManager = {
+    width: 4,
+    height: 4,
+    toBlob: () => Promise.resolve(new Blob([marker], { type: 'image/png' })),
+  };
+  const history = new HistoryManager(canvasManager, { sessionStorage: memoryStorage(), eventTarget });
+  assert.equal(events.length, 0, 'constructing the manager publishes no state');
+
+  history.snapshot({ force: true });
+  marker = 'after';
+  history.snapshot({ force: true });
+  await waitForTasks();
+  const afterSnapshots = events.at(-1);
+  assert.equal(afterSnapshots.type, 'paint:history-changed');
+  assert.deepEqual(afterSnapshots.detail, { canUndo: true, canRedo: false });
+
+  await history.undo();
+  await waitForTasks();
+  assert.equal(events.at(-1).type, 'paint:history-changed');
+  assert.equal(events.at(-1).detail.canRedo, true, 'undo makes a redo possible');
+
+  await history.redo();
+  await waitForTasks();
+  assert.equal(events.at(-1).type, 'paint:history-changed');
+  assert.equal(events.at(-1).detail.canUndo, true, 'redo puts a step back on the undo stack');
+
+  // The legacy callback keeps working for older callers.
+  const seen = [];
+  history.onChange = (canUndo, canRedo) => seen.push([canUndo, canRedo]);
+  marker = 'third';
+  history.snapshot({ force: true });
+  await waitForTasks();
+  assert.deepEqual(seen.at(-1), [true, false]);
+});
+
+test('shape favorites round trip through SettingsStore and search matches localized names', () => {
+	// Pure favorites helper: toggle on, toggle off, tolerate a bad stored value.
+	assert.deepEqual(toggleFavoriteShape([], 'star'), ['star']);
+	assert.deepEqual(toggleFavoriteShape(['star', 'heart'], 'star'), ['heart']);
+	assert.deepEqual(toggleFavoriteShape(null, 'line'), ['line']);
+	// Persisted round trip: a second store instance reads the same storage.
+	const storage = memoryStorage();
+	const first = createSettingsStore({ storage, key: 'test-favorites', defaults: { favoriteShapes: [] } });
+	first.set({ favoriteShapes: ['star', 'heart'] });
+	const second = createSettingsStore({ storage, key: 'test-favorites', defaults: { favoriteShapes: [] } });
+	assert.deepEqual(second.get().favoriteShapes, ['star', 'heart'], 'favorites survive reload');
+	// Search matches the translated label (with or without accents) and the
+	// English source title, so both locales find the same shapes.
+	const candidates = [
+		{ kind: 'line', label: 'Línea', title: 'Line' },
+		{ kind: 'rectangle', label: '長方形', title: 'Rectangle' },
+		{ kind: 'heart', label: 'Corazón', title: 'Heart' },
+	];
+	assert.deepEqual(matchShapeQuery('línea', candidates).map((c) => c.kind), ['line']);
+	assert.deepEqual(matchShapeQuery('linea', candidates).map((c) => c.kind), ['line'], 'accent-insensitive match');
+	assert.deepEqual(matchShapeQuery('rect', candidates).map((c) => c.kind), ['rectangle'], 'english source title matches');
+	assert.equal(matchShapeQuery('zzz', candidates).length, 0);
+	assert.equal(matchShapeQuery('', candidates).length, 3, 'empty query keeps every shape');
 });

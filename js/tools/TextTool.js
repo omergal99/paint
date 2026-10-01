@@ -154,7 +154,7 @@ export const createTextTool = () => {
     return Boolean(textObject);
   };
 
-  const open = (point, ctx) => {
+  const open = (point, ctx, initialText) => {
     const shell = document.createElement('div');
     shell.className = 'text-editor-shell';
     shell.style.left = `${point.x}px`;
@@ -195,6 +195,7 @@ export const createTextTool = () => {
     nextEditor.id = 'text-editor-input';
     nextEditor.name = 'text';
     nextEditor.setAttribute('aria-label', 'Text to draw');
+    if (initialText) nextEditor.value = initialText;
     nextEditor.style.color = ctx.canvasManager.primaryColor;
 
     // Keep the textarea first so its top-left edge remains the exact text
@@ -264,6 +265,7 @@ export const createTextTool = () => {
 
     getEditorParent(ctx).appendChild(shell);
     nextEditor.focus();
+    if (initialText) nextEditor.setSelectionRange(nextEditor.value.length, nextEditor.value.length);
     nextEditor.addEventListener('keydown', (event) => {
       event.stopPropagation();
       if (event.key === 'Escape') {
@@ -298,6 +300,18 @@ export const createTextTool = () => {
     },
     onMove() {},
     onUp() {},
+    // Clipboard text paste entry point: prefill a fresh editor at the
+    // placement anchor, or append when an editor is already open.
+    insertTextAt(text, point, ctx) {
+      if (typeof text !== 'string' || !text.trim()) return;
+      if (editor) {
+        editor.value += text;
+        editor.focus();
+        editor.setSelectionRange(editor.value.length, editor.value.length);
+        return;
+      }
+      open(point, ctx, text);
+    },
     onZoomChange(ctx) {
       if (!editor || context !== ctx) return;
       applyEditorStyle(ctx);

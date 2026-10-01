@@ -1429,7 +1429,7 @@ html[dir="rtl"] .ci-toggle[aria-expanded="false"] .menu-arrow {
 	grid-row: 2;
 	width: clamp(220px, 26vw, 360px);
 	min-width: 190px;
-	max-width: min(42vw, 420px);
+	max-width: min(50vw, 820px);
 	flex: 0 1 auto;
 	background: var(--w10-bg);
 	border-inline-start: 1px solid var(--w10-border-strong);
@@ -1536,6 +1536,199 @@ html[dir="rtl"] .ci-toggle[aria-expanded="false"] .menu-arrow {
 	margin-top: 8px;
 }
 
+/* Phase 2 step-01: reusable ribbon mirror shell (SSOT, no per-group CSS). */
+.ribbon-mirror {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	min-width: 0;
+}
+.mirror-section {
+	border: 1px solid var(--w10-border);
+	border-radius: 4px;
+	background: var(--w10-ribbon-bg);
+}
+.mirror-section-title {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	padding: 6px 8px;
+	cursor: pointer;
+	font-weight: 600;
+	list-style: none;
+}
+.mirror-section-title::-webkit-details-marker {
+	display: none;
+}
+.mirror-items {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	padding: 6px 8px 8px;
+}
+.mirror-action {
+	text-align: start;
+	padding: 6px 8px;
+	border: 1px solid var(--w10-border);
+	border-radius: 3px;
+	background: var(--w10-field-bg, #eef3f8);
+	color: var(--w10-text);
+	cursor: pointer;
+}
+.mirror-slider-row {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+	align-items: center;
+	gap: 6px;
+}
+.mirror-visibility-note {
+	margin: 0;
+	padding: 0 8px 8px;
+	color: var(--w10-text-dim);
+	font-size: 11px;
+}
+
+/* Phase 2 step-03: tabbed mirror layout (exclusive panels + roving tabs). */
+.mirror-tablist {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+	padding-bottom: 4px;
+	border-bottom: 1px solid var(--w10-border);
+}
+.mirror-tab {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 5px 10px;
+	border: 1px solid var(--w10-border);
+	border-radius: 4px 4px 0 0;
+	background: var(--w10-field-bg, #eef3f8);
+	color: var(--w10-text);
+	font: inherit;
+	font-weight: 600;
+	cursor: pointer;
+}
+.mirror-tab:hover {
+	background: var(--w10-hover);
+}
+.mirror-tab[aria-selected="true"] {
+	background: var(--w10-ribbon-bg);
+	border-bottom-color: transparent;
+	color: var(--w10-accent);
+}
+.mirror-tab:focus-visible {
+	outline: 2px solid var(--w10-accent);
+	outline-offset: 1px;
+}
+.mirror-tab-panel {
+	border-top: none;
+}
+
+/* Phase 2 step-03: shapes browser, star favorites, and mirror notes. The
+   grid mirrors the ribbon gallery tile layout but stays a separate control
+   (no .shape-btn) so only its own "click the ribbon tile" path runs. */
+.mirror-search-input {
+	box-sizing: border-box;
+	width: 100%;
+	min-height: 26px;
+	padding: 4px 6px;
+	border: 1px solid var(--w10-border);
+	border-radius: 3px;
+	background: var(--w10-input-bg, var(--w10-ribbon-bg));
+	color: var(--w10-text);
+	font: inherit;
+}
+.mirror-search-input:focus-visible {
+	outline: 2px solid var(--w10-accent);
+	outline-offset: 1px;
+}
+.mirror-note {
+	margin: 0;
+	color: var(--w10-text-dim);
+	font-size: 11px;
+}
+.mirror-shape-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(56px, 1fr));
+	gap: 4px;
+}
+.mirror-shape-cell {
+	position: relative;
+	display: flex;
+	min-width: 0;
+}
+.mirror-shape-tile {
+	display: flex;
+	flex: 1 1 auto;
+	flex-direction: column;
+	align-items: center;
+	gap: 2px;
+	min-width: 0;
+	padding: 4px 2px;
+	border: 1px solid var(--w10-border);
+	border-radius: 3px;
+	background: var(--w10-field-bg, #eef3f8);
+	color: var(--w10-text);
+	cursor: pointer;
+}
+.mirror-shape-tile:hover {
+	background: var(--w10-hover);
+}
+.mirror-shape-tile svg {
+	width: 18px;
+	height: 18px;
+}
+.mirror-shape-tile span {
+	overflow: hidden;
+	max-width: 100%;
+	font-size: 10px;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+.mirror-fav-toggle {
+	position: absolute;
+	top: 2px;
+	inset-inline-end: 2px;
+	width: 18px;
+	height: 18px;
+	padding: 0;
+	border: none;
+	background: transparent;
+	color: var(--w10-text-dim);
+	font-size: 11px;
+	line-height: 1;
+	cursor: pointer;
+}
+.mirror-fav-toggle.is-fav {
+	color: var(--w10-accent);
+}
+.mirror-fav-toggle:focus-visible {
+	outline: 2px solid var(--w10-accent);
+	outline-offset: 1px;
+}
+/* Ribbon dropdown favorites row: same tiles, compact horizontal list. */
+.shape-favorites {
+	padding: 4px 6px 6px;
+	border-bottom: 1px dashed var(--w10-border);
+}
+.shape-favorites-title {
+	display: block;
+	margin-bottom: 4px;
+	font-size: 11px;
+	font-weight: 600;
+	color: var(--w10-text-dim);
+}
+.shape-favorites-list {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+}
+.shape-favorites .mirror-shape-cell {
+	flex: 0 0 auto;
+	width: 52px;
+}
+
 .sidebar-content .checkbox-row input {
 	flex: 0 0 auto;
 	margin: 0;
@@ -1584,17 +1777,41 @@ html[dir="rtl"] .ci-toggle[aria-expanded="false"] .menu-arrow {
 	gap: 8px;
 	font-size: 12px;
 }
-.history-preferences {
-	display: grid;
+/* Phase 2 step-04: undo/redo inside the History tab share the ribbon path. */
+.history-undo-row {
+	display: flex;
 	gap: 6px;
-	font-size: 12px;
+}
+.history-undo-row button {
+	flex: 1 1 auto;
+	min-height: 26px;
+}
+.history-undo-row button:disabled {
+	opacity: 0.5;
+	cursor: default;
+}
+.history-preferences {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 3px;
+	font-size: 11px;
+}
+.history-pref-item {
+	white-space: nowrap;
+}
+.history-pref-sep {
+	color: var(--w10-text-dim);
 }
 .history-preferences strong {
 	color: var(--w10-accent);
 }
-.history-preferences button {
-	justify-self: start;
-	padding: 5px 8px;
+/* Compound selector: the shared .history-controls button rule is later in the
+   file, so a plain .history-preferences button would lose the cascade. */
+.history-controls .history-preferences button {
+	padding: 1px 5px;
+	font-size: 11px;
+	min-height: 20px;
 }
 .history-controls label {
 	display: flex;
@@ -2217,7 +2434,10 @@ html[dir="rtl"] .resize-ghost {
 	align-items: flex-start;
 	gap: 3px;
 	min-width: 190px;
-	z-index: 6;
+	/* The active text editor is the surface the user is working on; it must
+	   stack above committed-text focus targets (z-index 7) and selection
+	   handles (z-index 8) so hover never paints an old object over it. */
+	z-index: 9;
 	user-select: text;
 }
 .text-editor-toolbar {

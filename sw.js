@@ -1,4 +1,4 @@
-const CACHE_NAME = 'paint-shell-v1-7-0';
+const CACHE_NAME = 'paint-shell-v1-8-0';
 const CACHE_PREFIX = 'paint-shell-';
 const SHELL = [
   './',
@@ -74,6 +74,16 @@ const SHELL = [
   './js/releaseNotes.js',
   './js/pwa/PwaInstallManager.js',
   './js/ui/Sidebar.js',
+  './js/ui/RibbonMirror.js',
+  './js/ui/mirrors/fileMirror.js',
+  './js/ui/mirrors/clipboardMirror.js',
+  './js/ui/mirrors/imageMirror.js',
+  './js/ui/mirrors/toolsMirror.js',
+  './js/ui/mirrors/shapesMirror.js',
+  './js/ui/mirrors/colorsMirror.js',
+  './js/ui/mirrors/extrasMirror.js',
+  './js/ui/mirrors/historyMirror.js',
+  './js/ui/mirrors/lineSizeControl.js',
   './js/settings/SettingsRegistry.js',
   './js/settings/SettingsStore.js',
   './js/settings/ShortcutManager.js',

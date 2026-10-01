@@ -249,13 +249,18 @@ export const createActionMenuController = ({ root = document } = {}) => {
 
   const handleKeyboard = (event) => {
     if (event.key === 'Escape') {
-      event.preventDefault();
-      event.stopPropagation();
       const openMenus = [...root.querySelectorAll('.action-menu.open')];
       const activeMenu = event.target.closest?.('.action-menu') || openMenus.at(-1);
       const parentTrigger = directTrigger(activeMenu);
-      closeAll();
-      if (parentTrigger) setTimeout(() => parentTrigger.focus(), 0);
+      // Only consume Escape when this controller had something to close. The
+      // controller is bound at document level, so swallowing every Escape would
+      // also cancel the browser's own <dialog> dismiss (deep-linked dialogs).
+      if (openMenus.length > 0) {
+        event.preventDefault();
+        event.stopPropagation();
+        closeAll();
+        if (parentTrigger) setTimeout(() => parentTrigger.focus(), 0);
+      }
       return;
     }
 

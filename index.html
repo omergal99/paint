@@ -978,10 +978,20 @@
 					</div>
 					<div class="sidebar-content" id="sidebar-history-content" style="display: none;">
 						<div class="history-controls">
+							<!-- Phase 2 step-04: undo/redo inside the History tab, wired to the
+							     same path as data-tag="btn-undo" / "btn-redo" and Ctrl+Z. -->
+							<div class="history-undo-row">
+								<button type="button" id="history-undo-btn" data-tag="history-undo" data-i18n="common.actions.undo"
+									disabled>Undo</button>
+								<button type="button" id="history-redo-btn" data-tag="history-redo" data-i18n="common.actions.redo"
+									disabled>Redo</button>
+							</div>
 							<div class="history-preferences" aria-live="polite">
-								<div><span data-i18n="ui.autoSaveLabel">Auto-save:</span> <strong id="history-auto-status">Exit, refresh or new image</strong></div>
-								<div><span data-i18n="ui.saveLimitLabel">Save limit:</span> <strong id="history-limit-status">50 images</strong></div>
-								<button type="button" id="history-settings-link" data-i18n="ui.openHistorySettings">Open History Settings</button>
+								<span class="history-pref-item"><span data-i18n="ui.autoSaveLabel">Auto-save</span> <strong id="history-auto-status">Exit/refresh</strong></span>
+								<span class="history-pref-sep" aria-hidden="true">·</span>
+								<span class="history-pref-item"><span data-i18n="ui.saveLimitLabel">Save limit</span> <strong id="history-limit-status">50</strong></span>
+								<span class="history-pref-sep" aria-hidden="true">·</span>
+								<button type="button" id="history-settings-link" data-i18n="ui.openHistorySettings">Open</button>
 							</div>
 							<!-- Hidden mirrors keep the existing settings/state contract while the
 						     sidebar presents a read-only summary. -->
@@ -1285,7 +1295,7 @@
 					working image automatically.</p>
 				<div class="settings-field choice-field"><span data-i18n="ui.autoSaveWhen">Auto-save when</span>
 					<select id="setting-history-auto-save-mode">
-						<option value="lifecycle" data-i18n="ui.autoSaveLifecycle">Exit, refresh or new image</option>
+						<option value="lifecycle" data-i18n="ui.autoSaveLifecycle">Exit/refresh</option>
 						<option value="all" data-i18n="ui.allAutomaticEvents">All automatic events</option>
 						<option value="manual" data-i18n="ui.onlyManual">Only manually (Save Current button)</option>
 					</select>

@@ -6,6 +6,10 @@ import { HistoryManager } from './history/HistoryManager.js';
 import { ClipboardManager } from './clipboard/ClipboardManager.js';
 import { ToolManager } from './tools/ToolManager.js';
 import { createSelectTool } from './tools/SelectTool.js';
+import { appState } from './app/appState.js';
+import { router } from './app/router.js';
+import { initResizeDialog } from './app/resizeDialog.js';
+import { initFileActions } from './app/fileActions.js';
 import { createPencilTool, createBrushTool, createEraserTool } from './tools/FreehandTools.js';
 import { createFillTool } from './tools/FillTool.js';
 import { createShapeTool } from './tools/ShapeTool.js';
@@ -18,6 +22,7 @@ import { createColorInspector } from './ui/ColorInspector.js';
 import { createStatusBar } from './ui/StatusBar.js';
 import { Toolbar } from './ui/Toolbar.js';
 import { Sidebar } from './ui/Sidebar.js';
+import { configureShapesFavorites, initRibbonShapeFavorites } from './ui/mirrors/shapesMirror.js';
 import { PanelLayoutManager } from './ui/PanelLayoutManager.js';
 import { createSegmentedChoice } from './ui/SegmentedChoice.js';
 import { createDialogService } from './ui/DialogService.js';
@@ -30,6 +35,8 @@ import { rotateCanvas, rotateCanvasByAngle, flipCanvas, scaleCanvas } from './ut
 import { APP_VERSION } from './version.js';
 import {
 	DEFAULT_SETTINGS,
+	EVENTS,
+	HISTORY_LIMIT_OPTIONS,
 	HISTORY_VIEWS,
 	KEYBOARD_KEYS,
 	RIBBON_POSITIONS,
@@ -59,8 +66,6 @@ import { assessImageAdmission } from './storage/ImageAdmission.js';
 import { createEventBus } from './core/EventBus.js';
 import { createBackgroundRemovalService } from './background/BackgroundRemovalProvider.js';
 import { createLocalColorKeyProvider } from './background/LocalColorKeyProvider.js';
-import { createBackgroundRemovalController } from './background/BackgroundRemovalController.js';
-import { createBackgroundMaskEditor } from './background/BackgroundMaskEditor.js';
 import { createPaintDocument } from './core/DocumentContract.js';
 import { createSessionService } from './session/SessionService.js';
 
@@ -88,10 +93,11 @@ const dataTagObserver = globalThis.MutationObserver ? new MutationObserver((reco
 }) : null;
 dataTagObserver?.observe(document.documentElement, { childList: true, subtree: true });
 
-const isEmbeddedPaint = new URLSearchParams(globalThis.location?.search || '').get('embedded') === '1';
+const isEmbeddedPaint = router.resolveDeepLink().embedded;
 document.documentElement.classList.toggle('embedded-paint-app', isEmbeddedPaint);
 
 const stage = document.getElementById('canvas-stage');
+const bgSelect = document.getElementById('setting-canvas-bg');
 const canvasEl = document.getElementById('paint-canvas');
 const overlayEl = document.getElementById('overlay-canvas');
 const scaleEl = document.getElementById('canvas-scale');
@@ -104,6 +110,116 @@ const dialogService = createDialogService({
 	cancelButton: document.getElementById('app-dialog-cancel'),
 	form: document.getElementById('app-dialog-form'),
 });
+
+// ---------- Settings store (created first: every feature reads it) ----------
+const SETTINGS_KEY = STORAGE_KEYS.settings;
+const settingsStore = createSettingsStore({
+	storage: globalThis.localStorage,
+	key: SETTINGS_KEY,
+	defaults: DEFAULT_SETTINGS,
+	validators: {
+		canvasBackground: (value) => ['none', 'solid', 'transparent', 'checkerboard', 'grid'].includes(value),
+		solidBackgroundColor: (value) => typeof value === 'string' && /^#[0-9a-f]{6}$/i.test(value),
+		defaultZoom: (value) => Number.isFinite(Number(value)) && Number(value) > 0,
+		interfaceDirection: (value) => ['auto', 'ltr', 'rtl'].includes(value),
+		historyAutoSaveMode: (value) => ['all', 'close', 'lifecycle'].includes(value),
+		historyLimit: (value) => HISTORY_LIMIT_OPTIONS.includes(Number(value)),
+		favoriteShapes: (value) => Array.isArray(value) && value.every((item) => typeof item === 'string' && item),
+	},
+});
+
+const readSettings = () => {
+	return settingsStore.get();
+}
+
+// Values that JS renders must stay translatable: writing the text alone leaves
+// the node frozen in the language that was active at render time. Tagging the
+// node with `data-i18n-runtime` hands ownership back to LocaleController, which
+// re-translates every such node on `paint:locale-change`. Unkeyed values (a
+// plain number) clear the tag so the controller never overwrites them.
+const setLocalizedText = (node, key) => {
+  if (!node) return;
+  if (key) {
+    node.textContent = t(key);
+    node.setAttribute('data-i18n-runtime', key);
+  } else {
+    node.removeAttribute('data-i18n-runtime');
+  }
+};
+
+const getRibbonGroupKey = (groupSection) => groupSection?.dataset.ribbonKey
+	|| [...(groupSection?.classList || [])].find((name) => name.startsWith('ribbon-group-'))?.slice('ribbon-group-'.length)
+	|| groupSection?.querySelector('.ribbon-group-title')?.textContent.trim();
+
+const saveSettings = () => {
+	try {
+		const ribbonVisibility = {};
+		const buttonVisibility = {};
+		document.querySelectorAll('.ribbon-group').forEach((groupSection) => {
+			const title = groupSection.querySelector('.ribbon-group-title');
+			if (!title) return;
+			ribbonVisibility[getRibbonGroupKey(groupSection)] = [...groupSection.children]
+				.filter((child) => !child.classList.contains('ribbon-group-title') && child.id !== 'file-input')
+				.some((child) => !child.hidden && child.style.display !== 'none');
+			groupSection.querySelectorAll('.rbtn[id]').forEach((button) => {
+				buttonVisibility[button.id] = !button.hidden && button.style.display !== 'none';
+			});
+		});
+		const historyAutoSave = (document.getElementById('history-auto-save-toggle')?.checked
+			?? document.getElementById('setting-history-auto-save')?.checked) ?? true;
+		const historyAutoSaveMode = document.getElementById('setting-history-auto-save-mode')?.value || 'all';
+		settingsStore.set({
+			darkMode: dmCheckbox.checked,
+			showStatusBar: sbCheckbox.checked,
+			showColorInspector: ciCheckbox.checked,
+		showAiChat: aiCheckbox?.checked === true,
+		interfaceDirection: directionSelect?.value || 'auto',
+			canvasBackground: bgSelect.value,
+			solidBackgroundColor: solidBackgroundColorInput?.value || DEFAULT_SETTINGS.solidBackgroundColor,
+			defaultCanvasSize: defaultCanvasSizeSelect?.value || '800x600',
+			defaultCanvasWidth: Number(defaultCanvasWidthInput?.value) || 800,
+			defaultCanvasHeight: Number(defaultCanvasHeightInput?.value) || 600,
+			defaultZoom: getDefaultZoom(),
+			historyAutoSave,
+			historyAutoSaveMode,
+			// Phase 3 / step-01: the limit is owned by the store, never by a select.
+			historyLimit: Number(readSettings().historyLimit ?? DEFAULT_SETTINGS.historyLimit),
+			restoreLastImage: document.getElementById('setting-restore-last-image')?.checked === true,
+			ribbonLayout: { ...ribbonLayoutManager.state },
+			ribbonVisibility,
+			buttonVisibility,
+			showRotateInSelection: document.getElementById('rotate-selection-toggle')?.checked === true,
+			shortcuts: shortcutManager.get(),
+		});
+	} catch (error) { console.warn('Unable to save settings:', error); }
+}
+
+// ---------- History preferences + export helpers ----------
+const getHistoryPrefs = () => {
+	const s = readSettings();
+	return {
+		autoSave: s.historyAutoSave !== false, // default: automatic
+		mode: s.historyAutoSaveMode === 'close' ? 'lifecycle' : (s.historyAutoSaveMode || 'lifecycle'),
+	};
+}
+
+// Auto-save on "regular" events (Ctrl+S, new file). Manual Save Current always
+// works on its own.
+const shouldAutoSaveHistory = () => {
+	const { autoSave, mode } = getHistoryPrefs();
+	return autoSave && mode === 'all';
+}
+
+// Auto-save when the page is about to close (beforeunload).
+const shouldAutoSaveOnClose = () => {
+	const { autoSave, mode } = getHistoryPrefs();
+	return autoSave && (mode === 'all' || mode === 'lifecycle');
+}
+
+const shouldAutoSaveOnNew = () => {
+	const { autoSave, mode } = getHistoryPrefs();
+	return autoSave && (mode === 'all' || mode === 'lifecycle');
+}
 
 // ---------- Core managers ----------
 const eventBus = createEventBus();
@@ -328,9 +444,25 @@ const primaryRgb = hexToRgb(colorPalette.primary);
 if (primaryRgb) {
 	colorInspector.show({ ...primaryRgb, hex: colorPalette.primary });
 }
+// Phase 2 step-03: the inspector always reflects the shared foreground state,
+// so alpha/mirror changes (paint:primary-color-change) keep ci-swatch/ci-hex in
+// the same direction as palette writes.
+window.addEventListener('paint:primary-color-change', (event) => {
+	const hex = event.detail?.hex;
+	const rgb = hexToRgb(hex);
+	if (rgb) colorInspector.show({ ...rgb, hex });
+});
 
 const aiConnectionStore = createAiConnectionStore();
 const sidebar = new Sidebar({ canvasManager, historyManager, statusBar, palette: colorPalette, dialogService, aiConnectionStore });
+
+// Dialog URLs are owned by the router; this adapter keeps the historical call
+// shape and publishes the open dialog into app state. It is declared before
+// the feature modules that bind to it during boot.
+const setDialogUrl = (dialog, extra = {}) => {
+	router.setDialog(dialog, { tab: extra.tab ?? null, extra });
+	appState.dispatch({ type: 'dialog/changed', payload: dialog || null });
+}
 
 // ---------- Selection state + overlay drawing ----------
 const drawSelectionOutline = (region) => {
@@ -376,6 +508,7 @@ const setSelection = (region, opts = {}) => {
 		&& !sameRotationCenter(selectionRotation.selection, region)) selectionRotation = null;
 	canvasManager.selection = region;
 	statusBar.setSelection(region);
+	appState.dispatch({ type: 'selection/changed', payload: region });
 	canvasManager.clearOverlay();
 	if (region && region.w && region.h) {
 		if (canvasManager.floatingCanvas) {
@@ -568,6 +701,18 @@ const discardFloatingSelection = () => {
 	}
 }
 
+// Phase 2 step-04: one undo/redo path for every entry point (ribbon buttons,
+// the History tab, keyboard). A floating selection is dropped first so undo
+// restores the canvas, not the lifted shape.
+const runUndo = () => {
+	discardFloatingSelection();
+	historyManager.undo();
+}
+const runRedo = () => {
+	discardFloatingSelection();
+	historyManager.redo();
+}
+
 // ---------- Shared tool context ----------
 const saveToolSelection = (toolName) => {
 	try {
@@ -702,6 +847,17 @@ const originalSetActive = toolManager.setActive.bind(toolManager);
 toolManager.setActive = (name) => {
 	originalSetActive(name);
 	saveToolSelection(name);
+	appState.dispatch({ type: 'tool/changed', payload: name });
+};
+
+// Text-only clipboard paste opens the text tool prefilled at the same
+// placement anchor as image paste: current pointer, or 0,0 on a clean doc.
+const routeTextToTextTool = (text) => {
+	const isClean = canvasManager.isCleanDocument?.() === true;
+	const pt = isClean ? null : statusBar.currentPointer;
+	const point = pt ? { x: Math.floor(pt.x), y: Math.floor(pt.y) } : { x: 0, y: 0 };
+	toolManager.setActive('text');
+	toolManager.tools.get('text')?.insertTextAt?.(text, point, toolContext);
 };
 
 const clipboardManager = new ClipboardManager({
@@ -712,458 +868,43 @@ const clipboardManager = new ClipboardManager({
 	statusBar,
 	setActiveTool: (name) => toolManager.setActive(name),
 	commitFloatingSelection,
+	routeText: routeTextToTextTool,
 });
 
 // ---------- File operations ----------
-let fileHandle = null;
-const fileInput = document.getElementById('file-input');
-
-const persistSession = () => {
-	canvasManager.persistToStorage();
-}
-
-const canvasToPngBlob = (source) => new Promise((resolve) => {
-		if (typeof source?.toBlob !== 'function') return resolve(null);
-		source.toBlob((blob) => resolve(blob || null), 'image/png');
+const fileActions = initFileActions({
+	canvasManager,
+	historyManager,
+	statusBar,
+	sidebar,
+	clipboardManager,
+	setSelection,
+	commitFloatingSelection,
+	getSelection,
+	setDialogUrl,
+	shouldAutoSaveHistory,
+	shouldAutoSaveOnNew,
+	backgroundRemovalService,
+	commitFloatingPixels,
+	discardFloatingSelection,
+	bgSelect,
 });
-
-const getBackgroundRemovalInput = async () => {
-	const region = canvasManager.selection?.w && canvasManager.selection?.h
-		? { ...canvasManager.selection }
-		: null;
-	const target = canvasManager.floatingCanvas ? 'floating' : (region ? 'selection' : 'canvas');
-	const source = canvasManager.floatingCanvas
-		? canvasManager.floatingCanvas
-		: (region ? canvasManager.extractRegion(region) : canvasManager.createCompositeCanvas());
-	const blob = await canvasToPngBlob(source);
-	if (!blob) throw new Error('This browser could not prepare the image preview.');
-	return { blob, region, target };
-};
-
-const backgroundMaskEditor = createBackgroundMaskEditor({
-	root: document.getElementById('background-removal-preview-stage'),
-	overlay: document.getElementById('background-removal-mask-overlay'),
-});
-
-// Removing the background of the whole page leaves only transparent pixels,
-// so the Canvas Background setting must follow what the user now sees: switch
-// it to Transparent and let the normal change pipeline apply the mode, save
-// the settings, and refresh the segmented "Selected:" label.
-const syncCanvasBackgroundAfterRemoval = (region) => {
-	const coversWholePage = !region
-		|| (region.x <= 0 && region.y <= 0
-			&& region.w >= canvasManager.width
-			&& region.h >= canvasManager.height);
-	// Checkerboard already behaves like Transparent, so only opaque choices
-	// need to move.
-	if (!coversWholePage || ['transparent', 'checkerboard'].includes(bgSelect.value)) return;
-	bgSelect.value = 'transparent';
-	bgSelect.dispatchEvent(new Event('change'));
-};
-
-const applyBackgroundRemovalResult = async (result) => {
-	historyManager.snapshot({ force: true });
-	if (result?.target === 'floating' && canvasManager.floatingCanvas && typeof createImageBitmap === 'function') {
-		let bitmap = null;
-		try {
-			// A pasted selection is a temporary layer and is not part of the
-			// snapshot stream. Commit it only after Apply (the snapshot above still
-			// represents the pre-Apply document), then replace its region with the
-			// processed output so undo remains reliable.
-			const region = result.region || canvasManager.selection;
-			if (!region) return false;
-			commitFloatingPixels(region);
-			canvasManager.floatingCanvas = null;
-			canvasManager.flattenLayers();
-			bitmap = await createImageBitmap(result.imageBlob);
-			canvasManager.fillRegion(region, canvasManager.backgroundColor);
-			canvasManager.ctx.drawImage(bitmap, region.x, region.y, region.w, region.h);
-			canvasManager.clearOverlay();
-			setSelection(null);
-			canvasManager.markDocumentDirty();
-			persistSession();
-			syncCanvasBackgroundAfterRemoval(region);
-			statusBar.flash('Background preview applied to the active selection');
-			return true;
-		} catch {
-			return false;
-		} finally {
-			bitmap?.close?.();
-		}
-	}
-	// The preview is composed from raster and text layers. Flatten only after
-	// Apply so cancelling never changes the working document.
-	canvasManager.flattenLayers();
-	if (!result?.region) {
-		const loaded = await canvasManager.loadImageBlob(result.imageBlob, result.width, result.height);
-		if (loaded) {
-			persistSession();
-			syncCanvasBackgroundAfterRemoval(null);
-		}
-		return loaded;
-	}
-	if (typeof createImageBitmap !== 'function') return false;
-	let bitmap = null;
-	try {
-		bitmap = await createImageBitmap(result.imageBlob);
-		canvasManager.fillRegion(result.region, canvasManager.backgroundColor);
-		canvasManager.ctx.drawImage(bitmap, result.region.x, result.region.y, result.region.w, result.region.h);
-		canvasManager.clearOverlay();
-		setSelection(null);
-		canvasManager.markDocumentDirty();
-		persistSession();
-		syncCanvasBackgroundAfterRemoval(result.region);
-		return true;
-	} catch {
-		return false;
-	} finally {
-		bitmap?.close?.();
-	}
-};
-
-const backgroundRemovalController = createBackgroundRemovalController({
-	dialog: document.getElementById('background-removal-dialog'),
-	message: document.getElementById('background-removal-message'),
-	phase: document.getElementById('background-removal-phase'),
-	progress: document.getElementById('background-removal-progress'),
-	preview: document.getElementById('background-removal-preview'),
-	applyButton: document.getElementById('background-removal-apply'),
-	cancelButton: document.getElementById('background-removal-cancel'),
-	closeButton: document.getElementById('background-removal-close'),
-	previewButton: document.getElementById('background-removal-preview-button'),
-	service: backgroundRemovalService,
-	getInput: getBackgroundRemovalInput,
-	getOptions: () => ({
-		tolerance: Number(document.getElementById('background-removal-tolerance')?.value || 30),
-		backgroundColor: document.getElementById('background-removal-color')?.value || '#ffffff',
-		mode: document.getElementById('background-removal-mode')?.value || 'color-key',
-		edgeSoftness: Number(document.getElementById('background-removal-softness')?.value || 25),
-		...backgroundMaskEditor.getRegions(),
-	}),
-	applyResult: applyBackgroundRemovalResult,
-	onOpen: () => backgroundMaskEditor.clear(),
-	onClose: () => backgroundMaskEditor.clear(),
-});
-
-document.getElementById('background-removal-tolerance')?.addEventListener('input', (event) => {
-	const value = document.getElementById('background-removal-tolerance-value');
-	if (value) value.value = event.target.value;
-	if (value) value.textContent = event.target.value;
-});
-document.getElementById('background-removal-softness')?.addEventListener('input', (event) => {
-	const value = document.getElementById('background-removal-softness-value');
-	if (value) value.textContent = event.target.value;
-});
-document.getElementById('background-removal-sample')?.addEventListener('click', () => {
-	const source = canvasManager.floatingCanvas || canvasManager.canvas;
-	try {
-		const pixel = source?.getContext?.('2d', { willReadFrequently: true })?.getImageData(0, 0, 1, 1)?.data;
-		if (!pixel || pixel[3] === 0) return;
-		const hex = [...pixel.slice(0, 3)].map((channel) => Number(channel).toString(16).padStart(2, '0')).join('');
-		const color = document.getElementById('background-removal-color');
-		if (color) color.value = `#${hex}`;
-	} catch {
-		statusBar.flash('Could not sample the source color');
-	}
-});
-const setBackgroundMaskTool = (tool) => {
-	backgroundMaskEditor.setTool(tool);
-	document.getElementById('background-removal-keep')?.setAttribute('aria-pressed', String(tool === 'keep'));
-	document.getElementById('background-removal-remove')?.setAttribute('aria-pressed', String(tool === 'remove'));
-};
-document.getElementById('background-removal-keep')?.addEventListener('click', () => setBackgroundMaskTool('keep'));
-document.getElementById('background-removal-remove')?.addEventListener('click', () => setBackgroundMaskTool('remove'));
-document.getElementById('background-removal-clear-mask')?.addEventListener('click', () => backgroundMaskEditor.clear());
-document.getElementById('background-removal-expand')?.addEventListener('click', (event) => {
-	const dialog = document.getElementById('background-removal-dialog');
-	const expanded = dialog?.classList.toggle('is-expanded') === true;
-	event.currentTarget.setAttribute('aria-pressed', String(expanded));
-	event.currentTarget.textContent = expanded ? 'Compact' : 'Expand';
-});
-document.getElementById('background-removal-zoom')?.addEventListener('input', (event) => {
-	const scale = Math.max(0.5, Number(event.target.value) / 100);
-	const stage = document.getElementById('background-removal-preview-stage');
-	if (stage) stage.style.setProperty('--background-preview-scale', String(scale));
-});
-
-const selectAll = () => {
-	setSelection({ x: 0, y: 0, w: canvasManager.width, h: canvasManager.height });
-}
-
-const deleteSelection = () => {
-	const sel = getSelection();
-	if (!sel || !sel.w || !sel.h) return false;
-	if (canvasManager.floatingCanvas) {
-		canvasManager.floatingCanvas = null;
-		setSelection(null);
-	} else {
-		historyManager.snapshot();
-		canvasManager.fillRegion(sel, canvasManager.backgroundColor);
-		setSelection(null);
-	}
-	persistSession();
-	statusBar.flash('Deleted selection');
-	return true;
-}
-
-const newFile = () => {
-	if (shouldAutoSaveOnNew()) {
-		void doNewFile();
-		return;
-	}
-	const dialog = document.getElementById('new-file-dialog');
-	const button = document.getElementById('btn-new').getBoundingClientRect();
-	dialog.style.left = '';
-	dialog.style.right = '';
-	if (document.documentElement?.dir === 'rtl') {
-		dialog.style.right = `${Math.max(12, Math.round(window.innerWidth - button.right))}px`;
-	} else {
-		dialog.style.left = `${Math.max(12, Math.round(button.left))}px`;
-	}
-	dialog.style.top = `${Math.round(button.bottom + 8)}px`;
-	dialog.showModal();
-	setDialogUrl('new');
-	document.getElementById('new-file-ok')?.focus();
-}
-
-const doNewFile = async () => {
-	const { width, height } = getDefaultCanvasSize();
-	const admission = assessImageAdmission({ width, height });
-	if (!admission.ok) {
-		statusBar.flash(admission.message);
-		return;
-	}
-	if (shouldAutoSaveOnNew()) await sidebar.saveCurrentToHistory();
-	else if (shouldAutoSaveHistory()) await sidebar.saveCurrentToHistory();
-	discardFloatingSelection();
-	historyManager.clear();
-	fileHandle = null;
-	canvasManager.loadFromSource(makeBlankSource(width, height));
-	setSelection(null);
-	persistSession();
-	document.getElementById('new-file-dialog').close();
-	if (new URLSearchParams(window.location.search).get('dialog') === 'new') setDialogUrl(null);
-}
-
-const makeBlankSource = (w, h) => {
-	const c = document.createElement('canvas');
-	c.width = w;
-	c.height = h;
-	const ctx = c.getContext('2d');
-	if (canvasManager.backgroundMode !== 'transparent') {
-		ctx.fillStyle = canvasManager.backgroundColor;
-		ctx.fillRect(0, 0, w, h);
-	} else {
-		ctx.clearRect(0, 0, w, h);
-	}
-	return c;
-}
-
-const getDefaultCanvasSize = () => {
-	const value = document.getElementById('setting-default-canvas-size')?.value || '800x600';
-	const customWidth = Number(document.getElementById('setting-default-canvas-width')?.value);
-	const customHeight = Number(document.getElementById('setting-default-canvas-height')?.value);
-	const source = value === 'custom' && customWidth > 0 && customHeight > 0
-		? `${customWidth}x${customHeight}`
-		: value;
-	const [width, height] = source.split('x').map(Number);
-	return Number.isFinite(width) && Number.isFinite(height) && width > 0 && height > 0
-		? { width, height }
-		: { width: 800, height: 600 };
-}
-
-const openFile = () => {
-	fileInput.dataset.mode = 'open';
-	fileInput.click();
-}
-
-const importFile = () => {
-	fileInput.dataset.mode = 'import';
-	fileInput.click();
-}
-
-const openImageFile = async (file) => {
-	let bitmap = null;
-	try {
-		bitmap = await createImageBitmap(file);
-		const admission = assessImageAdmission({ width: bitmap.width, height: bitmap.height });
-		if (!admission.ok) {
-			statusBar.flash(admission.message);
-			return false;
-		}
-		discardFloatingSelection();
-		historyManager.snapshot();
-		if (!canvasManager.loadFromSource(bitmap)) return false;
-		fileHandle = null;
-		setSelection(null);
-		persistSession();
-		statusBar.flash(`Opened ${file.name}`);
-		return true;
-	} catch (error) {
-		console.error('Open image failed:', error);
-		statusBar.flash('Image could not be decoded');
-		return false;
-	} finally {
-		bitmap?.close?.();
-	}
-}
-
-const importImageFile = async (file) => {
-	const result = await clipboardManager.insertImageBlob(file, {
-		sourceLabel: `Imported ${file.name}`,
-	});
-	if (result) fileHandle = null;
-	return result;
-}
-
-fileInput.addEventListener('change', async (e) => {
-	const file = e.target.files[0];
-	const mode = fileInput.dataset.mode || 'open';
-	e.target.value = '';
-	fileInput.dataset.mode = '';
-	if (!file) return;
-	try {
-		if (mode === 'import') {
-			await importImageFile(file);
-			return;
-		}
-		await openImageFile(file);
-	} catch (error) {
-		console.error('Image import failed:', error);
-		statusBar.flash('Image could not be decoded');
-	}
-});
-
-const save = async () => {
-	commitFloatingSelection();
-	if (shouldAutoSaveHistory()) sidebar.saveCurrentToHistory();
-	if (window.showSaveFilePicker) {
-		try {
-			if (!fileHandle) {
-				fileHandle = await window.showSaveFilePicker({
-					suggestedName: 'untitled.png',
-					types: [{ description: 'PNG image', accept: { 'image/png': ['.png'] } }],
-				});
-			}
-			const writable = await fileHandle.createWritable();
-			const blob = await canvasManager.toBlob('image/png');
-			await writable.write(blob);
-			await writable.close();
-			persistSession();
-			statusBar.flash('Saved');
-			document.title = 'paint - ' + fileHandle.name;
-			showToast('Successfully saved to ' + fileHandle.name, true);
-			return;
-		} catch (err) {
-			if (err.name === 'AbortError') return;
-			console.warn('File System Access save failed, falling back to download:', err);
-		}
-	}
-	await downloadPNG();
-}
-
-const downloadPNG = async () => {
-	const blob = await canvasManager.toBlob('image/png');
-	if (!(blob instanceof Blob) || !globalThis.URL?.createObjectURL) {
-		statusBar.flash('PNG download could not be prepared');
-		return false;
-	}
-	const url = URL.createObjectURL(blob);
-	try {
-		const a = document.createElement('a');
-		a.href = url;
-		a.download = 'untitled.png';
-		a.click();
-		statusBar.flash('Downloaded as PNG');
-		document.title = 'paint - untitled.png';
-		showToast('Successfully downloaded untitled.png', true);
-		return true;
-	} finally {
-		window.setTimeout(() => URL.revokeObjectURL(url), 0);
-	}
-}
-
-const SAVE_FORMATS = Object.freeze({
-	png: Object.freeze({ mime: 'image/png', extension: 'png' }),
-	jpeg: Object.freeze({ mime: 'image/jpeg', extension: 'jpg' }),
-	webp: Object.freeze({ mime: 'image/webp', extension: 'webp' }),
-});
-
-const saveImageAs = async (format) => {
-	if (format === 'png') return save();
-	const selectedFormat = SAVE_FORMATS[format];
-	if (!selectedFormat) return false;
-	commitFloatingSelection();
-	if (shouldAutoSaveHistory()) sidebar.saveCurrentToHistory();
-
-	try {
-		let source = canvasManager.canvas;
-		if (format === 'jpeg') {
-			const flattened = document.createElement('canvas');
-			flattened.width = canvasManager.width;
-			flattened.height = canvasManager.height;
-			const context = flattened.getContext('2d');
-			if (!context) throw new Error('Export canvas is unavailable');
-			context.fillStyle = '#fff';
-			context.fillRect(0, 0, flattened.width, flattened.height);
-			context.drawImage(source, 0, 0);
-			source = flattened;
-		}
-		const blob = await new Promise((resolve) => source.toBlob(resolve, selectedFormat.mime, 0.92));
-		if (!(blob instanceof Blob) || blob.type !== selectedFormat.mime) {
-			statusBar.flash(t('ui.exportFormatUnavailable'));
-			return false;
-		}
-		const url = URL.createObjectURL(blob);
-		try {
-			const link = document.createElement('a');
-			link.href = url;
-			link.download = `untitled.${selectedFormat.extension}`;
-			link.click();
-			persistSession();
-			const message = t('ui.exportedImage', { format: selectedFormat.extension.toUpperCase() });
-			statusBar.flash(message);
-			showToast(message, true);
-			return true;
-		} finally {
-			window.setTimeout(() => URL.revokeObjectURL(url), 0);
-		}
-	} catch (error) {
-		console.warn('Image export failed:', error);
-		statusBar.flash(t('ui.exportFailed'));
-		return false;
-	}
-}
-
-const showToast = (msg, success = true) => {
-	const toast = document.createElement('div');
-	toast.className = 'toast ' + (success ? 'toast-success' : 'toast-error');
-	toast.textContent = msg;
-	document.body.appendChild(toast);
-	setTimeout(() => {
-		toast.classList.add('hide');
-		setTimeout(() => toast.remove(), 300);
-	}, 3000);
-}
-
-const crop = () => {
-	const sel = getSelection();
-	if (!sel || !sel.w || !sel.h) {
-		statusBar.flash('Select an area first');
-		return;
-	}
-	if (canvasManager.floatingCanvas) {
-		commitFloatingPixels(sel);
-		canvasManager.floatingCanvas = null;
-	}
-	canvasManager.flattenLayers();
-	historyManager.snapshot();
-	const region = canvasManager.extractRegion(sel);
-	canvasManager.loadFromSource(region);
-	setSelection(null);
-	persistSession();
-}
-
+const {
+	fileInput,
+	persistSession,
+	backgroundRemovalController,
+	selectAll,
+	deleteSelection,
+	newFile,
+	doNewFile,
+	getDefaultCanvasSize,
+	openFile,
+	importFile,
+	save,
+	saveImageAs,
+	showToast,
+	crop,
+} = fileActions;
 // ---------- Transformations ----------
 const applyTransformation = (transformFn) => {
 	// A menu transform starts a new operation; do not use a previous rotate
@@ -1363,132 +1104,14 @@ document.querySelectorAll('dialog').forEach((dialog) => dialog.addEventListener(
 }));
 
 // ---------- Resize-canvas dialog ----------
-const resizeDialog = document.getElementById('resize-dialog');
-const resizeWidthInput = document.getElementById('resize-width');
-const resizeHeightInput = document.getElementById('resize-height');
-const resizePercentInput = document.getElementById('resize-percent');
-const resizeTargetStatus = document.getElementById('resize-target-status');
-const keepAspectInput = document.getElementById('resize-keep-aspect');
-let aspectRatio = 1;
-let resizeTarget = { kind: 'canvas', x: 0, y: 0, width: 800, height: 600 };
-
-const activeResizeTarget = () => {
-	const selection = canvasManager.selection;
-	if (selection?.w > 0 && selection?.h > 0) {
-		return {
-			kind: 'selection',
-			x: selection.x,
-			y: selection.y,
-			width: selection.w,
-			height: selection.h,
-		};
-	}
-	return { kind: 'canvas', x: 0, y: 0, width: canvasManager.width, height: canvasManager.height };
-}
-
-const syncResizePercent = () => {
-	if (!resizePercentInput || !resizeTarget.width) return;
-	const width = Number(resizeWidthInput.value);
-	resizePercentInput.value = String(Math.max(1, Math.round((width / resizeTarget.width) * 100)));
-}
-
-const setResizeTargetFields = () => {
-	resizeWidthInput.value = resizeTarget.width;
-	resizeHeightInput.value = resizeTarget.height;
-	aspectRatio = resizeTarget.width / Math.max(1, resizeTarget.height);
-	keepAspectInput.checked = true;
-	resizePercentInput.value = '100';
-	if (resizeTargetStatus) {
-		resizeTargetStatus.textContent = resizeTarget.kind === 'selection'
-			? `Selection ${resizeTarget.width} × ${resizeTarget.height}px`
-			: 'Whole canvas';
-	}
-}
-
-const openResizeDialog = () => {
-	resizeTarget = activeResizeTarget();
-	setResizeTargetFields();
-	resizeDialog.showModal();
-	setDialogUrl('resize');
-}
-
-document.querySelectorAll('[data-resize-preset]').forEach((button) => {
-	button.addEventListener('click', () => {
-		const [width, height] = button.dataset.resizePreset.split('x').map(Number);
-		resizeWidthInput.value = width;
-		resizeHeightInput.value = height;
-		syncResizePercent();
-		document.querySelectorAll('[data-resize-preset]').forEach((item) => item.classList.toggle('selected', item === button));
-	});
-});
-
-resizeWidthInput.addEventListener('input', () => {
-	if (keepAspectInput.checked) resizeHeightInput.value = Math.round(resizeWidthInput.value / aspectRatio);
-	syncResizePercent();
-});
-resizeHeightInput.addEventListener('input', () => {
-	if (keepAspectInput.checked) resizeWidthInput.value = Math.round(resizeHeightInput.value * aspectRatio);
-	syncResizePercent();
-});
-resizePercentInput.addEventListener('input', () => {
-	const percent = Math.max(1, Math.min(1000, Number(resizePercentInput.value) || 100));
-	resizePercentInput.value = String(percent);
-	resizeWidthInput.value = Math.max(1, Math.round(resizeTarget.width * percent / 100));
-	resizeHeightInput.value = Math.max(1, Math.round(resizeTarget.height * percent / 100));
-});
-
-document.getElementById('resize-cancel').addEventListener('click', () => resizeDialog.close());
-resizeDialog.addEventListener('close', () => {
-	if (new URLSearchParams(window.location.search).get('dialog') === 'resize') setDialogUrl(null);
-});
-document.getElementById('resize-form').addEventListener('submit', () => {
-	const w = parseInt(resizeWidthInput.value, 10);
-	const h = parseInt(resizeHeightInput.value, 10);
-	if (w > 0 && h > 0) {
-		const requiredWidth = resizeTarget.kind === 'selection'
-			? Math.max(canvasManager.width, resizeTarget.x + w)
-			: w;
-		const requiredHeight = resizeTarget.kind === 'selection'
-			? Math.max(canvasManager.height, resizeTarget.y + h)
-			: h;
-		const admission = assessImageAdmission({
-			width: w,
-			height: h,
-			targetWidth: requiredWidth,
-			targetHeight: requiredHeight,
-		});
-		if (!admission.ok) {
-			statusBar.flash(admission.message);
-			return;
-		}
-		historyManager.snapshot();
-		if (resizeTarget.kind === 'selection') {
-			const source = canvasManager.floatingCanvas || canvasManager.extractRegion({
-				x: resizeTarget.x,
-				y: resizeTarget.y,
-				w: resizeTarget.width,
-				h: resizeTarget.height,
-			});
-			if (!canvasManager.floatingCanvas) {
-				canvasManager.fillRegion({
-					x: resizeTarget.x,
-					y: resizeTarget.y,
-					w: resizeTarget.width,
-					h: resizeTarget.height,
-				}, canvasManager.backgroundColor);
-				canvasManager.floatingCanvas = source;
-			}
-			if (requiredWidth !== canvasManager.width || requiredHeight !== canvasManager.height) {
-				if (!canvasManager.resize(requiredWidth, requiredHeight)) return;
-			}
-			canvasManager.floatingCanvas = scaleCanvas(source, w, h);
-			setSelection({ x: resizeTarget.x, y: resizeTarget.y, w, h });
-		} else {
-			commitFloatingSelection();
-			if (!canvasManager.resize(w, h)) return;
-		}
-		persistSession();
-	}
+const { openResizeDialog } = initResizeDialog({
+	canvasManager,
+	historyManager,
+	statusBar,
+	setSelection,
+	commitFloatingSelection,
+	persistSession,
+	setDialogUrl,
 });
 
 // ---------- Settings dialog ----------
@@ -1499,26 +1122,12 @@ const sbCheckbox = document.getElementById('setting-show-status-bar');
 const ciCheckbox = document.getElementById('setting-show-color-inspector');
 const aiCheckbox = document.getElementById('setting-show-ai-chat');
 const directionSelect = document.getElementById('setting-direction');
-const bgSelect = document.getElementById('setting-canvas-bg');
 const solidBackgroundColorInput = document.getElementById('setting-solid-background-color');
 const defaultCanvasSizeSelect = document.getElementById('setting-default-canvas-size');
 const defaultCanvasWidthInput = document.getElementById('setting-default-canvas-width');
 const defaultCanvasHeightInput = document.getElementById('setting-default-canvas-height');
 const defaultZoomSelect = document.getElementById('setting-default-zoom');
 const defaultZoomCustomInput = document.getElementById('setting-default-zoom-custom');
-const SETTINGS_KEY = STORAGE_KEYS.settings;
-const settingsStore = createSettingsStore({
-	storage: globalThis.localStorage,
-	key: SETTINGS_KEY,
-	defaults: DEFAULT_SETTINGS,
-	validators: {
-		canvasBackground: (value) => ['none', 'solid', 'transparent', 'checkerboard', 'grid'].includes(value),
-		solidBackgroundColor: (value) => typeof value === 'string' && /^#[0-9a-f]{6}$/i.test(value),
-		defaultZoom: (value) => Number.isFinite(Number(value)) && Number(value) > 0,
-		interfaceDirection: (value) => ['auto', 'ltr', 'rtl'].includes(value),
-		historyAutoSaveMode: (value) => ['all', 'close', 'lifecycle'].includes(value),
-	},
-});
 const shortcutManager = createShortcutManager({ bindings: settingsStore.get().shortcuts });
 settingsStore.subscribe((state) => shortcutManager.replace(state.shortcuts));
 const settingsRegistry = createSettingsRegistry();
@@ -1526,6 +1135,10 @@ settingsRegistry.registerStorageKey(STORAGE_KEYS.textHistory);
 settingsRegistry.registerStorageKey(STORAGE_KEYS.settingsTab);
 settingsRegistry.registerResetHandler(() => colorPalette.resetToDefaults());
 settingsRegistry.registerResetHandler(() => sidebar.resetSettings());
+// Phase 2 step-03: the Shapes mirror and the ribbon favorites row subscribe to
+// this one SettingsStore value (favoriteShapes) - no second favorites source.
+configureShapesFavorites(settingsStore);
+initRibbonShapeFavorites();
 const deterministicAi = createDeterministicCommandService({
 	setTheme: (theme) => {
 		dmCheckbox.checked = theme === 'dark';
@@ -1547,22 +1160,6 @@ const deterministicAi = createDeterministicCommandService({
 	},
 });
 sidebar.setAiCommandService(deterministicAi);
-
-const setDialogUrl = (dialog, extra = {}) => {
-	const params = new URLSearchParams(window.location.search);
-	if (dialog) params.set('dialog', dialog);
-	else {
-		params.delete('dialog');
-		params.delete('tab');
-	}
-	if (dialog !== 'settings') params.delete('tab');
-	Object.entries(extra).forEach(([key, value]) => {
-		if (value) params.set(key, value);
-		else params.delete(key);
-	});
-	const query = params.toString();
-	window.history.replaceState(null, '', `${window.location.pathname}${query ? `?${query}` : ''}${window.location.hash}`);
-}
 
 const settingsDialogController = createSettingsDialog({
 	dialog: settingsDialog,
@@ -1704,83 +1301,15 @@ const segmentedChoices = [...document.querySelectorAll('.choice-summary')].map((
 	select: document.getElementById(root.dataset.selectId),
 }));
 const renderSegmentedChoices = () => { segmentedChoices.forEach((choice) => choice.render()); }
-document.documentElement?.addEventListener('paint:locale-change', renderSegmentedChoices);
-
-const readSettings = () => {
-	return settingsStore.get();
-}
-
-const getRibbonGroupKey = (groupSection) => groupSection?.dataset.ribbonKey
-	|| [...(groupSection?.classList || [])].find((name) => name.startsWith('ribbon-group-'))?.slice('ribbon-group-'.length)
-	|| groupSection?.querySelector('.ribbon-group-title')?.textContent.trim();
-
-const saveSettings = () => {
-	try {
-		const ribbonVisibility = {};
-		const buttonVisibility = {};
-		document.querySelectorAll('.ribbon-group').forEach((groupSection) => {
-			const title = groupSection.querySelector('.ribbon-group-title');
-			if (!title) return;
-			ribbonVisibility[getRibbonGroupKey(groupSection)] = [...groupSection.children]
-				.filter((child) => !child.classList.contains('ribbon-group-title') && child.id !== 'file-input')
-				.some((child) => !child.hidden && child.style.display !== 'none');
-			groupSection.querySelectorAll('.rbtn[id]').forEach((button) => {
-				buttonVisibility[button.id] = !button.hidden && button.style.display !== 'none';
-			});
-		});
-		const historyAutoSave = (document.getElementById('history-auto-save-toggle')?.checked
-			?? document.getElementById('setting-history-auto-save')?.checked) ?? true;
-		const historyAutoSaveMode = document.getElementById('setting-history-auto-save-mode')?.value || 'all';
-		settingsStore.set({
-			darkMode: dmCheckbox.checked,
-			showStatusBar: sbCheckbox.checked,
-			showColorInspector: ciCheckbox.checked,
-		showAiChat: aiCheckbox?.checked === true,
-		interfaceDirection: directionSelect?.value || 'auto',
-			canvasBackground: bgSelect.value,
-			solidBackgroundColor: solidBackgroundColorInput?.value || DEFAULT_SETTINGS.solidBackgroundColor,
-			defaultCanvasSize: defaultCanvasSizeSelect?.value || '800x600',
-			defaultCanvasWidth: Number(defaultCanvasWidthInput?.value) || 800,
-			defaultCanvasHeight: Number(defaultCanvasHeightInput?.value) || 600,
-			defaultZoom: getDefaultZoom(),
-			historyAutoSave,
-			historyAutoSaveMode,
-			restoreLastImage: document.getElementById('setting-restore-last-image')?.checked === true,
-			ribbonLayout: { ...ribbonLayoutManager.state },
-			ribbonVisibility,
-			buttonVisibility,
-			showRotateInSelection: document.getElementById('rotate-selection-toggle')?.checked === true,
-			shortcuts: shortcutManager.get(),
-		});
-	} catch (error) { console.warn('Unable to save settings:', error); }
-}
-
-// ---------- History preferences + export helpers ----------
-const getHistoryPrefs = () => {
-	const s = readSettings();
-	return {
-		autoSave: s.historyAutoSave !== false, // default: automatic
-		mode: s.historyAutoSaveMode === 'close' ? 'lifecycle' : (s.historyAutoSaveMode || 'lifecycle'),
-	};
-}
-
-// Auto-save on "regular" events (Ctrl+S, new file). Manual Save Current always
-// works on its own.
-const shouldAutoSaveHistory = () => {
-	const { autoSave, mode } = getHistoryPrefs();
-	return autoSave && mode === 'all';
-}
-
-// Auto-save when the page is about to close (beforeunload).
-const shouldAutoSaveOnClose = () => {
-	const { autoSave, mode } = getHistoryPrefs();
-	return autoSave && (mode === 'all' || mode === 'lifecycle');
-}
-
-const shouldAutoSaveOnNew = () => {
-	const { autoSave, mode } = getHistoryPrefs();
-	return autoSave && (mode === 'all' || mode === 'lifecycle');
-}
+document.documentElement?.addEventListener('paint:locale-change', (event) => {
+renderSegmentedChoices();
+	// History preferences row: re-run both syncs so the auto-save state and the
+	// limit summary are rendered in the new language too.
+	syncHistoryControls();
+	syncHistoryLimitSelect(Number(readSettings().historyLimit ?? DEFAULT_SETTINGS.historyLimit));
+appState.dispatch({ type: 'locale/changed', payload: event.detail?.locale ?? null });
+appState.dispatch({ type: 'direction/changed', payload: event.detail?.direction ?? document.documentElement.dir });
+});
 
 const syncHistoryControls = (saved) => {
 	const prefs = saved
@@ -1795,8 +1324,8 @@ const syncHistoryControls = (saved) => {
 	if (m) m.value = prefs.mode;
 	if (restore) restore.checked = readSettings().restoreLastImage === true;
 	const status = document.getElementById('history-auto-status');
-	const labels = { lifecycle: t('ui.autoSaveLifecycle'), all: t('ui.allAutomaticEvents'), manual: t('ui.onlyManualShort') };
-	if (status) status.textContent = prefs.autoSave ? (labels[prefs.mode] || prefs.mode) : t('ui.off');
+	const modeKeys = { lifecycle: 'ui.autoSaveLifecycle', all: 'ui.allAutomaticEvents', manual: 'ui.onlyManualShort' };
+	setLocalizedText(status, prefs.autoSave ? (modeKeys[prefs.mode] ?? null) : 'ui.off');
 	renderSegmentedChoices();
 }
 
@@ -1806,7 +1335,16 @@ const syncHistoryLimitSelect = (value) => {
 	if (sidebarSel) sidebarSel.value = String(value);
 	if (settingsSel) settingsSel.value = String(value);
 	const limitStatus = document.getElementById('history-limit-status');
-	if (limitStatus) limitStatus.textContent = value > 0 ? t('ui.countImages', { count: value }) : t('ui.off');
+	// Concise one-line summary (Phase 2 step-04): the row shows the plain
+	// number; the Settings dialog keeps the worded "50 images" labels.
+	if (value > 0) {
+		if (limitStatus) {
+			limitStatus.textContent = String(value);
+			limitStatus.removeAttribute('data-i18n-runtime');
+		}
+	} else {
+		setLocalizedText(limitStatus, 'ui.off');
+	}
 	renderSegmentedChoices();
 }
 
@@ -1880,13 +1418,35 @@ const exportAllHistory = async () => {
 	statusBar.flash(`Exported ${sessions.length} images`);
 }
 
+// Phase 3 / step-01: Settings is the only owner of the save limit. Both selects
+// and the sidebar summary are views; IndexedDB keeps only the enforcement copy.
 const applyHistoryLimit = (val) => {
 	const parsed = parseInt(val, 10);
-	const safe = Number.isNaN(parsed) ? 50 : parsed;
+	const safe = HISTORY_LIMIT_OPTIONS.includes(parsed)
+		? parsed
+		: Number(readSettings().historyLimit ?? DEFAULT_SETTINGS.historyLimit);
+	settingsStore.set({ historyLimit: safe });
 	syncHistoryLimitSelect(safe);
 	if (sidebar?.globalHistory?.db) {
 		sidebar.globalHistory.saveSettings(safe, safe > 0);
 	}
+}
+
+// Startup restore + one-time migration: when the store still holds the default
+// and IndexedDB has another valid limit (someone changed it before the setting
+// existed), adopt the IndexedDB value so their choice is not lost.
+const restoreHistoryLimit = () => {
+	const stored = Number(readSettings().historyLimit);
+	const indexed = Number(sidebar.globalHistory.maxHistory);
+	const migrateFromIndexedDb = stored === DEFAULT_SETTINGS.historyLimit
+		&& HISTORY_LIMIT_OPTIONS.includes(indexed)
+		&& indexed !== stored;
+	const limit = migrateFromIndexedDb
+		? indexed
+		: (HISTORY_LIMIT_OPTIONS.includes(stored) ? stored : DEFAULT_SETTINGS.historyLimit);
+	if (limit !== stored) settingsStore.set({ historyLimit: limit });
+	syncHistoryLimitSelect(limit);
+	if (limit !== indexed) sidebar.globalHistory.saveSettings(limit, limit > 0);
 }
 
 const applyHistoryState = () => {
@@ -2285,7 +1845,7 @@ const populateRibbonSettings = () => {
 		details.className = 'ribbon-setting-details';
 		details.dataset.tag = `ribbon-group-details-${groups.indexOf(groupSection)}`;
 		details.textContent = t('ui.details');
-		details.addEventListener('click', () => sidebar.showGroupSettings(title.textContent, groupSection));
+		details.addEventListener('click', () => sidebar.openGroupSettings(groupSection));
 		row.append(label, details);
 		container.appendChild(row);
 	});
@@ -2311,7 +1871,7 @@ document.getElementById('settings-reset').addEventListener('click', async () => 
 
 settingsDialog.addEventListener('close', () => {
 	browserInfoPanel.deactivate();
-	if (new URLSearchParams(window.location.search).get('dialog') === 'settings') setDialogUrl(null);
+	if (router.param('dialog') === 'settings') setDialogUrl(null);
 });
 document.getElementById('settings-close').addEventListener('click', () => settingsDialog.close());
 directionSelect?.addEventListener('change', () => {
@@ -2440,7 +2000,7 @@ if (newFileDialog) {
 	document.getElementById('new-file-ok').addEventListener('click', doNewFile);
 	document.getElementById('new-file-cancel').addEventListener('click', () => newFileDialog.close());
 	newFileDialog.addEventListener('close', () => {
-		if (new URLSearchParams(window.location.search).get('dialog') === 'new') setDialogUrl(null);
+		if (router.param('dialog') === 'new') setDialogUrl(null);
 	});
 }
 
@@ -2478,9 +2038,8 @@ solidBackgroundColorInput?.addEventListener('input', (event) => {
 applySavedSettings();
 
 const restoreDialogFromUrl = () => {
-	const params = new URLSearchParams(window.location.search);
-	const dialog = params.get('dialog');
-	if (dialog === 'settings') openSettingsDialog(params.get('tab') || getLastSettingsTab());
+	const { dialog, tab } = router.resolveDeepLink();
+	if (dialog === 'settings') openSettingsDialog(tab || getLastSettingsTab());
 	else if (dialog === 'resize') openResizeDialog();
 	else if (dialog === 'new' && newFileDialog && !newFileDialog.open) newFileDialog.showModal();
 }
@@ -2541,8 +2100,8 @@ const toolbar = new Toolbar({
 		copy: () => clipboardManager.copy(),
 		crop,
 		openResizeDialog,
-		undo: () => { discardFloatingSelection(); historyManager.undo(); },
-		redo: () => { discardFloatingSelection(); historyManager.redo(); },
+		undo: runUndo,
+		redo: runRedo,
 		setPrimaryColor: (hex, alpha) => colorPalette.setPrimary(hex, alpha),
 	},
 });
@@ -2582,6 +2141,11 @@ renderTextStyleControls();
 
 // ---------- Sidebar Init ----------
 document.getElementById('btn-history-panel').addEventListener('click', () => sidebar.toggleHistory());
+// Phase 2 step-04: the History tab's undo/redo buttons use the same path as
+// data-tag="btn-undo" / "btn-redo" and Ctrl+Z / Ctrl+Shift+Z.
+document.getElementById('history-undo-btn')?.addEventListener('click', runUndo);
+document.getElementById('history-redo-btn')?.addEventListener('click', runRedo);
+sidebar.setHistoryDeepLinks({ openPreferences: () => openSettingsDialog('history') });
 document.getElementById('btn-ai-chat').addEventListener('click', () => sidebar.toggleAi());
 document.getElementById('history-settings-link')?.addEventListener('click', () => openSettingsDialog('history'));
 
@@ -2589,13 +2153,22 @@ document.querySelectorAll('.ribbon-group-title').forEach(titleEl => {
 	titleEl.addEventListener('click', () => {
 		const groupSection = titleEl.closest('.ribbon-group');
 		if (groupSection) {
-			sidebar.showGroupSettings(titleEl.textContent, groupSection);
+			sidebar.openGroupSettings(groupSection);
 		}
 	});
 });
 
 // ---------- File / Storage logic ----------
-historyManager.onChange = (canUndo, canRedo) => toolbar.setUndoRedoEnabled(canUndo, canRedo);
+// Phase 2 step-04: one state event feeds the ribbon buttons, the sidebar
+// History tab, and any mounted mirror action (no polling on any surface).
+window.addEventListener(EVENTS.historyChanged, (event) => {
+	const canUndo = event.detail?.canUndo === true;
+	const canRedo = event.detail?.canRedo === true;
+	toolbar.setUndoRedoEnabled(canUndo, canRedo);
+	sidebar.syncHistoryControls(canUndo, canRedo);
+	sidebar.syncRibbonMirror();
+	appState.dispatch({ type: 'history/changed', payload: { canUndo, canRedo } });
+});
 
 let lifecycleSnapshotQueued = false;
 const queueLifecycleHistorySnapshot = () => {
@@ -2644,7 +2217,7 @@ saveToolSelection(savedTool);
 (async () => {
 	await sidebar.finishInit();
 	await sidebar.flushPendingAutoSave();
-	syncHistoryLimitSelect(sidebar.globalHistory.maxHistory);
+	restoreHistoryLimit();
 	renderSegmentedChoices();
 })();
 
@@ -2721,9 +2294,8 @@ window.addEventListener('keydown', (e) => {
 	if (action === SHORTCUT_ACTIONS.undo || action === SHORTCUT_ACTIONS.redo) {
 		if (ownsTextEditing(activeElement)) return;
 		e.preventDefault();
-		discardFloatingSelection();
-		if (action === SHORTCUT_ACTIONS.undo) historyManager.undo();
-		else historyManager.redo();
+		if (action === SHORTCUT_ACTIONS.undo) runUndo();
+		else runRedo();
 		return;
 	}
 	if (action === SHORTCUT_ACTIONS.selectAll) {
@@ -2805,6 +2377,15 @@ document.addEventListener('paste', async (e) => {
 				console.error('Paste failed:', err);
 				statusBar.flash('Paste failed - unsupported image data');
 			}
+			return;
+		}
+		// Image-less paste: route text/plain into the text tool instead of
+		// doing nothing. Still clipboardData only - Cmd+V never calls
+		// navigator.clipboard.read().
+		const text = e.clipboardData?.getData('text/plain');
+		if (text && text.trim()) {
+			e.preventDefault();
+			routeTextToTextTool(text);
 			return;
 		}
 	}

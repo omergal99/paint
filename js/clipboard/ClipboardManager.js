@@ -8,12 +8,13 @@
 //          main.js), which carries the image with no permission prompt on any
 //          platform; navigator.clipboard.read() remains the toolbar-button
 //          fallback. A last-copied in-app blob keeps paste working even when
-//          the OS clipboard API is denied.
+//          the OS clipboard API is denied. Text-only clipboard content routes
+//          into the text tool through the injected routeText callback.
 
 import { assessImageAdmission } from '../storage/ImageAdmission.js';
 
 export class ClipboardManager {
-  constructor({ canvasManager, historyManager, getSelection, setSelection, statusBar, setActiveTool, commitFloatingSelection }) {
+  constructor({ canvasManager, historyManager, getSelection, setSelection, statusBar, setActiveTool, commitFloatingSelection, routeText }) {
     this.canvasManager = canvasManager;
     this.historyManager = historyManager;
     this.getSelection = getSelection; // () => {x,y,w,h} | null
@@ -21,6 +22,8 @@ export class ClipboardManager {
     this.statusBar = statusBar;
     this.setActiveTool = setActiveTool;
     this.commitFloatingSelection = commitFloatingSelection;
+    // Text-only paste opens the text tool; wired by the app shell (main.js).
+    this.routeText = routeText;
     // Last PNG we produced ourselves - fallback when the OS clipboard is blocked.
     this.lastCopiedBlob = null;
   }
@@ -154,6 +157,16 @@ export class ClipboardManager {
         const blob = await item.getType(type);
         await this.insertImageBlob(blob, { sourceLabel: 'Pasted' });
         return;
+      }
+      // Text-only clipboard content opens the text tool prefilled instead of
+      // doing nothing; image content always wins in the loop above.
+      const textItem = items.find((entry) => entry.types.includes('text/plain'));
+      if (textItem && this.routeText) {
+        const text = await (await textItem.getType('text/plain')).text();
+        if (text && text.trim()) {
+          await this.routeText(text);
+          return;
+        }
       }
       this.statusBar?.flash('Clipboard has no image to paste');
     } catch (err) {

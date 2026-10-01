@@ -98,6 +98,7 @@ test('Save is owned by File More actions', () => {
 });
 test('Background removal is a cancellable preview workflow', () => {
   const controller = read('js/background/BackgroundRemovalController.js');
+  const fileActions = read('js/app/fileActions.js');
   assert.match(html, /id="background-removal-dialog"/);
   assert.match(html, /id="background-removal-preview"/);
 	assert.match(html, /id="background-removal-progress"/);
@@ -119,7 +120,7 @@ test('Background removal is a cancellable preview workflow', () => {
   assert.match(main, /historyManager\.snapshot\(\{ force: true \}\)/);
   assert.match(controller, /controller\?\.signal\.aborted/);
 	assert.match(controller, /urlApi\?\.revokeObjectURL/);
-	assert.match(main, /target === 'floating'/);
+	assert.match(fileActions, /target === 'floating'/);
 });
 test('Open menu owns Open and Import options', () => {
   const openMenuStart = html.indexOf('id="btn-open-menu"');
@@ -242,6 +243,196 @@ test('Keyboard paste defers to the native paste event for macOS support', () => 
     'Copy must encode the PNG synchronously to keep the Safari user gesture alive');
 });
 
+test('Sidebar groups mirror the File, Clipboard, and Image ribbon sections', () => {
+  const fileMirror = read('js/ui/mirrors/fileMirror.js');
+  const clipboardMirror = read('js/ui/mirrors/clipboardMirror.js');
+  const imageMirror = read('js/ui/mirrors/imageMirror.js');
+  const ribbonMirror = read('js/ui/RibbonMirror.js');
+  assert.match(sidebar, /fileMirrorDescriptor/);
+  assert.match(sidebar, /clipboardMirrorDescriptor/);
+  assert.match(sidebar, /imageMirrorDescriptor/);
+  // Mirror actions click the ribbon control itself - no duplicated handlers.
+  assert.match(fileMirror, /target: 'btn-new'/);
+  assert.match(clipboardMirror, /target: 'btn-paste'/);
+  assert.match(imageMirror, /target: 'btn-image-more'/);
+  assert.match(ribbonMirror, /dataset\.sourceTag = sourceTag/);
+  assert.match(ribbonMirror, /findSource\(item\)\?\.click\(\)/);
+  assert.match(ribbonMirror, /sidebar-mirror/);
+});
+
+test('History tab exposes undo/redo, one concise preferences row, and event-driven state', () => {
+  const historyManager = read('js/history/HistoryManager.js');
+  const historyPanel = read('js/ui/HistoryPanel.js');
+  // The undo/redo row lives inside .history-controls next to the preferences.
+  assert.match(html, /class="history-undo-row"[\s\S]*?id="history-undo-btn"[\s\S]*?id="history-redo-btn"/);
+  assert.match(html, /id="history-undo-btn"[^>]*data-i18n="common\.actions\.undo"[^>]*disabled/);
+  assert.match(html, /id="history-redo-btn"[^>]*data-i18n="common\.actions\.redo"[^>]*disabled/);
+  // One row: Auto-save <state> · Save limit <n> · Open (shortened labels).
+  const preferences = html.match(/<div class="history-preferences"[\s\S]*?<\/div>/);
+  assert.ok(preferences, 'history-preferences row is missing');
+  const preferencesInner = preferences[0].replace(/^<div[^>]*>/, '');
+  assert.equal((preferencesInner.match(/<div/g) || []).length, 0, 'preferences must be a single row, not stacked divs');
+  assert.match(preferences[0], /data-i18n="ui\.autoSaveLabel"/);
+  assert.match(preferences[0], /data-i18n="ui\.saveLimitLabel"/);
+  assert.match(preferences[0], /data-i18n="ui\.openHistorySettings"/);
+  assert.doesNotMatch(preferences[0], />Open History Settings</, 'the long Open label is replaced, not duplicated');
+  assert.match(read('css/styles.css'), /\.history-preferences\s*\{\s*display: flex;/);
+  assert.match(read('css/styles.css'), /\.history-undo-row\s*\{/);
+  // One undo/redo path: ribbon handlers, the History tab, and the keyboard.
+  assert.match(main, /const runUndo = \(\) => \{\s*discardFloatingSelection\(\);\s*historyManager\.undo\(\);/);
+  assert.match(main, /const runRedo = \(\) => \{\s*discardFloatingSelection\(\);\s*historyManager\.redo\(\);/);
+  assert.match(main, /undo: runUndo,\s*redo: runRedo,/);
+  assert.match(main, /history-undo-btn'\)\?\.addEventListener\('click', runUndo\)/);
+  assert.match(main, /history-redo-btn'\)\?\.addEventListener\('click', runRedo\)/);
+  assert.match(main, /if \(action === SHORTCUT_ACTIONS\.undo\) runUndo\(\);\s*else runRedo\(\);/);
+  // State flows through one event, so no surface polls.
+  assert.match(historyManager, /EVENTS\.historyChanged/);
+  assert.match(main, /window\.addEventListener\(EVENTS\.historyChanged/);
+  assert.match(main, /sidebar\.syncHistoryControls\(canUndo, canRedo\)/);
+  assert.match(sidebar, /syncHistoryControls\(canUndo, canRedo\)/);
+  // Deep links: Extras -> History / Session / Preferences with focus return.
+  assert.match(sidebar, /openHistoryView\(view, \{ trigger = null \}/);
+  assert.match(sidebar, /historyPanel\?\.focusActiveView\?\.\(\)/);
+  assert.match(sidebar, /const trigger = this\._returnFocusTo;[\s\S]*?target\?\.focus\?\.\(\)/);
+  assert.match(sidebar, /: document\.getElementById\('btn-history-panel'\);/);
+  assert.match(historyPanel, /focusActiveView/);
+  assert.match(read('js/ui/mirrors/extrasMirror.js'), /openHistoryPreferences\?\.\(button\)/);
+  assert.doesNotMatch(read('js/i18n/messages.js'), /mirrorHistoryEntriesNote/, 'the step-03 disabled-note key is removed');
+});
+
+test('Sidebar groups mirror the Tools, Shapes, Colors, Extras, and History ribbon sections', () => {
+  const toolsMirror = read('js/ui/mirrors/toolsMirror.js');
+  const shapesMirror = read('js/ui/mirrors/shapesMirror.js');
+  const colorsMirror = read('js/ui/mirrors/colorsMirror.js');
+  const extrasMirror = read('js/ui/mirrors/extrasMirror.js');
+  const historyMirror = read('js/ui/mirrors/historyMirror.js');
+  const ribbonMirror = read('js/ui/RibbonMirror.js');
+  const constants = read('js/core/constants.js');
+  // One descriptor table covers every ribbon group; the legacy title-string
+  // group builder was removed in step-03 (consumers migrate with it).
+  ['tools', 'shapes', 'colors', 'extras', 'history'].forEach((key) => {
+    assert.match(sidebar, new RegExp(`${key}MirrorDescriptor`, 'i'));
+  });
+  assert.match(sidebar, /MIRROR_DESCRIPTORS/);
+  assert.match(sidebar, /openGroupSettings\(groupSection\)/);
+  assert.doesNotMatch(sidebar, /showGroupSettings/, 'step-03 removes the legacy group builder');
+  assert.match(main, /sidebar\.openGroupSettings\(groupSection\)/);
+  assert.doesNotMatch(main, /showGroupSettings/);
+  // Mirror actions still click the ribbon control; data-tag targets cover
+  // controls without ids (tools, fill modes).
+  assert.match(toolsMirror, /'tool-pencil', 'tool-brush'/);
+  assert.match(toolsMirror, /'fillmode-outline', 'fillmode-outline-fill', 'fillmode-fill'/);
+  assert.match(toolsMirror, /kind: 'action', targetTag/);
+  assert.match(ribbonMirror, /item\.targetTag/);
+  // Tools mirror is tabbed (Drawing / reserved Advanced note).
+  assert.match(toolsMirror, /layout: 'tabs'/);
+  assert.match(ribbonMirror, /'role', 'tablist'/);
+  assert.match(ribbonMirror, /aria-selected/);
+  assert.match(toolsMirror, /ui\.mirrorAdvancedNote/);
+  // Shapes: search over translated names + favorites persisted in SettingsStore.
+  assert.match(shapesMirror, /matchShapeQuery/);
+  assert.match(shapesMirror, /favoriteShapes/);
+  assert.match(shapesMirror, /initRibbonShapeFavorites/);
+  assert.match(constants, /favoriteShapes: \[\]/);
+  assert.match(main, /favoriteShapes: \(value\)/);
+  assert.match(main, /configureShapesFavorites\(settingsStore\)/);
+  assert.match(main, /initRibbonShapeFavorites\(\)/);
+  // Colors: alpha writes the ribbon input (one source) and the inspector
+  // follows the shared foreground event.
+  assert.match(colorsMirror, /primary-alpha/);
+  assert.match(colorsMirror, /dispatchEvent\(new Event\('input'/);
+  assert.match(main, /paint:primary-color-change[\s\S]{0,400}colorInspector\.show/);
+  // Extras: History entries are real deep links (step-04), not disabled stubs.
+  assert.doesNotMatch(extrasMirror, /button\.disabled = true/);
+  assert.match(extrasMirror, /sidebar-mirror-history-preferences/);
+  // History mirror mirrors disabled undo/redo through sync().
+  assert.match(historyMirror, /target: 'btn-undo'/);
+  assert.match(sidebar, /syncRibbonMirror\(\)/);
+  assert.match(main, /sidebar\.syncRibbonMirror\(\)/);
+});
+
+test('Text-only clipboard paste activates the text tool with the pasted text', () => {
+  const clipboard = read('js/clipboard/ClipboardManager.js');
+  const textTool = read('js/tools/TextTool.js');
+  // Native Cmd/Ctrl+V stays on clipboardData and routes text into the text tool.
+  assert.match(main, /getData\('text\/plain'\)/);
+  assert.match(main, /routeTextToTextTool/);
+  assert.match(main, /routeText: routeTextToTextTool/);
+  // Button/custom-shortcut fallback routes text-only clipboard content too.
+  assert.match(clipboard, /routeText/);
+  assert.match(textTool, /insertTextAt\(text, point, ctx\)/);
+  // Image contract unchanged: the image pass runs before any text routing.
+  assert.match(main, /insertImageBlob\(file, \{ sourceLabel: 'Pasted' \}\)/);
+  assert.ok(/startsWith\('image\/'\)[\s\S]*?getData\('text\/plain'\)/.test(main),
+    'native paste must keep the image pass ahead of text routing');
+});
+
+test('History preferences row re-translates on locale and settings changes', () => {
+  // Values JS renders must be tagged for LocaleController (data-i18n-runtime),
+  // otherwise they freeze in the language that was active at render time.
+  assert.match(main, /const setLocalizedText = \(node, key\)/);
+  assert.match(main, /setAttribute\('data-i18n-runtime', key\)/);
+  assert.match(main, /removeAttribute\('data-i18n-runtime'\)/);
+  // Auto-save state keeps message keys (not pre-translated strings).
+  assert.match(main, /modeKeys = \{ lifecycle: 'ui\.autoSaveLifecycle', all: 'ui\.allAutomaticEvents', manual: 'ui\.onlyManualShort' \}/);
+  assert.match(main, /setLocalizedText\(status, prefs\.autoSave \? \(modeKeys\[prefs\.mode\] \?\? null\) : 'ui\.off'\)/);
+  // "Off" is keyed; a plain number clears the tag so it is never overwritten.
+  assert.match(main, /setLocalizedText\(limitStatus, 'ui\.off'\)/);
+  assert.match(main, /limitStatus\.removeAttribute\('data-i18n-runtime'\)/);
+  // The locale listener re-runs both syncs so numbers/segmented controls agree.
+  assert.match(main, /addEventListener\('paint:locale-change', \(event\) => \{[\s\S]*?syncHistoryControls\(\);[\s\S]*?syncHistoryLimitSelect\(Number\(readSettings\(\)\.historyLimit/);
+  // Settings changes keep flowing through the same owner.
+  assert.match(main, /const onAutoSaveChange = \(event\) => \{[\s\S]*?applyHistoryState\(\);/);
+});
+
+test('Action menus only consume Escape when a menu was open', () => {
+  const controller = read('js/ui/ActionMenuController.js');
+  const escapeBranch = controller.slice(controller.indexOf("event.key === 'Escape'"));
+  // The controller is bound at document level: swallowing every Escape would also
+  // cancel the browser's native <dialog> dismiss (deep-linked dialogs).
+  assert.match(controller, /if \(openMenus\.length > 0\) \{\s*event\.preventDefault\(\);\s*event\.stopPropagation\(\);/);
+  // Deep-linked dialogs still open and Escape keeps the URL in sync.
+  assert.match(main, /const restoreDialogFromUrl = \(\) => \{/);
+  assert.match(main, /newFileDialog\.addEventListener\('close', \(\) => \{\s*if \(router\.param\('dialog'\) === 'new'\) setDialogUrl\(null\);/);
+  assert.doesNotMatch(escapeBranch.slice(0, 200), /event\.preventDefault\(\);\s*event\.stopPropagation\(\);\s*const openMenus/);
+});
+
+test('main.js stays a composition root as feature sections move into js/app/', () => {
+  const fileActions = read('js/app/fileActions.js');
+  const resizeDialog = read('js/app/resizeDialog.js');
+  // Sections live in modules; main only wires them and consumes their API.
+  assert.match(main, /import \{ initFileActions \} from '\.\/app\/fileActions\.js'/);
+  assert.match(main, /import \{ initResizeDialog \} from '\.\/app\/resizeDialog\.js'/);
+  assert.match(main, /const fileActions = initFileActions\(\{/);
+  assert.match(main, /const \{ openResizeDialog \} = initResizeDialog\(\{/);
+  assert.match(main, /const \{[\s\S]*?showToast,[\s\S]*?crop,\s*\} = fileActions;/);
+  // No module reaches for a global: collaborators are injected or imported.
+  assert.doesNotMatch(fileActions, /\bwindow\.location\b/);
+  assert.doesNotMatch(resizeDialog, /\bwindow\.location\b/);
+  assert.match(fileActions, /^import \{ t \} from '\.\.\/i18n\/messages\.js';/m);
+  assert.match(fileActions, /return Object\.freeze\(\{[\s\S]*?crop,/);
+  // The settings store and its tiny readers are created before feature sections.
+  const storeIndex = main.indexOf('const settingsStore = createSettingsStore({');
+  const fileOpsIndex = main.indexOf('const fileActions = initFileActions({');
+  assert.ok(storeIndex > 0 && fileOpsIndex > storeIndex, 'store must be created before features read it');
+});
+
+test('History save limit follows Settings instead of the IndexedDB copy', () => {
+  const constants = read('js/core/constants.js');
+  assert.match(constants, /export const HISTORY_LIMIT_OPTIONS = Object\.freeze\(\[0, 10, 20, 50, 100\]\)/);
+  assert.match(constants, /historyLimit: 50,/);
+  assert.match(main, /historyLimit: \(value\) => HISTORY_LIMIT_OPTIONS\.includes\(Number\(value\)\)/);
+  // saveSettings keeps the store value instead of scraping a control.
+  assert.match(main, /historyLimit: Number\(readSettings\(\)\.historyLimit/);
+  // applyHistoryLimit writes the store first, then the views + enforcement copy.
+  assert.match(main, /settingsStore\.set\(\{ historyLimit: safe \}\);[\s\S]*?syncHistoryLimitSelect\(safe\);[\s\S]*?globalHistory\.saveSettings\(safe, safe > 0\)/);
+  // Startup restores from the store (with a one-time IndexedDB migration).
+  assert.match(main, /restoreHistoryLimit\(\);/);
+  assert.match(main, /const migrateFromIndexedDb = stored === DEFAULT_SETTINGS\.historyLimit/);
+  assert.doesNotMatch(main, /syncHistoryLimitSelect\(sidebar\.globalHistory\.maxHistory\)/,
+    'startup must not treat the IndexedDB copy as the source of truth');
+});
+
 test('keyboard shortcuts are SSOT-backed, editable in Settings, and persisted', () => {
   assert.match(html, /data-settings-tab="shortcuts"\s*>\s*SHORTCUTS/);
   assert.match(html, /data-settings-panel="shortcuts"/);
@@ -256,7 +447,9 @@ test('keyboard shortcuts are SSOT-backed, editable in Settings, and persisted', 
 test('canvas undo/redo is not swallowed by focused ribbon or status controls', () => {
   assert.match(main, /const TEXT_EDITING_INPUT_TYPES = Object\.freeze\(\[/);
   assert.match(main, /const ownsTextEditing = \(element\) => element instanceof HTMLTextAreaElement/);
-  assert.match(main, /if \(ownsTextEditing\(activeElement\)\) return;[\s\S]*historyManager\.undo\(\)/);
+  assert.match(main, /if \(ownsTextEditing\(activeElement\)\) return;[\s\S]*runUndo\(\)/);
+  // Phase 2 step-04: the keyboard guard now routes through the one shared path.
+  assert.match(main, /const runUndo = \(\) => \{\s*discardFloatingSelection\(\);\s*historyManager\.undo\(\);/);
   const undoBranch = main.match(/if \(action === SHORTCUT_ACTIONS\.undo[\s\S]*?\n\t\}/)?.[0] || '';
   assert.ok(undoBranch, 'undo/redo branch must exist');
   assert.doesNotMatch(undoBranch, /if \(typing\) return;/,
@@ -400,12 +593,13 @@ test('settings search keeps text intact and reports only deepest areas', () => {
 });
 
 test('History auto-save toggle + export-all are wired and guarded', () => {
+  const fileActions = read('js/app/fileActions.js');
   assert.match(html, /id="history-auto-save-toggle"/);
   assert.match(html, /id="history-export-all-btn"/);
   assert.match(main, /shouldAutoSaveHistory\(\)/);
   assert.match(main, /shouldAutoSaveOnClose\(\)/);
-  assert.match(main, /if \(shouldAutoSaveHistory\(\)\) await sidebar\.saveCurrentToHistory/);
-  assert.match(main, /if \(shouldAutoSaveHistory\(\)\) sidebar\.saveCurrentToHistory/);
+  assert.match(fileActions, /if \(shouldAutoSaveHistory\(\)\) await sidebar\.saveCurrentToHistory/);
+  assert.match(fileActions, /if \(shouldAutoSaveHistory\(\)\) sidebar\.saveCurrentToHistory/);
   assert.match(main, /if \(shouldAutoSaveOnClose\(\)\) sidebar\.saveCurrentToHistory/);
   assert.match(main, /exportAllHistory\(\)/);
 });
@@ -540,7 +734,9 @@ test('Floating ribbon and side layouts remain scrollable and resizable', () => {
   assert.doesNotMatch(css, /#app\.ribbon-float \.ribbon\s*\{[^}]*min-height/s);
   assert.match(css, /#app\.ribbon-float \.ribbon\s*\{[^}]*overflow-x:\s*auto/s);
   assert.match(css, /\.main-area\s*\{[^}]*min-width:\s*0/s);
-  assert.match(css, /\.right-sidebar\s*\{[^}]*max-width:\s*min\(42vw/s);
+  // The sidebar keeps room for the phase-2 mirror sections: its max-width is
+  // min(50vw, 820px) (owner-confirmed widening from min(42vw, 420px)).
+  assert.match(css, /\.right-sidebar\s*\{[^}]*max-width:\s*min\(50vw/s);
 });
 
 test('AI chat exposes safe deterministic actions through one command service', () => {
@@ -629,13 +825,38 @@ test('Text editor alignment scales from one layout object', () => {
 test('Dialogs and palette settings have persistent UX hooks', () => {
   assert.match(main, /setDialogUrl\('settings'/);
 	assert.match(main, /restoreDialogFromUrl/);
-	assert.match(main, /params\.delete\('tab'\)/);
+	// URL shape lives in the router now: closing a dialog drops `dialog`+`tab`.
+	assert.match(read('js/app/router.js'), /params\.delete\('dialog'\)|params\.delete\(key\)/);
+	assert.match(read('js/app/router.js'), /setDialog/);
+	assert.doesNotMatch(main, /new URLSearchParams\(window\.location\.search\)/, 'main must not own URL state');
 	assert.match(main, /localStorage\.setItem\(STORAGE_KEYS\.settingsTab/);
 	assert.match(main, /getLastSettingsTab/);
 	assert.match(constants, /settingsTab:/);
   assert.match(main, /history-settings-link/);
   assert.match(sidebar, /palette-settings-editor/);
   assert.match(read('js/ui/ColorPalette.js'), /defaultPrimary/);
+});
+
+test('app state store and router are the single owners of view state and URLs', () => {
+  const appStateModule = read('js/app/appState.js');
+  const routerModule = read('js/app/router.js');
+  // Store: reducer-driven, selector subscribable, batched notifications.
+  assert.match(appStateModule, /defineReducer\('tool\/changed'/);
+  assert.match(appStateModule, /defineReducer\('selection\/changed'/);
+  assert.match(appStateModule, /defineReducer\('history\/changed'/);
+  assert.match(appStateModule, /queueMicrotask\(notify\)/);
+  assert.match(appStateModule, /subscribe = \(listener, selector = null\)/);
+  // Writers dispatch; nothing writes the snapshot directly.
+  assert.match(main, /appState\.dispatch\(\{ type: 'tool\/changed'/);
+  assert.match(main, /appState\.dispatch\(\{ type: 'selection\/changed'/);
+  assert.match(main, /appState\.dispatch\(\{ type: 'history\/changed'/);
+  // Router: one URL owner, deep links resolved without acting on them.
+  assert.match(routerModule, /export const createRouter/);
+  assert.match(routerModule, /resolveDeepLink/);
+  assert.match(routerModule, /onChange/);
+  assert.match(main, /from '\.\/app\/router\.js'/);
+  assert.match(main, /from '\.\/app\/appState\.js'/);
+  assert.equal((main.match(/window\.location\.search/g) || []).length, 0, 'no module may read location.search directly');
 });
 
 test('Settings reset is centralized and lives with destructive About actions', () => {
@@ -686,6 +907,11 @@ test('P0 quick wins: hover affordance, slider, release notes, fresh paste, undo 
   assert.match(read('sw.js'), /SliderControl\.js/);
   assert.match(read('sw.js'), /releaseNotes\.js/);
   assert.match(read('sw.js'), /EmojiStore\.js/);
+  // Phase 2: the sidebar mirrors must ship in the offline shell too, or the
+  // group views break offline while the ribbon still renders.
+  assert.match(read('sw.js'), /ui\/RibbonMirror\.js/);
+  assert.match(read('sw.js'), /ui\/mirrors\/shapesMirror\.js/);
+  assert.match(read('sw.js'), /ui\/mirrors\/extrasMirror\.js/);
   // #4 release notes tab + deep link support
   assert.match(html, /data-settings-tab="release"/);
   assert.match(html, /data-settings-panel="release"/);
@@ -821,8 +1047,12 @@ test('Phase 2 Steps 02–04 contracts and UX hooks are wired', () => {
   assert.match(sidebar, /historyManager\.removeSessionEntry\(entry\.id\)/);
   assert.match(html, /id="resize-percent"/);
   assert.match(html, /id="resize-keep-aspect"[^>]*checked/);
-  assert.match(main, /activeResizeTarget()/);
-  assert.match(main, /scaleCanvas\(source, w, h\)/);
+  // The resize dialog now lives in js/app/resizeDialog.js (Phase 3 modular
+  // split); main.js only wires its collaborators.
+  assert.match(read('js/app/resizeDialog.js'), /activeResizeTarget\(\)/);
+  assert.match(read('js/app/resizeDialog.js'), /scaleCanvas\(source, w, h\)/);
+  assert.match(main, /initResizeDialog\(\{/);
+  assert.match(main, /openResizeDialog/);
   assert.match(canvas, /backgroundMode/);
   assert.match(canvas, /clearRect\(x, y, width, height\)/);
   assert.match(html, /option value="transparent"/);
@@ -927,14 +1157,15 @@ test('Submenus pin on click, preview on hover, and show an open indicator', () =
 
 test('Canvas background choices stay in sync with pixels and the settings label', () => {
   const segmented = read('js/ui/SegmentedChoice.js');
+  const fileActions = read('js/app/fileActions.js');
   // Checkerboard behaves like Transparent: New clears instead of filling.
   assert.match(main, /value === 'transparent' \|\| value === 'checkerboard'/);
   assert.match(main, /const transparent = value === 'transparent'/);
   // Whole-page background removal switches the saved setting to Transparent.
-  assert.match(main, /const syncCanvasBackgroundAfterRemoval = \(region\) =>/);
-  assert.match(main, /syncCanvasBackgroundAfterRemoval\(null\)/);
-  assert.match(main, /syncCanvasBackgroundAfterRemoval\(result\.region\)/);
-  assert.match(main, /syncCanvasBackgroundAfterRemoval\(region\)/);
+  assert.match(fileActions, /const syncCanvasBackgroundAfterRemoval = \(region\) =>/);
+  assert.match(fileActions, /syncCanvasBackgroundAfterRemoval\(null\)/);
+  assert.match(fileActions, /syncCanvasBackgroundAfterRemoval\(result\.region\)/);
+  assert.match(fileActions, /syncCanvasBackgroundAfterRemoval\(region\)/);
   // The "Selected:" label mirrors option text, so it must opt out of the i18n
   // runtime-key observer that would otherwise revert every later render.
   assert.match(segmented, /data-i18n-ignore/);
@@ -951,7 +1182,7 @@ test('Color-inspector toggle keeps the shared arrow and zoom buttons use SVG ico
   const setter = main.slice(main.indexOf('const setColorInspectorCollapsed'), main.indexOf('let colorInspectorCollapsed'));
   assert.doesNotMatch(setter, /innerHTML/);
   assert.match(setter, /setAttribute\('aria-expanded'/);
-  assert.match(css, /\.ci-toggle \{[^}]*width: 20px/s);
+  assert.match(css, /\.ci-toggle \{[^}]*width: 16px/s);
   assert.match(css, /\.ci-toggle \.menu-arrow\s*\{[^}]*rotate\(-90deg\)/s);
   assert.match(css, /\.ci-toggle\[aria-expanded="false"\] \.menu-arrow\s*\{[^}]*rotate\(90deg\)/s);
   assert.match(css, /html\[dir="rtl"\] \.ci-toggle \.menu-arrow\s*\{[^}]*rotate\(90deg\)/s);
@@ -966,7 +1197,7 @@ test('Color-inspector toggle keeps the shared arrow and zoom buttons use SVG ico
   assert.match(zoomIn, /data-tag="zoom-in"/);
   assert.match(zoomIn, /<svg[^>]*aria-hidden[^>]*>[\s\S]*currentColor/);
   assert.doesNotMatch(zoomIn, />\s*\+\s*</);
-  assert.match(css, /\.zoom-controls button \.icon\s*\{[^}]*width: 12px/s);
+  assert.match(css, /\.zoom-controls button \.icon\s*\{[^}]*width: 20px/s);
 });
 
 test('Shape selection has one writer and clears the emoji highlight', () => {

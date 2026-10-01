@@ -3,8 +3,33 @@ import { GlobalHistory } from '../history/GlobalHistory.js';
 import { AI_PROVIDERS } from '../ai/AiConnectionStore.js';
 import { HISTORY_VIEWS } from '../core/constants.js';
 import { createHistoryPanel } from './HistoryPanel.js';
+import { createRibbonMirror } from './RibbonMirror.js';
+import { fileMirrorDescriptor } from './mirrors/fileMirror.js';
+import { clipboardMirrorDescriptor } from './mirrors/clipboardMirror.js';
+import { imageMirrorDescriptor } from './mirrors/imageMirror.js';
+import { toolsMirrorDescriptor } from './mirrors/toolsMirror.js';
+import { shapesMirrorDescriptor } from './mirrors/shapesMirror.js';
+import { colorsMirrorDescriptor } from './mirrors/colorsMirror.js';
+import { createExtrasMirrorDescriptor } from './mirrors/extrasMirror.js';
+import { historyMirrorDescriptor } from './mirrors/historyMirror.js';
 import { t } from '../i18n/messages.js';
 import { formatUnambiguousDate, formatUnambiguousTime } from '../utils/datetime.js';
+
+// Phase 2 step-03: every ribbon group resolves through one descriptor table
+// (data-ribbon-key -> RibbonMirror descriptor). The mirror never owns state;
+// Sidebar only mounts it and re-syncs it from app events.
+// Phase 2 step-04: entries may be factories so a group can receive Sidebar's
+// deep-link callbacks (Extras -> History views) without a second renderer.
+const MIRROR_DESCRIPTORS = Object.freeze({
+  file: fileMirrorDescriptor,
+  clipboard: clipboardMirrorDescriptor,
+  image: imageMirrorDescriptor,
+  tools: toolsMirrorDescriptor,
+  shapes: shapesMirrorDescriptor,
+  colors: colorsMirrorDescriptor,
+  extras: createExtrasMirrorDescriptor,
+  history: historyMirrorDescriptor,
+});
 
 export class Sidebar {
 	constructor({ canvasManager, statusBar, palette, aiCommandService = null, dialogService, aiConnectionStore = null, historyManager = null }) {
@@ -21,6 +46,10 @@ export class Sidebar {
 		this.historyContent = document.getElementById('sidebar-history-content');
 		this.historyGrid = document.getElementById('history-grid');
 		this.saveLimitSelect = document.getElementById('history-save-limit');
+		this.historyUndoBtn = document.getElementById('history-undo-btn');
+		this.historyRedoBtn = document.getElementById('history-redo-btn');
+		this._returnFocusTo = null;
+		this._openHistoryPreferences = null;
 		this.clearBtn = document.getElementById('history-clear-btn');
 		this.saveToHistoryBtn = document.getElementById('history-save-current-btn');
 
@@ -50,9 +79,14 @@ export class Sidebar {
 
 		this.groupSettingsContent = document.getElementById('sidebar-group-settings');
 		this.groupSettingsContainer = document.getElementById('group-settings-container');
-
+		this.ribbonMirror = null;
+		this.ribbonMirrorTitle = null;
 		this.globalHistory = new GlobalHistory();
 		this.activeTab = null;
+
+		// Mirror settings sliders follow the shared color state; undo/redo
+		// disabled parity is re-run from the history callback in main.js.
+		window.addEventListener('paint:primary-color-change', () => this.syncRibbonMirror());
 
 		// Initialization state tracking for race condition prevention
 		this._initComplete = false;
@@ -400,8 +434,12 @@ export class Sidebar {
 		this._saveSidebarState();
 	}
 
-	showGroupSettings(titleText, groupSection) {
-		if (!this.groupSettingsContent) return;
+	// Phase 2 step-03 migration: replaces the legacy title-string group builder.
+	// The ribbon group section is the only input; the title and mirror
+	// descriptor resolve from it (data-ribbon-key -> descriptor table).
+	openGroupSettings(groupSection) {
+		if (!this.groupSettingsContent || !groupSection) return;
+		const titleText = groupSection.querySelector('.ribbon-group-title')?.textContent ?? '';
 		this.activeTab = 'group-' + titleText;
 		this.title.textContent = `${titleText} ${t('settings.title')}`;
 		this.historyContent.style.display = 'none';
@@ -410,6 +448,20 @@ export class Sidebar {
 		this.sidebar.style.display = 'flex';
 
 		this.groupSettingsContainer.innerHTML = '';
+		this.ribbonMirrorTitle = titleText;
+		// Descriptor-driven option mirror mounts above the legacy visibility
+		// rows; actions click the ribbon control so the two never diverge.
+		const mirrorKey = groupSection.dataset?.ribbonKey || '';
+		const descriptorEntry = MIRROR_DESCRIPTORS[mirrorKey];
+		const mirrorDescriptor = (typeof descriptorEntry === 'function'
+			? descriptorEntry({
+				openHistoryView: (view, options) => this.openHistoryView(view, options),
+				openHistoryPreferences: (trigger) => this.openHistoryPreferences(trigger),
+			})
+			: descriptorEntry)
+			|| { key: mirrorKey, layout: 'sections', sections: [], visibility: false };
+		this.ribbonMirror = createRibbonMirror({ descriptor: mirrorDescriptor });
+		this.groupSettingsContainer.appendChild(this.ribbonMirror.element);
 
 		const toggleGroup = document.createElement('div');
 		toggleGroup.className = 'checkbox-row';
@@ -510,6 +562,43 @@ export class Sidebar {
 		this._saveSidebarState();
 	}
 
+	// Keep mounted mirror controls truthful: disabled ribbon state (undo/redo,
+	// crop) and shared settings (alpha) re-read through the descriptor getters.
+	syncRibbonMirror() {
+		try { this.ribbonMirror?.sync(); } catch { /* mirror is optional */ }
+	}
+
+	// Phase 2 step-04: the History tab's own undo/redo buttons follow the same
+	// state event the ribbon uses (no polling).
+	syncHistoryControls(canUndo, canRedo) {
+		if (this.historyUndoBtn) this.historyUndoBtn.disabled = !canUndo;
+		if (this.historyRedoBtn) this.historyRedoBtn.disabled = !canRedo;
+	}
+
+	// Phase 2 step-04: main.js owns the Settings dialog, so the Extras deep
+	// link for Preferences is injected instead of duplicated here.
+	setHistoryDeepLinks({ openPreferences = null } = {}) {
+		this._openHistoryPreferences = openPreferences;
+	}
+
+	// Deep link used by the Extras mirror entries: open the History panel on the
+	// requested view and move focus into it.
+	openHistoryView(view, { trigger = null } = {}) {
+		this._returnFocusTo = trigger || document.activeElement;
+		this.showHistory();
+		this.historyPanel?.setView?.(view);
+		// Focus lands on the next frame: the panel renders asynchronously after
+		// the sidebar becomes visible, and an early focus() would be dropped.
+		const focusPanel = () => this.historyPanel?.focusActiveView?.();
+		if (typeof globalThis.requestAnimationFrame === 'function') globalThis.requestAnimationFrame(focusPanel);
+		else focusPanel();
+	}
+
+	openHistoryPreferences(trigger = null) {
+		if (trigger) this._returnFocusTo = trigger;
+		this._openHistoryPreferences?.();
+	}
+
 	_appendPaletteSettings() {
 		const section = document.createElement('section');
 		section.className = 'palette-settings-editor';
@@ -557,6 +646,15 @@ export class Sidebar {
 	hide() {
 		this.sidebar.style.display = 'none';
 		this._saveSidebarState();
+		// Phase 2 step-04: a deep link (Extras -> History) returns focus to the
+		// entry that opened it. When that entry lives inside this sidebar it is
+		// hidden now too, so focus falls back to the ribbon History button.
+		const trigger = this._returnFocusTo;
+		this._returnFocusTo = null;
+		const target = trigger?.isConnected && trigger.offsetParent !== null
+			? trigger
+			: document.getElementById('btn-history-panel');
+		target?.focus?.();
 	}
 
 	_bindResizer() {

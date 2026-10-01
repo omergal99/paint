@@ -115,6 +115,10 @@ export const HISTORY_VIEWS = Object.freeze({
 	session: 'session',
 });
 
+// Phase 3 / step-01: the save-limit options live next to the setting so the
+// validator, the two selects, and the migration check share one list.
+export const HISTORY_LIMIT_OPTIONS = Object.freeze([0, 10, 20, 50, 100]);
+
 export const RIBBON_POSITIONS = Object.freeze({
 	top: 'top',
 	left: 'left',
@@ -148,10 +152,12 @@ export const DEFAULT_SETTINGS = Object.freeze({
 	defaultZoom: 100,
 	historyAutoSave: true,
 	historyAutoSaveMode: 'all',
+	historyLimit: 50,
 	restoreLastImage: false,
 	ribbonLayout: null,
 	ribbonVisibility: {},
 	buttonVisibility: {},
+	favoriteShapes: [],
 	showRotateInSelection: true,
 	shortcuts: DEFAULT_SHORTCUT_BINDINGS,
 });

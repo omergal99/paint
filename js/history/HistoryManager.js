@@ -5,6 +5,7 @@
 // without retaining base64 strings for every undo step.
 
 import { estimateHistoryEntryBytes, summarizeHistoryMemory } from '../storage/MemoryBudget.js';
+import { EVENTS } from '../core/constants.js';
 
 export const MAX_HISTORY = 20;
 export const MAX_HISTORY_BYTES = 64 * 1024 * 1024;
@@ -134,8 +135,10 @@ export class HistoryManager {
     urlApi = globalThis.URL,
     sessionStorage: sessionStore,
     maxSnapshotPixels = MAX_HISTORY_SNAPSHOT_PIXELS,
+    eventTarget = globalThis,
   } = {}) {
     this.canvasManager = canvasManager;
+    this.eventTarget = eventTarget;
     this.undoStack = [];
     this.redoStack = [];
     this._suppressed = false;
@@ -735,7 +738,12 @@ export class HistoryManager {
   }
 
   _notify() {
-    this.onChange?.(this.undoStack.length > 0, this.redoStack.length > 0);
+    const canUndo = this.undoStack.length > 0;
+    const canRedo = this.redoStack.length > 0;
+    this.onChange?.(canUndo, canRedo);
+    // Phase 2 step-04: publish undo/redo state so every surface (ribbon,
+    // sidebar History tab, mirror actions) subscribes instead of polling.
+    this.eventTarget?.dispatchEvent?.(new CustomEvent(EVENTS.historyChanged, { detail: { canUndo, canRedo } }));
   }
 }
 
