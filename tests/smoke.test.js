@@ -49,8 +49,8 @@ test('About stats use one shared loading status and resolve their values', () =>
 	assert.match(about, /id="about-loading-state"[^>]*data-i18n="ui\.loading"/);
 	assert.doesNotMatch(about, /<dd[^>]*>Loading/);
 	assert.equal((about.match(/data-i18n="ui\.loading"/g) || []).length, 1);
-	assert.match(main, /const loading = document\.getElementById\('about-loading-state'\)/);
-	assert.match(main, /finally \{[\s\S]*loading\.hidden = true/);
+	assert.match(read('js/app/aboutPanel.js'), /const loading = document\.getElementById\('about-loading-state'\)/);
+	assert.match(read('js/app/aboutPanel.js'), /finally \{[\s\S]*loading\.hidden = true/);
 	assert.match(app, /debugLoading=1&loadingMs=1500/);
 	assert.match(app, /RIBBON_STARTUP_MASK_DELAY_MS/);
 	assert.match(app, /Math\.min\(10000, Math\.max\(0/);
@@ -409,6 +409,24 @@ test('main.js stays a composition root as feature sections move into js/app/', (
   assert.match(main, /import \{ initCanvasTransforms, pruneRotationState, resetRotationState \} from '\.\/app\/canvasTransforms\.js';/);
   assert.match(main, /import \{ initHistoryControls \} from '\.\/app\/historyControls\.js';/);
   assert.match(main, /const historyControls = initHistoryControls\(\{/);
+  // Settings definitions live in js/app/*; main.js only wires them.
+  const settingsRegistry = read('js/app/settingsRegistry.js');
+  const aboutPanel = read('js/app/aboutPanel.js');
+  const shortcutSettings = read('js/app/shortcutSettings.js');
+  assert.match(main, /const settingsRegistry = createPaintSettingsRegistry\(\{ colorPalette, sidebar \}\);/);
+  assert.match(main, /const \{ shortcutManager, renderShortcutSettings \} = initShortcutSettings\(\{ settingsStore \}\);/);
+  assert.match(main, /const \{ updateAboutStats \} = initAboutPanel\(\);/);
+  assert.match(settingsRegistry, /registry\.registerResetHandler\(\(\) => colorPalette\.resetToDefaults\(\)\);/);
+  assert.match(settingsRegistry, /registry\.registerStorageKey\(STORAGE_KEYS\.settingsTab\);/);
+  assert.doesNotMatch(main, /settingsRegistry\.registerResetHandler\(/);
+  assert.match(aboutPanel, /const estimate = await getStorageEstimate\(\);/);
+  assert.match(shortcutSettings, /const shortcutManager = createShortcutManager\(\{ bindings: settingsStore\.get\(\)\.shortcuts \}\);/);
+  // Shortcut feedback is translated rather than hardcoded English.
+  assert.match(shortcutSettings, /t\('ui\.shortcutAlreadyAssigned'\)/);
+  assert.doesNotMatch(shortcutSettings, /'That shortcut is already assigned\.'/);
+  // JS-built rows must re-render on a language switch.
+  assert.match(shortcutSettings, /addEventListener\('paint:locale-change', renderShortcutSettings\)/);
+
   assert.match(main, /const \{[\s\S]*?applyHistoryState,\s*\} = historyControls;/);
   const historyControls = read('js/app/historyControls.js');
   assert.doesNotMatch(historyControls, /\bwindow\.location\b/);
@@ -470,7 +488,7 @@ test('keyboard shortcuts are SSOT-backed, editable in Settings, and persisted', 
   assert.match(read('js/core/constants.js'), /SHORTCUT_DEFINITIONS/);
   assert.match(read('js/settings/ShortcutManager.js'), /normalizeShortcut/);
   assert.match(main, /createShortcutManager/);
-  assert.match(main, /settingsStore\.set\(\{ shortcuts: shortcutManager\.get\(\) \}\)/);
+  assert.match(read('js/app/shortcutSettings.js'), /settingsStore\.set\(\{ shortcuts: shortcutManager\.get\(\) \}\)/);
   assert.match(main, /shortcutManager\.resolve\(shortcut\)/);
 });
 
@@ -894,7 +912,7 @@ test('Settings reset is centralized and lives with destructive About actions', (
   assert.match(html, /data-settings-panel="about"[\s\S]*id="settings-reset"[\s\S]*id="settings-clear-data"/);
   assert.doesNotMatch(html.match(/data-settings-panel="general"[\s\S]*?<\/form>/)?.[0] || '', /id="settings-reset"/);
   assert.match(main, /createSettingsRegistry/);
-  assert.match(main, /settingsRegistry\.registerResetHandler/);
+  assert.match(read('js/app/settingsRegistry.js'), /settingsRegistry\.registerResetHandler|registry\.registerResetHandler/);
   assert.match(main, /Reset all settings to their defaults/);
   assert.match(registry, /paint:colors/);
   assert.match(registry, /paint:panel-layout/);
@@ -947,7 +965,7 @@ test('P0 quick wins: hover affordance, slider, release notes, fresh paste, undo 
   assert.match(html, /data-settings-panel="release"/);
   assert.match(html, /id="release-notes-list"/);
   assert.ok(fs.existsSync(path.join(root, 'js/releaseNotes.js')), 'releaseNotes.js missing');
-  assert.match(main, /renderReleaseNotes/);
+  assert.match(read('js/app/aboutPanel.js'), /renderReleaseNotes/);
   // #2 clean-doc first paste at 0,0
   assert.match(read('js/clipboard/ClipboardManager.js'), /isCleanDocument/);
   assert.match(read('js/canvas/CanvasManager.js'), /isCleanDocument\(\)/);
@@ -1014,14 +1032,14 @@ test('Round-2 fixes: V glyph, session persistence, view-aware actions, storage m
   // 3.2 storage reporting: validated raw bytes, fresh browser estimate, the
   //     browser quota is shown separately, and the percentage bar is bounded.
 	assert.doesNotMatch(main, /STORAGE_ESTIMATE_CACHE_TTL_MS/);
-	assert.match(main, /normalizeStorageEstimate/);
-	assert.match(main, /getStorageEstimate/);
-	assert.match(main, /minimumFractionDigits: 2/);
-	assert.match(main, /GiB/);
+	assert.match(read('js/app/aboutPanel.js'), /normalizeStorageEstimate/);
+	assert.match(read('js/app/aboutPanel.js'), /getStorageEstimate/);
+	assert.match(read('js/app/aboutPanel.js'), /minimumFractionDigits: 2/);
+	assert.match(read('js/app/aboutPanel.js'), /GiB/);
   assert.match(html, /data-i18n="ui.storageQuota"/);
   assert.doesNotMatch(main, /quotaBytes - usageBytes/);
-	assert.match(main, /browser estimate/);
-	assert.match(main, /Math\.min\(100, Math\.max\(1, Math\.ceil/);
+	assert.match(read('js/app/aboutPanel.js'), /browser estimate/);
+	assert.match(read('js/app/aboutPanel.js'), /Math\.min\(100, Math\.max\(1, Math\.ceil/);
 });
 
 test('Round-2 stabilization: alpha, text commit, and nested image actions', () => {

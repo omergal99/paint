@@ -290,5 +290,9 @@ export const initializePtBr = (english) => {
     "status.exportedImages": "{count} imagens exportadas",
     "status.historyAutoSaveOn": "Salvamento automático do histórico ativado",
     "status.historyAutoSaveOff": "Salvamento automático do histórico desativado",
+    "ui.default": "Padrão",
+    "ui.shortcutAlreadyAssigned": "Essa tecla de atalho já está atribuída.",
+    "ui.shortcutReset": "{action} redefinido para o padrão.",
+    "ui.shortcutSaved": "Atalho de {action} salvo.",
   });
 };

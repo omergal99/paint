@@ -8,6 +8,7 @@ import {
 } from './storage.js';
 import { installTelemetry } from './telemetry.js';
 import { APP_VERSION } from './version.js';
+import { markBoot } from './app/bootTiming.js';
 
 const canvas = document.getElementById('paint-canvas');
 const presentedStorageFailures = new Set();
@@ -165,6 +166,7 @@ const restoreWorkingCanvas = async () => {
 
 const startEditorRuntime = async () => {
   ({ canvasManager, eventBus, statusBar, dialogService, destroyEditor, setPwaUpdateSafetyGuard, shouldRestoreLastImage } = await import('./main.js'));
+  markBoot('boot:main-module-evaluated');
   const disposeAutosave = installCanvasAutosave({
     canvas,
     eventBus,
@@ -215,7 +217,10 @@ const startEditorRuntime = async () => {
       console.warn('Unable to restore working canvas:', error);
       return showStorageFailure({ kind: STORAGE_FAILURE_KINDS.database, message: 'Autosave could not open. Your image is still open.' }, { onDiscard: clearCanvasState });
     })
-    .finally(() => window.dispatchEvent(new CustomEvent('paint:ready')));
+    .finally(() => {
+      markBoot('boot:interactive');
+      window.dispatchEvent(new CustomEvent('paint:ready'));
+    });
 };
 
 if (canvas) {

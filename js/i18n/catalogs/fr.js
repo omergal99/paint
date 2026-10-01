@@ -281,5 +281,9 @@ export const initializeFr = (english) => {
     "status.exportedImages": "{count} images exportées",
     "status.historyAutoSaveOn": "Enregistrement automatique de l'historique activé",
     "status.historyAutoSaveOff": "Enregistrement automatique de l'historique désactivé",
+    "ui.default": "Par défaut",
+    "ui.shortcutAlreadyAssigned": "Ce raccourci est déjà attribué.",
+    "ui.shortcutReset": "{action} réinitialisé par défaut.",
+    "ui.shortcutSaved": "Raccourci {action} enregistré.",
   });
 };

@@ -287,5 +287,9 @@ export const initializeJa = (english) => {
     "status.exportedImages": "{count} 枚の画像をエクスポートしました",
     "status.historyAutoSaveOn": "履歴の自動保存はオンです",
     "status.historyAutoSaveOff": "履歴の自動保存はオフです",
+    "ui.default": "既定",
+    "ui.shortcutAlreadyAssigned": "そのショートカットは既に使われています。",
+    "ui.shortcutReset": "{action} を既定に戻しました。",
+    "ui.shortcutSaved": "{action} のショートカットを保存しました。",
   });
 };

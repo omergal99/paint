@@ -286,5 +286,9 @@ export const initializeDe = (english) => {
     "status.exportedImages": "{count} Bilder exportiert",
     "status.historyAutoSaveOn": "Verlauf-Autospeicherung aktiv",
     "status.historyAutoSaveOff": "Verlauf-Autospeicherung aus",
+    "ui.default": "Standard",
+    "ui.shortcutAlreadyAssigned": "Dieses Tastenkürzel ist bereits belegt.",
+    "ui.shortcutReset": "{action} auf Standard zurückgesetzt.",
+    "ui.shortcutSaved": "Kürzel für {action} gespeichert.",
   });
 };

@@ -284,5 +284,9 @@ export const initializeAr = (english) => {
     "status.exportedImages": "تم تصدير {count} صورة",
     "status.historyAutoSaveOn": "الحفظ التلقائي للسجل مُفعّل",
     "status.historyAutoSaveOff": "الحفظ التلقائي للسجل مُعطّل",
+    "ui.default": "افتراضي",
+    "ui.shortcutAlreadyAssigned": "اختصار لوحة المفاتيح هذا مُسند بالفعل.",
+    "ui.shortcutReset": "تمت إعادة تعيين {action} إلى الافتراضي.",
+    "ui.shortcutSaved": "تم حفظ اختصار {action}.",
   });
 };

@@ -372,5 +372,9 @@ export const initializeHe = (english) => {
     "status.exportedImages": "יוצאו {count} תמונות",
     "status.historyAutoSaveOn": "שמירה אוטומטית של היסטוריה פעילה",
     "status.historyAutoSaveOff": "שמירה אוטומטית של היסטוריה כבויה",
+    "ui.default": "ברירת מחדל",
+    "ui.shortcutAlreadyAssigned": "קיצור המקלדת הזה כבר מוקצה.",
+    "ui.shortcutReset": "{action} הוחזר לברירת המחדל.",
+    "ui.shortcutSaved": "קיצור המקלדת של {action} נשמר.",
   });
 };

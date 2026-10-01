@@ -84,6 +84,10 @@ export const ES_MESSAGES = Object.freeze({
       "¿Borrar el lienzo guardado, los datos del espacio de trabajo, la configuración y el historial? Esta acción no se puede deshacer.",
   },
   ui: {
+    default: "Predeterminado",
+    shortcutAlreadyAssigned: "Ese atajo ya está asignado.",
+    shortcutReset: "{action} restablecido al valor predeterminado.",
+    shortcutSaved: "Atajo de {action} guardado.",
     crop: "Recortar",
     removeBackground: "Quitar fondo",
     backgroundRemovalMode: "Modo de eliminación",

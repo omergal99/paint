@@ -12,6 +12,10 @@ import { initResizeDialog } from './app/resizeDialog.js';
 import { initFileActions } from './app/fileActions.js';
 import { initCanvasTransforms, pruneRotationState, resetRotationState } from './app/canvasTransforms.js';
 import { initHistoryControls } from './app/historyControls.js';
+import { createPaintSettingsRegistry } from './app/settingsRegistry.js';
+import { initAboutPanel } from './app/aboutPanel.js';
+import { initShortcutSettings } from './app/shortcutSettings.js';
+import { markBoot } from './app/bootTiming.js';
 import { createPencilTool, createBrushTool, createEraserTool } from './tools/FreehandTools.js';
 import { createFillTool } from './tools/FillTool.js';
 import { createShapeTool } from './tools/ShapeTool.js';
@@ -71,6 +75,8 @@ import { createLocalColorKeyProvider } from './background/LocalColorKeyProvider.
 import { createPaintDocument } from './core/DocumentContract.js';
 import { createSessionService } from './session/SessionService.js';
 
+markBoot('boot:start');
+
 // ---------- DOM refs ----------
 // Every addressable UI element gets a stable inspection hook. Explicit
 // data-tag values remain authoritative; id values provide the safe fallback.
@@ -115,6 +121,7 @@ const dialogService = createDialogService({
 
 // ---------- Settings store (created first: every feature reads it) ----------
 const settingsStore = createPaintSettingsStore();
+markBoot('boot:settings-store');
 
 const readSettings = () => {
 	return settingsStore.get();
@@ -927,13 +934,8 @@ const defaultCanvasWidthInput = document.getElementById('setting-default-canvas-
 const defaultCanvasHeightInput = document.getElementById('setting-default-canvas-height');
 const defaultZoomSelect = document.getElementById('setting-default-zoom');
 const defaultZoomCustomInput = document.getElementById('setting-default-zoom-custom');
-const shortcutManager = createShortcutManager({ bindings: settingsStore.get().shortcuts });
-settingsStore.subscribe((state) => shortcutManager.replace(state.shortcuts));
-const settingsRegistry = createSettingsRegistry();
-settingsRegistry.registerStorageKey(STORAGE_KEYS.textHistory);
-settingsRegistry.registerStorageKey(STORAGE_KEYS.settingsTab);
-settingsRegistry.registerResetHandler(() => colorPalette.resetToDefaults());
-settingsRegistry.registerResetHandler(() => sidebar.resetSettings());
+const { shortcutManager, renderShortcutSettings } = initShortcutSettings({ settingsStore });
+const settingsRegistry = createPaintSettingsRegistry({ colorPalette, sidebar });
 // Phase 2 step-03: the Shapes mirror and the ribbon favorites row subscribe to
 // this one SettingsStore value (favoriteShapes) - no second favorites source.
 configureShapesFavorites(settingsStore);
@@ -1262,184 +1264,7 @@ const syncRibbonSettingsControls = () => {
 	});
 }
 
-const normalizeStorageEstimate = (value) => {
-	const usage = Number(value?.usage);
-	const quota = Number(value?.quota);
-	if (!Number.isFinite(usage) || !Number.isFinite(quota) || usage < 0 || quota <= 0 || usage > quota) return null;
-	return { usage, quota, checkedAt: Number(value?.checkedAt) || Date.now() };
-}
-
-const getStorageEstimate = async () => {
-	const estimate = await navigator.storage?.estimate?.();
-	return normalizeStorageEstimate({ ...estimate, checkedAt: Date.now() });
-}
-
-const updateAboutStats = async () => {
-	const loading = document.getElementById('about-loading-state');
-	const aboutValues = document.querySelectorAll('[data-about-value]');
-	if (loading) loading.hidden = false;
-	aboutValues.forEach((element) => element.setAttribute('aria-busy', 'true'));
-	const version = document.getElementById('about-version');
-	const activity = document.getElementById('about-activity');
-	if (version) version.textContent = APP_VERSION;
-	if (activity) activity.textContent = formatUnambiguousDateTime(new Date());
-		// Storage numbers are estimates, not disk truth. Read a fresh validated
-	// browser estimate every time the About tab is opened.
-	const MB = 1024 * 1024;
-	const formatBytes = (bytes) => {
-		const value = Number(bytes);
-		if (!Number.isFinite(value) || value < 0) return 'Unavailable';
-		const units = value >= 1024 ** 3 ? ['GiB', 1024 ** 3]
-			: value >= MB ? ['MiB', MB]
-			: value >= 1024 ? ['KiB', 1024]
-			: ['B', 1];
-		return `${(value / units[1]).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${units[0]}`;
-	};
-	const formatQuota = (bytes) => {
-		const value = Number(bytes);
-		if (!Number.isFinite(value) || value < 0) return 'Unavailable';
-		const GiB = 1024 ** 3;
-		if (value >= GiB) return `≈${(value / GiB).toLocaleString('en-US', { maximumFractionDigits: 0 })} GiB`;
-		return formatBytes(value);
-	};
-	try {
-		const estimate = await getStorageEstimate();
-		const usageBytes = estimate?.usage || 0;
-		const quotaBytes = estimate?.quota || 0;
-		// This is the browser's storage quota estimate, not free space on the
-		// user's disk. Keep the raw estimate and label the result accordingly;
-		// never present a made-up fixed 10 GB capacity.
-		const storage = document.getElementById('about-storage');
-		if (storage) storage.textContent = estimate ? formatBytes(usageBytes) : 'Unavailable';
-		const quotaEl = document.getElementById('about-storage-quota');
-		if (quotaEl) {
-			quotaEl.textContent = estimate ? formatQuota(quotaBytes) : 'Unavailable';
-		}
-		const fill = document.getElementById('about-storage-bar-fill');
-		const usageLabel = document.getElementById('about-storage-usage-label');
-		if (fill) {
-			let pct = 0;
-			if (estimate && quotaBytes > 0 && usageBytes > 0) {
-				pct = Math.min(100, Math.max(1, Math.ceil((usageBytes / quotaBytes) * 100)));
-			}
-			const viewPct = pct < 50 ? pct + 2 : pct; // keep the fill bar visible even at low usage
-			fill.style.width = `${viewPct}%`;
-			if (usageLabel) {
-				const ratio = estimate && quotaBytes > 0 ? (usageBytes / quotaBytes) * 100 : 0;
-				const percent = ratio > 0 && `~${String(Math.ceil(ratio))}`;
-				usageLabel.textContent = estimate ? t('ui.usagePercent', { percent }) : t('ui.usage');
-			}
-		}
-	} catch {
-		const storage = document.getElementById('about-storage');
-		if (storage) storage.textContent = 'Unavailable';
-		const quotaEl = document.getElementById('about-storage-quota');
-		if (quotaEl) quotaEl.textContent = 'Unavailable';
-		const usageLabel = document.getElementById('about-storage-usage-label');
-		if (usageLabel) usageLabel.textContent = t('ui.usage');
-	} finally {
-		aboutValues.forEach((element) => element.removeAttribute('aria-busy'));
-		if (loading) loading.hidden = true;
-	}
-}
-
-const renderReleaseNotes = () => {
-	const host = document.getElementById('release-notes-list');
-	if (!host) return;
-	host.innerHTML = '';
-	for (const note of getReleaseNotes()) {
-		const card = document.createElement('div');
-		card.className = 'release-note-card';
-		const head = document.createElement('div');
-		head.className = 'release-note-head';
-		const ver = document.createElement('strong');
-		ver.textContent = `v${note.version}`;
-		head.appendChild(ver);
-		if (note.date) {
-			const date = document.createElement('span');
-			date.className = 'release-note-date';
-			date.textContent = /^\d{4}-\d{2}-\d{2}$/.test(note.date)
-				? formatUnambiguousDate(new Date(`${note.date}T00:00:00`))
-				: note.date;
-			head.appendChild(date);
-		}
-		const list = document.createElement('ul');
-		for (const key of note.highlightKeys) {
-			const li = document.createElement('li');
-			li.textContent = t(key);
-			list.appendChild(li);
-		}
-		card.append(head, list);
-		host.appendChild(card);
-	}
-}
-const refreshAboutOnLocaleChange = () => {
-	if (!document.querySelector('[data-settings-panel="about"]')?.hidden) void updateAboutStats();
-};
-const refreshReleaseNotesOnLocaleChange = () => renderReleaseNotes();
-document.documentElement?.addEventListener('paint:locale-change', refreshAboutOnLocaleChange);
-document.documentElement?.addEventListener('paint:locale-change', refreshReleaseNotesOnLocaleChange);
-renderReleaseNotes();
-
-const shortcutSettingsStatus = document.getElementById('shortcut-settings-status');
-const persistShortcutSettings = () => settingsStore.set({ shortcuts: shortcutManager.get() });
-const renderShortcutSettings = () => {
-	const host = document.getElementById('shortcut-settings-list');
-	if (!host) return;
-	host.replaceChildren();
-	for (const definition of SHORTCUT_DEFINITIONS) {
-		const row = document.createElement('div');
-		row.className = 'shortcut-setting-row';
-		const label = document.createElement('label');
-		label.textContent = definition.label;
-		const input = document.createElement('input');
-		input.type = 'text';
-		input.readOnly = true;
-		input.className = 'shortcut-setting-input';
-		input.id = `shortcut-${definition.action}`;
-		input.dataset.shortcutAction = definition.action;
-		input.setAttribute('aria-label', `${definition.label} shortcut`);
-		input.value = formatShortcut(shortcutManager.get()[definition.action]);
-		input.title = 'Focus this field and press the shortcut you want';
-		input.addEventListener('keydown', (event) => {
-			if (event.key === 'Escape') {
-				input.blur();
-				return;
-			}
-			const next = shortcutFromEvent(event);
-			if (!next) return;
-			event.preventDefault();
-			event.stopPropagation();
-			const result = shortcutManager.assign(definition.action, next);
-			if (!result.ok) {
-				input.setCustomValidity('That shortcut is already assigned.');
-				if (shortcutSettingsStatus) shortcutSettingsStatus.textContent = 'That shortcut is already assigned.';
-				return;
-			}
-			input.setCustomValidity('');
-			input.value = formatShortcut(result.value);
-			persistShortcutSettings();
-			if (shortcutSettingsStatus) shortcutSettingsStatus.textContent = `${definition.label} shortcut saved.`;
-		});
-		const reset = document.createElement('button');
-		reset.type = 'button';
-		reset.className = 'settings-link-button shortcut-reset';
-		reset.textContent = 'Default';
-		reset.addEventListener('click', () => {
-			const result = shortcutManager.reset(definition.action);
-			if (!result.ok) return;
-			input.setCustomValidity('');
-			input.value = formatShortcut(result.value);
-			persistShortcutSettings();
-			if (shortcutSettingsStatus) shortcutSettingsStatus.textContent = `${definition.label} reset to default.`;
-		});
-		label.htmlFor = input.id;
-		row.append(label, input, reset);
-		host.appendChild(row);
-	}
-};
-renderShortcutSettings();
-
+const { updateAboutStats } = initAboutPanel();
 const RIBBON_GROUP_ORDER = Object.freeze([
 	'ribbon-group-file',
 	'ribbon-group-clipboard',
@@ -1655,7 +1480,9 @@ solidBackgroundColorInput?.addEventListener('input', (event) => {
 	saveSettings();
 });
 
+markBoot('boot:before-hydrate');
 applySavedSettings();
+markBoot('boot:after-hydrate');
 
 const restoreDialogFromUrl = () => {
 	const { dialog, tab } = router.resolveDeepLink();
