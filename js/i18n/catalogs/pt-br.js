@@ -284,5 +284,11 @@ export const initializePtBr = (english) => {
     "releaseNotes.unreleasedSep2026.h1": "Melhor suporte a idiomas e uma interface mais consistente",
     "releaseNotes.unreleasedSep2026.h2": "Fluxos de desenho, exportação e histórico mais simples",
     "releaseNotes.unreleasedSep2026.h3": "Uso offline e atualizações mais confiáveis",
+    "status.noSessionStepsToExport": "Nenhum passo de sessão para exportar",
+    "status.exportedSessionImages": "{count} imagens de sessão exportadas",
+    "status.noHistoryToExport": "Nenhum histórico para exportar",
+    "status.exportedImages": "{count} imagens exportadas",
+    "status.historyAutoSaveOn": "Salvamento automático do histórico ativado",
+    "status.historyAutoSaveOff": "Salvamento automático do histórico desativado",
   });
 };

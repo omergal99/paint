@@ -227,6 +227,12 @@ export const EN_MESSAGES = deepFreeze({
 		undoSnapshotSkipped: 'Undo snapshot skipped to protect memory.',
 		downloadReady: 'Download ready',
 		historySaved: 'History image saved',
+		noSessionStepsToExport: 'No session steps to export',
+		exportedSessionImages: 'Exported {count} session images',
+		noHistoryToExport: 'No history to export',
+		exportedImages: 'Exported {count} images',
+		historyAutoSaveOn: 'History auto-save on',
+		historyAutoSaveOff: 'History auto-save off',
 		historyCleared: 'History cleared',
 	},
 	releaseNotes: {

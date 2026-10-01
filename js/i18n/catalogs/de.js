@@ -280,5 +280,11 @@ export const initializeDe = (english) => {
     "releaseNotes.unreleasedSep2026.h1": "Bessere Sprachunterstützung und eine einheitlichere Oberfläche",
     "releaseNotes.unreleasedSep2026.h2": "Einfachere Abläufe für Zeichnen, Export und Verlauf",
     "releaseNotes.unreleasedSep2026.h3": "Zuverlässigere Offline-Nutzung und App-Updates",
+    "status.noSessionStepsToExport": "Keine Sitzungsschritte zum Exportieren",
+    "status.exportedSessionImages": "{count} Sitzungsbilder exportiert",
+    "status.noHistoryToExport": "Kein Verlauf zum Exportieren",
+    "status.exportedImages": "{count} Bilder exportiert",
+    "status.historyAutoSaveOn": "Verlauf-Autospeicherung aktiv",
+    "status.historyAutoSaveOff": "Verlauf-Autospeicherung aus",
   });
 };

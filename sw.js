@@ -1,7 +1,6 @@
-const CACHE_NAME = 'paint-shell-v1-8-0';
+const CACHE_NAME = 'paint-shell-v1-7-0';
 const CACHE_PREFIX = 'paint-shell-';
 const SHELL = [
-  './',
   './index.html',
   './manifest.json',
   './css/progressive.css',
@@ -93,6 +92,13 @@ const SHELL = [
   './js/utils/color.js',
   './js/utils/colorContract.js',
   './js/utils/transform.js',
+  './js/app/appState.js',
+  './js/app/canvasTransforms.js',
+  './js/app/fileActions.js',
+  './js/app/historyControls.js',
+  './js/app/resizeDialog.js',
+  './js/app/router.js',
+  './js/app/settingsStore.js',
   './css/assets/icon.svg',
   './css/assets/icon-192.png',
   './css/assets/icon-512.png',
@@ -103,8 +109,17 @@ const SHELL = [
 const cacheShell = async () => {
   const cache = await caches.open(CACHE_NAME);
   const results = await Promise.allSettled(SHELL.map(async (asset) => {
-    if (await cache.match(asset)) return;
-    await cache.add(asset);
+    // Always re-fetch first: a cache name stays the same across content
+    // changes, so trusting a previous entry would keep serving a stale module
+    // until someone hand-bumped the cache name. Offline installs fall back to
+    // the known-good copy instead of failing.
+    try {
+      await cache.add(asset);
+      return;
+    } catch (error) {
+      if (await cache.match(asset)) return;
+      throw error;
+    }
   }));
   const failed = results.reduce((count, result) => count + (result.status === 'rejected' ? 1 : 0), 0);
   return { ok: failed === 0, cached: SHELL.length - failed, failed };

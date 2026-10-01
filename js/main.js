@@ -10,6 +10,8 @@ import { appState } from './app/appState.js';
 import { router } from './app/router.js';
 import { initResizeDialog } from './app/resizeDialog.js';
 import { initFileActions } from './app/fileActions.js';
+import { initCanvasTransforms, pruneRotationState, resetRotationState } from './app/canvasTransforms.js';
+import { initHistoryControls } from './app/historyControls.js';
 import { createPencilTool, createBrushTool, createEraserTool } from './tools/FreehandTools.js';
 import { createFillTool } from './tools/FillTool.js';
 import { createShapeTool } from './tools/ShapeTool.js';
@@ -44,7 +46,7 @@ import {
 	SHORTCUT_DEFINITIONS,
 	STORAGE_KEYS,
 } from './core/constants.js';
-import { createSettingsStore } from './settings/SettingsStore.js';
+import { createPaintSettingsStore } from './app/settingsStore.js';
 import { createShortcutManager, formatShortcut, shortcutFromEvent } from './settings/ShortcutManager.js';
 import { createTextDocumentStore } from './document/TextDocumentStore.js';
 import { createTextHistoryStore } from './document/TextHistoryStore.js';
@@ -112,21 +114,7 @@ const dialogService = createDialogService({
 });
 
 // ---------- Settings store (created first: every feature reads it) ----------
-const SETTINGS_KEY = STORAGE_KEYS.settings;
-const settingsStore = createSettingsStore({
-	storage: globalThis.localStorage,
-	key: SETTINGS_KEY,
-	defaults: DEFAULT_SETTINGS,
-	validators: {
-		canvasBackground: (value) => ['none', 'solid', 'transparent', 'checkerboard', 'grid'].includes(value),
-		solidBackgroundColor: (value) => typeof value === 'string' && /^#[0-9a-f]{6}$/i.test(value),
-		defaultZoom: (value) => Number.isFinite(Number(value)) && Number(value) > 0,
-		interfaceDirection: (value) => ['auto', 'ltr', 'rtl'].includes(value),
-		historyAutoSaveMode: (value) => ['all', 'close', 'lifecycle'].includes(value),
-		historyLimit: (value) => HISTORY_LIMIT_OPTIONS.includes(Number(value)),
-		favoriteShapes: (value) => Array.isArray(value) && value.every((item) => typeof item === 'string' && item),
-	},
-});
+const settingsStore = createPaintSettingsStore();
 
 const readSettings = () => {
 	return settingsStore.get();
@@ -490,22 +478,11 @@ const updateCropActionState = () => {
 	button.setAttribute('aria-label', label);
 };
 
-let selectionRotation = null;
-const sameRegion = (a, b) => {
-	return a && b && ['x', 'y', 'w', 'h'].every((key) => a[key] === b[key]);
-}
-const sameRotationCenter = (a, b) => {
-	if (!a || !b) return false;
-	return Math.abs((a.x + a.w / 2) - (b.x + b.w / 2)) < 0.5
-		&& Math.abs((a.y + a.h / 2) - (b.y + b.h / 2)) < 0.5;
-}
-
 const setSelection = (region, opts = {}) => {
 	// Quarter-turn rotations legitimately swap the selection dimensions. Keep
 	// the original pixel snapshot while the center remains anchored, otherwise
 	// the next rotation would use an already fitted/shrunk result as its base.
-	if (selectionRotation && !sameRegion(selectionRotation.selection, region)
-		&& !sameRotationCenter(selectionRotation.selection, region)) selectionRotation = null;
+	pruneRotationState(region);
 	canvasManager.selection = region;
 	statusBar.setSelection(region);
 	appState.dispatch({ type: 'selection/changed', payload: region });
@@ -552,17 +529,10 @@ const selectionHandles = [...document.querySelectorAll('[data-selection-handle]'
 const rotateSelectionHandle = document.getElementById('selection-rotate');
 let activeToolName = 'select';
 let activeSelectionHandleDragCleanup = null;
-let activeSelectionRotationDragCleanup = null;
 
 const stopSelectionHandleDrag = () => {
 	const cleanup = activeSelectionHandleDragCleanup;
 	activeSelectionHandleDragCleanup = null;
-	cleanup?.();
-};
-
-const stopSelectionRotationDrag = () => {
-	const cleanup = activeSelectionRotationDragCleanup;
-	activeSelectionRotationDragCleanup = null;
 	cleanup?.();
 };
 
@@ -672,7 +642,7 @@ const commitFloatingSelection = () => {
 	if (canvasManager.floatingCanvas && canvasManager.selection) {
 		commitFloatingPixels(canvasManager.selection);
 		canvasManager.floatingCanvas = null;
-		selectionRotation = null;
+		resetRotationState();
 		setSelection(null);
 		canvasManager.persistToStorage();
 		// Restore the shape tool after a select-after-draw lift, so the user can
@@ -696,7 +666,7 @@ const commitFloatingSelection = () => {
 const discardFloatingSelection = () => {
 	if (canvasManager.floatingCanvas) {
 		canvasManager.floatingCanvas = null;
-		selectionRotation = null;
+		resetRotationState();
 		setSelection(null);
 	}
 }
@@ -906,191 +876,20 @@ const {
 	crop,
 } = fileActions;
 // ---------- Transformations ----------
-const applyTransformation = (transformFn) => {
-	// A menu transform starts a new operation; do not use a previous rotate
-	// handle's base canvas for it.
-	selectionRotation = null;
-	canvasManager.flattenLayers();
-	historyManager.snapshot();
-	const selection = canvasManager.selection;
-	if (selection && !canvasManager.floatingCanvas) {
-		canvasManager.floatingCanvas = canvasManager.extractRegion(selection);
-		canvasManager.fillRegion(selection, canvasManager.backgroundColor);
-	}
-	if (canvasManager.floatingCanvas && canvasManager.selection) {
-		const newCanvas = transformFn(canvasManager.floatingCanvas);
-		canvasManager.floatingCanvas = newCanvas;
-
-		// Update selection region to match new dimensions
-		const sel = canvasManager.selection;
-		const cx = sel.x + sel.w / 2;
-		const cy = sel.y + sel.h / 2;
-		const nw = newCanvas.width;
-		const nh = newCanvas.height;
-
-		setSelection({
-			x: cx - nw / 2,
-			y: cy - nh / 2,
-			w: nw,
-			h: nh
-		});
-	} else {
-		// Transform entire canvas
-		const newCanvas = transformFn(canvasManager.canvas);
-		canvasManager.loadFromSource(newCanvas);
-	}
-	persistSession();
-}
-
 const actionMenuController = createActionMenuController({ root: document });
 actionMenuController.bind();
-document.getElementById('btn-rotate-90').addEventListener('click', () => applyTransformation(c => rotateCanvas(c, 1)));
-document.getElementById('btn-rotate-180').addEventListener('click', () => applyTransformation(c => rotateCanvas(c, 2)));
-document.getElementById('btn-rotate-270').addEventListener('click', () => applyTransformation(c => rotateCanvas(c, 3)));
-document.getElementById('btn-rotate-free').addEventListener('click', async () => {
-	const value = await dialogService.prompt({
-		title: t('ui.freeRotate'),
-		message: t('ui.freeRotatePrompt'),
-		value: '15',
-		type: 'number',
-		confirmLabel: t('ui.rotate'),
-	});
-	const degrees = Number.parseFloat(value);
-	if (Number.isFinite(degrees)) applyTransformation(c => rotateCanvasByAngle(c, degrees));
+const transforms = initCanvasTransforms({
+	canvasManager,
+	historyManager,
+	viewportManager,
+	dialogService,
+	setSelection,
+	persistSession,
+	crop,
+	backgroundRemovalController,
+	getActiveToolName: () => activeToolName,
 });
-document.getElementById('btn-flip-horizontal').addEventListener('click', () => applyTransformation(c => flipCanvas(c, true)));
-document.getElementById('btn-flip-vertical').addEventListener('click', () => applyTransformation(c => flipCanvas(c, false)));
-document.getElementById('btn-crop').addEventListener('click', crop);
-document.getElementById('btn-remove-bg').addEventListener('click', () => { void backgroundRemovalController.open(); });
-const bindRotateSelectionHandle = () => {
-	if (!rotateSelectionHandle) return () => {};
-	const onClick = (event) => {
-		event.preventDefault();
-		event.stopPropagation();
-		if (rotateSelectionHandle._dragged) {
-			rotateSelectionHandle._dragged = false;
-			return;
-		}
-		if (document.getElementById('rotate-selection-toggle')?.checked) {
-			rotateSelectionByAngle(90, { prepared: rotateSelectionHandle._rotationPrepared === true });
-			rotateSelectionHandle._rotationPrepared = false;
-		}
-	};
-	const onPointerDown = (event) => {
-		if (activeToolName !== 'select' || !document.getElementById('rotate-selection-toggle')?.checked || !canvasManager.selection) return;
-		stopSelectionRotationDrag();
-		event.preventDefault();
-		event.stopPropagation();
-		const originalSelection = { ...canvasManager.selection };
-		historyManager.snapshot();
-		if (!canvasManager.floatingCanvas) {
-			canvasManager.floatingCanvas = canvasManager.extractRegion(originalSelection);
-			canvasManager.fillRegion(originalSelection, canvasManager.backgroundColor);
-			setSelection(originalSelection);
-		}
-		const rotationState = beginSelectionRotation(originalSelection);
-		const startDegrees = rotationState.degrees;
-		rotateSelectionHandle._rotationPrepared = true;
-		const center = { x: originalSelection.x + originalSelection.w / 2, y: originalSelection.y + originalSelection.h / 2 };
-		const startPoint = viewportManager.clientToImage(event.clientX, event.clientY);
-		const startAngle = Math.atan2(startPoint.y - center.y, startPoint.x - center.x);
-		let moved = false;
-		const onMove = (moveEvent) => {
-			const point = viewportManager.clientToImage(moveEvent.clientX, moveEvent.clientY);
-			const angle = Math.atan2(point.y - center.y, point.x - center.x);
-			const degrees = snapRotation(startDegrees + (angle - startAngle) * 180 / Math.PI);
-			if (Math.abs(degrees - startDegrees) > 1) moved = true;
-			rotationState.degrees = degrees;
-			const rendered = renderSelectionRotation(rotationState);
-			canvasManager.floatingCanvas = rendered.canvas;
-			setSelection(rendered.region);
-		};
-		let finished = false;
-		const cleanup = () => {
-			if (finished) return;
-			finished = true;
-			window.removeEventListener('pointermove', onMove);
-			window.removeEventListener('pointerup', onUp);
-			window.removeEventListener('pointercancel', onCancel);
-			if (activeSelectionRotationDragCleanup === cleanup) activeSelectionRotationDragCleanup = null;
-		};
-		const onUp = () => {
-			cleanup();
-			if (moved) {
-				rotateSelectionHandle._dragged = true;
-				rotateSelectionHandle._rotationPrepared = false;
-				canvasManager.persistToStorage();
-			}
-		};
-		const onCancel = () => cleanup();
-		window.addEventListener('pointermove', onMove);
-		window.addEventListener('pointerup', onUp, { once: true });
-		window.addEventListener('pointercancel', onCancel, { once: true });
-		activeSelectionRotationDragCleanup = cleanup;
-	};
-	rotateSelectionHandle.addEventListener('click', onClick);
-	rotateSelectionHandle.addEventListener('pointerdown', onPointerDown);
-	return () => {
-		stopSelectionRotationDrag();
-		rotateSelectionHandle.removeEventListener('click', onClick);
-		rotateSelectionHandle.removeEventListener('pointerdown', onPointerDown);
-	};
-};
-const destroyRotateSelectionHandleBinding = bindRotateSelectionHandle();
-
-const rotateSelectionByAngle = (degrees, { prepared = false } = {}) => {
-	const selection = canvasManager.selection;
-	if (!selection?.w || !selection?.h) return;
-	if (!prepared) historyManager.snapshot();
-	if (!prepared && !canvasManager.floatingCanvas) {
-		canvasManager.floatingCanvas = canvasManager.extractRegion(selection);
-		canvasManager.fillRegion(selection, canvasManager.backgroundColor);
-	}
-	const rotationState = beginSelectionRotation(selection);
-	rotationState.degrees += degrees;
-	rotationState.degrees = snapRotation(rotationState.degrees);
-	const rendered = renderSelectionRotation(rotationState);
-	canvasManager.floatingCanvas = rendered.canvas;
-	setSelection(rendered.region);
-	persistSession();
-}
-
-const beginSelectionRotation = (selection) => {
-	if (!canvasManager.floatingCanvas) return null;
-	if (!selectionRotation || !sameRotationCenter(selectionRotation.selection, selection)) {
-		selectionRotation = {
-			baseCanvas: scaleCanvas(canvasManager.floatingCanvas, canvasManager.floatingCanvas.width, canvasManager.floatingCanvas.height),
-			selection: { ...selection },
-			center: { x: selection.x + selection.w / 2, y: selection.y + selection.h / 2 },
-			degrees: 0,
-		};
-	}
-	return selectionRotation;
-}
-
-const snapRotation = (degrees) => {
-	const quarterTurn = Math.round(degrees / 90) * 90;
-	return Math.abs(degrees - quarterTurn) < 0.75 ? quarterTurn : degrees;
-}
-
-const renderSelectionRotation = (rotationState) => {
-	const { center, degrees, baseCanvas } = rotationState;
-	const quarterTurn = Math.round(degrees / 90) * 90;
-	// Always rotate the untouched source at its natural size. Fitting an
-	// already-rotated canvas into the old rectangle changes the shape's scale
-	// and can clip its corners. The resulting canvas is the true rotated
-	// bounding box, so the selection travels with the pixels.
-	const canvas = rotateCanvasByAngle(baseCanvas, degrees);
-	return {
-		canvas,
-		region: {
-			x: center.x - canvas.width / 2,
-			y: center.y - canvas.height / 2,
-			w: canvas.width,
-			h: canvas.height,
-		},
-	};
-}
+const { applyTransformation, destroyRotateSelectionHandleBinding } = transforms;
 const destroySelectionHandleBindings = bindSelectionHandles();
 
 // Panels that keep their own controls open (Shapes gallery, Text options) are
@@ -1310,150 +1109,6 @@ renderSegmentedChoices();
 appState.dispatch({ type: 'locale/changed', payload: event.detail?.locale ?? null });
 appState.dispatch({ type: 'direction/changed', payload: event.detail?.direction ?? document.documentElement.dir });
 });
-
-const syncHistoryControls = (saved) => {
-	const prefs = saved
-		? { autoSave: saved.historyAutoSave !== false, mode: saved.historyAutoSaveMode === 'close' ? 'lifecycle' : (saved.historyAutoSaveMode || 'lifecycle') }
-		: getHistoryPrefs();
-	const t1 = document.getElementById('history-auto-save-toggle');
-	const t2 = document.getElementById('setting-history-auto-save');
-	const m = document.getElementById('setting-history-auto-save-mode');
-	const restore = document.getElementById('setting-restore-last-image');
-	if (t1) t1.checked = prefs.autoSave;
-	if (t2) t2.checked = prefs.autoSave;
-	if (m) m.value = prefs.mode;
-	if (restore) restore.checked = readSettings().restoreLastImage === true;
-	const status = document.getElementById('history-auto-status');
-	const modeKeys = { lifecycle: 'ui.autoSaveLifecycle', all: 'ui.allAutomaticEvents', manual: 'ui.onlyManualShort' };
-	setLocalizedText(status, prefs.autoSave ? (modeKeys[prefs.mode] ?? null) : 'ui.off');
-	renderSegmentedChoices();
-}
-
-const syncHistoryLimitSelect = (value) => {
-	const sidebarSel = document.getElementById('history-save-limit');
-	const settingsSel = document.getElementById('setting-history-save-limit');
-	if (sidebarSel) sidebarSel.value = String(value);
-	if (settingsSel) settingsSel.value = String(value);
-	const limitStatus = document.getElementById('history-limit-status');
-	// Concise one-line summary (Phase 2 step-04): the row shows the plain
-	// number; the Settings dialog keeps the worded "50 images" labels.
-	if (value > 0) {
-		if (limitStatus) {
-			limitStatus.textContent = String(value);
-			limitStatus.removeAttribute('data-i18n-runtime');
-		}
-	} else {
-		setLocalizedText(limitStatus, 'ui.off');
-	}
-	renderSegmentedChoices();
-}
-
-const exportHistoryItem = async (session, index) => {
-	const stamp = session.timestamp
-		? new Date(session.timestamp).toISOString().replace(/[:.]/g, '-').slice(0, 19)
-		: 'session-step';
-	const name = `history-${index + 1}-${stamp}.png`;
-	const a = document.createElement('a');
-	a.href = session.dataUrl;
-	a.download = name;
-	document.body.appendChild(a);
-	a.click();
-	a.remove();
-}
-
-const exportSessionEntry = async (entry, index) => {
-	const a = document.createElement('a');
-	a.href = entry.dataUrl;
-	a.download = `session-${index + 1}.png`;
-	document.body.appendChild(a);
-	a.click();
-	a.remove();
-}
-
-const exportAllHistory = async () => {
-	const sessionView = sidebar.historyView === HISTORY_VIEWS.session;
-	if (sessionView) {
-		const entries = sidebar.historyManager?.getSessionEntries?.() || [];
-		if (!entries.length) {
-			statusBar.flash('No session steps to export');
-			return;
-		}
-		for (let i = 0; i < entries.length; i += 1) {
-			await exportSessionEntry(entries[i], i);
-			await new Promise((resolve) => setTimeout(resolve, 250));
-		}
-		statusBar.flash(`Exported ${entries.length} session images`);
-		return;
-	}
-	const sessions = await sidebar.globalHistory.getSessions();
-	if (!sessions.length) {
-		statusBar.flash('No history to export');
-		return;
-	}
-	// Preferred: let the user pick a folder and write every image into it.
-	if (window.showDirectoryPicker) {
-		try {
-			const dir = await window.showDirectoryPicker({ mode: 'readwrite' });
-			for (let i = 0; i < sessions.length; i += 1) {
-				const stamp = new Date(sessions[i].timestamp).toISOString().replace(/[:.]/g, '-').slice(0, 19);
-				const name = `history-${sessions.length - i}-${stamp}.png`;
-				const blob = await (await fetch(sessions[i].dataUrl)).blob();
-				const handle = await dir.getFileHandle(name, { create: true });
-				const writable = await handle.createWritable();
-				await writable.write(blob);
-				await writable.close();
-			}
-			statusBar.flash(`Exported ${sessions.length} images to folder`);
-			return;
-		} catch (err) {
-			if (err && err.name === 'AbortError') return;
-			console.warn('Directory export failed, falling back to downloads:', err);
-		}
-	}
-	// Fallback: sequential downloads (newest first, matching grid order).
-	for (let i = 0; i < sessions.length; i += 1) {
-		await exportHistoryItem(sessions[i], sessions.length - 1 - i);
-		await new Promise((resolve) => setTimeout(resolve, 250));
-	}
-	statusBar.flash(`Exported ${sessions.length} images`);
-}
-
-// Phase 3 / step-01: Settings is the only owner of the save limit. Both selects
-// and the sidebar summary are views; IndexedDB keeps only the enforcement copy.
-const applyHistoryLimit = (val) => {
-	const parsed = parseInt(val, 10);
-	const safe = HISTORY_LIMIT_OPTIONS.includes(parsed)
-		? parsed
-		: Number(readSettings().historyLimit ?? DEFAULT_SETTINGS.historyLimit);
-	settingsStore.set({ historyLimit: safe });
-	syncHistoryLimitSelect(safe);
-	if (sidebar?.globalHistory?.db) {
-		sidebar.globalHistory.saveSettings(safe, safe > 0);
-	}
-}
-
-// Startup restore + one-time migration: when the store still holds the default
-// and IndexedDB has another valid limit (someone changed it before the setting
-// existed), adopt the IndexedDB value so their choice is not lost.
-const restoreHistoryLimit = () => {
-	const stored = Number(readSettings().historyLimit);
-	const indexed = Number(sidebar.globalHistory.maxHistory);
-	const migrateFromIndexedDb = stored === DEFAULT_SETTINGS.historyLimit
-		&& HISTORY_LIMIT_OPTIONS.includes(indexed)
-		&& indexed !== stored;
-	const limit = migrateFromIndexedDb
-		? indexed
-		: (HISTORY_LIMIT_OPTIONS.includes(stored) ? stored : DEFAULT_SETTINGS.historyLimit);
-	if (limit !== stored) settingsStore.set({ historyLimit: limit });
-	syncHistoryLimitSelect(limit);
-	if (limit !== indexed) sidebar.globalHistory.saveSettings(limit, limit > 0);
-}
-
-const applyHistoryState = () => {
-	const { autoSave } = getHistoryPrefs();
-	statusBar?.flash?.(autoSave ? 'History auto-save on' : 'History auto-save off');
-	syncHistoryControls();
-}
 
 const applyCanvasBackgroundMode = (mode) => {
 	const value = mode || 'none';
@@ -1901,42 +1556,26 @@ const onRibbonChange = () => {
 window.addEventListener('paint:ribbon-change', onRibbonChange);
 
 // ---------- History controls wiring (sidebar + settings tab) ----------
-const autoSaveToggle = document.getElementById('history-auto-save-toggle');
-const settingAutoSave = document.getElementById('setting-history-auto-save');
-const settingAutoMode = document.getElementById('setting-history-auto-save-mode');
-const historyLimitSel = document.getElementById('history-save-limit');
-const settingLimit = document.getElementById('setting-history-save-limit');
-
-const persistHistoryPrefs = () => {
-	const state = {
-		historyAutoSave: autoSaveToggle ? autoSaveToggle.checked : (settingAutoSave ? settingAutoSave.checked : true),
-		historyAutoSaveMode: settingAutoMode ? settingAutoMode.value : 'all',
-	};
-	try {
-		settingsStore.set(state);
-	} catch (err) {
-		console.warn('Unable to save history prefs:', err);
-	}
-}
-
-const onAutoSaveChange = (event) => {
-	const enabled = event?.target?.checked ?? settingAutoSave?.checked ?? autoSaveToggle?.checked ?? true;
-	if (settingAutoSave) settingAutoSave.checked = enabled;
-	if (autoSaveToggle) autoSaveToggle.checked = enabled;
-	persistHistoryPrefs();
-	applyHistoryState();
-	saveSettings();
-};
-autoSaveToggle?.addEventListener('change', onAutoSaveChange);
-settingAutoSave?.addEventListener('change', onAutoSaveChange);
-settingAutoMode?.addEventListener('change', () => {
-	persistHistoryPrefs();
-	syncHistoryControls();
-	renderSegmentedChoices();
+const historyControls = initHistoryControls({
+	settingsStore,
+	sidebar,
+	statusBar,
+	dialogService,
+	readSettings,
+	getHistoryPrefs,
+	saveSettings,
+	renderSegmentedChoices,
+	setLocalizedText,
 });
-document.getElementById('setting-restore-last-image')?.addEventListener('change', saveSettings);
-historyLimitSel?.addEventListener('change', (e) => applyHistoryLimit(e.target.value));
-settingLimit?.addEventListener('change', (e) => applyHistoryLimit(e.target.value));
+const {
+	syncHistoryControls,
+	syncHistoryLimitSelect,
+	exportAllHistory,
+	exportHistoryItem,
+	applyHistoryLimit,
+	restoreHistoryLimit,
+	applyHistoryState,
+} = historyControls;
 
 defaultZoomSelect?.addEventListener('change', () => {
 	syncDefaultZoomInputFromSelect();
@@ -1966,25 +1605,6 @@ defaultCanvasHeightInput?.addEventListener('input', () => {
 	defaultCanvasSizeSelect.value = 'custom';
 	renderSegmentedChoices();
 	saveSettings();
-});
-
-document.getElementById('history-export-all-btn')?.addEventListener('click', () => exportAllHistory());
-window.addEventListener('paint:history-export-item', (e) => {
-	exportHistoryItem(e.detail.session, e.detail.index);
-	statusBar.flash(t('status.historySaved'));
-});
-document.getElementById('settings-history-export-all')?.addEventListener('click', () => exportAllHistory());
-document.getElementById('settings-history-clear')?.addEventListener('click', async () => {
-	const confirmed = await dialogService.confirm({
-		title: t('history.clearTitle'),
-		message: t('history.clearConfirm'),
-		confirmLabel: t('history.clearTitle'),
-		danger: true,
-	});
-	if (!confirmed) return;
-	await sidebar.globalHistory.clearAll();
-	if (sidebar.activeTab === HISTORY_VIEWS.history) await sidebar.refreshHistory();
-	statusBar.flash(t('status.historyCleared'));
 });
 
 document.getElementById('btn-settings').addEventListener('click', () => openSettingsDialog());

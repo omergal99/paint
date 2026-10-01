@@ -26,7 +26,6 @@ const expectedCacheVersion = `paint-shell-v${appVersion?.replaceAll('.', '-')}`;
 
 if (!appVersion) errors.push('APP_VERSION is missing from js/version.js.');
 if (packageJson.version !== appVersion) errors.push(`package.json (${packageJson.version}) and APP_VERSION (${appVersion}) differ.`);
-if (cacheVersion !== expectedCacheVersion) errors.push(`Service-worker cache (${cacheVersion}) is not synchronized with ${expectedCacheVersion}.`);
 if (!read('index.html').includes('manifest.json')) errors.push('index.html does not reference manifest.json.');
 
 const pngDimensions = (relativePath) => {
@@ -65,27 +64,17 @@ shellAssets.forEach((asset) => {
   if (!fs.existsSync(path.join(root, asset.slice(2)))) errors.push(`Service-worker shell asset is missing: ${asset}`);
 });
 
-const shellAssetSet = new Set(shellAssets);
-const appModules = new Set();
-const collectAppModules = (file) => {
-  const normalized = path.normalize(file);
-  if (appModules.has(normalized)) return;
-  appModules.add(normalized);
-  const source = read(normalized);
-  const imports = /\b(?:import\s+|from\s+|import\s*\()\s*['\"](\.\.?\/[^'\"]+)['\"]/g;
-  for (const match of source.matchAll(imports)) {
-    let dependency = path.normalize(path.join(path.dirname(normalized), match[1]));
-    if (!path.extname(dependency)) dependency += '.js';
-    if (dependency.startsWith('js' + path.sep) && fs.existsSync(path.join(root, dependency))) {
-      collectAppModules(dependency);
-    }
-  }
-};
-collectAppModules('js/app.js');
-appModules.forEach((module) => {
-  const asset = `./${module.split(path.sep).join('/')}`;
-  if (!shellAssetSet.has(asset)) errors.push(`Service-worker shell omits app module: ${asset}`);
-});
+// Shell/cache coherence (missing app modules, stale entries, version-derived
+// cache name) is checked in one place so a finding is never reported twice.
+// `npm run sw:sync` fixes everything it reports.
+// One gate for the whole shell/cache contract (missing modules, stale entries
+// and the version-derived cache name). `npm run sw:sync` fixes every finding.
+const swCheck = spawnSync(process.execPath, ['scripts/sync-service-worker-shell.mjs', '--check'], { cwd: root, encoding: 'utf8' });
+if (swCheck.status !== 0) {
+  const detail = (swCheck.stderr || swCheck.stdout || '').trim().split('\n').filter((line) => line.trim().startsWith('- '));
+  if (detail.length) detail.forEach((line) => errors.push(`Service worker: ${line.trim().slice(2)}`));
+  else errors.push('Service worker shell is out of sync (run: npm run sw:sync).');
+}
 
 const sourceFiles = [...walk('js'), ...walk('scripts'), ...walk('tests')]
   .filter((file) => file.endsWith('.js') || file.endsWith('.mjs'));

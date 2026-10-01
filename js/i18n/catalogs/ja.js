@@ -281,5 +281,11 @@ export const initializeJa = (english) => {
     "releaseNotes.unreleasedSep2026.h1": "言語対応を改善し、より一貫したインターフェースを実現",
     "releaseNotes.unreleasedSep2026.h2": "描画、エクスポート、履歴の操作をよりスムーズに",
     "releaseNotes.unreleasedSep2026.h3": "オフライン利用とアプリ更新の信頼性を向上",
+    "status.noSessionStepsToExport": "エクスポートするセッション手順がありません",
+    "status.exportedSessionImages": "{count} 枚のセッション画像をエクスポートしました",
+    "status.noHistoryToExport": "エクスポートする履歴がありません",
+    "status.exportedImages": "{count} 枚の画像をエクスポートしました",
+    "status.historyAutoSaveOn": "履歴の自動保存はオンです",
+    "status.historyAutoSaveOff": "履歴の自動保存はオフです",
   });
 };

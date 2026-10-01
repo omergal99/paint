@@ -99,6 +99,7 @@ test('Save is owned by File More actions', () => {
 test('Background removal is a cancellable preview workflow', () => {
   const controller = read('js/background/BackgroundRemovalController.js');
   const fileActions = read('js/app/fileActions.js');
+  const transforms = read('js/app/canvasTransforms.js');
   assert.match(html, /id="background-removal-dialog"/);
   assert.match(html, /id="background-removal-preview"/);
 	assert.match(html, /id="background-removal-progress"/);
@@ -116,7 +117,7 @@ test('Background removal is a cancellable preview workflow', () => {
 	assert.match(read('js/background/BackgroundMaskEditor.js'), /setPointerCapture/);
 	assert.match(read('js/background/BackgroundMaskEditor.js'), /stopPropagation/);
 	assert.match(main, /createBackgroundRemovalService/);
-  assert.match(main, /backgroundRemovalController\.open/);
+  assert.match(transforms, /backgroundRemovalController\.open/);
   assert.match(main, /historyManager\.snapshot\(\{ force: true \}\)/);
   assert.match(controller, /controller\?\.signal\.aborted/);
 	assert.match(controller, /urlApi\?\.revokeObjectURL/);
@@ -334,7 +335,7 @@ test('Sidebar groups mirror the Tools, Shapes, Colors, Extras, and History ribbo
   assert.match(shapesMirror, /favoriteShapes/);
   assert.match(shapesMirror, /initRibbonShapeFavorites/);
   assert.match(constants, /favoriteShapes: \[\]/);
-  assert.match(main, /favoriteShapes: \(value\)/);
+  assert.match(read('js/app/settingsStore.js'), /favoriteShapes: \(value\)/);
   assert.match(main, /configureShapesFavorites\(settingsStore\)/);
   assert.match(main, /initRibbonShapeFavorites\(\)/);
   // Colors: alpha writes the ribbon input (one source) and the inspector
@@ -368,21 +369,22 @@ test('Text-only clipboard paste activates the text tool with the pasted text', (
 });
 
 test('History preferences row re-translates on locale and settings changes', () => {
+  const historyControls = read('js/app/historyControls.js');
   // Values JS renders must be tagged for LocaleController (data-i18n-runtime),
   // otherwise they freeze in the language that was active at render time.
   assert.match(main, /const setLocalizedText = \(node, key\)/);
   assert.match(main, /setAttribute\('data-i18n-runtime', key\)/);
   assert.match(main, /removeAttribute\('data-i18n-runtime'\)/);
   // Auto-save state keeps message keys (not pre-translated strings).
-  assert.match(main, /modeKeys = \{ lifecycle: 'ui\.autoSaveLifecycle', all: 'ui\.allAutomaticEvents', manual: 'ui\.onlyManualShort' \}/);
-  assert.match(main, /setLocalizedText\(status, prefs\.autoSave \? \(modeKeys\[prefs\.mode\] \?\? null\) : 'ui\.off'\)/);
+  assert.match(historyControls, /modeKeys = \{ lifecycle: 'ui\.autoSaveLifecycle', all: 'ui\.allAutomaticEvents', manual: 'ui\.onlyManualShort' \}/);
+  assert.match(historyControls, /setLocalizedText\(status, prefs\.autoSave \? \(modeKeys\[prefs\.mode\] \?\? null\) : 'ui\.off'\)/);
   // "Off" is keyed; a plain number clears the tag so it is never overwritten.
-  assert.match(main, /setLocalizedText\(limitStatus, 'ui\.off'\)/);
-  assert.match(main, /limitStatus\.removeAttribute\('data-i18n-runtime'\)/);
+  assert.match(historyControls, /setLocalizedText\(limitStatus, 'ui\.off'\)/);
+  assert.match(historyControls, /limitStatus\.removeAttribute\('data-i18n-runtime'\)/);
   // The locale listener re-runs both syncs so numbers/segmented controls agree.
   assert.match(main, /addEventListener\('paint:locale-change', \(event\) => \{[\s\S]*?syncHistoryControls\(\);[\s\S]*?syncHistoryLimitSelect\(Number\(readSettings\(\)\.historyLimit/);
   // Settings changes keep flowing through the same owner.
-  assert.match(main, /const onAutoSaveChange = \(event\) => \{[\s\S]*?applyHistoryState\(\);/);
+  assert.match(historyControls, /const onAutoSaveChange = \(event\) => \{[\s\S]*?applyHistoryState\(\);/);
 });
 
 test('Action menus only consume Escape when a menu was open', () => {
@@ -404,6 +406,33 @@ test('main.js stays a composition root as feature sections move into js/app/', (
   assert.match(main, /import \{ initFileActions \} from '\.\/app\/fileActions\.js'/);
   assert.match(main, /import \{ initResizeDialog \} from '\.\/app\/resizeDialog\.js'/);
   assert.match(main, /const fileActions = initFileActions\(\{/);
+  assert.match(main, /import \{ initCanvasTransforms, pruneRotationState, resetRotationState \} from '\.\/app\/canvasTransforms\.js';/);
+  assert.match(main, /import \{ initHistoryControls \} from '\.\/app\/historyControls\.js';/);
+  assert.match(main, /const historyControls = initHistoryControls\(\{/);
+  assert.match(main, /const \{[\s\S]*?applyHistoryState,\s*\} = historyControls;/);
+  const historyControls = read('js/app/historyControls.js');
+  assert.doesNotMatch(historyControls, /\bwindow\.location\b/);
+  // Export feedback is translated, never hardcoded English.
+  assert.match(historyControls, /t\('status\.noHistoryToExport'\)/);
+  assert.match(historyControls, /t\('status\.exportedImages', \{ count: sessions\.length \}\)/);
+  assert.match(historyControls, /import \{ DEFAULT_SETTINGS, HISTORY_LIMIT_OPTIONS, HISTORY_VIEWS \} from '\.\.\/core\/constants\.js';/);
+  assert.match(main, /const transforms = initCanvasTransforms\(\{/);
+  assert.match(main, /const \{ applyTransformation, destroyRotateSelectionHandleBinding \} = transforms;/);
+  const transforms = read('js/app/canvasTransforms.js');
+  assert.doesNotMatch(transforms, /\bwindow\.location\b/);
+  assert.match(transforms, /^import \{ rotateCanvas, rotateCanvasByAngle, flipCanvas, scaleCanvas \} from '\.\.\/utils\/transform\.js';/m);
+  // The rotation snapshot has exactly one owner: the module exports the two
+  // state helpers main.js needs instead of keeping a second copy.
+  assert.match(transforms, /export const pruneRotationState = \(region\) => \{/);
+  assert.match(transforms, /export const resetRotationState = \(\) => \{/);
+  assert.doesNotMatch(main, /let selectionRotation = null;/);
+  const settingsStore = read('js/app/settingsStore.js');
+  assert.match(main, /import \{ createPaintSettingsStore \} from '\.\/app\/settingsStore\.js';/);
+  assert.match(settingsStore, /export const createPaintSettingsStore = \(\{ storage = globalThis\.localStorage, key = STORAGE_KEYS\.settings \} = \{\}\) => createSettingsStore\(\{/);
+  assert.match(settingsStore, /import \{ createSettingsStore \} from '\.\.\/settings\/SettingsStore\.js';/);
+  // One schema owner: no validators left inline in the composition root.
+  assert.doesNotMatch(main, /canvasBackground: \(value\) =>/);
+  assert.doesNotMatch(main, /favoriteShapes: \(value\) =>/);
   assert.match(main, /const \{ openResizeDialog \} = initResizeDialog\(\{/);
   assert.match(main, /const \{[\s\S]*?showToast,[\s\S]*?crop,\s*\} = fileActions;/);
   // No module reaches for a global: collaborators are injected or imported.
@@ -412,24 +441,25 @@ test('main.js stays a composition root as feature sections move into js/app/', (
   assert.match(fileActions, /^import \{ t \} from '\.\.\/i18n\/messages\.js';/m);
   assert.match(fileActions, /return Object\.freeze\(\{[\s\S]*?crop,/);
   // The settings store and its tiny readers are created before feature sections.
-  const storeIndex = main.indexOf('const settingsStore = createSettingsStore({');
+  const storeIndex = main.indexOf('const settingsStore = createPaintSettingsStore();');
   const fileOpsIndex = main.indexOf('const fileActions = initFileActions({');
   assert.ok(storeIndex > 0 && fileOpsIndex > storeIndex, 'store must be created before features read it');
 });
 
 test('History save limit follows Settings instead of the IndexedDB copy', () => {
   const constants = read('js/core/constants.js');
+  const historyControls = read('js/app/historyControls.js');
   assert.match(constants, /export const HISTORY_LIMIT_OPTIONS = Object\.freeze\(\[0, 10, 20, 50, 100\]\)/);
   assert.match(constants, /historyLimit: 50,/);
-  assert.match(main, /historyLimit: \(value\) => HISTORY_LIMIT_OPTIONS\.includes\(Number\(value\)\)/);
+  assert.match(read('js/app/settingsStore.js'), /historyLimit: \(value\) => HISTORY_LIMIT_OPTIONS\.includes\(Number\(value\)\)/);
   // saveSettings keeps the store value instead of scraping a control.
   assert.match(main, /historyLimit: Number\(readSettings\(\)\.historyLimit/);
   // applyHistoryLimit writes the store first, then the views + enforcement copy.
-  assert.match(main, /settingsStore\.set\(\{ historyLimit: safe \}\);[\s\S]*?syncHistoryLimitSelect\(safe\);[\s\S]*?globalHistory\.saveSettings\(safe, safe > 0\)/);
+  assert.match(historyControls, /settingsStore\.set\(\{ historyLimit: safe \}\);[\s\S]*?syncHistoryLimitSelect\(safe\);[\s\S]*?globalHistory\.saveSettings\(safe, safe > 0\)/);
   // Startup restores from the store (with a one-time IndexedDB migration).
   assert.match(main, /restoreHistoryLimit\(\);/);
-  assert.match(main, /const migrateFromIndexedDb = stored === DEFAULT_SETTINGS\.historyLimit/);
-  assert.doesNotMatch(main, /syncHistoryLimitSelect\(sidebar\.globalHistory\.maxHistory\)/,
+  assert.match(historyControls, /const migrateFromIndexedDb = stored === DEFAULT_SETTINGS\.historyLimit/);
+  assert.doesNotMatch(historyControls, /syncHistoryLimitSelect\(sidebar\.globalHistory\.maxHistory\)/,
     'startup must not treat the IndexedDB copy as the source of truth');
 });
 
@@ -601,13 +631,13 @@ test('History auto-save toggle + export-all are wired and guarded', () => {
   assert.match(fileActions, /if \(shouldAutoSaveHistory\(\)\) await sidebar\.saveCurrentToHistory/);
   assert.match(fileActions, /if \(shouldAutoSaveHistory\(\)\) sidebar\.saveCurrentToHistory/);
   assert.match(main, /if \(shouldAutoSaveOnClose\(\)\) sidebar\.saveCurrentToHistory/);
-  assert.match(main, /exportAllHistory\(\)/);
+  assert.match(read('js/app/historyControls.js'), /exportAllHistory\(\)/);
 });
 
 test('Per-item history save button and export event are in place', () => {
   assert.match(sidebar, /history-save/);
   assert.match(sidebar, /paint:history-export-item/);
-  assert.match(main, /paint:history-export-item/);
+  assert.match(read('js/app/historyControls.js'), /paint:history-export-item/);
 });
 
 test('Plain wheel scrolls natively; only Ctrl/Cmd+wheel zooms', () => {
@@ -764,8 +794,8 @@ test('AI provider launcher never collects API keys', () => {
 });
 
 test('Mirrored preference checkboxes use the event source and persist together', () => {
-  assert.match(main, /const onAutoSaveChange = \(event\)/);
-  assert.match(main, /const enabled = event\?\.target\?\.checked/);
+  assert.match(read('js/app/historyControls.js'), /const onAutoSaveChange = \(event\)/);
+  assert.match(read('js/app/historyControls.js'), /const enabled = event\?\.target\?\.checked/);
   assert.match(main, /paint:ai-chat-visibility-change/);
   assert.match(main, /applyAiChatVisibility\(aiCheckbox\?\.checked === true\)/);
 });
@@ -976,8 +1006,8 @@ test('Round-2 fixes: V glyph, session persistence, view-aware actions, storage m
   assert.match(html, /Clear All/);
   assert.match(sidebar, /_syncHistoryActionLabels/);
   assert.match(historyPanel, /history-actions-label/);
-  assert.match(main, /exportSessionEntry/);
-	assert.match(main, /sidebar\.historyView === HISTORY_VIEWS\.session/);
+  assert.match(read('js/app/historyControls.js'), /exportSessionEntry/);
+	assert.match(read('js/app/historyControls.js'), /sidebar\.historyView === HISTORY_VIEWS\.session/);
   // 3. taller settings dialog + compact ribbon rows
   assert.match(css, /height:\s*min\(520px,\s*88vh\)/);
   assert.match(css, /\.ribbon-setting-row:hover/);
@@ -1040,7 +1070,7 @@ test('Phase 2 Steps 02–04 contracts and UX hooks are wired', () => {
   assert.ok(fs.existsSync(path.join(root, 'js/core/constants.js')));
   assert.ok(fs.existsSync(path.join(root, 'js/core/EventBus.js')));
   assert.ok(fs.existsSync(path.join(root, 'js/settings/SettingsStore.js')));
-  assert.match(main, /createSettingsStore/);
+  assert.match(main, /createPaintSettingsStore/);
   assert.match(history, /getSessionEntries()/);
   assert.match(history, /removeSessionEntry\(id\)/);
   assert.match(sidebar, /historyManager\.restore\(entry\)/);
@@ -1104,8 +1134,9 @@ test('selection-handle drags are explicitly released with the editor', () => {
 	const destroyEditorBlock = main.match(/const destroyEditor = \(\) => \{[\s\S]*?\n\};/)?.[0] || '';
 	assert.match(main, /const bindSelectionHandles = \(\) => \{[\s\S]*?handle\.removeEventListener\('pointerdown', onPointerDown\)[\s\S]*?stopSelectionHandleDrag\(\)/);
 	assert.match(main, /const destroySelectionHandleBindings = bindSelectionHandles\(\);/);
-	assert.match(main, /const bindRotateSelectionHandle = \(\) => \{[\s\S]*?stopSelectionRotationDrag\(\)[\s\S]*?rotateSelectionHandle\.removeEventListener\('pointerdown', onPointerDown\)/);
-	assert.match(main, /window\.addEventListener\('pointercancel', onCancel, \{ once: true \}\);/);
+	const transforms = read('js/app/canvasTransforms.js');
+	assert.match(transforms, /const bindRotateSelectionHandle = \(\) => \{[\s\S]*?stopSelectionRotationDrag\(\)[\s\S]*?rotateSelectionHandle\.removeEventListener\('pointerdown', onPointerDown\)/);
+	assert.match(transforms, /window\.addEventListener\('pointercancel', onCancel, \{ once: true \}\);/);
 	assert.match(destroyEditorBlock, /destroySelectionHandleBindings\(\);/);
 	assert.match(destroyEditorBlock, /destroyRotateSelectionHandleBinding\(\);/);
 });
@@ -1217,4 +1248,37 @@ test('Shape selection has one writer and clears the emoji highlight', () => {
   assert.match(emojiStore, /export const syncEmojiSelection = \(container, \{ active = true \} = \{\}\) =>/);
   assert.match(emojiStore, /syncEmojiSelection\(container, \{ active: true \}\)/);
   assert.doesNotMatch(emojiStore, /btn\.classList\.add\('active'\)/);
+});
+
+test('the offline shell is generated from the import graph and version-synced', () => {
+  // Same contract `npm run verify:release` enforces, caught earlier here so a
+  // newly added module cannot reach a handoff with a stale service worker.
+  const worker = read('sw.js');
+  const packageJson = JSON.parse(read('package.json'));
+  const appVersion = read('js/version.js').match(/APP_VERSION\s*=\s*['"]([^'"]+)['"]/)?.[1];
+  const cacheName = worker.match(/const CACHE_NAME\s*=\s*['"]([^'"]+)['"];/) ?.[1];
+  assert.equal(cacheName, `paint-shell-v${appVersion.replace(/\./g, '-')}`);
+  assert.equal(packageJson.version, appVersion);
+
+  // Every module reachable from the app entry must be precached.
+  const shell = new Set([...worker.match(/const SHELL = \[([\s\S]*?)\];/)[1].matchAll(/['"](\.\/[^'"]+)['"]/g)].map((match) => match[1]));
+  const seen = new Set();
+  const visit = (file) => {
+    const normalized = path.normalize(file);
+    if (seen.has(normalized) || !fs.existsSync(path.join(root, normalized))) return;
+    seen.add(normalized);
+    for (const match of read(normalized).matchAll(/\b(?:import\s+|from\s+|import\s*\()\s*['"](\.\.?\/[^'"]+)['"]/g)) {
+      let dependency = path.normalize(path.join(path.dirname(normalized), match[1]));
+      if (!path.extname(dependency)) dependency += '.js';
+      if (dependency.startsWith(`js${path.sep}`)) visit(dependency);
+    }
+  };
+  visit('js/app.js');
+  const missing = [...seen]
+    .map((file) => `./${file.split(path.sep).join('/')}`)
+    .filter((asset) => !shell.has(asset));
+  assert.deepEqual(missing, [], `run: npm run sw:sync (missing ${missing.join(', ')})`);
+
+  // The sync script is the documented way to fix drift.
+  assert.match(read('scripts/sync-service-worker-shell.mjs'), /--check/);
 });

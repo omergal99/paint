@@ -33,7 +33,9 @@ On iPhone or iPad, use the browser’s **Share → Add to Home Screen** action.
 Published releases run `npm run version:patch` (or the matching version
 command), which synchronizes `js/version.js` and the service-worker cache
 version. The service worker checks for the new shell and controlled pages
-reload once the new worker takes control.
+reload once the new worker takes control. The offline shell is generated from
+the import graph: run `npm run sw:sync` after adding, moving or renaming any
+module. Full workflow in [`docs/RELEASING.md`](./docs/RELEASING.md).
 
 ## Contributing and support
 

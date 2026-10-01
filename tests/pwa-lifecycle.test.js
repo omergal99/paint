@@ -447,3 +447,48 @@ test('service-worker install rejects an incomplete shell without forcing activat
   await assert.rejects(installation, /Offline shell has .* unavailable asset/);
   assert.equal(skipWaitingCalls, 0);
 });
+
+test('offline shell precache always refreshes, falling back to the cached copy when offline', async () => {
+  const serviceWorkerSource = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
+  const listeners = new Map();
+  const cached = new Set(['./js/app.js']);
+  let refreshAttempts = 0;
+  const context = {
+    caches: {
+      open: async () => ({
+        match: async (asset) => (cached.has(asset) ? { asset } : undefined),
+        add: async (asset) => {
+          refreshAttempts += 1;
+          // Every asset except the one already cached behaves as offline.
+          if (asset === './js/app.js') throw new Error('offline');
+          cached.add(asset);
+        },
+      }),
+      keys: async () => [],
+      delete: async () => true,
+    },
+    self: {
+      addEventListener: (type, listener) => listeners.set(type, listener),
+      skipWaiting: () => {},
+      clients: { claim: async () => {} },
+    },
+    fetch: async () => { throw new Error('offline'); },
+    Response: { error: () => ({}) },
+    Promise,
+    Set,
+    Math,
+  };
+  vm.runInNewContext(serviceWorkerSource, context, { filename: 'sw.js' });
+
+  let installation;
+  listeners.get('install')({ waitUntil: (promise) => { installation = promise; } });
+  const result = await installation;
+
+  // The already-cached asset was re-fetched (and failed offline) yet the install
+  // still completed from the known-good copy instead of failing.
+  const shellEntryCount = [...serviceWorkerSource.match(/const SHELL = \[([\s\S]*?)\];/)[1]
+    .matchAll(/['"](\.\/[^'"]+)['"]/g)].length;
+  assert.equal(refreshAttempts, shellEntryCount);
+  assert.equal(result.ok, true);
+  assert.equal(result.failed, 0);
+});

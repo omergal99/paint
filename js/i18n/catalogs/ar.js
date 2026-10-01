@@ -278,5 +278,11 @@ export const initializeAr = (english) => {
     "releaseNotes.unreleasedSep2026.h1": "دعم أفضل للغات وواجهة أكثر اتساقًا",
     "releaseNotes.unreleasedSep2026.h2": "تجارب أسهل للرسم والتصدير والسجل",
     "releaseNotes.unreleasedSep2026.h3": "استخدام دون اتصال وتحديثات تطبيق أكثر موثوقية",
+    "status.noSessionStepsToExport": "لا توجد خطوات جلسة للتصدير",
+    "status.exportedSessionImages": "تم تصدير {count} صورة من الجلسة",
+    "status.noHistoryToExport": "لا يوجد سجل للتصدير",
+    "status.exportedImages": "تم تصدير {count} صورة",
+    "status.historyAutoSaveOn": "الحفظ التلقائي للسجل مُفعّل",
+    "status.historyAutoSaveOff": "الحفظ التلقائي للسجل مُعطّل",
   });
 };

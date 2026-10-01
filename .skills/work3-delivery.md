@@ -17,6 +17,9 @@ Use for every Work 3 phase/step (`docs-internal/develop/work3/phase-N/step-MM-*/
    `npm run verify:docs` after status changes. Browser check per step README
    (LTR/RTL, narrow, Escape/cancel). Tests land in the final pass per owner
    instruction unless the step README names a blocking regression test.
+6. New/renamed/removed modules under `js/`: run `npm run sw:sync` (the offline
+   shell is generated from the import graph). `npm test` fails if it drifts.
+   Full workflow: [`docs/RELEASING.md`](../docs/RELEASING.md).
 
 ## Hooks (when to use)
 

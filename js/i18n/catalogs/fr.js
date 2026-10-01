@@ -275,5 +275,11 @@ export const initializeFr = (english) => {
     "releaseNotes.unreleasedSep2026.h1": "Meilleure prise en charge des langues et interface plus cohérente",
     "releaseNotes.unreleasedSep2026.h2": "Flux de dessin, d’exportation et d’historique simplifiés",
     "releaseNotes.unreleasedSep2026.h3": "Utilisation hors ligne et mises à jour plus fiables",
+    "status.noSessionStepsToExport": "Aucune étape de session à exporter",
+    "status.exportedSessionImages": "{count} images de session exportées",
+    "status.noHistoryToExport": "Aucun historique à exporter",
+    "status.exportedImages": "{count} images exportées",
+    "status.historyAutoSaveOn": "Enregistrement automatique de l'historique activé",
+    "status.historyAutoSaveOff": "Enregistrement automatique de l'historique désactivé",
   });
 };

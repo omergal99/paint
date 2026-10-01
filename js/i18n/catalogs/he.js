@@ -366,5 +366,11 @@ export const initializeHe = (english) => {
     "releaseNotes.v1_5_0.h3": "היסטוריית IndexedDB עם מצבי שמירה אוטומטית וייצוא",
     "releaseNotes.v1_5_0.h4": "חלון הגדרות עם חלקי רצועה, היסטוריה ואודות",
     "releaseNotes.v1_5_0.h5": "תמיכה לא מקוונת באמצעות service worker",
+    "status.noSessionStepsToExport": "אין שלבי הפעלה לייצוא",
+    "status.exportedSessionImages": "יוצאו {count} תמונות הפעלה",
+    "status.noHistoryToExport": "אין היסטוריה לייצוא",
+    "status.exportedImages": "יוצאו {count} תמונות",
+    "status.historyAutoSaveOn": "שמירה אוטומטית של היסטוריה פעילה",
+    "status.historyAutoSaveOff": "שמירה אוטומטית של היסטוריה כבויה",
   });
 };
