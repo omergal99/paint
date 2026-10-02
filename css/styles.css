@@ -1,6 +1,15 @@
 /* css/styles.css */
 
 :root {
+	/* Selection frame. Two states: the marquee being dragged paints with the
+	   thin "selecting" colour, an established selection switches to the
+	   thicker/darker "active" colour. Overridable from Settings. */
+	--selection-outline-color: #0078d4;
+	--selection-outline-active-color: #0b3d91;
+	/* Screen-pixel handle sizes. The overlay is scaled by zoom, so the
+	   handles divide by --zoom-inverse to keep this size on screen. */
+	--selection-handle-size: 9px;
+	--selection-rotate-size: 24px;
 	--w10-bg: #f3f3f3;
 	--w10-ribbon-bg: #f0f0f0;
 	--w10-border: #d4d4d4;
@@ -2263,12 +2272,17 @@ body.dark-mode #history-clear-btn {
 .selection-handle {
 	position: absolute;
 	z-index: 8;
-	width: 9px;
-	height: 9px;
+	width: var(--selection-handle-size, 9px);
+	height: var(--selection-handle-size, 9px);
 	padding: 0;
-	border: 1px solid #0078d4;
+	border: 1px solid var(--selection-outline-active-color, #0b3d91);
 	background: #fff;
-	transform: translateZ(0);
+	/* Handles live inside #canvas-scale, which carries the zoom transform.
+	   Without this they grow and shrink with the canvas; ViewportManager
+	   publishes `--zoom-inverse` (1 / zoom) so they keep a constant on-screen
+	   size - canvas size = base pixels / zoom. */
+	transform: scale(var(--zoom-inverse, 1));
+	transform-origin: center;
 	display: none;
 	touch-action: none;
 }
@@ -2533,6 +2547,34 @@ html[dir="rtl"] .resize-ghost {
 	cursor: pointer;
 	font-size: 18px;
 	line-height: 20px;
+	/* Same zoom-invariant sizing as the corner handles: it sits inside
+	   #canvas-scale, so it needs the inverse zoom to stay 24px on screen. */
+	transform: scale(var(--zoom-inverse, 1));
+	transform-origin: center;
+}
+
+/* Preview: hides the frame and handles so the composite can be judged before
+   committing. Sits next to the rotate handle and stays visible while active so
+   the frame can always be brought back. */
+.selection-preview {
+	position: absolute;
+	z-index: 9;
+	width: 20px;
+	height: 20px;
+	padding: 0;
+	border: 1px solid var(--w10-accent);
+	border-radius: 50%;
+	background: var(--w10-hover);
+	color: var(--w10-accent);
+	cursor: pointer;
+	font-size: 13px;
+	line-height: 16px;
+	transform: scale(var(--zoom-inverse, 1));
+	transform-origin: center;
+}
+.selection-preview[aria-pressed="true"] {
+	background: var(--w10-accent);
+	color: #fff;
 }
 
 /* ===================== STATUS BAR ===================== */

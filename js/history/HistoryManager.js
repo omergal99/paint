@@ -147,6 +147,11 @@ export class HistoryManager {
     this._showCurrent = true;
     this._currentEntry = null;
     this._currentSignature = null;
+    this._transaction = null;
+    // Called before an undo restores pixels. A floating selection lives on the
+    // overlay, so restoring the base canvas underneath it is invisible until
+    // the float is discarded - which is what made one Ctrl+Z look like a no-op.
+    this.onBeforeRestore = null;
     this._urlApi = urlApi;
     this._sessionStorage = sessionStore === undefined ? getSessionStorageSafely() : sessionStore;
     this.maxSnapshotPixels = Math.max(1, Math.floor(Number(maxSnapshotPixels) || MAX_HISTORY_SNAPSHOT_PIXELS));
@@ -431,6 +436,63 @@ export class HistoryManager {
     return true;
   }
 
+  /**
+   * Begin an atomic transaction.
+   *
+   * A selection move spans many pixel mutations (lift the region, clear it,
+   * then re-composite it somewhere else). Snapshotting at `pointerdown` left a
+   * half-applied state on the stack, and leaving the floating selection alive
+   * during undo made the first Ctrl+Z look like a no-op - users had to press it
+   * twice. So a transaction captures the "before" pixels now and records a
+   * single entry only when it commits.
+   *
+   * Transactions do not nest: a second `beginTransaction()` commits the first.
+   */
+  beginTransaction() {
+    if (this._suppressed || this._disposed) return false;
+    if (this._transaction) this.commitTransaction();
+    const captured = this.snapshot();
+    // `snapshot()` only pushes when the pixels actually changed; inside a
+    // transaction that is fine - we still need the entry to exist as "before".
+    if (!captured) this._transaction = { entry: null, signature: this.canvasManager._pixelsSignature?.() || null };
+    else this._transaction = { entry: this.undoStack.pop(), signature: this._lastSnapshotSig };
+    return true;
+  }
+
+  /** Record the transaction's single undo entry. */
+  commitTransaction() {
+    const transaction = this._transaction;
+    this._transaction = null;
+    if (!transaction || this._disposed) return false;
+    const sig = this.canvasManager._pixelsSignature?.() || null;
+    // Nothing changed inside the transaction (e.g. a click that lifted and
+    // dropped the selection in place): record nothing rather than a no-op step.
+    if (!transaction.entry || (sig && sig === transaction.signature)) {
+      if (transaction.entry) this._releaseEntry(transaction.entry);
+      return false;
+    }
+    this._lastSnapshotSig = sig;
+    this.undoStack.push(transaction.entry);
+    this._clearRedoStack();
+    this._trimToLimits();
+    this._showCurrent = true;
+    this._notify();
+    if (!transaction.entry.pending) this._persistSessionBackup();
+    return true;
+  }
+
+  /** Throw the transaction away without touching the undo stack. */
+  abortTransaction() {
+    const transaction = this._transaction;
+    this._transaction = null;
+    if (transaction?.entry) this._releaseEntry(transaction.entry);
+    return Boolean(transaction);
+  }
+
+  get hasOpenTransaction() {
+    return Boolean(this._transaction);
+  }
+
   async _entrySource(entry) {
     const sourceEntry = entry?._sourceEntry || entry;
     if (!sourceEntry || sourceEntry._released) return null;
@@ -489,7 +551,14 @@ export class HistoryManager {
   }
 
   async _undoNow() {
+    // An in-flight selection move must be recorded before we step backwards.
+    // Its "before" entry is held outside the stack, so this has to run before
+    // the empty-stack guard or the move would be silently dropped.
+    if (this._transaction) this.commitTransaction();
     if (this.undoStack.length === 0 || this._disposed) return false;
+    // Drop any floating selection first: it is drawn on the overlay, so
+    // restoring the base canvas under it looks like nothing happened.
+    this.onBeforeRestore?.();
     const admission = this._snapshotAdmission();
     if (!admission.ok) {
       this._reportSnapshotRejection(admission);
@@ -626,6 +695,8 @@ export class HistoryManager {
     this._releaseEntries(this.undoStack);
     this._releaseEntries(this.redoStack);
     this._releaseEntry(this._currentEntry);
+    this._releaseEntry(this._transaction?.entry);
+    this._transaction = null;
     this.undoStack = [];
     this.redoStack = [];
     this._currentEntry = null;

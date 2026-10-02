@@ -964,6 +964,8 @@
 								hidden></button>
 							<button class="selection-rotate" id="selection-rotate" aria-label="Rotate selection 90 degrees"
 								title="Rotate selection" hidden>↻</button>
+							<button class="selection-preview" id="selection-preview" aria-label="Preview selection without frame"
+								title="Preview selection" hidden>◎</button>
 							<div class="resize-ghost" id="resize-ghost" data-tag="resize-ghost"></div>
 						</div><!-- /canvas-scale -->
 					</div><!-- /canvas-stage -->
@@ -1218,6 +1220,21 @@
 						<option value="rtl" data-i18n="ui.directionRtl">Right to left</option>
 					</select>
 				</div>
+								<!-- Phase 8: selection appearance. These write CSS custom properties,
+								     so the overlay reads them without a JS round-trip. -->
+								<div class="settings-field"><label for="setting-selection-handle-size" data-i18n="ui.selectionHandleSize">Selection handle size</label>
+									<input type="range" id="setting-selection-handle-size" min="6" max="20" step="1" value="9"
+										data-css-var="--selection-handle-size" data-css-unit="px">
+								</div>
+								<div class="settings-field"><label for="setting-selection-outline-color" data-i18n="ui.selectionOutlineColor">Selection outline color</label>
+									<input type="color" id="setting-selection-outline-color" value="#0078d4" data-css-var="--selection-outline-color">
+								</div>
+								<div class="settings-field"><label for="setting-selection-active-color" data-i18n="ui.selectionActiveColor">Active selection outline color</label>
+									<input type="color" id="setting-selection-active-color" value="#0b3d91" data-css-var="--selection-outline-active-color">
+								</div>
+								<div class="menu-checkbox"><input type="checkbox" id="setting-selection-preview"> <label
+										for="setting-selection-preview" data-i18n="ui.selectionPreview">Preview selection without frame</label>
+								</div>
 								<div class="settings-field choice-field"><span data-i18n="ui.canvasBackground">Canvas Background</span>
 					<select id="setting-canvas-bg">
 										<option value="none" data-i18n="ui.solidColor">Solid Color</option>

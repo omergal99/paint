@@ -31,11 +31,19 @@ export const createSelectTool = () => {
       state.start = pt;
       state.liftedOrigin = { x: sel.x, y: sel.y };
 
-      // If it's not floating yet, lift the pixels now!
+      // If it's not floating yet, lift the pixels now. The whole move is one
+      // atomic history entry: `beginTransaction` captures the "before" pixels
+      // and the entry is recorded when the selection is committed, so a single
+      // Ctrl+Z steps back over the entire move instead of half of it.
       if (!ctx.canvasManager.floatingCanvas) {
-        ctx.historyManager.snapshot();
+        ctx.historyManager.beginTransaction();
         ctx.canvasManager.floatingCanvas = ctx.canvasManager.extractRegion(sel);
         ctx.canvasManager.fillRegion(sel, ctx.canvasManager.backgroundColor);
+        // Re-composite the lifted pixels onto the overlay straight away.
+        // Without this the region showed the background fill (usually white)
+        // from pointerdown until the first pointermove, which is the "white
+        // flash" when clicking inside an active selection.
+        ctx.setSelection({ ...sel });
       }
       return;
     }

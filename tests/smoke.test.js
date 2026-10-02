@@ -236,7 +236,15 @@ test('Standalone named functions use arrow constants', () => {
 });
 
 test('Keyboard paste defers to the native paste event for macOS support', () => {
-  assert.match(read('js/main.js'), /document\.addEventListener\('paste'/);
+  // The clipboard service now owns the native listener, so copy/cut/paste behave
+  // the same from the keyboard and from the ribbon buttons.
+  const service = read('js/services/clipboard/clipboardService.js');
+  assert.match(service, /documentRef\?\.addEventListener\('paste', handlePaste\)/);
+  assert.match(service, /documentRef\?\.addEventListener\('copy', handleCopy\)/);
+  assert.match(service, /documentRef\?\.addEventListener\('cut', handleCut\)/);
+  assert.match(main, /clipboardService\.attach\(\);/);
+  assert.doesNotMatch(main, /document\.addEventListener\('paste'/,
+    'the native paste listener must have one owner');
   const shortcutBlock = main.match(/window\.addEventListener\('keydown'[\s\S]*?\n\}\);\n/)?.[0] || '';
   assert.ok(!/case 'v':[\s\S]*clipboardManager\.paste\(\)/.test(shortcutBlock),
     'Cmd+V must not route through navigator.clipboard.read()');
@@ -356,15 +364,17 @@ test('Text-only clipboard paste activates the text tool with the pasted text', (
   const clipboard = read('js/clipboard/ClipboardManager.js');
   const textTool = read('js/tools/TextTool.js');
   // Native Cmd/Ctrl+V stays on clipboardData and routes text into the text tool.
-  assert.match(main, /getData\('text\/plain'\)/);
+  // That path moved into the clipboard service; main.js only wires it up.
+  const clipboardService = read('js/services/clipboard/clipboardService.js');
+  assert.match(clipboardService, /getData\('text\/plain'\)/);
   assert.match(main, /routeTextToTextTool/);
   assert.match(main, /routeText: routeTextToTextTool/);
   // Button/custom-shortcut fallback routes text-only clipboard content too.
   assert.match(clipboard, /routeText/);
   assert.match(textTool, /insertTextAt\(text, point, ctx\)/);
   // Image contract unchanged: the image pass runs before any text routing.
-  assert.match(main, /insertImageBlob\(file, \{ sourceLabel: 'Pasted' \}\)/);
-  assert.ok(/startsWith\('image\/'\)[\s\S]*?getData\('text\/plain'\)/.test(main),
+  assert.match(clipboardService, /insertImageBlob\(file, \{ sourceLabel: 'Pasted' \}\)/);
+  assert.ok(/startsWith\('image\/'\)[\s\S]*?getData\('text\/plain'/.test(clipboardService),
     'native paste must keep the image pass ahead of text routing');
 });
 

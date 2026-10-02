@@ -4,6 +4,9 @@ import { ViewportManager } from './canvas/ViewportManager.js';
 import { CanvasResizer } from './canvas/CanvasResizer.js';
 import { HistoryManager } from './history/HistoryManager.js';
 import { ClipboardManager } from './clipboard/ClipboardManager.js';
+import { createClipboardService } from './services/clipboard/clipboardService.js';
+import { paintSelectionFrame, readSelectionAppearance } from './services/selection/selectionAppearance.js';
+import { createSelectionSettings } from './services/selection/selectionSettings.js';
 import { ToolManager } from './tools/ToolManager.js';
 import { createSelectTool } from './tools/SelectTool.js';
 import { appState } from './app/appState.js';
@@ -489,14 +492,22 @@ const setDialogUrl = (dialog, extra = {}) => {
 }
 
 // ---------- Selection state + overlay drawing ----------
+// The frame has two states. While the marquee is being dragged the region has
+// no area yet, so it paints with the thin "selecting" colour. Once the
+// selection exists it switches to the thicker, darker "active" colour to say
+// "this is a real selection, drag inside it to move it". Both colours come from
+// CSS custom properties, so Settings can change them without editing this file.
+let selectionPreviewActive = false;
+
+const isActiveSelection = () => Boolean(canvasManager.selection?.w && canvasManager.selection?.h);
+
 const drawSelectionOutline = (region) => {
-	const g = canvasManager.octx;
-	g.save();
-	g.strokeStyle = '#0078d4';
-	g.lineWidth = 1;
-	g.setLineDash([4, 3]);
-	g.strokeRect(region.x + 0.5, region.y + 0.5, region.w, region.h);
-	g.restore();
+	paintSelectionFrame(canvasManager.octx, region, {
+		appearance: readSelectionAppearance(),
+		active: isActiveSelection(),
+		preview: selectionPreviewActive,
+		zoom: viewportManager.zoom / 100,
+	});
 }
 
 const getSelection = () => {
@@ -563,8 +574,48 @@ const nudgeSelection = (dx, dy) => {
 
 const selectionHandles = [...document.querySelectorAll('[data-selection-handle]')];
 const rotateSelectionHandle = document.getElementById('selection-rotate');
+const selectionPreviewButton = document.getElementById('selection-preview');
 let activeToolName = 'select';
 let activeSelectionHandleDragCleanup = null;
+
+// Preview mode hides every selection affordance (frame, corner handles, rotate
+// and preview buttons) while still compositing the floating pixels, so the user
+// can judge the result before committing. Holding the button (or leaving it
+// active) keeps it hidden until released.
+const isSelectionPreviewEnabled = () => document.getElementById('setting-selection-preview')?.checked === true;
+
+const setSelectionPreview = (active) => {
+	const next = Boolean(active);
+	if (next === selectionPreviewActive) return;
+	selectionPreviewActive = next;
+	// Repaint: `setSelection` redraws the float and (unless previewing) the frame,
+	// and refreshes every handle's visibility.
+	setSelection(canvasManager.selection);
+};
+
+selectionPreviewButton?.addEventListener('click', () => setSelectionPreview(!selectionPreviewActive));
+// Hold-to-preview: showing the clean composite while the pointer is down is the
+// quickest way to check a move, and releasing always restores the frame.
+selectionPreviewButton?.addEventListener('pointerdown', (event) => {
+	event.preventDefault();
+	setSelectionPreview(true);
+});
+selectionPreviewButton?.addEventListener('pointerup', () => {
+	if (!isSelectionPreviewEnabled()) setSelectionPreview(false);
+});
+selectionPreviewButton?.addEventListener('pointerleave', () => {
+	if (!isSelectionPreviewEnabled()) setSelectionPreview(false);
+});
+
+// Selection appearance (handle size, outline colours) is owned by the stylesheet
+// through CSS custom properties; the Settings controls only write them.
+const selectionSettings = createSelectionSettings({
+	onChange: () => {
+		if (isSelectionPreviewEnabled()) setSelectionPreview(true);
+		else setSelectionPreview(false);
+	},
+});
+selectionSettings.start();
 
 const stopSelectionHandleDrag = () => {
 	const cleanup = activeSelectionHandleDragCleanup;
@@ -574,18 +625,27 @@ const stopSelectionHandleDrag = () => {
 
 const updateSelectionHandles = (region) => {
 	const selectionToolActive = activeToolName === 'select';
+	// Preview hides every affordance: nothing should suggest the selection can
+	// still be dragged while the user is judging the composite.
+	const hidden = selectionPreviewActive || !selectionToolActive || !region || !region.w || !region.h;
 	selectionHandles.forEach((handle) => {
-		handle.hidden = !selectionToolActive || !region || !region.w || !region.h;
+		handle.hidden = hidden;
 	});
 	if (rotateSelectionHandle) {
 		const enabled = document.getElementById('rotate-selection-toggle')?.checked === true;
-		rotateSelectionHandle.hidden = !selectionToolActive || !enabled || !region || !region.w || !region.h;
-		if (region?.w && region?.h) {
+		rotateSelectionHandle.hidden = hidden || !enabled;
+		if (!rotateSelectionHandle.hidden) {
 			rotateSelectionHandle.style.left = `${region.x + region.w / 2 - 12}px`;
 			rotateSelectionHandle.style.top = `${Math.max(0, region.y - 28)}px`;
 		}
 	}
-	if (!region || !region.w || !region.h) return;
+	// The preview button itself stays visible while previewing, so the user can
+	// always get the frame back.
+	if (selectionPreviewButton) {
+		selectionPreviewButton.hidden = !selectionToolActive || !region || !region.w || !region.h;
+		selectionPreviewButton.setAttribute('aria-pressed', String(selectionPreviewActive));
+	}
+	if (hidden) return;
 	const points = {
 		nw: [region.x, region.y], n: [region.x + region.w / 2, region.y], ne: [region.x + region.w, region.y],
 		e: [region.x + region.w, region.y + region.h / 2], se: [region.x + region.w, region.y + region.h],
@@ -678,6 +738,10 @@ const commitFloatingSelection = () => {
 	if (canvasManager.floatingCanvas && canvasManager.selection) {
 		commitFloatingPixels(canvasManager.selection);
 		canvasManager.floatingCanvas = null;
+		// One atomic history entry for the whole lift-and-place. Recording it
+		// here (the commit) rather than at pointerdown keeps the "before" pixels
+		// intact, so a single Ctrl+Z reverses the complete move.
+		historyManager.commitTransaction();
 		resetRotationState();
 		setSelection(null);
 		canvasManager.persistToStorage();
@@ -702,10 +766,17 @@ const commitFloatingSelection = () => {
 const discardFloatingSelection = () => {
 	if (canvasManager.floatingCanvas) {
 		canvasManager.floatingCanvas = null;
+		historyManager.abortTransaction();
 		resetRotationState();
 		setSelection(null);
 	}
 }
+
+// Undo must drop a floating selection before restoring pixels: the float is
+// painted on the overlay canvas, so restoring the base canvas underneath it is
+// invisible and one Ctrl+Z looks like a no-op. Discarding it first is what
+// makes a selection move a single, atomic undo step.
+historyManager.onBeforeRestore = () => discardFloatingSelection();
 
 // Phase 2 step-04: one undo/redo path for every entry point (ribbon buttons,
 // the History tab, keyboard). A floating selection is dropped first so undo
@@ -1328,9 +1399,9 @@ const toolbar = new Toolbar({
 		importFile,
 		save,
 		saveAs: saveImageAs,
-		paste: () => clipboardManager.paste(),
-		cut: () => clipboardManager.cut(),
-		copy: () => clipboardManager.copy(),
+		paste: () => clipboardService.paste(),
+		cut: () => clipboardService.cut(),
+		copy: () => clipboardService.copy(),
 		crop,
 		openResizeDialog,
 		undo: runUndo,
@@ -1540,17 +1611,20 @@ window.addEventListener('keydown', (e) => {
 	if (action === SHORTCUT_ACTIONS.copy || action === SHORTCUT_ACTIONS.cut) {
 		if (editable && hasTextSelection) return;
 		e.preventDefault();
-		if (action === SHORTCUT_ACTIONS.copy) clipboardManager.copy();
-		else clipboardManager.cut();
+		// The native copy/cut events route here too, so the keyboard and the
+		// ribbon button share one implementation.
+		if (action === SHORTCUT_ACTIONS.copy) clipboardService.copy();
+		else clipboardService.cut();
 		return;
 	}
 	if (action === SHORTCUT_ACTIONS.paste) {
-		// The default Ctrl/Cmd+V remains the native paste event below for Safari
-		// and permission-free clipboard image transfer. Custom bindings use the
-		// explicit clipboard-read fallback while preserving user activation.
+		// The default Ctrl/Cmd+V stays on the native paste event owned by the
+		// clipboard service (no permission prompt, works on Safari). Custom
+		// bindings use the explicit clipboard-read fallback while preserving
+		// user activation.
 		if (shortcutManager.isDefault(action, shortcut) || typing) return;
 		e.preventDefault();
-		void clipboardManager.paste();
+		void clipboardService.paste();
 		return;
 	}
 	if (typing) return;
@@ -1587,43 +1661,15 @@ window.addEventListener('keydown', (e) => {
 	}
 });
 
-// ---------- Native paste events (Cmd/Ctrl+V on any OS, incl. macOS) ----------
-// The browser dispatches a real 'paste' event for Cmd+V with clipboard contents
-// attached - no async clipboard-read permission needed (Safari on Mac blocks
-// navigator.clipboard.read() most of the time).
-document.addEventListener('paste', async (e) => {
-	const target = e.target;
-	const editingText = target instanceof HTMLElement &&
-		(target.tagName === 'TEXTAREA' || target.tagName === 'INPUT' || target.isContentEditable);
-	if (editingText) return; // let form fields receive normal text paste
-
-	const items = e.clipboardData?.items;
-	if (items) {
-		for (const item of items) {
-			if (!item.type.startsWith('image/')) continue;
-			const file = item.getAsFile();
-			if (!file) continue;
-			e.preventDefault();
-			try {
-				await clipboardManager.insertImageBlob(file, { sourceLabel: 'Pasted' });
-			} catch (err) {
-				console.error('Paste failed:', err);
-				statusBar.flash('Paste failed - unsupported image data');
-			}
-			return;
-		}
-		// Image-less paste: route text/plain into the text tool instead of
-		// doing nothing. Still clipboardData only - Cmd+V never calls
-		// navigator.clipboard.read().
-		const text = e.clipboardData?.getData('text/plain');
-		if (text && text.trim()) {
-			e.preventDefault();
-			routeTextToTextTool(text);
-			return;
-		}
-	}
-	statusBar.flash('Clipboard has no image to paste');
+// ---------- Clipboard ----------
+// One service owns copy/cut/paste for every trigger: the ribbon buttons, the
+// custom bindings below, and the browser's native clipboard events.
+const clipboardService = createClipboardService({
+	clipboardManager,
+	routeText: routeTextToTextTool,
+	statusBar,
 });
+clipboardService.attach();
 
 // ---------- Drag and Drop ----------
 window.addEventListener('dragover', (e) => e.preventDefault());
@@ -1668,6 +1714,8 @@ const destroyEditor = () => {
 	textSelectionOverlay.destroy();
 	textLayerService.destroy();
 	historyManager.dispose();
+	clipboardService.destroy();
+	selectionSettings.destroy();
 };
 
 const shouldRestoreLastImage = () => settingsStore.get().restoreLastImage === true;
