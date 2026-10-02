@@ -2556,6 +2556,27 @@ html[dir="rtl"] .resize-ghost {
 /* Preview: hides the frame and handles so the composite can be judged before
    committing. Sits next to the rotate handle and stays visible while active so
    the frame can always be brought back. */
+/* Selection overlay actions (rotate + preview) travel together as one toolbar,
+   centred above the selection. */
+.selection-overlay-actions {
+	position: absolute;
+	z-index: 9;
+	display: flex;
+	gap: 6px;
+	align-items: center;
+	pointer-events: auto;
+	transform: scale(var(--zoom-inverse, 1));
+	transform-origin: center bottom;
+}
+.selection-overlay-actions[hidden] {
+	display: none;
+}
+.selection-overlay-actions .selection-rotate,
+.selection-overlay-actions .selection-preview {
+	position: static;
+	transform: none;
+}
+
 .selection-preview {
 	position: absolute;
 	z-index: 9;
@@ -2575,6 +2596,72 @@ html[dir="rtl"] .resize-ghost {
 .selection-preview[aria-pressed="true"] {
 	background: var(--w10-accent);
 	color: #fff;
+}
+
+/* Selection Properties (Sidebar ▸ Image). The preview reads the same CSS
+   custom properties the canvas overlay uses, so it cannot drift from reality. */
+.selection-properties-panel {
+	display: grid;
+	gap: 10px;
+	padding: 4px 2px;
+}
+.selection-prop-row {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+.selection-prop-row input[type="range"] {
+	flex: 1;
+}
+.selection-prop-badge {
+	min-width: 38px;
+	padding: 1px 6px;
+	border: 1px solid var(--w10-border);
+	border-radius: 3px;
+	background: var(--w10-bg);
+	text-align: center;
+	font-variant-numeric: tabular-nums;
+}
+.selection-prop-preview {
+	border: 1px dashed var(--w10-border);
+	border-radius: 4px;
+	background: var(--w10-bg);
+	padding: 12px;
+	display: flex;
+	justify-content: center;
+}
+.selection-preview-sample {
+	position: relative;
+	width: 150px;
+	height: 80px;
+}
+.selection-preview-sample-frame,
+.selection-preview-sample-active {
+	position: absolute;
+	inset: 8px;
+	border-style: dashed;
+	border-radius: 2px;
+}
+.selection-preview-sample-frame {
+	border-width: 1px;
+	border-color: var(--selection-outline-color, #0078d4);
+}
+.selection-preview-sample-active {
+	inset: 24px;
+	border-width: 2px;
+	border-color: var(--selection-outline-active-color, #0b3d91);
+}
+.selection-preview-sample-handle {
+	position: absolute;
+	left: 4px;
+	top: 4px;
+	width: var(--selection-handle-size, 9px);
+	height: var(--selection-handle-size, 9px);
+	background: #fff;
+	border: 1px solid var(--selection-outline-active-color, #0b3d91);
+}
+.selection-prop-reset {
+	align-self: flex-start;
 }
 
 /* ===================== STATUS BAR ===================== */

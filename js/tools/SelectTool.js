@@ -51,9 +51,12 @@ export const createSelectTool = () => {
     // Clicked outside: commit the existing floating selection first!
     ctx.commitFloatingSelection();
 
-    // Start drawing a new marquee box.
+    // Start drawing a new marquee box. Tell the user a gesture is in progress:
+    // until the pointer is released this region only defines an area and its
+    // pixels cannot be moved yet.
     state.moving = false;
     state.start = pt;
+    ctx.setMarqueeStatus?.(true);
     ctx.setSelection({ x: Math.round(pt.x), y: Math.round(pt.y), w: 0, h: 0 });
   }
 
@@ -78,6 +81,7 @@ export const createSelectTool = () => {
 
   const onUp = (pt, ctx) => {
     if (!state.start) return;
+    ctx.setMarqueeStatus?.(false);
     if (state.moving) {
       state.moving = false;
       ctx.canvasManager.persistToStorage();
@@ -93,6 +97,7 @@ export const createSelectTool = () => {
 
   const onCancel = (_pt, ctx) => {
     if (!state.moving) ctx.setSelection(null);
+    ctx.setMarqueeStatus?.(false);
     state.start = null;
     state.moving = false;
     state.liftedOrigin = null;

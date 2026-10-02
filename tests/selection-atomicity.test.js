@@ -3,6 +3,9 @@ const assert = quieterAssert;
 import fs from 'node:fs';
 import path from 'node:path';
 import test from 'node:test';
+import { APP_VERSION } from '../js/version.js';
+import { RELEASE_NOTES } from '../js/releaseNotes.js';
+import { EN_MESSAGES, getMessageTemplate } from '../js/i18n/messages.js';
 
 const root = path.resolve(import.meta.dirname, '..');
 const read = (file) => fs.readFileSync(path.join(root, file), 'utf8');
@@ -152,17 +155,130 @@ test('clicking inside a selection does not flash the background fill', () => {
 });
 
 test('selection appearance controls are translated, not hard-coded English', () => {
-  const html = read('index.html');
+  // The controls moved from Settings to the Image sidebar mirror, which builds
+  // them from one template - so the markup is asserted on the module, not on
+  // a copy that can drift inside index.html.
+  const panel = read('js/services/selection/selectionPropertiesPanel.js');
   const messages = read('js/i18n/messages.js');
-  for (const key of ['ui.selectionHandleSize', 'ui.selectionOutlineColor', 'ui.selectionActiveColor', 'ui.selectionPreview']) {
-    assert.ok(html.includes(`data-i18n="${key}"`), `index.html must reference ${key}`);
+  const html = read('index.html');
+  for (const key of ['ui.selectionHandleSize', 'ui.selectionOutlineColor', 'ui.selectionActiveColor', 'ui.selectionPreview', 'ui.selectionReset']) {
+    assert.ok(panel.includes(`data-i18n="${key}"`), `selection panel must reference ${key}`);
     assert.ok(messages.includes(key.split('.')[1]), `messages.js must define ${key}`);
   }
-  // Settings writes CSS custom properties rather than pushing values to the canvas.
+  // Not duplicated in Settings ▸ General any more.
+  assert.doesNotMatch(html, /setting-selection-handle-size/);
+
   const settings = read('js/services/selection/selectionSettings.js');
   assert.match(settings, /applyCssVariable/);
-  assert.match(html, /data-css-var="--selection-outline-color"/);
-  assert.match(html, /id="setting-selection-preview"/);
+  assert.match(panel, /data-css-var="--selection-outline-color"/);
+  assert.match(panel, /id="setting-selection-preview"/);
+  // Numeric badge + reset are part of the same panel.
+  assert.match(panel, /id="selection-handle-size-value"/);
+  assert.match(panel, /id="setting-selection-reset"/);
+  assert.match(settings, /resetToDefaults/);
+});
+
+test('the image mirror mounts the selection properties panel', () => {
+  const mirror = read('js/ui/mirrors/imageMirror.js');
+  assert.match(mirror, /id: 'selection-properties'/);
+  assert.match(mirror, /host\.append\(buildSelectionPropertiesPanel\(\)\.node\)/);
+  assert.match(mirror, /import \{ buildSelectionPropertiesPanel \}/);
+});
+
+test('the live preview reads the same variables the canvas overlay uses', () => {
+  // If the preview kept its own copy of the colours it would drift from the
+  // real selection frame; both must read the CSS custom properties.
+  const preview = read('js/services/selection/selectionPreview.js');
+  for (const variable of ['--selection-handle-size', '--selection-outline-color', '--selection-outline-active-color']) {
+    assert.ok(preview.includes(variable), `preview must read ${variable}`);
+  }
+  const css = read('css/styles.css');
+  assert.match(css, /\.selection-preview-sample-frame \{[\s\S]*?var\(--selection-outline-color/);
+  assert.match(css, /\.selection-preview-sample-active \{[\s\S]*?var\(--selection-outline-active-color/);
+});
+
+test('the marquee reports that the user is still defining the area', () => {
+  const select = read('js/tools/SelectTool.js');
+  const main = read('js/main.js');
+  const statusBar = read('js/ui/StatusBar.js');
+  assert.match(select, /ctx\.setMarqueeStatus\?\.\(true\)/);
+  assert.match(select, /ctx\.setMarqueeStatus\?\.\(false\)/);
+  assert.match(main, /statusBar\.setMarqueeStatus\?\.\(next\)|statusBar\.setMarqueeSelecting\?\.\(next\)/);
+  assert.match(statusBar, /setMarqueeSelecting/);
+  assert.match(statusBar, /ui\.selectingArea/);
+});
+
+test('preview and rotate travel together as one selection toolbar', () => {
+  const html = read('index.html');
+  const scale = html.slice(html.indexOf('class="selection-overlay-actions"'));
+  assert.ok(scale.includes('id="selection-rotate"'));
+  assert.ok(scale.includes('id="selection-preview"'));
+  // Both are inside the same wrapper, so they cannot be positioned apart again.
+  const start = html.indexOf('class="selection-overlay-actions"');
+  const end = html.indexOf('</div>', html.indexOf('id="selection-preview"'));
+  assert.ok(start > -1 && end > start);
+});
+
+test('an unchanged transaction records nothing instead of a no-op undo step', () => {
+  // A click that lifts and drops a selection in the same place produces
+  // identical pixels. Recording that would add a history entry where Ctrl+Z
+  // appears to do nothing - exactly the "flaky undo" symptom.
+  const history = read('js/history/HistoryManager.js');
+  const commit = history.slice(history.indexOf('  commitTransaction() {'));
+  assert.match(commit.slice(0, 800), /sig && sig === transaction\.signature/);
+  assert.match(commit.slice(0, 800), /this\._releaseEntry\(transaction\.entry\);/);
+  assert.match(commit.slice(0, 800), /return false;/);
+});
+
+test('transactions do not nest and disposing one keeps the stack usable', () => {
+  const history = read('js/history/HistoryManager.js');
+  const begin = history.slice(history.indexOf('  beginTransaction() {'));
+  // A second begin commits the first, so a lost pointerup cannot leak an entry.
+  assert.match(begin.slice(0, 400), /if \(this\._transaction\) this\.commitTransaction\(\);/);
+  const abort = history.slice(history.indexOf('  abortTransaction() {'));
+  assert.match(abort.slice(0, 400), /_releaseEntry\(transaction\.entry\)/);
+  assert.match(history, /get hasOpenTransaction\(\)/);
+});
+
+test('discarding a floating selection abandons its pending entry', () => {
+  // Discard is what Escape and "click outside" do. The pixels of the lift must
+  // not stay on the undo stack, or the next Ctrl+Z restores a state the user
+  // never actually made.
+  const main = read('js/main.js');
+  const discard = main.slice(main.indexOf('const discardFloatingSelection ='));
+  assert.match(discard.slice(0, 400), /historyManager\.abortTransaction\(\);/);
+});
+
+test('redo is reachable again after a discarded selection', () => {
+  // Clearing the redo stack is part of taking a new action; the transaction API
+  // must keep doing it or redo silently dies after every move.
+  const history = read('js/history/HistoryManager.js');
+  const commit = history.slice(history.indexOf('  commitTransaction() {'));
+  assert.match(commit.slice(0, 900), /this\._clearRedoStack\(\);/);
+  assert.match(commit.slice(0, 900), /this\._trimToLimits\(\);/);
+});
+
+test('the release gate fails when the shipped version has no release notes', () => {
+  // The bug this prevents: bumping package.json and shipping yesterday's notes.
+  const gate = read('scripts/release-notes-check.mjs');
+  assert.match(gate, /newest\.version !== APP_VERSION/);
+  assert.match(gate, /No release notes entry for shipping version/);
+  assert.match(gate, /unreleased/i);
+  assert.match(gate, /has no English text/);
+  // ...and it must actually run as part of the release gate.
+  const release = read('scripts/release-check.mjs');
+  assert.match(release, /release-notes-check\.mjs/);
+});
+
+test('the newest release note describes the shipping version', () => {
+  // Reads the real modules, not a regex over source: this is the same check the
+  // release gate runs, so a mismatch here is a mismatch in CI too.
+  assert.equal(RELEASE_NOTES[0].version, APP_VERSION);
+  assert.ok(!/unreleased/i.test(RELEASE_NOTES[0].version));
+  for (const key of RELEASE_NOTES[0].highlightKeys) {
+    assert.ok(getMessageTemplate(EN_MESSAGES, key), `${key} must have English text`);
+  }
+  assert.match(read('js/releaseNotes.js'), /'releaseNotes\.v1_8_0\.h1'/);
 });
 
 test('disposing releases an open transaction instead of leaking its entry', () => {

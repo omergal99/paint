@@ -107,7 +107,8 @@ export const EN_MESSAGES = deepFreeze({
 		crop: 'Crop', removeBackground: 'Remove Background', backgroundRemovalMode: 'Removal mode', backgroundRemovalColorKey: 'Color key (all matching pixels)', backgroundRemovalFloodFill: 'Flood fill (connected background)', backgroundRemovalSoftEdge: 'Soft edge (feathered alpha)', backgroundRemovalTolerance: 'Tolerance', backgroundRemovalSoftness: 'Edge softness', backgroundRemovalColor: 'Background color', backgroundRemovalSample: 'Sample', preview: 'Preview', noSelectionCrop: 'No Selection Area to Crop', openBackgroundRemovalOptions: 'Open background removal options', rotate: 'Rotate', rotate90: 'Rotate 90',
 		rotate180: 'Rotate 180', rotate270: 'Rotate 270', freeRotate: 'Free Rotate', showRotateInSelection: 'Show Rotate in selection',
 		selectionHandleSize: 'Selection handle size', selectionOutlineColor: 'Selection outline color',
-		selectionActiveColor: 'Active selection outline color', selectionPreview: 'Preview selection without frame',
+		selectionActiveColor: 'Active selection outline color', selectionPreview: 'Preview selection without frame', selectionReset: 'Reset to Defaults',
+		selectionLabel: 'Selection:', selectingArea: 'Selecting...',
 		flip: 'Flip', flipHorizontal: 'Flip Horizontal', flipVertical: 'Flip Vertical', showRecentTextToolbar: 'Show Recent text toolbar',
 		selectTextAfterDraw: 'Select text after draw', textFocusHelp: 'Focus targets are safe; editing existing text remains deferred.',
 		textStyle: 'Text style', outline: 'Outline', blackOutline: 'Black outline', shadow: 'Shadow', neon: 'Neon', bold: 'Bold',
@@ -241,6 +242,12 @@ export const EN_MESSAGES = deepFreeze({
 		historyCleared: 'History cleared',
 	},
 	releaseNotes: {
+		v1_8_0: {
+			h1: 'Selection moves are now a single undo step, with no double-press',
+			h2: 'Selection handles stay the same on-screen size at every zoom level',
+			h3: 'Copy, cut and paste behave the same from the keyboard and the ribbon',
+			h4: 'Selection frame, handle size and colours are configurable, with a preview mode',
+		},
 		unreleasedSep2026: {
 			h1: 'Better language support and a more consistent interface',
 			h2: 'Smoother drawing, export, and history workflows',

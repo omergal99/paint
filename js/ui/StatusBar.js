@@ -1,3 +1,5 @@
+import { t } from '../i18n/messages.js';
+
 // js/ui/StatusBar.js
 export const createStatusBar = ({ pointerEl, selectionEl, canvasSizeEl, flashEl }) => {
   let currentPointer = null;
@@ -8,8 +10,24 @@ export const createStatusBar = ({ pointerEl, selectionEl, canvasSizeEl, flashEl 
     pointerEl.textContent = pt ? `Pointer: ${Math.round(pt.x)}, ${Math.round(pt.y)}px` : 'Pointer: -';
   }
 
+  // The selection label is written here, so it must be tagged as a runtime key
+  // or LocaleController would revert the text on the next locale change.
   const setSelection = (region) => {
-    selectionEl.textContent = region && region.w && region.h ? `Selection: ${region.w} × ${region.h}px` : '';
+    if (region && region.w && region.h) {
+      selectionEl.textContent = `${t('ui.selectionLabel')} ${region.w} × ${region.h}px`;
+      selectionEl.setAttribute('data-i18n-runtime', 'ui.selectionLabel');
+    } else {
+      selectionEl.textContent = '';
+      selectionEl.removeAttribute('data-i18n-runtime');
+    }
+  }
+
+  // Mid-drag the marquee is only an area, not a movable selection. Saying so
+  // stops the thin frame reading as "the click did nothing".
+  const setMarqueeSelecting = (active) => {
+    selectionEl.textContent = active ? t('ui.selectingArea') : '';
+    if (active) selectionEl.setAttribute('data-i18n-runtime', 'ui.selectingArea');
+    else selectionEl.removeAttribute('data-i18n-runtime');
   }
 
   const setCanvasSize = (w, h) => {
@@ -31,6 +49,7 @@ export const createStatusBar = ({ pointerEl, selectionEl, canvasSizeEl, flashEl 
   return Object.freeze({
     setPointer,
     setSelection,
+    setMarqueeSelecting,
     setCanvasSize,
     flash,
     get currentPointer() { return currentPointer; },

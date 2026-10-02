@@ -501,6 +501,17 @@ let selectionPreviewActive = false;
 
 const isActiveSelection = () => Boolean(canvasManager.selection?.w && canvasManager.selection?.h);
 
+// While the marquee is being dragged the region is not yet a selection: its
+// pixels cannot be moved, only defined. The status bar says so, so a user does
+// not read the thin frame as "nothing happened" mid-drag.
+let marqueeInProgress = false;
+const setMarqueeStatus = (active) => {
+	const next = Boolean(active);
+	if (next === marqueeInProgress) return;
+	marqueeInProgress = next;
+	statusBar.setMarqueeSelecting?.(next);
+};
+
 const drawSelectionOutline = (region) => {
 	paintSelectionFrame(canvasManager.octx, region, {
 		appearance: readSelectionAppearance(),
@@ -575,6 +586,7 @@ const nudgeSelection = (dx, dy) => {
 const selectionHandles = [...document.querySelectorAll('[data-selection-handle]')];
 const rotateSelectionHandle = document.getElementById('selection-rotate');
 const selectionPreviewButton = document.getElementById('selection-preview');
+const selectionActionsBar = document.querySelector('.selection-overlay-actions');
 let activeToolName = 'select';
 let activeSelectionHandleDragCleanup = null;
 
@@ -631,13 +643,18 @@ const updateSelectionHandles = (region) => {
 	selectionHandles.forEach((handle) => {
 		handle.hidden = hidden;
 	});
-	if (rotateSelectionHandle) {
-		const enabled = document.getElementById('rotate-selection-toggle')?.checked === true;
-		rotateSelectionHandle.hidden = hidden || !enabled;
-		if (!rotateSelectionHandle.hidden) {
-			rotateSelectionHandle.style.left = `${region.x + region.w / 2 - 12}px`;
-			rotateSelectionHandle.style.top = `${Math.max(0, region.y - 28)}px`;
+	// The rotate + preview pair travels together above the selection.
+	if (selectionActionsBar) {
+		const actionsVisible = !selectionPreviewActive && selectionToolActive && region && region.w && region.h;
+		selectionActionsBar.hidden = !actionsVisible;
+		if (actionsVisible) {
+			const centre = region.x + region.w / 2;
+			selectionActionsBar.style.left = `${centre - selectionActionsBar.offsetWidth / 2}px`;
+			selectionActionsBar.style.top = `${Math.max(0, region.y - 40)}px`;
 		}
+	}
+	if (rotateSelectionHandle) {
+		rotateSelectionHandle.hidden = hidden || !document.getElementById('rotate-selection-toggle')?.checked;
 	}
 	// The preview button itself stays visible while previewing, so the user can
 	// always get the frame back.
@@ -875,6 +892,7 @@ const toolContext = {
 	commitFloatingSelection,
 	discardFloatingSelection,
 	drawSelectionOutline,
+	setMarqueeStatus,
 	setPrimaryColor: (hex, alpha = canvasManager.primaryAlpha) => colorPalette.setPrimary(hex, alpha),
 	setSecondaryColor: (hex, alpha = canvasManager.secondaryAlpha) => colorPalette.setSecondary(hex, alpha),
 	setActiveTool: (name) => toolManager.setActive(name),

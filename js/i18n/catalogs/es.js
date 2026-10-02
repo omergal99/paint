@@ -112,6 +112,9 @@ export const ES_MESSAGES = Object.freeze({
     selectionOutlineColor: "Color del contorno de selección",
     selectionActiveColor: "Color del contorno de selección activa",
     selectionPreview: "Vista previa de la selección sin marco",
+    selectionReset: "Restablecer valores predeterminados",
+    selectionLabel: "Selección:",
+    selectingArea: "Seleccionando...",
     flip: "Voltear",
     flipHorizontal: "Voltear horizontalmente",
     flipVertical: "Voltear verticalmente",
@@ -426,6 +429,12 @@ export const ES_MESSAGES = Object.freeze({
     historyCleared: "Historial borrado",
   },
   releaseNotes: {
+    v1_8_0: {
+      h1: "Los movimientos de selección son ahora un único paso de deshacer, sin pulsar dos veces",
+      h2: "Las jaladeras de selección mantienen el mismo tamaño en pantalla en cualquier nivel de zoom",
+      h3: "Copiar, cortar y pegar se comportan igual desde el teclado y desde la cinta",
+      h4: "El marco, el tamaño de las jaladeras y los colores son configurables, con modo de vista previa",
+    },
     unreleasedSep2026: {
       h1: "Mejor compatibilidad con idiomas y una interfaz más coherente",
       h2: "Flujos de dibujo, exportación e historial más sencillos",
