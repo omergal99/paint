@@ -2,9 +2,13 @@ import { APP_VERSION } from './version.js';
 
 // Per-version highlights are message keys so every ready locale can render the
 // customer-facing release history. Keep newest first; the renderer resolves
-// them through `t()` with the English fallback for incomplete catalogs. The
-// newest entry derives its version from APP_VERSION, which is synchronized
-// from package.json by `npm run version:sync`.
+// them through `t()` with the English fallback for incomplete catalogs.
+//
+// Only the entry for the version currently in development tracks `APP_VERSION`.
+// Bumping the app version freezes that entry's literal number and adds a new
+// tracking entry above it. Deriving every release from APP_VERSION - or reusing
+// one entry for two versions - silently rewrites history, which is exactly how
+// the 1.7.0 notes disappeared when 1.8.0 was cut.
 export const RELEASE_NOTES = Object.freeze([
 	{
 		version: APP_VERSION,
@@ -14,6 +18,16 @@ export const RELEASE_NOTES = Object.freeze([
 			'releaseNotes.v1_8_0.h2',
 			'releaseNotes.v1_8_0.h3',
 			'releaseNotes.v1_8_0.h4',
+		],
+	},
+	{
+		version: '1.7.0',
+		date: '2026-09-22',
+		commitIds: ['26ca1c8', '94d9e78', '06cc1f1'],
+		highlightKeys: [
+			'releaseNotes.unreleasedSep2026.h1',
+			'releaseNotes.unreleasedSep2026.h2',
+			'releaseNotes.unreleasedSep2026.h3',
 		],
 	},
 	{

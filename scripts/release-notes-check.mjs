@@ -44,6 +44,41 @@ if (!newest) {
 const released = new Set(RELEASE_NOTES.map((entry) => entry.version));
 if (!released.has(APP_VERSION)) errors.push(`No release notes entry for shipping version ${APP_VERSION}.`);
 
+// History must never be rewritten. Two entries claiming one version, or a
+// gap-free descending order, means an entry was edited after shipping instead
+// of prepended - which is how the 1.7.0 notes were lost when 1.8.0 was cut.
+const seen = new Map();
+for (const entry of RELEASE_NOTES) {
+  if (seen.has(entry.version)) errors.push(`Duplicate release note entry for ${entry.version}.`);
+  seen.set(entry.version, entry);
+}
+
+const parsed = (value) => String(value || '').split('.').map((part) => Number.parseInt(part, 10) || 0);
+const compare = (a, b) => {
+  const left = parsed(a);
+  const right = parsed(b);
+  for (let i = 0; i < Math.max(left.length, right.length); i += 1) {
+    const diff = (left[i] || 0) - (right[i] || 0);
+    if (diff !== 0) return diff;
+  }
+  return 0;
+};
+// Newest first. Anything ascending means a shipped entry was moved or removed.
+for (let i = 1; i < RELEASE_NOTES.length; i += 1) {
+  if (compare(RELEASE_NOTES[i - 1].version, RELEASE_NOTES[i].version) <= 0) {
+    errors.push(`Release notes are not newest-first at ${RELEASE_NOTES[i - 1].version} -> ${RELEASE_NOTES[i].version}.`);
+  }
+}
+
+// Every highlight key referenced by any entry must still resolve, so a renamed
+// key cannot blank out past releases either.
+const knownKeys = new Set(listMessageKeys(EN_MESSAGES));
+for (const entry of RELEASE_NOTES) {
+  for (const key of entry.highlightKeys || []) {
+    if (!knownKeys.has(key)) errors.push(`${entry.version}: highlight has no English text: ${key}`);
+  }
+}
+
 if (errors.length) {
   console.error('Release notes check: FAIL');
   errors.forEach((error) => console.error(`- ${error}`));

@@ -13,9 +13,11 @@ export const createSelectTool = () => {
     // pointerdown point.
     state.start = null;
     state.moving = false;
+    ctx.setMarqueeStatus?.(false);
   }
 
   const onDeactivate = (ctx) => {
+    ctx.setMarqueeStatus?.(false);
     ctx.commitFloatingSelection();
   }
 
@@ -80,8 +82,11 @@ export const createSelectTool = () => {
   }
 
   const onUp = (pt, ctx) => {
-    if (!state.start) return;
+    // Clear the marquee indicator before any early return: a gesture that ends
+    // without a start (tool switched mid-drag, cancelled pointer) would otherwise
+    // leave "Selecting..." stuck in the status bar forever.
     ctx.setMarqueeStatus?.(false);
+    if (!state.start) return;
     if (state.moving) {
       state.moving = false;
       ctx.canvasManager.persistToStorage();

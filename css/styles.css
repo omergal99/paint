@@ -636,6 +636,32 @@ body {
 	color: var(--w10-text);
 	outline: none;
 }
+/* Open dropdown / menu toggles must read as *pressed*, not merely hovered.
+   Hover fades as soon as the pointer leaves, which left users unsure whether a
+   second click would close the menu. `ActionMenuController` already publishes
+   `aria-expanded`, so every toggle in the app is covered by this one rule
+   instead of a per-button patch. */
+.rbtn[aria-expanded="true"],
+.text-tool-menu-arrow[aria-expanded="true"],
+.ci-toggle[aria-expanded="true"],
+.mirror-action[aria-expanded="true"] {
+	background: var(--w10-hover);
+	box-shadow: inset 0 -2px 0 var(--w10-accent);
+	color: var(--w10-text);
+	outline: none;
+}
+/* Keep the "this is still open" state distinguishable while hovered. */
+.rbtn[aria-expanded="true"]:hover,
+.mirror-action[aria-expanded="true"]:hover {
+	background: var(--w10-hover2);
+	box-shadow: inset 0 -2px 0 var(--w10-accent);
+}
+/* Caret points down while the menu is open. */
+.rbtn[aria-expanded="true"] .menu-arrow,
+.ci-toggle[aria-expanded="true"] .menu-arrow {
+	transform: rotate(180deg);
+}
+
 .text-tool-menu-arrow .menu-arrow {
 	margin: 0;
 	font-size: 14px;
@@ -2469,6 +2495,14 @@ html[dir="rtl"] .resize-ghost {
 	   handles (z-index 8) so hover never paints an old object over it. */
 	z-index: 9;
 	user-select: text;
+	/* Editor chrome is UI, not artwork. It lives inside #canvas-scale, which
+	   carries the zoom transform, so at 40% zoom the toolbar, fonts and resize
+	   handle all shrank to an unreadable size. The inverse zoom keeps the whole
+	   shell a constant on-screen size, exactly like the selection handles.
+	   Anchored top-left so the JS-positioned canvas coordinate stays put. */
+	transform: scale(var(--zoom-inverse, 1));
+	transform-origin: top left;
+	white-space: nowrap;
 }
 .text-editor-toolbar {
 	display: grid;
@@ -2629,10 +2663,16 @@ html[dir="rtl"] .resize-ghost {
 	padding: 12px;
 	display: flex;
 	justify-content: center;
+	/* The sidebar can collapse to a narrow strip; the sample must shrink with it
+	   instead of forcing the panel to overflow. */
+	max-width: 100%;
+	box-sizing: border-box;
+	overflow: hidden;
 }
 .selection-preview-sample {
 	position: relative;
-	width: 150px;
+	width: 100px;
+	max-width: 100%;
 	height: 80px;
 }
 .selection-preview-sample-frame,

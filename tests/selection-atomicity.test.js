@@ -207,9 +207,11 @@ test('the marquee reports that the user is still defining the area', () => {
   const statusBar = read('js/ui/StatusBar.js');
   assert.match(select, /ctx\.setMarqueeStatus\?\.\(true\)/);
   assert.match(select, /ctx\.setMarqueeStatus\?\.\(false\)/);
-  assert.match(main, /statusBar\.setMarqueeStatus\?\.\(next\)|statusBar\.setMarqueeSelecting\?\.\(next\)/);
-  assert.match(statusBar, /setMarqueeSelecting/);
-  assert.match(statusBar, /ui\.selectingArea/);
+  // The status slot always shows the real measurement. A transient hint could be
+  // left on screen when a pointerup is missed, hiding the selection size.
+  assert.match(main, /statusBar\.setSelection\(region\);/);
+  assert.ok(!main.includes('statusBar.setMarqueeSelecting?.(true)'),
+    'the marquee hint must not take over the selection slot');
 });
 
 test('preview and rotate travel together as one selection toolbar', () => {
@@ -272,6 +274,96 @@ test('the release gate fails when the shipped version has no release notes', () 
   // ...and it must actually run as part of the release gate.
   const release = read('scripts/release-check.mjs');
   assert.match(release, /release-notes-check\.mjs/);
+});
+
+test('the status slot always reports the selection size', () => {
+  // Two regressions came from the same "Selecting..." hint: releasing the pointer
+  // blanked the slot, and a missed pointerup left it stuck, so an existing
+  // selection showed no size at all. The label is now owned by setSelection.
+  const main = read('js/main.js');
+  const marker = 'const setSelection =';
+  const block = main.slice(main.indexOf(marker), main.indexOf(marker) + 1400);
+  assert.match(block, /statusBar\.setSelection\(region\);/);
+  assert.ok(!/setMarqueeSelecting/.test(block), 'the slot must not be taken over by the marquee hint');
+});
+
+test('release notes history is preserved, newest first', () => {
+  // Regression: the 1.7.0 entry was `version: APP_VERSION`, so bumping to 1.8.0
+  // relabelled it and 1.7.0's notes vanished from About.
+  const versions = RELEASE_NOTES.map((entry) => entry.version);
+  assert.ok(versions.includes('1.7.0'), '1.7.0 must remain in the history');
+  assert.ok(versions.includes('1.6.1'));
+  assert.equal(new Set(versions).size, versions.length, 'no version may appear twice');
+  // Strictly descending, comparing patch numbers too (1.6.1 > 1.6.0).
+  const toParts = (v) => v.split('.').map(Number);
+  const compare = (a, b) => {
+    const left = toParts(a);
+    const right = toParts(b);
+    for (let i = 0; i < 3; i += 1) {
+      const diff = (left[i] || 0) - (right[i] || 0);
+      if (diff !== 0) return diff;
+    }
+    return 0;
+  };
+  for (let i = 1; i < versions.length; i += 1) {
+    assert.ok(compare(versions[i - 1], versions[i]) > 0,
+      `history must be newest first: ${versions[i - 1]} then ${versions[i]}`);
+  }
+  // Every entry's text still resolves, so no release renders blank.
+  for (const entry of RELEASE_NOTES) {
+    for (const key of entry.highlightKeys || []) {
+      assert.ok(getMessageTemplate(EN_MESSAGES, key), `${entry.version}: ${key} must have English text`);
+    }
+  }
+});
+
+test('the release gate refuses a rewritten history', () => {
+  const gate = read('scripts/release-notes-check.mjs');
+  assert.match(gate, /Duplicate release note entry/);
+  assert.match(gate, /are not newest-first/);
+  assert.match(gate, /highlight has no English text/);
+});
+
+test('text editor chrome keeps a fixed on-screen size at any zoom', () => {
+  // The editor shell lives inside #canvas-scale, so it used to shrink with the
+  // canvas until the toolbar was unreadable at 40%.
+  const css = read('css/styles.css');
+  const shell = css.slice(css.indexOf('.text-editor-shell {'));
+  assert.match(shell.slice(0, 1200), /transform: scale\(var\(--zoom-inverse, 1\)\)/);
+  assert.match(shell.slice(0, 1200), /transform-origin: top left/);
+  // ViewportManager must actually publish the variable it consumes.
+  assert.match(read('js/canvas/ViewportManager.js'), /setProperty\('--zoom-inverse', String\(1 \/ scale\)\)/);
+});
+
+test('open dropdown toggles are visibly pressed', () => {
+  // ActionMenuController already publishes aria-expanded, so one rule covers the
+  // whole app; without it an open menu looked identical to a hovered button.
+  const css = read('css/styles.css');
+  assert.match(css, /\.rbtn\[aria-expanded="true"\][\s\S]{0,400}?box-shadow: inset 0 -2px 0 var\(--w10-accent\)/);
+  assert.match(css, /\.rbtn\[aria-expanded="true"\]:hover/);
+  assert.match(css, /\.rbtn\[aria-expanded="true"\] \.menu-arrow[\s\S]{0,120}?rotate\(180deg\)/);
+  assert.match(read('js/ui/ActionMenuController.js'), /setAttribute\('aria-expanded', String\(shouldOpen\)\)/);
+});
+
+test('the selection preview sample fits a collapsed sidebar', () => {
+  const css = read('css/styles.css');
+  const sample = css.slice(css.indexOf('.selection-preview-sample {'));
+  assert.match(sample.slice(0, 200), /width: 100px/);
+  assert.match(sample.slice(0, 200), /max-width: 100%/);
+});
+
+test('idle and active outline colours are independent settings', () => {
+  // Regression report: changing "Selection outline color" appeared to do nothing
+  // because the active colour was bound to the same control.
+  const panel = read('js/services/selection/selectionPropertiesPanel.js');
+  assert.match(panel, /data-css-var="--selection-outline-color"/);
+  assert.match(panel, /data-css-var="--selection-outline-active-color"/);
+  // Distinct ids, so one control cannot overwrite the other.
+  assert.match(panel, /id="setting-selection-outline-color"/);
+  assert.match(panel, /id="setting-selection-active-color"/);
+  const settings = read('js/services/selection/selectionSettings.js');
+  assert.match(settings, /'--selection-outline-color': '#0078d4'/);
+  assert.match(settings, /'--selection-outline-active-color': '#0b3d91'/);
 });
 
 test('the newest release note describes the shipping version', () => {

@@ -502,14 +502,14 @@ let selectionPreviewActive = false;
 const isActiveSelection = () => Boolean(canvasManager.selection?.w && canvasManager.selection?.h);
 
 // While the marquee is being dragged the region is not yet a selection: its
-// pixels cannot be moved, only defined. The status bar says so, so a user does
-// not read the thin frame as "nothing happened" mid-drag.
+// pixels cannot be moved, only defined.
+//
+// The hint is derived from the region in `setSelection`, not from pointer
+// events. An event-driven toggle can be left stuck when a pointerup is missed,
+// and once the marquee has real area the size readout is the useful label.
 let marqueeInProgress = false;
 const setMarqueeStatus = (active) => {
-	const next = Boolean(active);
-	if (next === marqueeInProgress) return;
-	marqueeInProgress = next;
-	statusBar.setMarqueeSelecting?.(next);
+	marqueeInProgress = Boolean(active);
 };
 
 const drawSelectionOutline = (region) => {
@@ -542,6 +542,11 @@ const setSelection = (region, opts = {}) => {
 	// the next rotation would use an already fitted/shrunk result as its base.
 	pruneRotationState(region);
 	canvasManager.selection = region;
+	// The status slot always reports the real measurement. An earlier version showed
+	// a transient "Selecting..." hint during the marquee, but the hint could be
+	// left on screen when a pointerup was missed, hiding the selection size.
+	// A correct-but-plainer readout beats a hint that can lie, so the marquee
+	// state is still tracked for the tools, but not rendered here.
 	statusBar.setSelection(region);
 	appState.dispatch({ type: 'selection/changed', payload: region });
 	canvasManager.clearOverlay();
