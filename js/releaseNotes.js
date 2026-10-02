@@ -53,7 +53,7 @@ export const RELEASE_NOTES = Object.freeze([
 	},
 	{
 		version: '1.5.0',
-		date: '2026-09',
+		date: '2026-09-01',
 		highlightKeys: [
 			'releaseNotes.v1_5_0.h1',
 			'releaseNotes.v1_5_0.h2',

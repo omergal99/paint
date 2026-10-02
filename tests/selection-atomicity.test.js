@@ -88,15 +88,17 @@ test('undo settles an open transaction before the empty-stack guard', () => {
 });
 
 test('the selection frame paints differently while selecting and when active', () => {
-  // The marquee being dragged has no area yet; once the region exists it becomes
-  // a real, movable selection. Those are two different states and must not look
-  // the same, otherwise an active selection reads as a rendering glitch.
+  // Two states driven by the *gesture*, not by the size of the region: the frame
+  // must stay in the "selecting" colour for the whole marquee drag, otherwise
+  // "Selection outline color" shows for about one frame and looks broken.
   const main = read('js/main.js');
   const appearance = read('js/services/selection/selectionAppearance.js');
   const css = read('css/styles.css');
 
   assert.match(main, /const isActiveSelection = \(\) => Boolean\(canvasManager\.selection\?\.w && canvasManager\.selection\?\.h\);/);
-  assert.match(main, /active: isActiveSelection\(\)/);
+  assert.match(main, /const isMarqueeSelecting = \(\) => marqueeInProgress;/);
+  assert.match(main, /active: !isMarqueeSelecting\(\) && isActiveSelection\(\)/);
+  assert.doesNotMatch(main, /active: isActiveSelection\(\)/);
 
   // Two distinct colours, thicker stroke when active.
   assert.match(appearance, /activeOutlineColor/);
@@ -418,6 +420,46 @@ test('interactive drag-rotation uses the injected tool accessor', () => {
   assert.match(transforms, /window\.addEventListener\('pointermove', onMove\)/);
   assert.match(transforms, /window\.addEventListener\('pointerup', onUp, \{ once: true \}\)/);
   assert.match(transforms, /clientToImage\(moveEvent\.clientX, moveEvent\.clientY\)/);
+});
+
+test('every undo trigger routes through one runUndo/runRedo pair', () => {
+  // The ribbon button, the History sidebar buttons and Ctrl+Z must share one
+  // implementation, otherwise they drift and one of them silently stops undoing.
+  // `runUndo` also discards a floating selection first, which is what makes a
+  // selection move reversible instead of a no-op.
+  const main = read('js/main.js');
+  assert.match(main, /const runUndo = \(\) => \{\s*discardFloatingSelection\(\);\s*historyManager\.undo\(\);\s*\}/);
+  assert.match(main, /const runRedo = \(\) => \{\s*discardFloatingSelection\(\);\s*historyManager\.redo\(\);\s*\}/);
+  assert.match(main, /undo: runUndo,/);
+  assert.match(main, /redo: runRedo,/);
+  assert.match(read('js/ui/Toolbar.js'), /getElementById\('btn-undo'\), 'click', \(\) => this\.handlers\.undo\(\)/);
+  assert.match(main, /getElementById\('history-undo-btn'\)\?\.addEventListener\('click', runUndo\)/);
+  assert.match(main, /getElementById\('history-redo-btn'\)\?\.addEventListener\('click', runRedo\)/);
+});
+
+test('selection handles centre on their point at any configured size', () => {
+  // Regression: the offset was hardcoded to 4 (half of the 9px default), so
+  // growing the handle in Settings shifted every affordance by half the growth.
+  const main = read('js/main.js');
+  assert.match(main, /const handleHalfSize = \(\) => \{/);
+  assert.match(main, /--selection-handle-size/);
+  assert.match(main, /handle\.style\.left = `\$\{x - half\}px`;/);
+  assert.match(main, /handle\.style\.top = `\$\{y - half\}px`;/);
+  assert.doesNotMatch(main, /handle\.style\.left = `\$\{x - 4\}px`;/);
+  // The handle scales about its own centre, so the layout half-size is correct
+  // and must not be divided by zoom as well.
+  assert.match(read('css/styles.css'), /\.selection-handle \{[\s\S]{0,900}?transform-origin: center/);
+});
+
+test('unambiguous dates are zero-padded to DD/MMM/YYYY', () => {
+  // Regression: the day was rendered unpadded ("2/Oct/2026"), so release notes
+  // and session rows did not share one width. `pad2` existed but was unused.
+  assert.match(read('js/utils/datetime.js'), /pad2\(date\.getDate\(\)\)/);
+  assert.doesNotMatch(read('js/utils/datetime.js'), /\$\{date\.getDate\(\)\}/);
+  // Every stored release date must be a full ISO day so the renderer formats it.
+  for (const entry of RELEASE_NOTES) {
+    assert.match(entry.date, /^\d{4}-\d{2}-\d{2}$/, `${entry.version} needs a full ISO date`);
+  }
 });
 
 test('the newest release note describes the shipping version', () => {

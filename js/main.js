@@ -501,21 +501,48 @@ let selectionPreviewActive = false;
 
 const isActiveSelection = () => Boolean(canvasManager.selection?.w && canvasManager.selection?.h);
 
-// While the marquee is being dragged the region is not yet a selection: its
-// pixels cannot be moved, only defined.
+// Two genuinely different selection modes, and the difference is whether the
+// pixels have been lifted off the canvas:
 //
-// The hint is derived from the region in `setSelection`, not from pointer
-// events. An event-driven toggle can be left stuck when a pointerup is missed,
-// and once the marquee has real area the size readout is the useful label.
+//   idle marquee - a rectangle that only defines bounds. Handles and arrow keys
+//                 change *which part of the image* is selected; nothing is
+//                 transformed. Painted with the thin "selecting" colour.
+//   active float - the region has been dragged/rotated/cut, so its pixels live
+//                 on `floatingCanvas` and can be transformed. Painted with the
+//                 thicker "active" colour.
+//
+// Driving this off the region's size (the original `isActiveSelection()`) made
+// "active" true on the first pointermove, so the selecting colour showed for
+// about one frame and "Selection outline color" looked like it did nothing.
+const isFloatingSelection = () => Boolean(canvasManager.floatingCanvas);
+
+// Repaint the frame after a mode change. `setSelection` only runs while a gesture
+// is in flight, so without this the last painted frame stayed on screen after the
+// float was lifted or dropped.
+const repaintSelectionFrame = () => {
+	if (!canvasManager.selection?.w || !canvasManager.selection?.h) return;
+	canvasManager.clearOverlay();
+	if (canvasManager.floatingCanvas) {
+		const overlayContext = canvasManager.octx;
+		overlayContext.save();
+		overlayContext.globalAlpha = 1;
+		overlayContext.globalCompositeOperation = 'source-over';
+		overlayContext.drawImage(canvasManager.floatingCanvas, canvasManager.selection.x, canvasManager.selection.y);
+		overlayContext.restore();
+	}
+	drawSelectionOutline(canvasManager.selection);
+};
+
 let marqueeInProgress = false;
 const setMarqueeStatus = (active) => {
 	marqueeInProgress = Boolean(active);
+	if (!marqueeInProgress) repaintSelectionFrame();
 };
 
 const drawSelectionOutline = (region) => {
 	paintSelectionFrame(canvasManager.octx, region, {
 		appearance: readSelectionAppearance(),
-		active: isActiveSelection(),
+		active: isFloatingSelection(),
 		preview: selectionPreviewActive,
 		zoom: viewportManager.zoom / 100,
 	});
@@ -577,11 +604,12 @@ const nudgeSelection = (dx, dy) => {
 	}
 	const width = canvasManager.floatingCanvas?.width || selection.w;
 	const height = canvasManager.floatingCanvas?.height || selection.h;
-	const maxX = Math.max(0, canvasManager.width - width);
-	const maxY = Math.max(0, canvasManager.height - height);
+	// Deliberately NOT clamped to the canvas. A floating selection may be nudged
+	// (and dragged) past the border so it can be parked off-screen and brought
+	// back; only the marquee that *creates* a selection stays inside the canvas.
 	setSelection({
-		x: Math.max(0, Math.min(maxX, selection.x + dx)),
-		y: Math.max(0, Math.min(maxY, selection.y + dy)),
+		x: selection.x + dx,
+		y: selection.y + dy,
 		w: width,
 		h: height,
 	});
@@ -655,10 +683,22 @@ const updateSelectionHandles = (region) => {
 		e: [region.x + region.w, region.y + region.h / 2], se: [region.x + region.w, region.y + region.h],
 		s: [region.x + region.w / 2, region.y + region.h], sw: [region.x, region.y + region.h], w: [region.x, region.y + region.h / 2],
 	};
-	selectionHandles.forEach((handle) => {
+	// Half the handle size, so the square's *centre* lands on the corner/edge point.
+// The old code hardcoded 4 (half of the 9px default), which centred correctly
+// only at that one size: growing the handle in Settings pushed every affordance
+// down and right by half the growth. The handle is scaled about its own centre
+// by `--zoom-inverse`, so dividing by zoom here would double-correct - the
+// layout width is what matters.
+const handleHalfSize = () => {
+	const raw = getComputedStyle(document.documentElement).getPropertyValue('--selection-handle-size').trim();
+	const size = parseFloat(raw);
+	return (Number.isFinite(size) ? size : 9) / 2;
+};
+selectionHandles.forEach((handle) => {
 		const [x, y] = points[handle.dataset.selectionHandle];
-		handle.style.left = `${x - 4}px`;
-		handle.style.top = `${y - 4}px`;
+		const half = handleHalfSize();
+		handle.style.left = `${x - half}px`;
+		handle.style.top = `${y - half}px`;
 	});
 }
 
@@ -880,6 +920,7 @@ const toolContext = {
 	discardFloatingSelection,
 	drawSelectionOutline,
 	setMarqueeStatus,
+	repaintSelectionFrame,
 	setPrimaryColor: (hex, alpha = canvasManager.primaryAlpha) => colorPalette.setPrimary(hex, alpha),
 	setSecondaryColor: (hex, alpha = canvasManager.secondaryAlpha) => colorPalette.setSecondary(hex, alpha),
 	setActiveTool: (name) => toolManager.setActive(name),
@@ -1457,6 +1498,9 @@ document.getElementById('history-redo-btn')?.addEventListener('click', runRedo);
 sidebar.setHistoryDeepLinks({ openPreferences: () => openSettingsDialog('history') });
 document.getElementById('btn-ai-chat').addEventListener('click', () => sidebar.toggleAi());
 document.getElementById('history-settings-link')?.addEventListener('click', () => openSettingsDialog('history'));
+// Select All lives in the Image ▸ More menu and in the Image sidebar mirror;
+// both reach the same implementation as the Ctrl+A binding.
+document.getElementById('btn-select-all')?.addEventListener('click', () => fileActions.selectAll());
 
 document.querySelectorAll('.ribbon-group-title').forEach(titleEl => {
 	titleEl.addEventListener('click', () => {

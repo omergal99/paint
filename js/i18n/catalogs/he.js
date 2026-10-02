@@ -87,6 +87,7 @@ export const initializeHe = (english) => {
     "ui.selectionReset": "איפוס לברירת מחדל",
     "ui.selectionLabel": "בחירה:",
     "ui.selectingArea": "בוחר...",
+    "ui.selectAll": "בחר הכול",
     "ui.flip": "היפוך",
     "ui.flipHorizontal": "היפוך אופקי",
     "ui.flipVertical": "היפוך אנכי",

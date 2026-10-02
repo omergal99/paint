@@ -17,6 +17,7 @@ export const imageMirrorDescriptor = Object.freeze({
         Object.freeze({ kind: 'action', target: 'btn-canvas-size', tag: 'sidebar-mirror-btn-canvas-size' }),
         Object.freeze({ kind: 'action', target: 'btn-crop', tag: 'sidebar-mirror-btn-crop' }),
         Object.freeze({ kind: 'action', target: 'btn-image-more', tag: 'sidebar-mirror-btn-image-more' }),
+        Object.freeze({ kind: 'action', target: 'btn-select-all', tag: 'sidebar-mirror-btn-select-all' }),
       ]),
     }),
     Object.freeze({

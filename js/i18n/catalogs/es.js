@@ -115,6 +115,7 @@ export const ES_MESSAGES = Object.freeze({
     selectionReset: "Restablecer valores predeterminados",
     selectionLabel: "Selección:",
     selectingArea: "Seleccionando...",
+    selectAll: "Seleccionar todo",
     flip: "Voltear",
     flipHorizontal: "Voltear horizontalmente",
     flipVertical: "Voltear verticalmente",

@@ -64,6 +64,11 @@ export const createSelectTool = () => {
 
   const onMove = (pt, ctx) => {
     if (!state.start) return;
+    // A *new* marquee may only define an area inside the canvas: dragging past
+    // the edge must not create a selection that hangs over the border. Moving an
+    // existing float is deliberately NOT clamped here, so a drag can push it
+    // off-canvas exactly like the arrow-key nudge does.
+    const bound = (value, limit) => Math.max(0, Math.min(limit, value));
     if (state.moving) {
       const dx = Math.round(pt.x - state.start.x);
       const dy = Math.round(pt.y - state.start.y);
@@ -78,7 +83,15 @@ export const createSelectTool = () => {
     const y = Math.min(state.start.y, pt.y);
     const w = Math.abs(pt.x - state.start.x);
     const h = Math.abs(pt.y - state.start.y);
-    ctx.setSelection({ x: Math.round(x), y: Math.round(y), w: Math.round(w), h: Math.round(h) });
+    // Clamp the marquee rectangle itself to the canvas, so neither edge can be
+    // dragged past the border.
+    const limitW = ctx.canvasManager.width;
+    const limitH = ctx.canvasManager.height;
+    const rx = bound(x, limitW);
+    const ry = bound(y, limitH);
+    const rw = Math.min(w, limitW - rx);
+    const rh = Math.min(h, limitH - ry);
+    ctx.setSelection({ x: Math.round(rx), y: Math.round(ry), w: Math.round(rw), h: Math.round(rh) });
   }
 
   const onUp = (pt, ctx) => {
@@ -86,7 +99,11 @@ export const createSelectTool = () => {
     // without a start (tool switched mid-drag, cancelled pointer) would otherwise
     // leave "Selecting..." stuck in the status bar forever.
     ctx.setMarqueeStatus?.(false);
-    if (!state.start) return;
+        // Lifting the pixels switches the selection into the "active float" mode,
+        // which changes the frame colour and stroke. `setSelection` below already
+        // repaints, and the early return here would skip it, so ask for a repaint.
+        ctx.repaintSelectionFrame?.();
+        if (!state.start) return;
     if (state.moving) {
       state.moving = false;
       ctx.canvasManager.persistToStorage();

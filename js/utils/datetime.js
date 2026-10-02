@@ -7,7 +7,10 @@ const isValid = (date) => date instanceof Date && !Number.isNaN(date.getTime());
 
 export const formatUnambiguousDate = (date) => {
 	if (!isValid(date)) return '';
-	return `${date.getDate()}/${MONTHS[date.getMonth()]}/${date.getFullYear()}`;
+	// Zero-pad the day so the width never changes: "02/Oct/2026", not
+	// "2/Oct/2026". An unpadded day was the only thing breaking the DD/MMM/YYYY
+	// shape everywhere release notes and session rows are rendered.
+	return `${pad2(date.getDate())}/${MONTHS[date.getMonth()]}/${date.getFullYear()}`;
 };
 
 export const formatUnambiguousTime = (date) => {

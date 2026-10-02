@@ -2518,6 +2518,15 @@ html[dir="rtl"] .resize-ghost {
 	grid-template-columns: max-content minmax(0, 1fr) max-content;
 	align-items: center;
 	gap: 3px;
+	/* Track the shell instead of floating at its own width: the toolbar holds the
+	   recent-text controls, so a narrower shell used to clip them while a wider
+	   one left the toolbar hanging over the edge. `width: 100%` + `min-width: 0`
+	   lets the grid shrink below its content without overflowing. */
+	width: 100%;
+	min-width: 0;
+	max-width: 100%;
+	align-self: stretch;
+	box-sizing: border-box;
 	min-height: 24px;
 	width: 100%;
 	padding: 2px 3px;
@@ -2676,15 +2685,20 @@ html[dir="rtl"] .resize-ghost {
 	display: flex;
 	justify-content: center;
 	/* The sidebar can collapse to a narrow strip; the sample must shrink with it
-	   instead of forcing the panel to overflow. */
+	   instead of forcing the panel to overflow or clip. */
 	max-width: 100%;
 	box-sizing: border-box;
 	overflow: hidden;
+	min-width: 0;
 }
 .selection-preview-sample {
 	position: relative;
 	width: 100px;
 	max-width: 100%;
+	/* Allow the sample to shrink inside a narrow sidebar, and let the frame
+	   samples keep their proportions instead of squashing into each other. */
+	flex-shrink: 1;
+	min-width: 0;
 	height: 80px;
 }
 .selection-preview-sample-frame,
