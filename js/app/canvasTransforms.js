@@ -125,7 +125,11 @@ const bindRotateSelectionHandle = () => {
 		}
 	};
 	const onPointerDown = (event) => {
-		if (activeToolName !== 'select' || !document.getElementById('rotate-selection-toggle')?.checked || !canvasManager.selection) return;
+		// `activeToolName` is main.js's module binding; this module only receives the
+		// accessor. Reading the bare name threw a ReferenceError here, which killed
+		// every pointerdown and so silently disabled drag-rotation (the click path
+		// never reads it, which is why clicking still appeared to work).
+		if (getActiveToolName() !== 'select' || !document.getElementById('rotate-selection-toggle')?.checked || !canvasManager.selection) return;
 		stopSelectionRotationDrag();
 		event.preventDefault();
 		event.stopPropagation();

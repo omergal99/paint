@@ -366,6 +366,32 @@ test('idle and active outline colours are independent settings', () => {
   assert.match(settings, /'--selection-outline-active-color': '#0b3d91'/);
 });
 
+test('interactive drag-rotation uses the injected tool accessor', () => {
+  // Regression: `onPointerDown` read a bare `activeToolName`, which does not exist
+  // in canvasTransforms, so every pointerdown on the rotate handle threw
+  // ReferenceError and drag-rotation was dead. The click path never read it,
+  // which is why clicking still looked like it worked.
+  const transforms = read('js/app/canvasTransforms.js');
+  const onPointerDown = transforms.slice(
+    transforms.indexOf('const onPointerDown ='),
+    transforms.indexOf('const onPointerDown =') + 600,
+  );
+  assert.match(onPointerDown, /getActiveToolName\(\) !== 'select'/);
+  // Strip comments first: the explanation above names the very identifier the
+  // negative check looks for.
+  const onPointerDownCode = onPointerDown.split('\n').filter((line) => !line.trim().startsWith('//')).join('\n');
+  assert.doesNotMatch(onPointerDownCode, /\bactiveToolName\b/);
+
+  // The accessor must actually be declared as a dependency and supplied.
+  assert.match(transforms, /getActiveToolName,/);
+  assert.match(read('js/main.js'), /getActiveToolName: \(\) => activeToolName,/);
+
+  // The drag must listen on window for move/up, or a cursor drag cannot rotate.
+  assert.match(transforms, /window\.addEventListener\('pointermove', onMove\)/);
+  assert.match(transforms, /window\.addEventListener\('pointerup', onUp, \{ once: true \}\)/);
+  assert.match(transforms, /clientToImage\(moveEvent\.clientX, moveEvent\.clientY\)/);
+});
+
 test('the newest release note describes the shipping version', () => {
   // Reads the real modules, not a regex over source: this is the same check the
   // release gate runs, so a mismatch here is a mismatch in CI too.
