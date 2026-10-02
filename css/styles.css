@@ -2608,7 +2608,10 @@ html[dir="rtl"] .resize-ghost {
 	gap: 6px;
 	align-items: center;
 	pointer-events: auto;
-	transform: scale(var(--zoom-inverse, 1));
+	/* Centre the bar on its `left` anchor. Doing it with a transform instead of
+	   `offsetWidth` maths keeps the rotate handle locked to the selection's
+	   top-centre even while the bar is `hidden` (a hidden element measures 0). */
+	transform: translateX(-50%) scale(var(--zoom-inverse, 1));
 	transform-origin: center bottom;
 }
 .selection-overlay-actions[hidden] {

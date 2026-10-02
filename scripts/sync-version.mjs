@@ -20,9 +20,14 @@ const cacheMarker = /const CACHE_NAME = 'paint-shell-v[^']+';/;
 if (!cacheMarker.test(serviceWorker)) {
   throw new Error('Service-worker cache version marker is missing');
 }
+// Preserve the shell content hash appended by sync-service-worker-shell.mjs.
+// Only the version segment moves here; dropping the hash would collapse every
+// deploy of one version into a single cache key.
+const currentName = serviceWorker.match(cacheMarker)[0].match(/'([^']+)'/)[1];
+const hashSuffix = currentName.match(/-([0-9a-f]{8})$/)?.[1];
 const updatedServiceWorker = serviceWorker.replace(
   cacheMarker,
-  `const CACHE_NAME = 'paint-shell-v${cacheVersion}';`,
+  `const CACHE_NAME = 'paint-shell-v${cacheVersion}${hashSuffix ? `-${hashSuffix}` : ''}';`,
 );
 fs.writeFileSync(serviceWorkerFile, updatedServiceWorker);
 console.log(`Synced paint version ${version} to js/version.js`);

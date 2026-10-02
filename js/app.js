@@ -240,10 +240,54 @@ if (canvas) {
 }
 
 if ('serviceWorker' in navigator && window.isSecureContext) {
+  // Deploys on static hosting (GitHub Pages) do not push an event: the browser
+  // only notices a new worker when it re-fetches `sw.js`. Without an explicit
+  // check the previous worker keeps serving the old shell - the cache name only
+  // changes when the version is bumped, so same-version deploys stay stale
+  // indefinitely. Ask for an update on load, whenever the tab becomes visible,
+  // and on a slow timer, then reload once the new worker takes control.
+  let refreshing = false;
+  const reloadOnce = () => {
+    if (refreshing) return;
+    refreshing = true;
+    window.location.reload();
+  };
+
+  const trackUpdates = (registration) => {
+    if (!registration) return;
+    // A new worker that reaches "installed" while another is already in control
+    // is waiting behind it; skipWaiting hands over so the caches get purged.
+    registration.addEventListener('updatefound', () => {
+      const installing = registration.installing;
+      if (!installing) return;
+      installing.addEventListener('statechange', () => {
+        if (installing.state === 'installed' && navigator.serviceWorker.controller) {
+          installing.postMessage({ type: 'SKIP_WAITING' });
+        }
+      });
+    });
+  };
+
+  navigator.serviceWorker.addEventListener('controllerchange', reloadOnce);
+
+  const checkForUpdate = async (registration) => {
+    try {
+      await registration.update();
+    } catch (error) {
+      console.warn('Service worker update check failed:', error);
+    }
+  };
+
   window.addEventListener('load', async () => {
     try {
       const workerUrl = `./sw.js?version=${encodeURIComponent(APP_VERSION)}`;
-      await navigator.serviceWorker.register(workerUrl, { scope: './' });
+      const registration = await navigator.serviceWorker.register(workerUrl, { scope: './' });
+      trackUpdates(registration);
+      await checkForUpdate(registration);
+      navigator.serviceWorker.ready.then(trackUpdates).catch(() => {});
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) void checkForUpdate(registration);
+      });
     } catch (error) {
       console.warn('Offline mode unavailable:', error);
     }

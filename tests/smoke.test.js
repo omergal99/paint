@@ -1305,7 +1305,9 @@ test('the offline shell is generated from the import graph and version-synced', 
   const packageJson = JSON.parse(read('package.json'));
   const appVersion = read('js/version.js').match(/APP_VERSION\s*=\s*['"]([^'"]+)['"]/)?.[1];
   const cacheName = worker.match(/const CACHE_NAME\s*=\s*['"]([^'"]+)['"];/) ?.[1];
-  assert.equal(cacheName, `paint-shell-v${appVersion.replace(/\./g, '-')}`);
+  // Version plus an optional shell-content hash. The hash busts the cache on every
+  // deploy, so GitHub Pages users are not stuck on a same-version shell.
+  assert.match(cacheName, new RegExp(`^paint-shell-v${appVersion.replace(/\./g, '-')}(-[0-9a-f]{8})?$`));
   assert.equal(packageJson.version, appVersion);
 
   // Every module reachable from the app entry must be precached.

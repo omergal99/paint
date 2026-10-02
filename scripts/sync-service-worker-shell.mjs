@@ -10,6 +10,7 @@
 // Production builds do not need this: `npm run build` rewrites the shell and
 // appends a content fingerprint to the cache name (see scripts/build.mjs).
 import fs from 'node:fs';
+import { createHash } from 'node:crypto';
 import path from 'node:path';
 
 const root = path.resolve(import.meta.dirname, '..');
@@ -41,8 +42,6 @@ const collectAppModules = (entry) => {
 const packageJson = JSON.parse(read('package.json'));
 const version = process.env.PAINT_VERSION || packageJson.version;
 if (!/^\d+\.\d+\.\d+([.-][0-9A-Za-z.-]+)?$/.test(version)) throw new Error(`Invalid paint version: ${version}`);
-const expectedCacheName = `paint-shell-v${version.replace(/\./g, '-')}`;
-
 const worker = fs.readFileSync(workerPath, 'utf8');
 const shellMatch = worker.match(/(const SHELL = \[)([\s\S]*?)(\];)/);
 if (!shellMatch) throw new Error('Service-worker SHELL array is missing; cannot sync it.');
@@ -52,6 +51,24 @@ const appModules = collectAppModules('js/app.js');
 const appModuleSet = new Set(appModules);
 const missing = appModules.filter((asset) => !existingShell.includes(asset));
 const stale = existingShell.filter((asset) => asset.startsWith('./js/') && !fs.existsSync(path.join(root, asset.slice(2))));
+
+// The cache name carries a content hash of the precached shell, not just the app
+// version. Static hosts (GitHub Pages) have no version bump between deploys, so a
+// version-only name left every same-version deploy serving the previous shell
+// forever: `activate` saw the same key and purged nothing. Hashing the shell
+// contents makes any code change produce a new cache name, which is what makes
+// the worker's `activate` handler drop the stale one.
+const shellHash = createHash('sha256');
+for (const asset of [...existingShell, ...missing]) {
+  shellHash.update(asset);
+  const file = path.join(root, asset.replace(/^\.\//, ''));
+  // `missing` entries are being added to the shell in this same run, so their
+  // names must count even though there is nothing to read yet.
+  if (fs.existsSync(file)) shellHash.update(fs.readFileSync(file));
+}
+const cacheDigest = shellHash.digest('hex').slice(0, 8);
+const expectedCacheName = `paint-shell-v${version.replace(/\./g, '-')}-${cacheDigest}`;
+
 const currentCacheName = worker.match(/const CACHE_NAME\s*=\s*['"]([^'"]+)['"];/) ?.[1];
 const cacheDrift = currentCacheName !== expectedCacheName
   ? `cache name ${currentCacheName} should be ${expectedCacheName}`

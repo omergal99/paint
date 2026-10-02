@@ -638,8 +638,11 @@ const updateSelectionHandles = (region) => {
 		const actionsVisible = !selectionPreviewActive && selectionToolActive && region && region.w && region.h;
 		selectionActionsBar.hidden = !actionsVisible;
 		if (actionsVisible) {
-			const centre = region.x + region.w / 2;
-			selectionActionsBar.style.left = `${centre - selectionActionsBar.offsetWidth / 2}px`;
+			// Centre with a transform, not arithmetic on `offsetWidth`: the bar is
+			// `hidden` while previewing, and a hidden element measures 0, so
+			// subtracting half of it shifted the rotate handle right when the
+			// frame came back.
+			selectionActionsBar.style.left = `${region.x + region.w / 2}px`;
 			selectionActionsBar.style.top = `${Math.max(0, region.y - 40)}px`;
 		}
 	}
