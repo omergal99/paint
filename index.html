@@ -962,14 +962,12 @@
 								aria-label="Resize selection southwest" hidden></button>
 							<button class="selection-handle handle-w" data-selection-handle="w" aria-label="Resize selection west"
 								hidden></button>
-							<!-- The preview button lives beside the rotate handle (the selection's own
-							     toolbar) rather than in a canvas corner, so the two selection
-							     actions sit together instead of in opposite places. -->
+							<!-- The rotate handle is the only overlay action: the preview toggle lives in
+									     Sidebar ▸ Image Settings ▸ Selection Properties, so the canvas keeps a
+									     single, unambiguous affordance. -->
 							<div class="selection-overlay-actions">
 								<button class="selection-rotate" id="selection-rotate" aria-label="Rotate selection 90 degrees"
 									title="Rotate selection" hidden>↻</button>
-								<button class="selection-preview" id="selection-preview" aria-label="Preview selection without frame"
-									title="Preview selection" hidden>◎</button>
 							</div>
 							<div class="resize-ghost" id="resize-ghost" data-tag="resize-ghost"></div>
 						</div><!-- /canvas-scale -->

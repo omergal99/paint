@@ -590,15 +590,14 @@ const nudgeSelection = (dx, dy) => {
 
 const selectionHandles = [...document.querySelectorAll('[data-selection-handle]')];
 const rotateSelectionHandle = document.getElementById('selection-rotate');
-const selectionPreviewButton = document.getElementById('selection-preview');
 const selectionActionsBar = document.querySelector('.selection-overlay-actions');
 let activeToolName = 'select';
 let activeSelectionHandleDragCleanup = null;
 
-// Preview mode hides every selection affordance (frame, corner handles, rotate
-// and preview buttons) while still compositing the floating pixels, so the user
-// can judge the result before committing. Holding the button (or leaving it
-// active) keeps it hidden until released.
+// Preview mode hides the frame, the corner handles and the rotate control while
+// still compositing the floating pixels. It is driven solely by the
+// Sidebar ▸ Image ▸ Selection Properties checkbox; there is deliberately no
+// canvas button, so the overlay keeps one unambiguous affordance.
 const isSelectionPreviewEnabled = () => document.getElementById('setting-selection-preview')?.checked === true;
 
 const setSelectionPreview = (active) => {
@@ -609,20 +608,6 @@ const setSelectionPreview = (active) => {
 	// and refreshes every handle's visibility.
 	setSelection(canvasManager.selection);
 };
-
-selectionPreviewButton?.addEventListener('click', () => setSelectionPreview(!selectionPreviewActive));
-// Hold-to-preview: showing the clean composite while the pointer is down is the
-// quickest way to check a move, and releasing always restores the frame.
-selectionPreviewButton?.addEventListener('pointerdown', (event) => {
-	event.preventDefault();
-	setSelectionPreview(true);
-});
-selectionPreviewButton?.addEventListener('pointerup', () => {
-	if (!isSelectionPreviewEnabled()) setSelectionPreview(false);
-});
-selectionPreviewButton?.addEventListener('pointerleave', () => {
-	if (!isSelectionPreviewEnabled()) setSelectionPreview(false);
-});
 
 // Selection appearance (handle size, outline colours) is owned by the stylesheet
 // through CSS custom properties; the Settings controls only write them.
@@ -660,12 +645,6 @@ const updateSelectionHandles = (region) => {
 	}
 	if (rotateSelectionHandle) {
 		rotateSelectionHandle.hidden = hidden || !document.getElementById('rotate-selection-toggle')?.checked;
-	}
-	// The preview button itself stays visible while previewing, so the user can
-	// always get the frame back.
-	if (selectionPreviewButton) {
-		selectionPreviewButton.hidden = !selectionToolActive || !region || !region.w || !region.h;
-		selectionPreviewButton.setAttribute('aria-pressed', String(selectionPreviewActive));
 	}
 	if (hidden) return;
 	const points = {

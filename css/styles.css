@@ -2495,14 +2495,23 @@ html[dir="rtl"] .resize-ghost {
 	   handles (z-index 8) so hover never paints an old object over it. */
 	z-index: 9;
 	user-select: text;
-	/* Editor chrome is UI, not artwork. It lives inside #canvas-scale, which
-	   carries the zoom transform, so at 40% zoom the toolbar, fonts and resize
-	   handle all shrank to an unreadable size. The inverse zoom keeps the whole
-	   shell a constant on-screen size, exactly like the selection handles.
-	   Anchored top-left so the JS-positioned canvas coordinate stays put. */
+}
+
+/*
+   Do NOT put a zoom-inverse transform on `.text-editor-shell`.
+   The shell must keep scaling with `#canvas-scale`, because it is a *preview*:
+   the committed text is drawn on the canvas at `fontSize` image pixels, which
+   the viewport then scales by the zoom factor. Scaling the shell by 1/zoom made
+   the editor render text at screen size `fontSize` while the canvas showed it at
+   `fontSize * zoom`, so the two stopped lining up whenever zoom != 100%.
+
+   Only the surrounding chrome (toolbar and resize affordances) is UI and must
+   stay a fixed on-screen size; those are normalised individually below.
+*/
+.text-editor-toolbar,
+.text-editor-shell > .text-editor-resize {
 	transform: scale(var(--zoom-inverse, 1));
 	transform-origin: top left;
-	white-space: nowrap;
 }
 .text-editor-toolbar {
 	display: grid;

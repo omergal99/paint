@@ -111,16 +111,16 @@ test('the selection frame paints differently while selecting and when active', (
 test('preview mode hides the frame and every handle but keeps the float', () => {
   const main = read('js/main.js');
   const appearance = read('js/services/selection/selectionAppearance.js');
-  const html = read('index.html');
+  const panel = read('js/services/selection/selectionPropertiesPanel.js');
 
-  assert.match(html, /id="selection-preview"/);
-  // Painting is skipped entirely in preview, but the float stays composited.
+  // Preview is a sidebar toggle; there is no canvas button.
+  assert.match(panel, /id="setting-selection-preview"/);
   assert.match(appearance, /if \(!context \|\| !region \|\| !region\.w \|\| !region\.h \|\| preview\) return false;/);
   assert.match(main, /preview: selectionPreviewActive/);
   // Handles, rotate and the frame all hide while previewing.
   assert.match(main, /const hidden = selectionPreviewActive \|\| !selectionToolActive/);
-  // The preview button stays reachable so the frame can always come back.
-  assert.match(main, /selectionPreviewButton\.hidden = !selectionToolActive/);
+  // The preview control lives in the sidebar panel, not the overlay.
+  assert.match(main, /document\.getElementById\('setting-selection-preview'\)\?\.checked === true/);
 });
 
 test('the clipboard service owns copy, cut and paste for every trigger', () => {
@@ -214,15 +214,26 @@ test('the marquee reports that the user is still defining the area', () => {
     'the marquee hint must not take over the selection slot');
 });
 
-test('preview and rotate travel together as one selection toolbar', () => {
+test('preview is driven only from the sidebar, not the canvas overlay', () => {
+  // The overlay keeps a single unambiguous affordance (rotate); preview lives in
+  // Sidebar ▸ Image ▸ Selection Properties.
   const html = read('index.html');
-  const scale = html.slice(html.indexOf('class="selection-overlay-actions"'));
-  assert.ok(scale.includes('id="selection-rotate"'));
-  assert.ok(scale.includes('id="selection-preview"'));
-  // Both are inside the same wrapper, so they cannot be positioned apart again.
+  const overlay = html.slice(html.indexOf('class="selection-overlay-actions"'));
+  assert.ok(overlay.includes('id="selection-rotate"'));
+  assert.ok(!html.includes('id="selection-preview"'), 'no canvas preview button');
+  const main = read('js/main.js');
+  assert.doesNotMatch(main, /selectionPreviewButton/);
+  assert.match(main, /const isSelectionPreviewEnabled = \(\) => document\.getElementById\('setting-selection-preview'\)\?\.checked === true;/);
+  // Preview still hides the frame and every handle.
+  assert.match(main, /const hidden = selectionPreviewActive \|\|/);
+});
+
+test('the selection overlay carries the rotate handle', () => {
+  const html = read('index.html');
   const start = html.indexOf('class="selection-overlay-actions"');
-  const end = html.indexOf('</div>', html.indexOf('id="selection-preview"'));
-  assert.ok(start > -1 && end > start);
+  assert.ok(start > -1, 'the overlay actions wrapper must exist');
+  const wrapper = html.slice(start, html.indexOf('</div>', start));
+  assert.ok(wrapper.includes('id="selection-rotate"'));
 });
 
 test('an unchanged transaction records nothing instead of a no-op undo step', () => {
@@ -324,15 +335,32 @@ test('the release gate refuses a rewritten history', () => {
   assert.match(gate, /highlight has no English text/);
 });
 
-test('text editor chrome keeps a fixed on-screen size at any zoom', () => {
-  // The editor shell lives inside #canvas-scale, so it used to shrink with the
-  // canvas until the toolbar was unreadable at 40%.
+test('the text editor shell previews at true canvas scale, chrome stays fixed', () => {
+  // Regression: a zoom-inverse transform on `.text-editor-shell` made the editor
+  // render text at screen size `fontSize` while the canvas renders it at
+  // `fontSize * zoom`, so the preview and the result stopped lining up at any
+  // zoom other than 100%. The shell must scale WITH the canvas; only chrome is
+  // normalised.
   const css = read('css/styles.css');
-  const shell = css.slice(css.indexOf('.text-editor-shell {'));
-  assert.match(shell.slice(0, 1200), /transform: scale\(var\(--zoom-inverse, 1\)\)/);
-  assert.match(shell.slice(0, 1200), /transform-origin: top left/);
+  const shell = css.slice(css.indexOf('.text-editor-shell {'), css.indexOf('.text-editor-toolbar,'));
+  assert.ok(!/transform:\s*scale\(var\(--zoom-inverse/.test(shell),
+    'the editor shell must not be zoom-inverted: it is a preview of canvas output');
+  // The chrome is UI and does get normalised.
+  assert.match(css, /\.text-editor-toolbar,\s*\n\.text-editor-shell > \.text-editor-resize \{[\s\S]{0,200}?transform: scale\(var\(--zoom-inverse, 1\)\)/);
   // ViewportManager must actually publish the variable it consumes.
   assert.match(read('js/canvas/ViewportManager.js'), /setProperty\('--zoom-inverse', String\(1 \/ scale\)\)/);
+});
+
+test('text commit anchors to the canvas-space origin, not the scaled DOM rect', () => {
+  // The commit path must use `origin` (image pixels). Reading a
+  // getBoundingClientRect would mix the viewport zoom and the shell's own
+  // transform into the placement maths.
+  const textTool = read('js/tools/TextTool.js');
+  const commit = textTool.slice(textTool.indexOf('const commit = ()'), textTool.indexOf('const open = ('));
+  assert.match(commit, /const anchor = origin;/);
+  assert.match(commit, /x: anchor\.x,/);
+  assert.match(commit, /y: anchor\.y \+ canvasTextOffset,/);
+  assert.doesNotMatch(commit, /getBoundingClientRect/);
 });
 
 test('open dropdown toggles are visibly pressed', () => {
