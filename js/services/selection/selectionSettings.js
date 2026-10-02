@@ -32,10 +32,15 @@ export const createSelectionSettings = ({
   documentRef = globalThis.document,
   onChange = null,
 } = {}) => {
-  const inputs = [...(documentRef?.querySelectorAll?.('[data-css-var]') || [])];
-  const previewToggle = documentRef?.getElementById('setting-selection-preview');
-  const valueBadge = documentRef?.getElementById('selection-handle-size-value');
-  const resetButton = documentRef?.getElementById('setting-selection-reset');
+  const controls = () => [...(documentRef?.querySelectorAll?.('[data-css-var]') || [])];
+  const previewToggle = () => documentRef?.getElementById('setting-selection-preview');
+  const valueBadge = () => documentRef?.getElementById('selection-handle-size-value');
+
+  const updateBadge = () => {
+    const badge = valueBadge();
+    if (!badge) return;
+    badge.textContent = readRootProperty(root, '--selection-handle-size') || '9px';
+  };
 
   // Paint every control with the current value so the UI opens on live state,
   // not on the markup defaults.
@@ -43,30 +48,29 @@ export const createSelectionSettings = ({
     for (const [property, fallback] of Object.entries(SELECTION_APPEARANCE_DEFAULTS)) {
       if (!readRootProperty(root, property)) root?.style?.setProperty(property, fallback);
     }
-    inputs.forEach((input) => {
+    for (const input of controls()) {
       const property = input.dataset.cssVar;
       const current = readRootProperty(root, property) || SELECTION_APPEARANCE_DEFAULTS[property];
-      if (property.includes('size')) input.value = String(parseInt(current, 10) || 9);
-      else input.value = current;
-    });
+      input.value = property.includes('size') ? String(parseInt(current, 10) || 9) : current;
+    }
     updateBadge();
   };
 
-  const updateBadge = () => {
-    if (!valueBadge) return;
-    const size = readRootProperty(root, '--selection-handle-size') || '9px';
-    valueBadge.textContent = size;
-  };
-
-  const handleChange = (event) => {
-    applyCssVariable(root, event.target);
+  // These panels are built lazily (the Image sidebar mirror mounts on first
+  // open), so per-element listeners bound at start would miss every control
+  // that does not exist yet. One delegated listener covers panels mounted at
+  // any time, which is what makes the slider actually reach the canvas.
+  const handleControlInput = (event) => {
+    const target = event.target;
+    if (!target?.matches?.('[data-css-var]')) return;
+    applyCssVariable(root, target);
     updateBadge();
-    onChange?.(event.target);
+    onChange?.(target);
   };
 
-  // Reset clears the per-session inline overrides and repaints the defaults, so
-  // "Reset" and "what a fresh install looks like" are the same state.
-  const resetToDefaults = () => {
+  const handleReset = (event) => {
+    const target = event.target;
+    if (!target?.closest?.('#setting-selection-reset')) return;
     for (const [property, value] of Object.entries(SELECTION_APPEARANCE_DEFAULTS)) {
       root?.style?.removeProperty(property);
       root?.style?.setProperty(property, value);
@@ -75,24 +79,25 @@ export const createSelectionSettings = ({
     onChange?.(null);
   };
 
+  const handlePreviewToggle = (event) => {
+    if (event.target?.id !== 'setting-selection-preview') return;
+    onChange?.(event.target);
+  };
+
   const start = () => {
     syncFromRoot();
-    inputs.forEach((input) => {
-      input.addEventListener('input', handleChange);
-      input.addEventListener('change', handleChange);
-    });
-    previewToggle?.addEventListener('change', onChange);
-    resetButton?.addEventListener('click', resetToDefaults);
+    documentRef?.addEventListener('input', handleControlInput);
+    documentRef?.addEventListener('change', handleControlInput);
+    documentRef?.addEventListener('click', handleReset);
+    documentRef?.addEventListener('change', handlePreviewToggle);
   };
 
   const destroy = () => {
-    inputs.forEach((input) => {
-      input.removeEventListener('input', handleChange);
-      input.removeEventListener('change', handleChange);
-    });
-    previewToggle?.removeEventListener('change', onChange);
-    resetButton?.removeEventListener('click', resetToDefaults);
+    documentRef?.removeEventListener('input', handleControlInput);
+    documentRef?.removeEventListener('change', handleControlInput);
+    documentRef?.removeEventListener('click', handleReset);
+    documentRef?.removeEventListener('change', handlePreviewToggle);
   };
 
-  return Object.freeze({ start, destroy, resetToDefaults, previewToggle, inputs, valueBadge });
+  return Object.freeze({ start, destroy, syncFromRoot, controls, previewToggle, valueBadge });
 };

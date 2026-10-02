@@ -175,7 +175,11 @@ test('selection appearance controls are translated, not hard-coded English', () 
   // Numeric badge + reset are part of the same panel.
   assert.match(panel, /id="selection-handle-size-value"/);
   assert.match(panel, /id="setting-selection-reset"/);
-  assert.match(settings, /resetToDefaults/);
+  // Delegated, not per-element: the Image mirror mounts lazily, so listeners
+  // bound at start would never reach the slider.
+  assert.match(settings, /documentRef\?\.addEventListener\('input', handleControlInput\)/);
+  assert.match(settings, /target\?\.matches\?\.\('\[data-css-var\]'\)/);
+  assert.match(settings, /SELECTION_APPEARANCE_DEFAULTS/);
 });
 
 test('the image mirror mounts the selection properties panel', () => {

@@ -24,28 +24,42 @@ const PREVIEW_TEMPLATE = `
  */
 export const createSelectionPreview = ({ host, inputs = [] } = {}) => {
   if (!host) return Object.freeze({ destroy() {} });
+  const doc = host.ownerDocument || globalThis.document;
   host.innerHTML = PREVIEW_TEMPLATE;
-  const root = globalThis.document?.documentElement;
+  const root = doc?.documentElement;
   const handle = host.querySelector('[data-role="handle"]');
   const frame = host.querySelector('[data-role="frame"]');
   const active = host.querySelector('[data-role="active"]');
-  const numericBadge = host.querySelector('[data-role="value"]');
 
+  const controlIds = Object.freeze([...inputs]);
+
+  // Delegated on purpose. This panel is mounted detached and only sometimes, so
+  // listeners bound to the controls here would miss both the initial build and
+  // any later remount. One document-level listener covers every instance.
   const readVariables = () => {
     const computed = globalThis.getComputedStyle?.(root);
     const read = (name) => computed?.getPropertyValue(name).trim() || '';
+    const valueOf = (id, fallback) => doc?.getElementById?.(id)?.value || read(fallback);
+    // Read the control the user is dragging first: the settings module writes the
+    // custom properties from its own delegated listener, and ordering between two
+    // document-level listeners is not guaranteed, so the variable may still hold
+    // the previous value while dragging.
     return {
-      handleSize: read('--selection-handle-size') || '9px',
-      outline: read('--selection-outline-color') || '#0078d4',
-      activeColor: read('--selection-outline-active-color') || '#0b3d91',
+      handleSize: doc?.getElementById?.(controlIds[0])
+        ? `${doc.getElementById(controlIds[0]).value}px`
+        : (read('--selection-handle-size') || '9px'),
+      outline: valueOf(controlIds[1], '--selection-outline-color') || '#0078d4',
+      activeColor: valueOf(controlIds[2], '--selection-outline-active-color') || '#0b3d91',
     };
   };
 
   // Both frame samples read the same custom properties the canvas overlay uses.
   const apply = () => {
     const { handleSize, outline, activeColor } = readVariables();
-    if (handle) handle.style.width = handleSize;
-    if (handle) handle.style.height = handleSize;
+    if (handle) {
+      handle.style.width = handleSize;
+      handle.style.height = handleSize;
+    }
     if (frame) {
       frame.style.borderColor = outline;
       frame.style.borderWidth = '1px';
@@ -55,22 +69,19 @@ export const createSelectionPreview = ({ host, inputs = [] } = {}) => {
       // Active state is deliberately the thicker stroke, matching the overlay.
       active.style.borderWidth = '2px';
     }
-    if (numericBadge) numericBadge.textContent = handleSize;
   };
 
-  const controls = inputs
-    .map((id) => globalThis.document?.getElementById(id))
-    .filter(Boolean);
-  const listener = () => apply();
-  controls.forEach((control) => control.addEventListener('input', listener));
-  controls.forEach((control) => control.addEventListener('change', listener));
+  const isTrackedControl = (target) => Boolean(target?.id) && controlIds.includes(target.id);
+  const listener = (event) => { if (isTrackedControl(event.target)) apply(); };
+  doc?.addEventListener('input', listener);
+  doc?.addEventListener('change', listener);
 
   apply();
 
   const destroy = () => {
-    controls.forEach((control) => control.removeEventListener('input', listener));
-    controls.forEach((control) => control.removeEventListener('change', listener));
+    doc?.removeEventListener('input', listener);
+    doc?.removeEventListener('change', listener);
   };
 
-  return Object.freeze({ apply, destroy, elements: { handle, frame, active, numericBadge } });
+  return Object.freeze({ apply, destroy, elements: { handle, frame, active } });
 };
