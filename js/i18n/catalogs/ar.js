@@ -50,6 +50,8 @@ export const initializeAr = (english) => {
     "settings.general": "عام",
     "settings.search": "البحث في الإعدادات",
     "ui.crop": "اقتصاص",
+    "ui.selectionMenu": "التحديد",
+    "ui.blackOutlineStrokeWidth": "عرض المخطط الأسود",
     "ui.rotate": "تدوير",
     "ui.rotate90": "تدوير 90",
     "ui.rotate180": "تدوير 180",

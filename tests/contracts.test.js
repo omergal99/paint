@@ -209,6 +209,32 @@ test('ToolManager coalesces pointer work, flushes before up, and cancels safely'
 	assert.ok(cancelledFrames.includes(2), 'destroy cancels an outstanding animation frame');
 });
 
+test('ToolManager cancels the owning gesture before a history restore', () => {
+	const surface = eventTarget();
+	const calls = [];
+	const manager = new ToolManager({
+		surface,
+		viewportManager: { clientToImage: (x, y) => ({ x, y }) },
+		toolContext: { canvasManager: { persistToStorage: () => {} } },
+		requestFrame: (callback) => { callback(); return 1; },
+		cancelFrame: () => {},
+	});
+	manager.register({
+		name: 'test',
+		onDown: () => calls.push('down'),
+		onCancel: () => calls.push('cancel'),
+		onUp: () => calls.push('up'),
+	});
+	manager.setActive('test');
+	surface.dispatch('pointerdown', { pointerId: 12, button: 0, clientX: 0, clientY: 0, preventDefault: () => {} });
+	assert.equal(manager.cancelActiveGesture(), true);
+	assert.equal(manager._dragging, false);
+	assert.equal(manager._activePointerId, null);
+	surface.dispatch('pointerup', { pointerId: 12, button: 0, clientX: 1, clientY: 1 });
+	assert.deepEqual(calls, ['down', 'cancel'], 'a later pointerup cannot revive stale gesture state');
+	manager.destroy();
+});
+
 test('ToolManager keeps a drag rAF queue owned by its active pointer', () => {
 	const surface = eventTarget();
 	const frames = [];
@@ -636,6 +662,33 @@ test('HistoryManager captures Blob snapshots before mutation, revokes owned URLs
 	assert.equal(largeHistory.snapshot({ force: true }), false);
 	assert.equal(largeCaptureCalls, 0, 'oversized history never begins a PNG encode');
 	assert.match(rejections[0].message, /protect memory/);
+});
+
+test('selection lift, drag, and drop undo as one pre-lift state', async () => {
+	let pixels = 'before';
+	const canvasManager = {
+		width: 8,
+		height: 8,
+		canvas: { toDataURL: () => `data:image/png;base64,${pixels}` },
+		_pixelsSignature: () => pixels,
+		loadImageDataUrl: async (source) => {
+			pixels = source.slice('data:image/png;base64,'.length);
+			return true;
+		},
+		persistToStorage: () => {},
+	};
+	const history = new HistoryManager(canvasManager, { sessionStorage: memoryStorage() });
+	history.beginTransaction();
+	pixels = 'lifted-hole';
+	pixels = 'dropped';
+	history.onBeforeRestore = () => history.commitTransaction();
+	assert.equal(history.undoStack.length, 0, 'an active float holds its pre-lift entry outside the stack');
+	assert.equal(await history.undo(), true);
+	assert.equal(pixels, 'before', 'one undo restores the exact pre-lift pixels');
+	assert.equal(history.undoStack.length, 0);
+	assert.equal(history.redoStack.length, 1);
+	assert.equal(await history.redo(), true);
+	assert.equal(pixels, 'dropped', 'redo restores the committed destination');
 });
 
 test('color contract normalizes alpha without losing legacy hex input', () => {

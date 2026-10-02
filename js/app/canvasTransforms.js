@@ -61,7 +61,7 @@ const applyTransformation = (transformFn) => {
 	// handle's base canvas for it.
 	selectionRotation = null;
 	canvasManager.flattenLayers();
-	historyManager.snapshot();
+	if (!canvasManager.floatingCanvas && !historyManager.hasOpenTransaction) historyManager.snapshot();
 	const selection = canvasManager.selection;
 	if (selection && !canvasManager.floatingCanvas) {
 		canvasManager.floatingCanvas = canvasManager.extractRegion(selection);
@@ -134,7 +134,7 @@ const bindRotateSelectionHandle = () => {
 		event.preventDefault();
 		event.stopPropagation();
 		const originalSelection = { ...canvasManager.selection };
-		historyManager.snapshot();
+		if (!canvasManager.floatingCanvas && !historyManager.hasOpenTransaction) historyManager.snapshot();
 		if (!canvasManager.floatingCanvas) {
 			canvasManager.floatingCanvas = canvasManager.extractRegion(originalSelection);
 			canvasManager.fillRegion(originalSelection, canvasManager.backgroundColor);
@@ -193,7 +193,7 @@ const destroyRotateSelectionHandleBinding = bindRotateSelectionHandle();
 const rotateSelectionByAngle = (degrees, { prepared = false } = {}) => {
 	const selection = canvasManager.selection;
 	if (!selection?.w || !selection?.h) return;
-	if (!prepared) historyManager.snapshot();
+	if (!prepared && !canvasManager.floatingCanvas && !historyManager.hasOpenTransaction) historyManager.snapshot();
 	if (!prepared && !canvasManager.floatingCanvas) {
 		canvasManager.floatingCanvas = canvasManager.extractRegion(selection);
 		canvasManager.fillRegion(selection, canvasManager.backgroundColor);

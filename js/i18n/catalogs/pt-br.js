@@ -54,6 +54,8 @@ export const initializePtBr = (english) => {
     "ui.directionLtr": "Da esquerda para a direita",
     "ui.directionRtl": "Da direita para a esquerda",
     "ui.crop": "Recortar",
+    "ui.selectionMenu": "Seleção",
+    "ui.blackOutlineStrokeWidth": "Espessura do contorno preto",
     "ui.rotate": "Girar",
     "ui.rotate90": "Girar 90",
     "ui.rotate180": "Girar 180",

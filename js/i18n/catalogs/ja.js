@@ -50,6 +50,8 @@ export const initializeJa = (english) => {
     "settings.general": "全般",
     "settings.search": "設定を検索",
     "ui.crop": "トリミング",
+    "ui.selectionMenu": "選択範囲",
+    "ui.blackOutlineStrokeWidth": "黒い輪郭の幅",
     "ui.rotate": "回転",
     "ui.rotate90": "90度回転",
     "ui.rotate180": "180度回転",

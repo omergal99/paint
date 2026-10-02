@@ -50,6 +50,8 @@ export const initializeFr = (english) => {
     "settings.general": "Général",
     "settings.search": "Rechercher dans les paramètres",
     "ui.crop": "Rogner",
+    "ui.selectionMenu": "Sélection",
+    "ui.blackOutlineStrokeWidth": "Épaisseur du contour noir",
     "ui.rotate": "Rotation",
     "ui.rotate90": "Rotation 90",
     "ui.rotate180": "Rotation 180",

@@ -23,6 +23,7 @@ const normalizeObject = (value = {}) => {
 		height: Math.max(0, Number(value.height) || 0),
 		fontSize: Math.max(1, Number(value.fontSize) || 16),
 		fontFamily: String(value.fontFamily || 'Segoe UI'),
+		strokeWidth: Math.max(0, Number(value.strokeWidth) || 0),
 		color: value.color && typeof value.color === 'object' ? clone(value.color) : { r: 0, g: 0, b: 0, a: 1 },
 		styles: Array.isArray(value.styles) ? [...new Set(value.styles.map(String))] : [],
 		zIndex: Number.isFinite(Number(value.zIndex)) ? Number(value.zIndex) : 0,

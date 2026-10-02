@@ -44,6 +44,18 @@ test('the handles really are inside the zoom-transformed box', () => {
   assert.ok(rotateHandle > scaleOpen && rotateHandle < scaleClose);
 });
 
+test('selection handle offsets follow the configured size and distinguish bounds from floats', () => {
+  const main = read('js/main.js');
+  const css = read('css/styles.css');
+  const handles = main.slice(main.indexOf('const handleHalfSize ='), main.indexOf('const bindSelectionHandles ='));
+  assert.match(handles, /--selection-handle-size/);
+  assert.match(handles, /\? size : 9\) \/ 2/);
+  const resize = main.slice(main.indexOf('const bindSelectionHandles ='), main.indexOf('const commitFloatingPixels ='));
+  assert.match(resize, /if \(canvasManager\.floatingCanvas\) canvasManager\.floatingCanvas = scaleCanvas/);
+  assert.match(resize, /setSelection\(\{ x, y, w, h \}, \{ preview: true \}\)/);
+  assert.match(css, /\.selection-handle\s*\{[\s\S]*?width: var\(--selection-handle-size/);
+});
+
 test('a selection move records one atomic history entry, not a half-applied step', () => {
   const history = read('js/history/HistoryManager.js');
   const select = read('js/tools/SelectTool.js');
@@ -62,14 +74,14 @@ test('a selection move records one atomic history entry, not a half-applied step
   assert.match(commit, /historyManager\.commitTransaction\(\);/);
 });
 
-test('undo discards the floating selection before restoring pixels', () => {
-  // The float is painted on the overlay canvas. Restoring the base canvas under
-  // it changes nothing on screen, which is why one Ctrl+Z looked like a no-op
-  // and users had to press it twice.
+test('undo finalizes the floating selection before restoring pixels', () => {
+  // Finalizing the float commits its pending atomic transaction before undo
+  // captures redo and restores the pre-lift pixels.
   const history = read('js/history/HistoryManager.js');
   const main = read('js/main.js');
   assert.match(history, /this\.onBeforeRestore\?\.\(\);/);
-  assert.match(main, /historyManager\.onBeforeRestore = \(\) => discardFloatingSelection\(\);/);
+  assert.match(main, /historyManager\.onBeforeRestore = \(\) => \{\s*toolManager\.cancelActiveGesture\(\);\s*commitFloatingSelection\(\);/);
+  assert.match(main, /historyManager\.commitTransaction\(\);/);
 
   const discard = main.slice(main.indexOf('const discardFloatingSelection ='));
   assert.match(discard.slice(0, 400), /historyManager\.abortTransaction\(\);/);
@@ -95,9 +107,8 @@ test('the selection frame paints differently while selecting and when active', (
   const appearance = read('js/services/selection/selectionAppearance.js');
   const css = read('css/styles.css');
 
-  assert.match(main, /const isActiveSelection = \(\) => Boolean\(canvasManager\.selection\?\.w && canvasManager\.selection\?\.h\);/);
-  assert.match(main, /const isMarqueeSelecting = \(\) => marqueeInProgress;/);
-  assert.match(main, /active: !isMarqueeSelecting\(\) && isActiveSelection\(\)/);
+  assert.match(main, /const isFloatingSelection = \(\) => Boolean\(canvasManager\.floatingCanvas\);/);
+  assert.match(main, /active: isFloatingSelection\(\)/);
   assert.doesNotMatch(main, /active: isActiveSelection\(\)/);
 
   // Two distinct colours, thicker stroke when active.
@@ -428,8 +439,8 @@ test('every undo trigger routes through one runUndo/runRedo pair', () => {
   // `runUndo` also discards a floating selection first, which is what makes a
   // selection move reversible instead of a no-op.
   const main = read('js/main.js');
-  assert.match(main, /const runUndo = \(\) => \{\s*discardFloatingSelection\(\);\s*historyManager\.undo\(\);\s*\}/);
-  assert.match(main, /const runRedo = \(\) => \{\s*discardFloatingSelection\(\);\s*historyManager\.redo\(\);\s*\}/);
+  assert.match(main, /const runUndo = \(\) => \{\s*historyManager\.undo\(\);\s*\}/);
+  assert.match(main, /const runRedo = \(\) => \{\s*historyManager\.redo\(\);\s*\}/);
   assert.match(main, /undo: runUndo,/);
   assert.match(main, /redo: runRedo,/);
   assert.match(read('js/ui/Toolbar.js'), /getElementById\('btn-undo'\), 'click', \(\) => this\.handlers\.undo\(\)/);

@@ -8,6 +8,8 @@ export const buildSelectionPropertiesPanel = () => {
   const wrap = document.createElement('div');
   wrap.className = 'selection-properties-panel';
   wrap.innerHTML = `
+    <button type="button" class="mirror-action" data-tag="sidebar-mirror-btn-select-all"
+      data-i18n="ui.selectAll">Select All</button>
     <div class="selection-prop-preview" id="selection-prop-preview-host"></div>
     <div class="settings-field">
       <label for="setting-selection-handle-size" data-i18n="ui.selectionHandleSize">Selection handle size</label>
@@ -31,6 +33,8 @@ export const buildSelectionPropertiesPanel = () => {
     </div>
     <button type="button" class="btn selection-prop-reset" id="setting-selection-reset"
       data-i18n="ui.selectionReset">Reset to Defaults</button>`;
+  wrap.querySelector('[data-tag="sidebar-mirror-btn-select-all"]')
+    ?.addEventListener('click', () => document.getElementById('btn-select-all')?.click());
   // Wire the live preview as soon as the block exists. The settings module is
   // started by main.js; this only keeps the preview bound to the DOM.
   const preview = createSelectionPreview({

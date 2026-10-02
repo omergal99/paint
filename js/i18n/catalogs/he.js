@@ -62,6 +62,8 @@ export const initializeHe = (english) => {
     "settings.clearDataTitle": "ניקוי כל הנתונים השמורים",
     "settings.clearDataConfirm": "לנקות את הבד השמור, נתוני סביבת העבודה, ההגדרות וההיסטוריה? אי אפשר לבטל פעולה זו.",
     "ui.crop": "חיתוך",
+    "ui.selectionMenu": "בחירה",
+    "ui.blackOutlineStrokeWidth": "רוחב המתאר השחור",
     "ui.removeBackground": "הסרת רקע",
     "ui.backgroundRemovalMode": "מצב הסרת רקע",
     "ui.backgroundRemovalColorKey": "מפתח צבע (כל הפיקסלים התואמים)",

@@ -89,6 +89,8 @@ export const ES_MESSAGES = Object.freeze({
     shortcutReset: "{action} restablecido al valor predeterminado.",
     shortcutSaved: "Atajo de {action} guardado.",
     crop: "Recortar",
+    selectionMenu: "Selección",
+    blackOutlineStrokeWidth: "Grosor del contorno negro",
     removeBackground: "Quitar fondo",
     backgroundRemovalMode: "Modo de eliminación",
     backgroundRemovalColorKey:

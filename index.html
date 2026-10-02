@@ -251,9 +251,17 @@
 								<span><span data-i18n="ribbon.annotations.more">More</span> <span class="menu-arrow"
 										aria-hidden="true">▾</span></span></button>
 							<div class="action-menu-items image-more-menu-items" role="menu" aria-label="More image actions">
-										<div class="action-menu action-submenu">
-											<button type="button" id="btn-select-all" role="menuitem" data-i18n="ui.selectAll"
-												title="Select All">Select All</button>
+								<div class="action-menu action-submenu">
+									<button class="action-menu-trigger action-submenu-trigger" type="button" role="menuitem"
+										aria-haspopup="menu" aria-expanded="false" aria-label="Selection"
+										data-i18n-attr="aria-label:ui.selectionMenu">
+										<span data-i18n="ui.selectionMenu">Selection</span><span class="submenu-arrow" aria-hidden="true">›</span>
+									</button>
+									<div class="action-menu-items action-submenu-items" role="menu" data-i18n-attr="aria-label:ui.selectionMenu">
+										<button type="button" id="btn-select-all" role="menuitem" data-i18n="ui.selectAll"
+											title="Select All">Select All</button>
+									</div>
+								</div>
 								<div class="action-menu action-submenu">
 									<button class="action-menu-trigger action-submenu-trigger" id="btn-crop-menu" type="button"
 										role="menuitem" aria-haspopup="menu" aria-expanded="false" aria-label="Crop"
@@ -429,6 +437,12 @@
 													class="style-sample">Aa</span><span>Outline</span></button>
 											<button type="button" class="text-style-option" data-text-style="black-outline"><span
 													class="style-sample">Aa</span><span>Black outline</span></button>
+										<div class="text-outline-width">
+										<label for="text-outline-stroke-width" data-i18n="ui.blackOutlineStrokeWidth">Black outline width</label>
+										<input type="range" id="text-outline-stroke-width" min="1" max="20" step="1" value="2"
+											aria-label="Black outline width" data-i18n-attr="aria-label:ui.blackOutlineStrokeWidth">
+										<output id="text-outline-stroke-width-value" for="text-outline-stroke-width">2px</output>
+									</div>
 											<button type="button" class="text-style-option" data-text-style="shadow"><span
 													class="style-sample">Aa</span><span>Shadow</span></button>
 											<button type="button" class="text-style-option" data-text-style="neon"><span
@@ -1565,6 +1579,7 @@
 		<form method="dialog" id="app-dialog-form">
 			<h3 id="app-dialog-title">Please confirm</h3>
 			<p id="app-dialog-message"></p>
+			<img id="app-dialog-preview" class="app-dialog-preview" alt="" hidden>
 			<input id="app-dialog-input" class="app-dialog-input" type="text" aria-label="Dialog value" hidden />
 			<div class="dialog-actions">
 				<button type="button" id="app-dialog-cancel">Cancel</button>

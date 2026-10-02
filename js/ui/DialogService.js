@@ -3,8 +3,8 @@
 // here prevents browser-native alert/confirm/prompt UI from leaking into
 // feature modules and gives the app one consistent interaction surface.
 
-export const createDialogService = ({ dialog, title, message, input, confirmButton, cancelButton, form } = {}) => {
-  const setContent = ({ heading, body, confirmLabel, cancelLabel, danger, prompt }) => {
+export const createDialogService = ({ dialog, title, message, preview, input, confirmButton, cancelButton, form } = {}) => {
+  const setContent = ({ heading, body, confirmLabel, cancelLabel, danger, prompt, preview: previewOptions }) => {
     title.textContent = heading;
     message.textContent = body;
     confirmButton.textContent = confirmLabel;
@@ -14,6 +14,11 @@ export const createDialogService = ({ dialog, title, message, input, confirmButt
     input.value = prompt?.value ?? '';
     input.placeholder = prompt?.placeholder || '';
     input.type = prompt?.type || 'text';
+    if (preview) {
+      preview.hidden = !previewOptions?.src;
+      preview.src = previewOptions?.src || '';
+      preview.alt = previewOptions?.alt || '';
+    }
     dialog.dataset.dialogMode = prompt ? 'prompt' : 'confirm';
   };
 
@@ -45,6 +50,7 @@ export const createDialogService = ({ dialog, title, message, input, confirmButt
         confirmLabel: options.confirmLabel || 'Continue',
         cancelLabel: options.cancelLabel || 'Cancel',
         danger: options.danger === true,
+        preview: options.preview || null,
       });
     },
     prompt(options = {}) {

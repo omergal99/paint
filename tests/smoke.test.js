@@ -288,8 +288,8 @@ test('History tab exposes undo/redo, one concise preferences row, and event-driv
   assert.match(read('css/styles.css'), /\.history-preferences\s*\{\s*display: flex;/);
   assert.match(read('css/styles.css'), /\.history-undo-row\s*\{/);
   // One undo/redo path: ribbon handlers, the History tab, and the keyboard.
-  assert.match(main, /const runUndo = \(\) => \{\s*discardFloatingSelection\(\);\s*historyManager\.undo\(\);/);
-  assert.match(main, /const runRedo = \(\) => \{\s*discardFloatingSelection\(\);\s*historyManager\.redo\(\);/);
+  assert.match(main, /const runUndo = \(\) => \{\s*historyManager\.undo\(\);/);
+  assert.match(main, /const runRedo = \(\) => \{\s*historyManager\.redo\(\);/);
   assert.match(main, /undo: runUndo,\s*redo: runRedo,/);
   assert.match(main, /history-undo-btn'\)\?\.addEventListener\('click', runUndo\)/);
   assert.match(main, /history-redo-btn'\)\?\.addEventListener\('click', runRedo\)/);
@@ -512,7 +512,7 @@ test('canvas undo/redo is not swallowed by focused ribbon or status controls', (
   assert.match(main, /const ownsTextEditing = \(element\) => element instanceof HTMLTextAreaElement/);
   assert.match(main, /if \(ownsTextEditing\(activeElement\)\) return;[\s\S]*runUndo\(\)/);
   // Phase 2 step-04: the keyboard guard now routes through the one shared path.
-  assert.match(main, /const runUndo = \(\) => \{\s*discardFloatingSelection\(\);\s*historyManager\.undo\(\);/);
+  assert.match(main, /const runUndo = \(\) => \{\s*historyManager\.undo\(\);/);
   const undoBranch = main.match(/if \(action === SHORTCUT_ACTIONS\.undo[\s\S]*?\n\t\}/)?.[0] || '';
   assert.ok(undoBranch, 'undo/redo branch must exist');
   assert.doesNotMatch(undoBranch, /if \(typing\) return;/,
@@ -652,7 +652,7 @@ test('settings search keeps text intact and reports only deepest areas', () => {
   assert.match(read('css/styles.css'), /\.settings-tab\.dialog-search-tab-active\s*\{[\s\S]*box-shadow: inset 0 0 0 2px var\(--w10-search-accent\)/);
   assert.match(search, /firstResultIndex = results\.findIndex/);
   assert.match(read('css/styles.css'), /right: 2px[\s\S]*bottom: 2px[\s\S]*min-width: 10px[\s\S]*padding: 0 1px[\s\S]*font-size: 10px[\s\S]*line-height: 12px/);
-  assert.match(main, /if \(editable\) return;[\s\S]*selectAll\(\)/);
+  assert.match(main, /if \(\(e\.ctrlKey \|\| e\.metaKey\)[\s\S]*e\.preventDefault\(\);\s*selectAll\(\);/);
 });
 
 test('History auto-save toggle + export-all are wired and guarded', () => {

@@ -73,6 +73,18 @@ export class ToolManager {
     if (this.onToolChange) this.onToolChange(name);
   }
 
+  cancelActiveGesture() {
+    if (!this._dragging) return false;
+    const pointerId = this._activePointerId;
+    this._cancelQueuedMove(pointerId);
+    this.active?.onCancel?.(null, this.toolContext);
+    this._dragging = false;
+    this._activePointerId = null;
+    this._releasePointer(pointerId);
+    this._detachWindowPointerFallback();
+    return true;
+  }
+
   _point(e) {
     const { x, y } = this.viewportManager.clientToImage(e.clientX, e.clientY);
     return { x, y, button: e.button };

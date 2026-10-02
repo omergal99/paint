@@ -117,6 +117,7 @@ const dialogService = createDialogService({
 	dialog: document.getElementById('app-dialog'),
 	title: document.getElementById('app-dialog-title'),
 	message: document.getElementById('app-dialog-message'),
+	preview: document.getElementById('app-dialog-preview'),
 	input: document.getElementById('app-dialog-input'),
 	confirmButton: document.getElementById('app-dialog-confirm'),
 	cancelButton: document.getElementById('app-dialog-cancel'),
@@ -499,8 +500,6 @@ const setDialogUrl = (dialog, extra = {}) => {
 // CSS custom properties, so Settings can change them without editing this file.
 let selectionPreviewActive = false;
 
-const isActiveSelection = () => Boolean(canvasManager.selection?.w && canvasManager.selection?.h);
-
 // Two genuinely different selection modes, and the difference is whether the
 // pixels have been lifted off the canvas:
 //
@@ -533,10 +532,8 @@ const repaintSelectionFrame = () => {
 	drawSelectionOutline(canvasManager.selection);
 };
 
-let marqueeInProgress = false;
 const setMarqueeStatus = (active) => {
-	marqueeInProgress = Boolean(active);
-	if (!marqueeInProgress) repaintSelectionFrame();
+	if (!active) repaintSelectionFrame();
 };
 
 const drawSelectionOutline = (region) => {
@@ -709,7 +706,6 @@ const bindSelectionHandles = () => {
 			stopSelectionHandleDrag();
 			event.preventDefault();
 			event.stopPropagation();
-			historyManager.snapshot();
 			const original = { ...canvasManager.selection };
 			const direction = handle.dataset.selectionHandle;
 			const start = viewportManager.clientToImage(event.clientX, event.clientY);
@@ -816,21 +812,21 @@ const discardFloatingSelection = () => {
 	}
 }
 
-// Undo must drop a floating selection before restoring pixels: the float is
-// painted on the overlay canvas, so restoring the base canvas underneath it is
-// invisible and one Ctrl+Z looks like a no-op. Discarding it first is what
-// makes a selection move a single, atomic undo step.
-historyManager.onBeforeRestore = () => discardFloatingSelection();
+// Finalize the float before history captures/replaces pixels. This commits a
+// drag's single atomic transaction; undo then restores the exact pre-lift
+// canvas in one step, while redo restores the dropped image.
+historyManager.onBeforeRestore = () => {
+	toolManager.cancelActiveGesture();
+	commitFloatingSelection();
+};
 
 // Phase 2 step-04: one undo/redo path for every entry point (ribbon buttons,
 // the History tab, keyboard). A floating selection is dropped first so undo
 // restores the canvas, not the lifted shape.
 const runUndo = () => {
-	discardFloatingSelection();
 	historyManager.undo();
 }
 const runRedo = () => {
-	discardFloatingSelection();
 	historyManager.redo();
 }
 
@@ -867,7 +863,16 @@ let currentFontSize = (() => {
 })();
 
 const TEXT_STYLES_KEY = 'paint:text-styles';
+const TEXT_STROKE_WIDTH_KEY = 'paint:text-outline-stroke-width';
 const TEXT_STYLE_NAMES = ['outline', 'black-outline', 'shadow', 'neon', 'bold', 'italic', 'underline'];
+let currentTextStrokeWidth = (() => {
+	try {
+		const value = Number(localStorage.getItem(TEXT_STROKE_WIDTH_KEY));
+		return Number.isFinite(value) && value >= 1 && value <= 20 ? value : 2;
+	} catch {
+		return 2;
+	}
+})();
 let selectedTextStyles = (() => {
 	try {
 		const saved = JSON.parse(localStorage.getItem(TEXT_STYLES_KEY) || 'null');
@@ -904,6 +909,18 @@ const saveTextStyles = () => {
 	renderTextStyleControls();
 }
 
+const textStrokeWidthInput = document.getElementById('text-outline-stroke-width');
+const textStrokeWidthOutput = document.getElementById('text-outline-stroke-width-value');
+if (textStrokeWidthInput) {
+	textStrokeWidthInput.value = String(currentTextStrokeWidth);
+	if (textStrokeWidthOutput) textStrokeWidthOutput.value = `${currentTextStrokeWidth}px`;
+	textStrokeWidthInput.addEventListener('input', () => {
+		currentTextStrokeWidth = Math.max(1, Math.min(20, Number(textStrokeWidthInput.value) || 2));
+		if (textStrokeWidthOutput) textStrokeWidthOutput.value = `${currentTextStrokeWidth}px`;
+		try { localStorage.setItem(TEXT_STROKE_WIDTH_KEY, String(currentTextStrokeWidth)); } catch {}
+	});
+}
+
 const toolContext = {
 	canvasManager,
 	historyManager,
@@ -935,6 +952,7 @@ const toolContext = {
 	getFontSize: () => currentFontSize,
 	getFontFamily: () => "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
 	getTextStyle: getTextStyles,
+	getTextStrokeWidth: () => currentTextStrokeWidth,
 	getTextHistoryToolbarVisible: () => toolbar.getTextHistoryToolbarVisible?.() !== false,
 	setFontSize: (size) => {
 		currentFontSize = Math.max(1, Math.min(300, parseInt(size, 10)));
@@ -1632,6 +1650,11 @@ const ownsTextEditing = (element) => element instanceof HTMLTextAreaElement
 
 window.addEventListener('keydown', (e) => {
 	if (e.defaultPrevented) return;
+	if ((e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === 'a') {
+		e.preventDefault();
+		selectAll();
+		return;
+	}
 	const tag = document.activeElement?.tagName;
 	const typing = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
 	const shortcut = shortcutFromEvent(e);
@@ -1652,7 +1675,6 @@ window.addEventListener('keydown', (e) => {
 		return;
 	}
 	if (action === SHORTCUT_ACTIONS.selectAll) {
-		if (editable) return;
 		e.preventDefault();
 		selectAll();
 		return;

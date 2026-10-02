@@ -148,9 +148,8 @@ export class HistoryManager {
     this._currentEntry = null;
     this._currentSignature = null;
     this._transaction = null;
-    // Called before an undo restores pixels. A floating selection lives on the
-    // overlay, so restoring the base canvas underneath it is invisible until
-    // the float is discarded - which is what made one Ctrl+Z look like a no-op.
+    // Finalizes overlay state before undo/redo/restore captures or replaces
+    // canvas pixels, keeping the raster and floating selection in sync.
     this.onBeforeRestore = null;
     this._urlApi = urlApi;
     this._sessionStorage = sessionStore === undefined ? getSessionStorageSafely() : sessionStore;
@@ -456,6 +455,7 @@ export class HistoryManager {
     // transaction that is fine - we still need the entry to exist as "before".
     if (!captured) this._transaction = { entry: null, signature: this.canvasManager._pixelsSignature?.() || null };
     else this._transaction = { entry: this.undoStack.pop(), signature: this._lastSnapshotSig };
+    this._notify();
     return true;
   }
 
@@ -469,6 +469,7 @@ export class HistoryManager {
     // dropped the selection in place): record nothing rather than a no-op step.
     if (!transaction.entry || (sig && sig === transaction.signature)) {
       if (transaction.entry) this._releaseEntry(transaction.entry);
+      this._notify();
       return false;
     }
     this._lastSnapshotSig = sig;
@@ -486,6 +487,7 @@ export class HistoryManager {
     const transaction = this._transaction;
     this._transaction = null;
     if (transaction?.entry) this._releaseEntry(transaction.entry);
+    if (transaction) this._notify();
     return Boolean(transaction);
   }
 
@@ -551,14 +553,13 @@ export class HistoryManager {
   }
 
   async _undoNow() {
-    // An in-flight selection move must be recorded before we step backwards.
-    // Its "before" entry is held outside the stack, so this has to run before
-    // the empty-stack guard or the move would be silently dropped.
+    // Finalize a float first: committing it also commits its open atomic
+    // selection transaction, preserving exactly one pre-lift undo entry.
+    this.onBeforeRestore?.();
+    // A non-selection transaction may still be open; settle it before the
+    // empty-stack guard because its entry is held outside the undo stack.
     if (this._transaction) this.commitTransaction();
     if (this.undoStack.length === 0 || this._disposed) return false;
-    // Drop any floating selection first: it is drawn on the overlay, so
-    // restoring the base canvas under it looks like nothing happened.
-    this.onBeforeRestore?.();
     const admission = this._snapshotAdmission();
     if (!admission.ok) {
       this._reportSnapshotRejection(admission);
@@ -610,6 +611,8 @@ export class HistoryManager {
   }
 
   async _redoNow() {
+    this.onBeforeRestore?.();
+    if (this._transaction) this.commitTransaction();
     if (this.redoStack.length === 0 || this._disposed) return false;
     const admission = this._snapshotAdmission();
     if (!admission.ok) {
@@ -655,6 +658,8 @@ export class HistoryManager {
 
   async restore(entry) {
     if (this._disposed) return false;
+    this.onBeforeRestore?.();
+    if (this._transaction) this.commitTransaction();
     return this._restoreEntry(entry);
   }
 
@@ -809,7 +814,7 @@ export class HistoryManager {
   }
 
   _notify() {
-    const canUndo = this.undoStack.length > 0;
+    const canUndo = this.undoStack.length > 0 || Boolean(this._transaction?.entry);
     const canRedo = this.redoStack.length > 0;
     this.onChange?.(canUndo, canRedo);
     // Phase 2 step-04: publish undo/redo state so every surface (ribbon,

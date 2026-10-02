@@ -50,6 +50,8 @@ export const initializeDe = (english) => {
     "settings.general": "Allgemein",
     "settings.search": "Einstellungen durchsuchen",
     "ui.crop": "Zuschneiden",
+    "ui.selectionMenu": "Auswahl",
+    "ui.blackOutlineStrokeWidth": "Breite der schwarzen Kontur",
     "ui.rotate": "Drehen",
     "ui.rotate90": "90 drehen",
     "ui.rotate180": "180 drehen",

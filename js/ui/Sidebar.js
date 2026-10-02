@@ -925,6 +925,10 @@ export class Sidebar {
 					message: 'Restore this step? Unsaved current work will be lost.',
 					confirmLabel: 'Restore step',
 					danger: true,
+					preview: {
+						src: entry.thumb || entry.dataUrl,
+						alt: `Preview of ${entry.label || `session step ${index + 1}`}`,
+					},
 				});
 				if (confirmed) {
 					await this.historyManager.restore(entry);
