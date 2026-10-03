@@ -849,10 +849,14 @@ export class Sidebar {
 			img.title = 'Click to import this image';
 			img.addEventListener('click', async () => {
 				const confirmed = await this.dialogService.confirm({
-					title: 'Load history image',
-					message: 'Load this image? Unsaved current work will be lost.',
-					confirmLabel: 'Load image',
+					title: t('ui.restoreOverrideTitle'),
+					message: t('ui.restoreOverrideMessage'),
+					confirmLabel: t('ui.restoreOverrideAction'),
 					danger: true,
+					preview: {
+						src: session.thumb || session.dataUrl,
+						alt: `Preview of saved image ${index + 1}`,
+					},
 				});
 				if (confirmed) {
 					await this.canvasManager.loadImageDataUrl(session.dataUrl, session.width, session.height);
@@ -921,9 +925,9 @@ export class Sidebar {
 			img.title = 'Click to restore this session step';
 			img.addEventListener('click', async () => {
 				const confirmed = await this.dialogService.confirm({
-					title: 'Restore session step',
-					message: 'Restore this step? Unsaved current work will be lost.',
-					confirmLabel: 'Restore step',
+					title: t('ui.restoreOverrideTitle'),
+					message: t('ui.restoreOverrideMessage'),
+					confirmLabel: t('ui.restoreOverrideAction'),
 					danger: true,
 					preview: {
 						src: entry.thumb || entry.dataUrl,

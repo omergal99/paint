@@ -118,6 +118,7 @@ const dialogService = createDialogService({
 	title: document.getElementById('app-dialog-title'),
 	message: document.getElementById('app-dialog-message'),
 	preview: document.getElementById('app-dialog-preview'),
+	closeButton: document.getElementById('app-dialog-close'),
 	input: document.getElementById('app-dialog-input'),
 	confirmButton: document.getElementById('app-dialog-confirm'),
 	cancelButton: document.getElementById('app-dialog-cancel'),
@@ -403,6 +404,10 @@ const textSelectionOverlay = createTextSelectionOverlay({
 	onMoveStart: (options) => textLayerService.beginMove(options),
 	onMove: (options) => textLayerService.move(options),
 	onMoveEnd: (options) => textLayerService.endMove(options),
+	onDelete: ({ id }) => {
+		historyManager.snapshot({ force: true });
+		if (textDocumentStore.remove(id)) canvasManager.persistToStorage();
+	},
 });
 
 canvasManager.onRasterLoad = () => {
@@ -864,6 +869,7 @@ let currentFontSize = (() => {
 
 const TEXT_STYLES_KEY = 'paint:text-styles';
 const TEXT_STROKE_WIDTH_KEY = 'paint:text-outline-stroke-width';
+const TEXT_STROKE_COLOR_KEY = 'paint:text-outline-stroke-color';
 const TEXT_STYLE_NAMES = ['outline', 'black-outline', 'shadow', 'neon', 'bold', 'italic', 'underline'];
 let currentTextStrokeWidth = (() => {
 	try {
@@ -871,6 +877,14 @@ let currentTextStrokeWidth = (() => {
 		return Number.isFinite(value) && value >= 1 && value <= 20 ? value : 2;
 	} catch {
 		return 2;
+	}
+})();
+let currentTextStrokeColor = (() => {
+	try {
+		const value = localStorage.getItem(TEXT_STROKE_COLOR_KEY);
+		return /^#[\da-f]{6}$/i.test(value || '') ? value : '#000000';
+	} catch {
+		return '#000000';
 	}
 })();
 let selectedTextStyles = (() => {
@@ -918,6 +932,16 @@ if (textStrokeWidthInput) {
 		currentTextStrokeWidth = Math.max(1, Math.min(20, Number(textStrokeWidthInput.value) || 2));
 		if (textStrokeWidthOutput) textStrokeWidthOutput.value = `${currentTextStrokeWidth}px`;
 		try { localStorage.setItem(TEXT_STROKE_WIDTH_KEY, String(currentTextStrokeWidth)); } catch {}
+		window.dispatchEvent(new Event('paint:text-stroke-style-change'));
+	});
+}
+const textStrokeColorInput = document.getElementById('text-outline-stroke-color');
+if (textStrokeColorInput) {
+	textStrokeColorInput.value = currentTextStrokeColor;
+	textStrokeColorInput.addEventListener('input', () => {
+		currentTextStrokeColor = textStrokeColorInput.value;
+		try { localStorage.setItem(TEXT_STROKE_COLOR_KEY, currentTextStrokeColor); } catch {}
+		window.dispatchEvent(new Event('paint:text-stroke-style-change'));
 	});
 }
 
@@ -953,6 +977,7 @@ const toolContext = {
 	getFontFamily: () => "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
 	getTextStyle: getTextStyles,
 	getTextStrokeWidth: () => currentTextStrokeWidth,
+	getTextStrokeColor: () => currentTextStrokeColor,
 	getTextHistoryToolbarVisible: () => toolbar.getTextHistoryToolbarVisible?.() !== false,
 	setFontSize: (size) => {
 		currentFontSize = Math.max(1, Math.min(300, parseInt(size, 10)));
@@ -1649,12 +1674,15 @@ const ownsTextEditing = (element) => element instanceof HTMLTextAreaElement
 	|| (element instanceof HTMLInputElement && TEXT_EDITING_INPUT_TYPES.includes(element.type));
 
 window.addEventListener('keydown', (e) => {
-	if (e.defaultPrevented) return;
 	if ((e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === 'a') {
 		e.preventDefault();
+		e.stopPropagation();
 		selectAll();
-		return;
 	}
+}, true);
+
+window.addEventListener('keydown', (e) => {
+	if (e.defaultPrevented) return;
 	const tag = document.activeElement?.tagName;
 	const typing = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
 	const shortcut = shortcutFromEvent(e);
@@ -1672,11 +1700,6 @@ window.addEventListener('keydown', (e) => {
 		e.preventDefault();
 		if (action === SHORTCUT_ACTIONS.undo) runUndo();
 		else runRedo();
-		return;
-	}
-	if (action === SHORTCUT_ACTIONS.selectAll) {
-		e.preventDefault();
-		selectAll();
 		return;
 	}
 	if (action === SHORTCUT_ACTIONS.copy || action === SHORTCUT_ACTIONS.cut) {

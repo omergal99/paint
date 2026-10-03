@@ -17,6 +17,7 @@ export const createTextSelectionOverlay = ({
 	onMoveStart,
 	onMove,
 	onMoveEnd,
+	onDelete,
 } = {}) => {
 	const layer = document.createElement('div');
 	layer.className = 'text-object-focus-layer';
@@ -97,6 +98,14 @@ export const createTextSelectionOverlay = ({
 			target.addEventListener('pointercancel', finishMove);
 
 			target.addEventListener('keydown', (event) => {
+				if (event.key === 'Delete' && object.id === selectedId) {
+					event.preventDefault();
+					event.stopPropagation();
+					selectedId = null;
+					onDelete?.({ id: object.id });
+					render(store?.getAll?.() || []);
+					return;
+				}
 				const deltas = {
 					ArrowLeft: [-1, 0],
 					ArrowRight: [1, 0],

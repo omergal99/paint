@@ -38,3 +38,24 @@ test('text renderer measures and draws committed objects without a paint selecti
 		['fillText', 'Paint', 13, 48],
 	]);
 });
+
+test('committed black-outline text rasterizes its configured width and color', () => {
+	const context = fakeContext();
+	const object = {
+		text: 'Stroke',
+		x: 0,
+		y: 0,
+		fontSize: 24,
+		fontFamily: 'Segoe UI',
+		color: { r: 30, g: 60, b: 90, a: 1 },
+		styles: ['black-outline'],
+		strokeWidth: 7,
+		strokeColor: '#e02040',
+	};
+
+	assert.equal(renderTextObject({ context, object }), true);
+	assert.equal(context.strokeStyle, '#e02040');
+	assert.equal(context.lineWidth, 7);
+	assert.deepEqual(context.calls.find((call) => Array.isArray(call) && call[0] === 'strokeText'),
+		['strokeText', 'Stroke', 1, 0]);
+});

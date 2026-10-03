@@ -40,6 +40,7 @@ export const createTextTool = () => {
   let origin = null;
   let historyUnsubscribe = null;
   let historyToolbarListener = null;
+  let strokeStyleListener = null;
 
   const getEditorParent = (ctx) => ctx.scaleEl || ctx.stage;
 
@@ -58,7 +59,7 @@ export const createTextTool = () => {
       ? '2px 2px 3px rgba(0,0,0,.45)'
       : styles.has('neon') ? `0 0 8px ${ctx.canvasManager.primaryColor}` : 'none';
     editor.style.webkitTextStroke = styles.has('black-outline')
-      ? `${ctx.getTextStrokeWidth?.() || Math.max(1, fontSize * .06)}px #000`
+      ? `${ctx.getTextStrokeWidth?.() || Math.max(1, fontSize * .06)}px ${ctx.getTextStrokeColor?.() || '#000000'}`
       : styles.has('outline') ? `${Math.max(1, fontSize * .06)}px ${ctx.canvasManager.primaryColor}` : 'unset';
     editor.style.color = ctx.canvasManager.primaryColor;
 
@@ -90,8 +91,10 @@ export const createTextTool = () => {
   const clearEditorReferences = () => {
     historyUnsubscribe?.();
     if (historyToolbarListener) window.removeEventListener('paint:text-history-toolbar-change', historyToolbarListener);
+    if (strokeStyleListener) window.removeEventListener('paint:text-stroke-style-change', strokeStyleListener);
     historyUnsubscribe = null;
     historyToolbarListener = null;
+    strokeStyleListener = null;
     editor = null;
     editorShell = null;
     historySelect = null;
@@ -129,7 +132,9 @@ export const createTextTool = () => {
       fontSize: ctx.getFontSize(),
       fontFamily: ctx.getFontFamily(),
     });
-    ctx.historyManager.snapshot();
+    // Text is a separate composited layer, so pixel signatures alone cannot
+    // detect consecutive text commits. Force one snapshot for every object.
+    ctx.historyManager.snapshot({ force: true });
     const canvasContext = ctx.canvasManager.ctx;
     const canvasTextOffset = getCanvasTextOffset(fontSize);
     const rgb = hexToRgb(ctx.canvasManager.primaryColor) || { r: 0, g: 0, b: 0 };
@@ -141,6 +146,8 @@ export const createTextTool = () => {
       fontFamily: ctx.getFontFamily(),
       color: { ...rgb, a: Number(ctx.canvasManager.primaryAlpha ?? 1) },
       styles: [...styles],
+      strokeWidth: styles.has('black-outline') ? (ctx.getTextStrokeWidth?.() || 2) : 0,
+      strokeColor: ctx.getTextStrokeColor?.() || '#000000',
       zIndex: Date.now(),
     };
     const measured = measureTextObject({ context: canvasContext, object: draft });
@@ -207,6 +214,8 @@ export const createTextTool = () => {
     historySelect = nextHistorySelect;
     context = ctx;
     origin = point;
+    strokeStyleListener = () => applyEditorStyle(ctx);
+    window.addEventListener('paint:text-stroke-style-change', strokeStyleListener);
     applyEditorStyle(ctx);
     renderHistoryOptions();
 

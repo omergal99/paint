@@ -472,7 +472,9 @@ export class HistoryManager {
       this._notify();
       return false;
     }
-    this._lastSnapshotSig = sig;
+    // The transaction entry is the pre-lift state. Do not advance the
+    // dedupe signature to the committed pixels; the next transaction must
+    // capture this newly reached state as its own undo boundary.
     this.undoStack.push(transaction.entry);
     this._clearRedoStack();
     this._trimToLimits();

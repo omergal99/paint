@@ -75,7 +75,9 @@ export const renderTextObject = ({ context, object } = {}) => {
 		const lineX = Number(object.x) + 1;
 		const lineY = Number(object.y) + index * lineHeight;
 		if (styleSet.has('outline') || styleSet.has('black-outline')) {
-			context.strokeStyle = styleSet.has('black-outline') ? '#000' : color;
+			context.strokeStyle = styleSet.has('black-outline')
+				? (/^#[\da-f]{6}$/i.test(String(object.strokeColor || '')) ? object.strokeColor : '#000')
+				: color;
 			context.lineWidth = styleSet.has('black-outline') && Number(object.strokeWidth) > 0
 				? Number(object.strokeWidth)
 				: Math.max(1, fontSize * .06);

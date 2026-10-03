@@ -691,6 +691,24 @@ test('selection lift, drag, and drop undo as one pre-lift state', async () => {
 	assert.equal(pixels, 'dropped', 'redo restores the committed destination');
 });
 
+test('consecutive selection moves each reserve a distinct undo snapshot', () => {
+	let pixels = 'start';
+	const history = new HistoryManager({
+		width: 8,
+		height: 8,
+		_pixelsSignature: () => pixels,
+		canvas: { toDataURL: () => `data:image/png;base64,${pixels}` },
+	}, { sessionStorage: memoryStorage() });
+	history.beginTransaction();
+	pixels = 'move-1';
+	history.commitTransaction();
+	history.beginTransaction();
+	assert.ok(history._transaction?.entry, 'the second move captures the first move’s committed pixels');
+	pixels = 'move-2';
+	history.commitTransaction();
+	assert.equal(history.undoStack.length, 2);
+});
+
 test('color contract normalizes alpha without losing legacy hex input', () => {
 	assert.deepEqual(normalizeRgba('#336699'), { r: 51, g: 102, b: 153, a: 1 });
 	assert.equal(colorStateToCss({ hex: '#336699', alpha: 0.5 }), 'rgba(51, 102, 153, 0.5)');
@@ -698,8 +716,10 @@ test('color contract normalizes alpha without losing legacy hex input', () => {
 
 test('text document store keeps revisions and serializable editable objects', () => {
 	const store = createTextDocumentStore();
-	const added = store.add({ text: 'Hello', x: 4, y: 8, styles: ['bold', 'bold'] });
+	const added = store.add({ text: 'Hello', x: 4, y: 8, styles: ['bold', 'bold'], strokeWidth: 5, strokeColor: '#123abc' });
 	assert.equal(added.text, 'Hello');
+	assert.equal(added.strokeWidth, 5);
+	assert.equal(added.strokeColor, '#123abc');
 	assert.deepEqual(store.getAll()[0].styles, ['bold']);
 	const updated = store.update(added.id, { text: 'Hello world' });
 	assert.equal(updated.revision, 1);

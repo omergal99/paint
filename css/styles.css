@@ -2864,6 +2864,32 @@ dialog h3 {
 	display: grid;
 	gap: 10px;
 }
+.app-dialog-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+}
+.app-dialog-header h3 {
+	margin: 0;
+}
+.app-dialog-close {
+	flex: 0 0 auto;
+	width: 28px;
+	height: 28px;
+	border: 1px solid var(--w10-border);
+	border-radius: 4px;
+	background: var(--w10-bg);
+	color: var(--w10-text);
+	font: inherit;
+	font-size: 20px;
+	line-height: 1;
+	cursor: pointer;
+}
+.app-dialog-close:hover,
+.app-dialog-close:focus-visible {
+	background: var(--w10-hover);
+}
 .app-dialog p {
 	margin: 0;
 	color: var(--w10-text-dim);
@@ -3975,12 +4001,26 @@ html[dir="rtl"] .submenu-arrow {
 	padding: 7px 10px;
 }
 .text-outline-width {
+	grid-column: 1 / -1;
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
 	gap: 6px;
 	max-width: 100%;
 	font-size: 11px;
+}
+.text-outline-color {
+	grid-column: 1 / -1;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	font-size: 11px;
+}
+.text-outline-color input[type="color"] {
+	width: 38px;
+	height: 26px;
+	padding: 2px;
 }
 .text-outline-width input {
 	flex: 1 1 90px;

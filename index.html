@@ -443,6 +443,11 @@
 											aria-label="Black outline width" data-i18n-attr="aria-label:ui.blackOutlineStrokeWidth">
 										<output id="text-outline-stroke-width-value" for="text-outline-stroke-width">2px</output>
 									</div>
+						<div class="text-outline-color">
+							<label for="text-outline-stroke-color" data-i18n="ui.blackOutlineStrokeColor">Black outline color</label>
+							<input type="color" id="text-outline-stroke-color" value="#000000"
+								aria-label="Black outline color" data-i18n-attr="aria-label:ui.blackOutlineStrokeColor">
+						</div>
 											<button type="button" class="text-style-option" data-text-style="shadow"><span
 													class="style-sample">Aa</span><span>Shadow</span></button>
 											<button type="button" class="text-style-option" data-text-style="neon"><span
@@ -1577,7 +1582,11 @@
 
 	<dialog id="app-dialog" class="app-dialog" aria-labelledby="app-dialog-title">
 		<form method="dialog" id="app-dialog-form">
-			<h3 id="app-dialog-title">Please confirm</h3>
+			<header class="app-dialog-header">
+				<h3 id="app-dialog-title">Please confirm</h3>
+				<button type="button" id="app-dialog-close" class="app-dialog-close" aria-label="Close"
+					data-i18n-attr="aria-label:common.actions.close">×</button>
+			</header>
 			<p id="app-dialog-message"></p>
 			<img id="app-dialog-preview" class="app-dialog-preview" alt="" hidden>
 			<input id="app-dialog-input" class="app-dialog-input" type="text" aria-label="Dialog value" hidden />
