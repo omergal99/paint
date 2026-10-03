@@ -57,6 +57,8 @@ test('committed black-outline text rasterizes its configured width and color', (
 	assert.equal(renderTextObject({ context, object }), true);
 	assert.equal(context.strokeStyle, '#e02040');
 	assert.equal(context.lineWidth, 7);
+	assert.equal(context.lineJoin, 'round');
+	assert.equal(context.lineCap, 'round');
 	assert.equal(context.lineWidth, getTextStrokeWidth({
 		fontSize: object.fontSize,
 		strokeWidth: object.strokeWidth,
@@ -90,4 +92,6 @@ test('outline preview and raster strokes share the same width calculation', () =
 	};
 	renderTextObject({ context, object });
 	assert.equal(context.lineWidth, 5, 'the raster stroke uses the exact CSS preview width in canvas pixels');
+	assert.equal(context.lineJoin, 'round');
+	assert.equal(context.lineCap, 'round');
 });

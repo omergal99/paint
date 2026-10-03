@@ -1,4 +1,9 @@
 const getEnabledOptions = (select) => [...select.options].filter((option) => !option.disabled);
+const openDropdowns = new Set();
+
+export const closePersistentDropdowns = () => {
+	openDropdowns.forEach((dropdown) => dropdown.close());
+};
 
 export const createPersistentDropdown = ({
 	select,
@@ -95,6 +100,8 @@ export const createPersistentDropdown = ({
 
 	const open = () => {
 		if (trigger.disabled) return;
+		closePersistentDropdowns();
+		openDropdowns.add(api);
 		isOpen = true;
 		listbox.hidden = false;
 		trigger.setAttribute('aria-expanded', 'true');
@@ -104,6 +111,7 @@ export const createPersistentDropdown = ({
 
 	const close = ({ restoreFocus = false } = {}) => {
 		isOpen = false;
+		openDropdowns.delete(api);
 		listbox.hidden = true;
 		trigger.setAttribute('aria-expanded', 'false');
 		trigger.removeAttribute('aria-activedescendant');
@@ -201,6 +209,7 @@ export const createPersistentDropdown = ({
 		destroy() {
 			if (destroyed) return;
 			destroyed = true;
+			close();
 			trigger.removeEventListener('click', onTriggerClick);
 			trigger.removeEventListener('keydown', onKeyDown);
 			select.removeEventListener('change', onSourceChange);

@@ -11,7 +11,9 @@ export const createAdjustmentsDialog = ({
 	adjustmentSelect,
 	targetSelect,
 	valueInput,
+	valueNumberInput,
 	valueOutput,
+	targetButtons = [],
 	previewCanvas,
 	applyButton,
 	resetButton,
@@ -40,6 +42,9 @@ export const createAdjustmentsDialog = ({
 	let currentValue = getValue?.(currentId) ?? ADJUSTMENTS[currentId]?.defaultValue ?? 100;
 	let frame = null;
 	let returnFocus = null;
+	let applied = false;
+	let cancelHandled = false;
+	let preserveMaskOnClose = false;
 
 	const currentMetadata = () => ADJUSTMENTS[currentId];
 	const renderSlider = () => {
@@ -49,6 +54,13 @@ export const createAdjustmentsDialog = ({
 		valueInput.step = '1';
 		valueInput.disabled = metadata.kind === 'pattern';
 		valueInput.value = String(currentValue);
+		if (valueNumberInput) {
+			valueNumberInput.min = String(metadata.min);
+			valueNumberInput.max = String(metadata.max);
+			valueNumberInput.step = '1';
+			valueNumberInput.disabled = metadata.kind === 'pattern';
+			valueNumberInput.value = String(currentValue);
+		}
 		valueInput.setAttribute('aria-valuetext', `${currentValue}`);
 		valueOutput.value = `${currentValue}`;
 	};
@@ -80,7 +92,11 @@ export const createAdjustmentsDialog = ({
 		[...targetSelect.options].forEach((option) => {
 			if (option.value === 'selection') option.disabled = !hasSelection?.();
 		});
-		targetSelect.refresh?.();
+		targetButtons.forEach((button) => {
+			const target = button.dataset.adjustmentTarget;
+			button.setAttribute('aria-pressed', String(target === targetSelect.value));
+			button.disabled = target === 'selection' && !hasSelection?.();
+		});
 		paintMaskButton.hidden = !brushArea;
 		clearMaskButton.hidden = !brushArea;
 		invertMaskButton.hidden = !brushArea;
@@ -93,6 +109,15 @@ export const createAdjustmentsDialog = ({
 			targetSelect.value = 'document';
 		}
 		updateScopeControls();
+		schedulePreview();
+	};
+
+	const setValue = (rawValue) => {
+		if (rawValue === '' || !Number.isFinite(Number(rawValue))) return;
+		const metadata = currentMetadata();
+		currentValue = Math.max(metadata.min, Math.min(metadata.max, Math.round(Number(rawValue))));
+		renderSlider();
+		onValueChange?.({ id: currentId, value: currentValue });
 		schedulePreview();
 	};
 
@@ -112,6 +137,9 @@ export const createAdjustmentsDialog = ({
 			setAdjustment();
 		}
 		returnFocus = document.activeElement;
+		applied = false;
+		cancelHandled = false;
+		preserveMaskOnClose = false;
 		updateScopeControls();
 		renderSlider();
 		schedulePreview();
@@ -126,15 +154,26 @@ export const createAdjustmentsDialog = ({
 		returnFocus?.focus?.();
 		returnFocus = null;
 	};
+	const handleCancel = () => {
+		if (cancelHandled || applied || preserveMaskOnClose) return;
+		cancelHandled = true;
+		onCancel?.();
+	};
 
 	adjustmentSelect.addEventListener('change', setAdjustment);
 	targetSelect.addEventListener('change', setTarget);
 	valueInput.addEventListener('input', () => {
-		currentValue = Number(valueInput.value);
-		renderSlider();
-		onValueChange?.({ id: currentId, value: currentValue });
-		schedulePreview();
+		setValue(valueInput.value);
 	});
+	valueNumberInput?.addEventListener('input', () => {
+		setValue(valueNumberInput.value);
+	});
+	targetButtons.forEach((button) => button.addEventListener('click', () => {
+		if (button.disabled) return;
+		targetSelect.value = button.dataset.adjustmentTarget;
+		const EventConstructor = targetSelect.ownerDocument?.defaultView?.Event || globalThis.Event;
+		targetSelect.dispatchEvent(new EventConstructor('change', { bubbles: true }));
+	}));
 	resetButton.addEventListener('click', () => {
 		currentValue = currentMetadata().defaultValue;
 		renderSlider();
@@ -143,8 +182,9 @@ export const createAdjustmentsDialog = ({
 	});
 	applyButton.addEventListener('click', () => {
 		try {
-			const applied = apply({ id: currentId, value: currentValue, target: targetSelect.value });
-			if (applied === false) return;
+			const applyResult = apply({ id: currentId, value: currentValue, target: targetSelect.value });
+			if (applyResult === false) return;
+			applied = true;
 			onApplied?.({ id: currentId, value: currentValue, target: targetSelect.value });
 			close();
 		} catch (error) {
@@ -153,11 +193,11 @@ export const createAdjustmentsDialog = ({
 		}
 	});
 	cancelButton.addEventListener('click', () => {
-		onCancel?.();
+		handleCancel();
 		close();
 	});
-	dialog.addEventListener('cancel', () => onCancel?.());
 	paintMaskButton.addEventListener('click', () => {
+		preserveMaskOnClose = true;
 		close();
 		onPaintMask?.();
 	});
@@ -169,7 +209,9 @@ export const createAdjustmentsDialog = ({
 		onInvertMask?.();
 		schedulePreview();
 	});
+	dialog.addEventListener('cancel', handleCancel);
 	dialog.addEventListener('close', () => {
+		handleCancel();
 		returnFocus?.focus?.();
 		returnFocus = null;
 	});
@@ -186,6 +228,7 @@ export const createAdjustmentsDialog = ({
 		destroy: () => {
 			if (frame !== null) cancelAnimationFrame(frame);
 			frame = null;
+			dialog.removeEventListener('cancel', handleCancel);
 			if (dialog.open) dialog.close();
 		},
 	});

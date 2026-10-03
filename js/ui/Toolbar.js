@@ -305,6 +305,23 @@ export class Toolbar {
     const sizeButton = this.root.querySelector('#line-size');
     const sizeOptions = [...this.root.querySelectorAll('[data-size-option]')];
     const customInput = this.root.querySelector('#custom-line-size');
+    sizeOptions.forEach((option) => {
+      if (option.querySelector('.line-size-option-icon')) return;
+      const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      const label = document.createElement('span');
+      const size = Math.max(1, Number(option.dataset.sizeOption) || 1);
+      icon.setAttribute('viewBox', '0 0 20 20');
+      icon.setAttribute('class', 'icon line-size-option-icon');
+      icon.setAttribute('aria-hidden', 'true');
+      circle.setAttribute('cx', '10');
+      circle.setAttribute('cy', '10');
+      circle.setAttribute('r', String(Math.min(7, Math.max(1.5, size / 2))));
+      circle.setAttribute('fill', 'currentColor');
+      icon.append(circle);
+      label.textContent = option.textContent.trim();
+      option.replaceChildren(icon, label);
+    });
 
     const applySize = (val) => {
       let size = parseInt(val, 10);

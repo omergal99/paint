@@ -43,6 +43,7 @@ export const colorsMirrorDescriptor = Object.freeze({
     }),
     Object.freeze({
       id: 'adjustments',
+      icon: 'adjustments',
       titleKey: 'ui.adjustments',
       open: false,
       items: Object.freeze([

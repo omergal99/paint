@@ -97,9 +97,38 @@ const chevron = () => {
   c.setAttribute('aria-hidden', 'true');
   return c;
 };
+const SECTION_ICON_PATHS = Object.freeze({
+  'undo-redo': 'M7 7 3 10l4 3M3 10h8a5 5 0 0 1 5 5M13 7l4-4m0 0h-4m4 0v4',
+  document: 'M5 2h7l4 4v12H5zM12 2v5h4M8 11h5M8 14h5',
+  export: 'M10 13V3m0 0L6 7m4-4 4 4M4 12v5h12v-5',
+  drawing: 'm4 14 9-9 3 3-9 9-4 1zM12 6l3 3',
+  advanced: 'M4 4h5v5H4zM11 4h5v5h-5zM4 11h5v5H4zM11 11h5v5h-5z',
+  opacity: 'M10 2s-6 6-6 10a6 6 0 0 0 12 0c0-4-6-10-6-10Z',
+  adjustments: 'M3 5h14M3 10h14M3 15h14M7 3v4m5 1v4m-4 1v4',
+  actions: 'M5 4h10v13H5zM8 2h4M8 8h4M8 11h4M8 14h4',
+  extras: 'M10 2v4m0 8v4M2 10h4m8 0h4M4.3 4.3l2.8 2.8m5.8 5.8 2.8 2.8m0-11.4-2.8 2.8m-5.8 5.8-2.8 2.8',
+  history: 'M3 5v4h4M4 9a6 6 0 1 1 1 5m5-5V5m0 4 3 2',
+  'all-shapes': 'M3 4h6v5H3zM12 3l5 7h-10zM6 12a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z',
+  favorites: 'm10 2 2.3 5 5.5.7-4 3.9 1 5.5-4.8-2.7-4.8 2.7 1-5.5-4-3.9 5.5-.7z',
+  size: 'M3 7V3h4m6 0h4v4m0 6v4h-4m-6 0H3v-4',
+  'select-resize': 'M3 7V3h4m6 0h4v4m0 6v4h-4m-6 0H3v-4M7 10h6m-3-3v6',
+  'selection-properties': 'M3 3h14v14H3zM6 7h8M6 10h8M6 13h5',
+});
 const sectionTitleNode = (section) => {
+  const wrapper = mk('span', 'mirror-section-heading');
+  const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  icon.setAttribute('viewBox', '0 0 20 20');
+  icon.setAttribute('class', 'icon size4 mirror-section-icon');
+  icon.setAttribute('aria-hidden', 'true');
+  const iconPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  iconPath.setAttribute('d', SECTION_ICON_PATHS[section.icon || section.id] || SECTION_ICON_PATHS.advanced);
+  iconPath.setAttribute('fill', 'none');
+  iconPath.setAttribute('stroke', 'currentColor');
+  iconPath.setAttribute('stroke-linecap', 'round');
+  icon.append(iconPath);
   const span = mk('span', '', section.titleKey ? t(section.titleKey) : String(section.title ?? section.id));
-  return runtimeKey(span, section.titleKey);
+  wrapper.append(icon, runtimeKey(span, section.titleKey));
+  return wrapper;
 };
 const buildItems = (section, hooks) => {
   const list = mk('div', 'mirror-items');

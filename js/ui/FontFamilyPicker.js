@@ -1,5 +1,6 @@
 import { DEFAULT_TEXT_FONT_FAMILY } from '../core/constants.js';
 import { t } from '../i18n/messages.js';
+import { closePersistentDropdowns } from './PersistentDropdown.js';
 
 const renderOptionLabel = (family) => family.value === DEFAULT_TEXT_FONT_FAMILY
 	? t('ui.systemUiDefaultFont')
@@ -103,6 +104,7 @@ export const createFontFamilyPicker = ({
 	};
 
 	const open = () => {
+		closePersistentDropdowns();
 		isOpen = true;
 		listbox.hidden = false;
 		trigger.setAttribute('aria-expanded', 'true');

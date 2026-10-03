@@ -2,6 +2,7 @@
 // direction, outside-click, Escape, and aria state in one seam prevents new
 // menus (including dynamically-created palette menus) from drifting.
 import { KEYBOARD_KEYS } from '../core/constants.js';
+import { closePersistentDropdowns } from './PersistentDropdown.js';
 
 const closeMenu = (menu) => {
   menu.classList.remove('open');
@@ -150,6 +151,7 @@ export const createActionMenuController = ({ root = document } = {}) => {
   const openMenuAt = (menu, point = {}) => {
     const menuItems = menu?.querySelector('.action-menu-items');
     if (!menu || !menuItems) return false;
+    closePersistentDropdowns();
     closeAll([menu]);
     menu.hidden = false;
     menu.classList.add('open');
@@ -182,6 +184,7 @@ export const createActionMenuController = ({ root = document } = {}) => {
 
     const shouldOpen = !menu.classList.contains('open');
     const keep = shouldOpen ? [menu, ...ancestorsOf(menu)] : [];
+    if (shouldOpen && !menu.classList.contains('action-submenu')) closePersistentDropdowns();
     closeAll(keep);
     trigger.setAttribute('aria-expanded', String(shouldOpen));
     if (!shouldOpen) return;
@@ -218,6 +221,7 @@ export const createActionMenuController = ({ root = document } = {}) => {
     const trigger = directTrigger(active);
     if (!menuItems) return;
     active.classList.add('open');
+    closePersistentDropdowns();
     trigger?.setAttribute('aria-expanded', 'true');
     positionMenu(active, menuItems, { anchor: trigger, placement: 'submenu' });
   };

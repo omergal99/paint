@@ -79,6 +79,7 @@ import { createBrushCursorOverlay } from './ui/BrushCursorOverlay.js';
 import { createPersistentDropdown } from './ui/PersistentDropdown.js';
 import { createAdjustmentsDialog, createAdjustmentOption } from './ui/AdjustmentsDialog.js';
 import { createDialogSearch } from './ui/DialogSearch.js';
+import { standardizeDialogFrames } from './ui/DialogFrame.js';
 import { createSettingsDialog } from './ui/SettingsDialog.js';
 import { createBrowserInfoPanel } from './ui/BrowserInfoPanel.js';
 import { createCheckboxRowController } from './ui/CheckboxRowController.js';
@@ -94,6 +95,7 @@ import { createPaintDocument } from './core/DocumentContract.js';
 import { createSessionService } from './session/SessionService.js';
 
 markBoot('boot:start');
+standardizeDialogFrames({ root: document });
 
 // ---------- DOM refs ----------
 // Every addressable UI element gets a stable inspection hook. Explicit
@@ -1037,16 +1039,14 @@ const adjustmentDropdown = createPersistentDropdown({
 	select: document.getElementById('adjustment-select'),
 	labelledBy: 'adjustment-label',
 });
-const adjustmentTargetDropdown = createPersistentDropdown({
-	select: document.getElementById('adjustment-target'),
-	labelledBy: 'adjustment-target-label',
-});
 const adjustmentDialog = createAdjustmentsDialog({
 	dialog: document.getElementById('adjustments-dialog'),
 	adjustmentSelect: adjustmentDropdown,
-	targetSelect: adjustmentTargetDropdown,
+	targetSelect: document.getElementById('adjustment-target'),
 	valueInput: document.getElementById('adjustment-value'),
+	valueNumberInput: document.getElementById('adjustment-value-number'),
 	valueOutput: document.getElementById('adjustment-value-output'),
+	targetButtons: [...document.querySelectorAll('[data-adjustment-target]')],
 	previewCanvas: document.getElementById('adjustments-preview'),
 	applyButton: document.getElementById('adjustment-apply'),
 	resetButton: document.getElementById('adjustment-reset'),

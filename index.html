@@ -149,9 +149,9 @@
 										<span class="submenu-arrow" aria-hidden="true">›</span>
 									</button>
 									<div class="action-menu-items action-submenu-items" role="menu" data-i18n-attr="aria-label:ui.saveImageAs" aria-label="Save image as">
-										<button type="button" role="menuitem" data-export-format="png" data-i18n="ui.formatPng">PNG image</button>
-										<button type="button" role="menuitem" data-export-format="jpeg" data-i18n="ui.formatJpeg">JPEG image</button>
-										<button type="button" role="menuitem" data-export-format="webp" data-i18n="ui.formatWebp">WebP image</button>
+										<button type="button" role="menuitem" data-export-format="png"><svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="3" width="14" height="14" fill="none" stroke="currentColor"/><circle cx="7" cy="7" r="1.5" fill="currentColor"/><path d="m4 15 4-4 2 2 3-4 3 6" fill="none" stroke="currentColor"/></svg><span data-i18n="ui.formatPng">PNG image</span></button>
+										<button type="button" role="menuitem" data-export-format="jpeg"><svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="3" width="14" height="14" fill="none" stroke="currentColor"/><circle cx="7" cy="7" r="1.5" fill="currentColor"/><path d="m4 15 4-4 2 2 3-4 3 6" fill="none" stroke="currentColor"/></svg><span data-i18n="ui.formatJpeg">JPEG image</span></button>
+										<button type="button" role="menuitem" data-export-format="webp"><svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="3" width="14" height="14" fill="none" stroke="currentColor"/><circle cx="7" cy="7" r="1.5" fill="currentColor"/><path d="m4 15 4-4 2 2 3-4 3 6" fill="none" stroke="currentColor"/></svg><span data-i18n="ui.formatWebp">WebP image</span></button>
 									</div>
 								</div>
 								<button type="button" id="btn-manage-workspace" data-tag="btn-manage-workspace" role="menuitem"
@@ -255,7 +255,11 @@
 									<button class="action-menu-trigger action-submenu-trigger" type="button" role="menuitem"
 										aria-haspopup="menu" aria-expanded="false" aria-label="Selection"
 										data-i18n-attr="aria-label:ui.selectionMenu">
-										<span data-i18n="ui.selectionMenu">Selection</span><span class="submenu-arrow" aria-hidden="true">›</span>
+										<span class="submenu-label"><svg class="icon size4" viewBox="0 0 20 20" aria-hidden="true">
+												<rect x="3" y="3" width="14" height="14" fill="none" stroke="currentColor"
+													stroke-dasharray="2.5 2" />
+											</svg><span data-i18n="ui.selectionMenu">Selection</span></span><span class="submenu-arrow"
+											aria-hidden="true">›</span>
 									</button>
 									<div class="action-menu-items action-submenu-items" role="menu" data-i18n-attr="aria-label:ui.selectionMenu">
 										<button type="button" id="btn-select-rectangle" role="menuitemradio" aria-checked="true"
@@ -378,18 +382,18 @@
 											</svg><span data-i18n="ui.flipVertical">Flip Vertical</span></button>
 									</div>
 								</div>
+								<button class="action-menu-item" type="button" id="btn-adjustments" data-tag="btn-adjustments"
+									role="menuitem" data-i18n-attr="title:ui.adjustments" title="Adjustments">
+									<svg class="icon size4" viewBox="0 0 20 20" aria-hidden="true">
+										<path d="M3 5h14M3 10h14M3 15h14" fill="none" stroke="currentColor" stroke-linecap="round" />
+										<circle cx="7" cy="5" r="1.6" fill="var(--w10-ribbon-bg)" stroke="currentColor" />
+										<circle cx="12" cy="10" r="1.6" fill="var(--w10-ribbon-bg)" stroke="currentColor" />
+										<circle cx="8" cy="15" r="1.6" fill="var(--w10-ribbon-bg)" stroke="currentColor" />
+									</svg>
+									<span data-i18n="ui.adjustments">Adjustments...</span>
+								</button>
 							</div>
 						</div>
-						<button class="rbtn small" type="button" id="btn-adjustments" data-tag="btn-adjustments"
-							data-i18n-attr="title:ui.adjustments" title="Adjustments">
-							<svg class="icon size4" viewBox="0 0 20 20" aria-hidden="true">
-								<path d="M3 5h14M3 10h14M3 15h14" fill="none" stroke="currentColor" stroke-linecap="round" />
-								<circle cx="7" cy="5" r="1.6" fill="var(--w10-ribbon-bg)" stroke="currentColor" />
-								<circle cx="12" cy="10" r="1.6" fill="var(--w10-ribbon-bg)" stroke="currentColor" />
-								<circle cx="8" cy="15" r="1.6" fill="var(--w10-ribbon-bg)" stroke="currentColor" />
-							</svg>
-							<span data-i18n="ui.adjustments">Adjustments</span>
-						</button>
 					</div>
 				</div>
 				<div class="ribbon-group-title">Image</div>
@@ -1209,8 +1213,8 @@
 				<label for="resize-keep-aspect">Maintain aspect ratio</label>
 			</div>
 			<div class="dialog-actions">
-				<button type="button" id="resize-cancel" data-tag="resize-cancel">Cancel</button>
-				<button type="submit" id="resize-ok" data-tag="resize-ok">OK</button>
+				<button type="button" id="resize-cancel" class="dialog-button-secondary" data-tag="resize-cancel">Cancel</button>
+				<button type="submit" id="resize-ok" class="dialog-button-primary" data-tag="resize-ok">OK</button>
 			</div>
 		</form>
 	</dialog>
@@ -1500,7 +1504,7 @@
 				</div>
 			</section>
 			<div class="settings-footer settings-footer-nav" aria-hidden="true"></div>
-			<footer class="settings-footer"><button type="button" id="settings-footer-close">Close</button></footer>
+			<footer class="settings-footer"><button type="button" class="dialog-button-secondary" id="settings-footer-close">Close</button></footer>
 		</div>
 	</dialog>
 
@@ -1510,8 +1514,8 @@
 			<h3>Start new image?</h3>
 			<p>Unsaved changes will be lost.</p>
 			<div class="dialog-actions">
-				<button type="button" id="new-file-cancel">Cancel</button>
-				<button type="button" id="new-file-ok" class="danger">New Image</button>
+				<button type="button" id="new-file-cancel" class="dialog-button-secondary">Cancel</button>
+				<button type="button" id="new-file-ok" class="danger dialog-button-warning">New Image</button>
 			</div>
 		</form>
 	</dialog>
@@ -1522,7 +1526,7 @@
 			<h3 id="workspace-manager-title" data-tag="workspace-manager-title">Manage multiple Paint</h3>
 			<p data-tag="workspace-manager-help">Choose an open document or close one before switching to split view.</p>
 			<div id="workspace-manager-tabs" class="workspace-manager-tabs" data-tag="workspace-manager-tabs"></div>
-			<div class="dialog-actions"><button type="submit" data-tag="workspace-manager-close">Close</button></div>
+			<div class="dialog-actions"><button type="submit" class="dialog-button-secondary" data-tag="workspace-manager-close">Close</button></div>
 		</form>
 	</dialog>
 
@@ -1598,13 +1602,13 @@
 				<output id="background-removal-phase" data-tag="background-removal-phase" aria-live="polite">Ready</output>
 			</div>
 			<div class="dialog-actions">
-				<button type="button" id="background-removal-cancel" data-tag="background-removal-cancel"
+				<button type="button" id="background-removal-cancel" class="dialog-button-secondary" data-tag="background-removal-cancel"
 					data-i18n="common.actions.cancel">Cancel</button>
-				<button type="button" id="background-removal-close" data-tag="background-removal-close"
+				<button type="button" id="background-removal-close" class="dialog-button-secondary" data-tag="background-removal-close"
 					data-i18n="common.actions.close" hidden>Close</button>
-				<button type="button" id="background-removal-preview-button" data-tag="background-removal-preview-button"
+				<button type="button" id="background-removal-preview-button" class="dialog-button-secondary" data-tag="background-removal-preview-button"
 					data-i18n="ui.preview">Preview</button>
-				<button type="button" id="background-removal-apply" data-tag="background-removal-apply"
+				<button type="button" id="background-removal-apply" class="dialog-button-primary" data-tag="background-removal-apply"
 					data-i18n="common.actions.apply" disabled>Apply</button>
 			</div>
 		</form>
@@ -1621,8 +1625,8 @@
 			<img id="app-dialog-preview" class="app-dialog-preview" alt="" hidden>
 			<input id="app-dialog-input" class="app-dialog-input" type="text" aria-label="Dialog value" hidden />
 			<div class="dialog-actions">
-				<button type="button" id="app-dialog-cancel">Cancel</button>
-				<button type="submit" id="app-dialog-confirm">Continue</button>
+				<button type="button" id="app-dialog-cancel" class="dialog-button-secondary">Cancel</button>
+				<button type="submit" id="app-dialog-confirm" class="dialog-button-primary">Continue</button>
 			</div>
 		</form>
 	</dialog>
@@ -1630,24 +1634,47 @@
 	<dialog id="adjustments-dialog" class="adjustments-dialog" aria-labelledby="adjustments-dialog-title">
 		<form method="dialog" id="adjustments-form">
 			<h2 id="adjustments-dialog-title" data-i18n="ui.adjustments">Adjustments</h2>
-			<span id="adjustment-label" class="adjustments-field-label" data-i18n="ui.adjustment">Adjustment</span>
-			<select id="adjustment-select" data-tag="adjustment-select"></select>
-			<span id="adjustment-target-label" class="adjustments-field-label" data-i18n="ui.adjustmentTarget">Apply to</span>
-			<select id="adjustment-target" data-tag="adjustment-target">
-				<option value="document" data-i18n="ui.adjustmentDocument">Entire image</option>
-				<option value="selection" data-i18n="ui.adjustmentSelection">Selection</option>
-				<option value="brushArea" data-i18n="ui.adjustmentBrushArea">Painted area</option>
-			</select>
-			<label for="adjustment-value">
-				<span id="adjustment-value-label" data-i18n="ui.adjustmentValue">Amount</span>
-				<output id="adjustment-value-output" for="adjustment-value"></output>
-			</label>
-			<input id="adjustment-value" data-tag="adjustment-value" type="range" min="0" max="200" value="100"
-				aria-describedby="adjustment-error" />
-			<div class="adjustments-preview-wrap">
-				<canvas id="adjustments-preview" data-tag="adjustments-preview" width="1" height="1"
-					aria-hidden="true"></canvas>
+			<div class="adjustments-group">
+				<label class="adjustments-field-label" id="adjustment-label" for="adjustment-select"
+					data-i18n="ui.adjustment">Adjustment</label>
+				<select id="adjustment-select" data-tag="adjustment-select"></select>
 			</div>
+			<fieldset class="adjustments-group">
+				<legend id="adjustment-target-label" data-i18n="ui.adjustmentTarget">Apply to</legend>
+				<div class="adjustment-target-choices" role="group" aria-labelledby="adjustment-target-label">
+					<button type="button" class="adjustment-target-choice" data-adjustment-target="document"
+						data-i18n="ui.adjustmentDocument" aria-pressed="true">Entire image</button>
+					<button type="button" class="adjustment-target-choice" data-adjustment-target="selection"
+						data-i18n="ui.adjustmentSelection" aria-pressed="false">Selection</button>
+					<button type="button" class="adjustment-target-choice" data-adjustment-target="brushArea"
+						data-i18n="ui.adjustmentBrushArea" aria-pressed="false">Painted area</button>
+				</div>
+				<select id="adjustment-target" data-tag="adjustment-target" hidden>
+					<option value="document" data-i18n="ui.adjustmentDocument">Entire image</option>
+					<option value="selection" data-i18n="ui.adjustmentSelection">Selection</option>
+					<option value="brushArea" data-i18n="ui.adjustmentBrushArea">Painted area</option>
+				</select>
+			</fieldset>
+			<fieldset class="adjustments-group adjustments-value-group">
+				<legend>
+					<label for="adjustment-value" id="adjustment-value-label" data-i18n="ui.adjustmentValue">Amount</label>
+				</legend>
+				<div class="adjustment-value-controls">
+					<input id="adjustment-value" data-tag="adjustment-value" type="range" min="0" max="200" value="100"
+						aria-describedby="adjustment-error" />
+					<input id="adjustment-value-number" data-tag="adjustment-value-number" type="number" min="0" max="200"
+						step="1" value="100" aria-labelledby="adjustment-value-label"
+						aria-describedby="adjustment-error" />
+					<output id="adjustment-value-output" for="adjustment-value adjustment-value-number"></output>
+				</div>
+			</fieldset>
+			<fieldset class="adjustments-group adjustments-preview-group">
+				<legend data-i18n="ui.preview">Preview</legend>
+				<div class="adjustments-preview-wrap">
+					<canvas id="adjustments-preview" data-tag="adjustments-preview" width="1" height="1"
+						aria-hidden="true"></canvas>
+				</div>
+			</fieldset>
 			<p id="adjustment-error" class="adjustment-error" role="status" aria-live="polite"></p>
 			<div class="adjustment-mask-actions">
 				<button type="button" id="adjustment-paint-mask" data-tag="adjustment-paint-mask"
@@ -1658,9 +1685,12 @@
 					data-i18n="ui.adjustmentInvertMask" hidden>Invert mask</button>
 			</div>
 			<div class="dialog-actions">
-				<button type="button" id="adjustment-reset" data-tag="adjustment-reset" data-i18n="ui.adjustmentReset">Reset</button>
-				<button type="button" id="adjustment-cancel" data-tag="adjustment-cancel" data-i18n="common.actions.cancel">Cancel</button>
-				<button type="button" id="adjustment-apply" data-tag="adjustment-apply" data-i18n="common.actions.apply">Apply</button>
+				<button type="button" id="adjustment-reset" class="dialog-button-warning" data-tag="adjustment-reset"
+					data-i18n="ui.adjustmentReset">Reset</button>
+				<button type="button" id="adjustment-cancel" class="dialog-button-secondary" data-tag="adjustment-cancel"
+					data-i18n="common.actions.cancel">Cancel</button>
+				<button type="button" id="adjustment-apply" class="dialog-button-primary" data-tag="adjustment-apply"
+					data-i18n="common.actions.apply">Apply</button>
 			</div>
 		</form>
 	</dialog>
@@ -1676,7 +1706,7 @@
 				<button type="button" id="ai-copy-current-image">Copy current image</button>
 			</div>
 			<div class="dialog-actions">
-				<button type="submit" id="ai-connection-cancel">Close</button>
+				<button type="submit" id="ai-connection-cancel" class="dialog-button-secondary">Close</button>
 			</div>
 		</form>
 	</dialog>

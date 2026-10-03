@@ -109,3 +109,25 @@ test('recent-text dropdown remains enabled only when history has entries', () =>
 	assert.equal(control.title, 'Recent text…');
 	dropdown.destroy();
 });
+
+test('opening a persistent dropdown closes the previously open dropdown', () => {
+	const first = createRecentTextDropdown({
+		documentRef: createDocument(),
+		label: 'First',
+		placeholder: 'First',
+	});
+	const second = createRecentTextDropdown({
+		documentRef: createDocument(),
+		label: 'Second',
+		placeholder: 'Second',
+	});
+	first.setEntries([{ id: 'one', text: 'One' }]);
+	second.setEntries([{ id: 'two', text: 'Two' }]);
+	first.control.trigger.dispatch('click');
+	assert.equal(first.control.listbox.hidden, false);
+	second.control.trigger.dispatch('click');
+	assert.equal(first.control.listbox.hidden, true);
+	assert.equal(second.control.listbox.hidden, false);
+	first.destroy();
+	second.destroy();
+});

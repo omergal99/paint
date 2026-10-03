@@ -93,6 +93,8 @@ export const renderTextObject = ({ context, object } = {}) => {
 				strokeWidth: object.strokeWidth,
 				styles: styleSet,
 			});
+			context.lineJoin = 'round';
+			context.lineCap = 'round';
 			context.strokeText(line, lineX, lineY);
 		}
 		context.fillText(line, lineX, lineY);

@@ -28,6 +28,19 @@ dismiss (ADR 0001).
 - Closing always clears the URL, so a reload never resurrects a dismissed dialog.
 - Native dismissal (Escape, backdrop click) stays intact: a global handler must
   never `preventDefault()` Escape unless it consumed the event.
+- Static dialogs are framed by `standardizeDialogFrames()` during app startup;
+  dialogs created later use `standardizeDialogFrame({ dialog })`. Both use a
+  titled header with `.settings-close`, a scrollable `.dialog-body`, and a
+  bordered `.dialog-footer`. Settings keeps its tabbed shell while sharing the
+  same header/footer tokens.
+
+## Menu and mirror icons
+
+- Every menu item, submenu entry, and sidebar mirror section includes a
+  decorative icon that is hidden from assistive technology; the text label
+  remains the accessible name.
+- Use the existing menu icon sizing and `currentColor` stroke conventions.
+  Do not replace a visible label with an icon-only control.
 
 ## Mirrored controls (one setting, many surfaces)
 
