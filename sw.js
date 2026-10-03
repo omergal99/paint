@@ -1,4 +1,4 @@
-const CACHE_NAME = 'paint-shell-v1-8-0-6a9415c4';
+const CACHE_NAME = 'paint-shell-v1-8-0-c036069c';
 const CACHE_PREFIX = 'paint-shell-';
 const SHELL = [
   './index.html',
@@ -119,6 +119,7 @@ const SHELL = [
   './js/app/selectionOverlayController.js',
   './js/services/selection/selectionGeometry.js',
   './js/canvas/AdjustmentEngine.js',
+  './js/ui/RecentTextDropdown.js',
   './css/assets/icon.svg',
   './css/assets/icon-192.png',
   './css/assets/icon-512.png',

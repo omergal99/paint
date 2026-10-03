@@ -2520,7 +2520,7 @@ html[dir="rtl"] .resize-ghost {
 	display: flex;
 	flex-direction: row;
 	direction: ltr;
-	justify-content: flex-end;
+	justify-content: space-between;
 	align-items: center;
 	gap: 3px;
 	/* Track the shell instead of floating at its own width: the toolbar holds the
@@ -2533,7 +2533,6 @@ html[dir="rtl"] .resize-ghost {
 	align-self: stretch;
 	box-sizing: border-box;
 	min-height: 24px;
-	width: 100%;
 	padding: 0 3px;
 	background: color-mix(in srgb, var(--w10-panel-bg, var(--w10-ribbon-bg)) 92%, transparent);
 	border: 1px solid var(--w10-border-strong);
@@ -2551,13 +2550,17 @@ html[dir="rtl"] .resize-ghost {
 	justify-content: flex-start;
 	background: color-mix(in srgb, var(--w10-panel-bg, var(--w10-ribbon-bg)) 82%, transparent);
 }
+.text-history-controls {
+	display: flex;
+	flex: 1 1 auto;
+	align-items: center;
+	gap: 5px;
+	min-width: 0;
+}
 .text-editor-toolbar-label {
 	padding: 0 2px;
 	white-space: nowrap;
-	text-align: right;
-}
-.text-history-select {
-	text-align: right;
+	text-align: start;
 }
 .text-history-select,
 .text-history-clear,
@@ -2565,13 +2568,29 @@ html[dir="rtl"] .resize-ghost {
 	min-height: 24px;
 	font: inherit;
 }
-.text-history-select,
-.text-font-family-select {
-	min-width: 0;
-	max-width: 190px;
+.text-history-select {
+	flex: 1 1 240px;
+	display: block;
+	width: 100%;
+	min-width: 150px;
+	max-width: 320px;
+	overflow: hidden;
+	padding: 2px 6px;
+	text-align: start;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 	border: 1px solid var(--w10-border);
+	border-radius: 3px;
 	background: var(--w10-input-bg, var(--w10-ribbon-bg));
 	color: var(--w10-text);
+	cursor: pointer;
+}
+.text-history-select:disabled {
+	cursor: default;
+	opacity: .7;
+}
+.text-font-family-select {
+	max-width: 190px;
 }
 .text-history-clear {
 	padding: 2px 5px;

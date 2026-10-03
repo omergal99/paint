@@ -227,6 +227,47 @@ test('pending in-app image copy wins paste when the OS still exposes stale pixel
 	assert.equal(pasteCount, 1);
 });
 
+test('pasting clears a static marquee before creating the pasted floating selection', async () => {
+	const previousDocument = globalThis.document;
+	const events = [];
+	const canvasManager = {
+		width: 100,
+		height: 100,
+		floatingCanvas: null,
+		isCleanDocument: () => false,
+		persistToStorage: () => {},
+	};
+	globalThis.document = {
+		createElement: () => ({
+			width: 0,
+			height: 0,
+			getContext: () => ({ drawImage: () => events.push('draw-pasted-image') }),
+		}),
+	};
+	const manager = new ClipboardManager({
+		canvasManager,
+		historyManager: { snapshot: () => events.push('snapshot') },
+		getSelection: () => ({ x: 5, y: 5, w: 20, h: 20 }),
+		setSelection: (selection) => events.push(selection ? 'set-pasted-selection' : 'clear-old-selection'),
+		statusBar: { currentPointer: null, flash: () => {} },
+		setActiveTool: () => {},
+		commitFloatingSelection: () => events.push('commit-existing-float'),
+	});
+	try {
+		const result = await manager.insertBitmapAsFloatingSelection({
+			width: 12,
+			height: 8,
+			close: () => events.push('close-bitmap'),
+		});
+		assert.deepEqual(result, { x: 0, y: 0, w: 12, h: 8 });
+		assert.ok(events.indexOf('clear-old-selection') < events.indexOf('snapshot'));
+		assert.ok(events.indexOf('snapshot') < events.indexOf('set-pasted-selection'));
+		assert.equal(canvasManager.floatingCanvas.width, 12);
+	} finally {
+		globalThis.document = previousDocument;
+	}
+});
+
 class RecordingContext {
 	constructor() { this.calls = []; }
 	save() { this.calls.push(['save']); }

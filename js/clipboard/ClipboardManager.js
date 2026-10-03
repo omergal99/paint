@@ -67,6 +67,9 @@ export class ClipboardManager {
       // Commit any active floating selection only after this new image is known
       // safe, so a rejected import never mutates the current work.
       this.commitFloatingSelection?.();
+      // A static marquee is not committed by commitFloatingSelection(). Clear
+      // it before establishing the pasted image as the new active selection.
+      this.setSelection?.(null);
       this.historyManager.snapshot();
       if (neededWidth !== this.canvasManager.width || neededHeight !== this.canvasManager.height) {
         if (!this.canvasManager.resize(neededWidth, neededHeight)) return null;

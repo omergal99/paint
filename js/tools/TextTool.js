@@ -6,6 +6,7 @@
 import { EVENTS, KEYBOARD_KEYS } from '../core/constants.js';
 import { hexToRgb } from '../utils/color.js';
 import { t } from '../i18n/messages.js';
+import { createRecentTextDropdown } from '../ui/RecentTextDropdown.js';
 import {
   TEXT_EDITOR_LAYOUT,
   getTextFont,
@@ -37,7 +38,7 @@ const getCanvasTextOffset = (fontSize) => (
 export const createTextTool = () => {
   let editor = null;
   let editorShell = null;
-  let historySelect = null;
+  let historyDropdown = null;
   let context = null;
   let origin = null;
   let historyUnsubscribe = null;
@@ -54,7 +55,6 @@ export const createTextTool = () => {
     const toolbar = editorShell?.querySelector('.text-editor-toolbar');
     if (toolbar) {
       toolbar.style.minHeight = `${24 / zoom}px`;
-      toolbar.style.gridTemplateRows = `${Math.max(0, 24 / zoom - 2)}px`;
     }
     const fontSize = getRenderSize(ctx);
     const styles = getStyleSet(ctx);
@@ -86,22 +86,8 @@ export const createTextTool = () => {
   };
 
   const renderHistoryOptions = () => {
-    if (!historySelect || !context?.textHistoryStore) return;
-    const currentValue = historySelect.value;
-    historySelect.replaceChildren();
-    const placeholder = document.createElement('option');
-    placeholder.value = '';
-    placeholder.textContent = 'Recent text…';
-    historySelect.appendChild(placeholder);
-    context.textHistoryStore.getAll().forEach((entry) => {
-      const option = document.createElement('option');
-      option.value = entry.id;
-      option.textContent = entry.text.replace(/\s+/g, ' ').slice(0, 48) || 'Untitled text';
-      historySelect.appendChild(option);
-    });
-    if ([...historySelect.options].some((option) => option.value === currentValue)) {
-      historySelect.value = currentValue;
-    }
+    if (!historyDropdown || !context?.textHistoryStore) return;
+    historyDropdown.setEntries(context.textHistoryStore.getAll());
   };
 
   const clearEditorReferences = () => {
@@ -113,9 +99,10 @@ export const createTextTool = () => {
     historyToolbarListener = null;
     strokeStyleListener = null;
     fontFamilyListener = null;
+    historyDropdown?.destroy();
     editor = null;
     editorShell = null;
-    historySelect = null;
+    historyDropdown = null;
     context = null;
     origin = null;
   };
@@ -198,22 +185,33 @@ export const createTextTool = () => {
       toolbar.hidden = false;
       toolbar.classList.toggle('is-empty', !historyVisible);
       toolbar.removeAttribute('aria-hidden');
-      [historyLabel, nextHistorySelect, clearHistoryButton].forEach((control) => {
+      [historyControls, clearHistoryButton].forEach((control) => {
         control.hidden = !historyVisible;
       });
     };
+    const historyControls = document.createElement('div');
+    historyControls.className = 'text-history-controls';
     const historyLabel = document.createElement('span');
     historyLabel.className = 'text-editor-toolbar-label';
-    historyLabel.textContent = 'Recent text';
-    const nextHistorySelect = document.createElement('select');
-    nextHistorySelect.className = 'text-history-select';
-    nextHistorySelect.setAttribute('aria-label', 'Restore recent text');
+    historyLabel.id = 'text-history-label';
+    historyLabel.textContent = t('ui.recentText');
+    historyDropdown = createRecentTextDropdown({
+      label: t('ui.restoreRecentText'),
+      labelId: historyLabel.id,
+      placeholder: t('ui.recentTextPlaceholder'),
+      onSelect: (entry) => {
+        nextEditor.value = entry.text;
+        nextEditor.focus();
+        nextEditor.setSelectionRange(nextEditor.value.length, nextEditor.value.length);
+      },
+    });
     const clearHistoryButton = document.createElement('button');
     clearHistoryButton.type = 'button';
     clearHistoryButton.className = 'text-history-clear';
-    clearHistoryButton.textContent = 'Clear';
-    clearHistoryButton.setAttribute('aria-label', 'Clear recent text history');
-    toolbar.append(historyLabel, nextHistorySelect, clearHistoryButton);
+    clearHistoryButton.textContent = t('common.actions.clear');
+    clearHistoryButton.setAttribute('aria-label', t('ui.clearRecentTextHistory'));
+    historyControls.append(historyLabel, historyDropdown.element);
+    toolbar.append(historyControls, clearHistoryButton);
     setHistoryToolbarVisibility(ctx.getTextHistoryToolbarVisible?.() !== false);
 
     const nextEditor = document.createElement('textarea');
@@ -229,7 +227,6 @@ export const createTextTool = () => {
     shell.append(nextEditor, toolbar);
     editor = nextEditor;
     editorShell = shell;
-    historySelect = nextHistorySelect;
     context = ctx;
     origin = point;
     strokeStyleListener = () => applyEditorStyle(ctx);
@@ -239,13 +236,6 @@ export const createTextTool = () => {
     applyEditorStyle(ctx);
     renderHistoryOptions();
 
-    nextHistorySelect.addEventListener('change', () => {
-      const entry = ctx.textHistoryStore?.getAll().find((item) => item.id === nextHistorySelect.value);
-      if (!entry) return;
-      nextEditor.value = entry.text;
-      nextEditor.focus();
-      nextEditor.setSelectionRange(nextEditor.value.length, nextEditor.value.length);
-    });
     clearHistoryButton.addEventListener('click', () => {
       ctx.textHistoryStore?.clear();
       nextEditor.focus();

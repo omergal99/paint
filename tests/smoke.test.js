@@ -177,8 +177,10 @@ test('Text editing keeps recent textarea history separate from deferred object e
 	assert.match(historyStore, /export const createTextHistoryStore/);
 	assert.match(historyStore, /maxTextHistoryEntries/);
 	assert.match(textTool, /className = 'text-editor-shell'/);
-	assert.match(textTool, /className = 'text-history-select'/);
-	assert.match(textTool, /Restore recent text/);
+	assert.match(textTool, /createRecentTextDropdown/);
+	assert.match(read('js/ui/RecentTextDropdown.js'), /id = 'text-history-select'/);
+	assert.match(read('js/ui/RecentTextDropdown.js'), /name = 'textHistorySelect'/);
+	assert.match(read('js/ui/RecentTextDropdown.js'), /option\.title = entry\.text/);
 	assert.match(textTool, /textHistoryStore\?\.record/);
 	assert.match(textTool, /textHistoryStore\?\.clear/);
 	assert.match(main, /textHistoryStore/);

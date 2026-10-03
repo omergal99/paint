@@ -110,6 +110,8 @@ export const EN_MESSAGES = deepFreeze({
 		selectionActiveColor: 'Active selection outline color', selectionPreview: 'Preview selection without frame', selectionReset: 'Reset to Defaults',
 		selectionLabel: 'Selection:', selectingArea: 'Selecting...', selectionMenu: 'Selection', selectAll: 'Select All',
 		selectRectangle: 'Rectangular Selection', selectLasso: 'Free-form Selection',
+		recentText: 'Recent text', recentTextPlaceholder: 'Recent text…', restoreRecentText: 'Restore recent text',
+		clearRecentTextHistory: 'Clear recent text history',
 		flip: 'Flip', flipHorizontal: 'Flip Horizontal', flipVertical: 'Flip Vertical', showRecentTextToolbar: 'Show Recent text toolbar',
 		systemUiDefaultFont: 'System UI (Default Sans-Serif)',
 		selectTextAfterDraw: 'Select text after draw', textFocusHelp: 'Focus targets are safe; editing existing text remains deferred.',
@@ -325,6 +327,10 @@ export const REQUIRED_MESSAGE_KEYS = Object.freeze([
 	'notepad.empty',
 	'status.saved',
 	'status.undoSnapshotSkipped',
+	'ui.recentText',
+	'ui.recentTextPlaceholder',
+	'ui.restoreRecentText',
+	'ui.clearRecentTextHistory',
 	...new Set(Object.values(UI_TEXT_KEYS)),
 ]);
 
