@@ -3,11 +3,13 @@
 // metadata is rendered by TextLayerService. Layout values stay shared so the
 // editor and committed layer keep the same font-size-dependent geometry.
 
-import { KEYBOARD_KEYS } from '../core/constants.js';
+import { KEYBOARD_KEYS, TEXT_FONT_FAMILIES } from '../core/constants.js';
 import { hexToRgb } from '../utils/color.js';
+import { t } from '../i18n/messages.js';
 import {
   TEXT_EDITOR_LAYOUT,
   getTextFont,
+  getTextStrokeWidth,
   getTextStyleSet,
   measureTextObject,
   renderTextObject,
@@ -58,9 +60,16 @@ export const createTextTool = () => {
     editor.style.textShadow = styles.has('shadow')
       ? '2px 2px 3px rgba(0,0,0,.45)'
       : styles.has('neon') ? `0 0 8px ${ctx.canvasManager.primaryColor}` : 'none';
-    editor.style.webkitTextStroke = styles.has('black-outline')
-      ? `${ctx.getTextStrokeWidth?.() || 1}px ${ctx.getTextStrokeColor?.() || '#000000'}`
-      : styles.has('outline') ? `${Math.max(1, fontSize * .06)}px ${ctx.canvasManager.primaryColor}` : 'unset';
+    const strokeWidth = getTextStrokeWidth({
+      fontSize,
+      strokeWidth: ctx.getTextStrokeWidth?.(),
+      styles,
+    });
+    editor.style.webkitTextStroke = strokeWidth > 0
+      ? `${strokeWidth}px ${styles.has('black-outline')
+        ? (ctx.getTextStrokeColor?.() || '#000000')
+        : ctx.canvasManager.primaryColor}`
+      : 'unset';
     editor.style.color = ctx.canvasManager.primaryColor;
 
     if (origin && editorShell) {
@@ -190,12 +199,22 @@ export const createTextTool = () => {
     const nextHistorySelect = document.createElement('select');
     nextHistorySelect.className = 'text-history-select';
     nextHistorySelect.setAttribute('aria-label', 'Restore recent text');
+    const fontFamilySelect = document.createElement('select');
+    fontFamilySelect.className = 'text-font-family-select';
+    fontFamilySelect.setAttribute('aria-label', t('ui.textFontFamily'));
+    TEXT_FONT_FAMILIES.forEach(({ label, value }) => {
+      const option = document.createElement('option');
+      option.value = value;
+      option.textContent = label;
+      fontFamilySelect.appendChild(option);
+    });
+    fontFamilySelect.value = ctx.getFontFamily();
     const clearHistoryButton = document.createElement('button');
     clearHistoryButton.type = 'button';
     clearHistoryButton.className = 'text-history-clear';
     clearHistoryButton.textContent = 'Clear';
     clearHistoryButton.setAttribute('aria-label', 'Clear recent text history');
-    toolbar.append(historyLabel, nextHistorySelect, clearHistoryButton);
+    toolbar.append(historyLabel, nextHistorySelect, clearHistoryButton, fontFamilySelect);
     setHistoryToolbarVisibility(ctx.getTextHistoryToolbarVisible?.() !== false);
 
     const nextEditor = document.createElement('textarea');
@@ -225,6 +244,10 @@ export const createTextTool = () => {
       nextEditor.value = entry.text;
       nextEditor.focus();
       nextEditor.setSelectionRange(nextEditor.value.length, nextEditor.value.length);
+    });
+    fontFamilySelect.addEventListener('change', () => {
+      ctx.setFontFamily?.(fontFamilySelect.value);
+      applyEditorStyle(ctx);
     });
     clearHistoryButton.addEventListener('click', () => {
       ctx.textHistoryStore?.clear();

@@ -53,6 +53,8 @@ import {
 	SHORTCUT_ACTIONS,
 	SHORTCUT_DEFINITIONS,
 	STORAGE_KEYS,
+	DEFAULT_TEXT_FONT_FAMILY,
+	TEXT_FONT_FAMILIES,
 } from './core/constants.js';
 import { createPaintSettingsStore } from './app/settingsStore.js';
 import { createShortcutManager, formatShortcut, shortcutFromEvent } from './settings/ShortcutManager.js';
@@ -867,6 +869,18 @@ let currentFontSize = (() => {
 	}
 })();
 
+const TEXT_FONT_FAMILY_KEY = 'paint:text-font-family';
+let currentTextFontFamily = (() => {
+	try {
+		const saved = localStorage.getItem(TEXT_FONT_FAMILY_KEY);
+		return TEXT_FONT_FAMILIES.some(({ value }) => value === saved)
+			? saved
+			: DEFAULT_TEXT_FONT_FAMILY;
+	} catch {
+		return DEFAULT_TEXT_FONT_FAMILY;
+	}
+})();
+
 const TEXT_STYLES_KEY = 'paint:text-styles';
 const TEXT_STROKE_WIDTH_KEY = 'paint:text-outline-stroke-width';
 const TEXT_STROKE_COLOR_KEY = 'paint:text-outline-stroke-color';
@@ -974,7 +988,7 @@ const toolContext = {
 	flattenLayers: () => canvasManager.flattenLayers(),
 	getEmoji: () => toolbar.getSelectedEmoji(),
 	getFontSize: () => currentFontSize,
-	getFontFamily: () => "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+	getFontFamily: () => currentTextFontFamily,
 	getTextStyle: getTextStyles,
 	getTextStrokeWidth: () => currentTextStrokeWidth,
 	getTextStrokeColor: () => currentTextStrokeColor,
@@ -985,6 +999,15 @@ const toolContext = {
 			localStorage.setItem('paint:font-size', currentFontSize);
 		} catch (err) {
 			console.warn('Unable to save font size:', err);
+		}
+	},
+	setFontFamily: (family) => {
+		if (!TEXT_FONT_FAMILIES.some(({ value }) => value === family)) return;
+		currentTextFontFamily = family;
+		try {
+			localStorage.setItem(TEXT_FONT_FAMILY_KEY, currentTextFontFamily);
+		} catch (err) {
+			console.warn('Unable to save text font family:', err);
 		}
 	},
 };
@@ -1674,10 +1697,17 @@ const ownsTextEditing = (element) => element instanceof HTMLTextAreaElement
 	|| (element instanceof HTMLInputElement && TEXT_EDITING_INPUT_TYPES.includes(element.type));
 
 window.addEventListener('keydown', (e) => {
+	if (e.defaultPrevented) return;
 	if ((e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === 'a') {
 		e.preventDefault();
 		e.stopPropagation();
 		selectAll();
+	}
+	const action = shortcutManager.resolve(shortcutFromEvent(e));
+	if (action === SHORTCUT_ACTIONS.undo && !ownsTextEditing(document.activeElement)) {
+		e.preventDefault();
+		e.stopPropagation();
+		runUndo();
 	}
 }, true);
 

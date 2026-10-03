@@ -1336,9 +1336,19 @@ test('the offline shell is generated from the import graph and version-synced', 
 });
 
 test('global Ctrl+A capture prevents native selection before shortcut dispatch', () => {
-  const capture = main.slice(main.indexOf("window.addEventListener('keydown'"), main.indexOf("window.addEventListener('keydown'") + 400);
-  assert.match(capture, /if \(\(e\.ctrlKey \|\| e\.metaKey\)[\s\S]*e\.preventDefault\(\);\s*e\.stopPropagation\(\);\s*selectAll\(\);\s*\}\s*\}, true\);/);
+  const start = main.indexOf("window.addEventListener('keydown'");
+  const end = main.indexOf('}, true);', start);
+  const capture = main.slice(start, end);
+  assert.match(capture, /if \(\(e\.ctrlKey \|\| e\.metaKey\)[\s\S]*?e\.preventDefault\(\);\s*e\.stopPropagation\(\);\s*selectAll\(\);/);
+  assert.match(main.slice(end), /^\}, true\);/);
   assert.match(main, /window\.addEventListener\('keydown', \(e\) => \{\s*if \(e\.defaultPrevented\) return;/);
+});
+
+test('pending session previews resolve the settled snapshot source', () => {
+  const sidebar = read('js/ui/Sidebar.js');
+  assert.match(sidebar, /const getHistoryPreviewEntry = \(entry\) => entry\?\._sourceEntry \|\| entry;/);
+  assert.match(sidebar, /!sourceEntry\?\.pending \? sourceEntry\?\.dataUrl : ''/);
+  assert.match(sidebar, /entry\.ready\.then\(\(\) => \{\s*const readyPreviewSrc = getHistoryPreviewUrl\(entry\)/);
 });
 
 test('Delete prioritizes a selected text object over pixel selection deletion', () => {

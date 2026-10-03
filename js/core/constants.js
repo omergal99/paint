@@ -115,6 +115,35 @@ export const HISTORY_VIEWS = Object.freeze({
 	session: 'session',
 });
 
+export const DEFAULT_TEXT_FONT_FAMILY = "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+export const TEXT_FONT_FAMILIES = Object.freeze([
+	Object.freeze({ label: 'System UI', value: DEFAULT_TEXT_FONT_FAMILY }),
+	...[
+		'Arial',
+		'Helvetica',
+		'Times New Roman',
+		'Courier New',
+		'Georgia',
+		'Verdana',
+		'Impact',
+		'Trebuchet MS',
+		'Comic Sans MS',
+		'Palatino Linotype',
+		'Garamond',
+		'Bookman Old Style',
+		'Arial Black',
+		'Tahoma',
+		'Lucida Console',
+		'Monaco',
+		'Brush Script MT',
+		'Century Gothic',
+		'Copperplate',
+		'serif',
+		'sans-serif',
+		'monospace',
+	].map((value) => Object.freeze({ label: value, value })),
+]);
+
 // Phase 3 / step-01: the save-limit options live next to the setting so the
 // validator, the two selects, and the migration check share one list.
 export const HISTORY_LIMIT_OPTIONS = Object.freeze([0, 10, 20, 50, 100]);

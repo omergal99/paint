@@ -2519,7 +2519,7 @@ html[dir="rtl"] .resize-ghost {
 }
 .text-editor-toolbar {
 	display: grid;
-	grid-template-columns: max-content minmax(0, 1fr) max-content;
+	grid-template-columns: max-content minmax(0, 1fr) max-content minmax(0, 1fr);
 	align-items: center;
 	gap: 3px;
 	/* Track the shell instead of floating at its own width: the toolbar holds the
@@ -2551,11 +2551,13 @@ html[dir="rtl"] .resize-ghost {
 	white-space: nowrap;
 }
 .text-history-select,
-.text-history-clear {
+.text-history-clear,
+.text-font-family-select {
 	min-height: 24px;
 	font: inherit;
 }
-.text-history-select {
+.text-history-select,
+.text-font-family-select {
 	min-width: 0;
 	max-width: 190px;
 	border: 1px solid var(--w10-border);

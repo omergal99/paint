@@ -4,6 +4,7 @@ import { createActionMenuController } from '../js/ui/ActionMenuController.js';
 import { createBrowserInfoPanel, readBrowserInfo } from '../js/ui/BrowserInfoPanel.js';
 import { createCheckboxRowController } from '../js/ui/CheckboxRowController.js';
 import { EMOJI_CATALOG, renderEmojiGrid, syncEmojiSelection } from '../js/tools/EmojiStore.js';
+import { createDialogService } from '../js/ui/DialogService.js';
 
 const eventTarget = () => {
   const listeners = new Map();
@@ -105,6 +106,7 @@ test('browser diagnostics listen for pointer movement only while active and clea
     windowRef: browserWindow,
     translate: (key, variables = {}) => Object.entries(variables).reduce((text, [name, value]) => text.replace(`{${name}}`, value), translations[key] || key),
   });
+
   const value = (name) => values.find((field) => field.dataset.browserInfo === name).textContent;
 
   assert.equal(browserNavigator.geolocation.calls, 0, 'opening the diagnostics component does not request location');
@@ -125,6 +127,52 @@ test('browser diagnostics listen for pointer movement only while active and clea
   panel.destroy();
   assert.equal(browserWindow.listenerCount(), 0);
   assert.equal(locationButton.listenerCount(), 0, 'destroy releases the location control listener');
+});
+
+test('dialog text updates discard stale runtime translation keys', () => {
+  const makeControl = (textContent = '') => {
+    const attributes = new Set(['data-i18n-runtime', 'data-i18n-runtime-source']);
+    return {
+      ...eventTarget(),
+      attributes,
+      textContent,
+      removeAttribute(name) { attributes.delete(name); },
+      classList: { toggle() {} },
+      focus() {},
+    };
+  };
+  const dialog = {
+    ...eventTarget(),
+    dataset: {},
+    returnValue: 'cancel',
+    showModal() {},
+  };
+  const title = makeControl('Please confirm');
+  const message = makeControl();
+  const confirmButton = makeControl('Continue');
+  const cancelButton = makeControl('Cancel');
+  const service = createDialogService({
+    dialog,
+    title,
+    message,
+    preview: null,
+    closeButton: null,
+    input: { hidden: false, value: '', placeholder: '', type: '' },
+    confirmButton,
+    cancelButton,
+    form: eventTarget(),
+  });
+
+  void service.confirm({
+    title: 'Restore Image by Override',
+    message: 'Replace the current canvas?',
+    confirmLabel: 'Override',
+  });
+
+  assert.equal(title.textContent, 'Restore Image by Override');
+  assert.equal(confirmButton.textContent, 'Override');
+  assert.equal(title.attributes.has('data-i18n-runtime'), false);
+  assert.equal(confirmButton.attributes.has('data-i18n-runtime-source'), false);
 });
 
 test('checkbox rows toggle their whitespace through one delegated listener', () => {

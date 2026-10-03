@@ -4,19 +4,46 @@
 // feature modules and gives the app one consistent interaction surface.
 
 export const createDialogService = ({ dialog, title, message, preview, closeButton, input, confirmButton, cancelButton, form } = {}) => {
+  let ownedPreviewUrl = null;
+
+  const releaseOwnedPreviewUrl = () => {
+    if (!ownedPreviewUrl) return;
+    URL.revokeObjectURL(ownedPreviewUrl);
+    ownedPreviewUrl = null;
+  };
+
+  const resolvePreviewSource = (source) => {
+    if (!source) return '';
+    if (typeof source === 'string') return source;
+    if (typeof Blob !== 'undefined' && source instanceof Blob) {
+      ownedPreviewUrl = URL.createObjectURL(source);
+      return ownedPreviewUrl;
+    }
+    throw new TypeError('Dialog preview source must be a URL string or Blob');
+  };
+
+  const setDynamicText = (element, value) => {
+    element.removeAttribute('data-i18n-runtime');
+    element.removeAttribute('data-i18n-runtime-source');
+    element.textContent = value;
+  };
+
   const setContent = ({ heading, body, confirmLabel, cancelLabel, danger, prompt, preview: previewOptions }) => {
-    title.textContent = heading;
-    message.textContent = body;
-    confirmButton.textContent = confirmLabel;
-    cancelButton.textContent = cancelLabel;
+    releaseOwnedPreviewUrl();
+    setDynamicText(title, heading);
+    setDynamicText(message, body);
+    setDynamicText(confirmButton, confirmLabel);
+    setDynamicText(cancelButton, cancelLabel);
     confirmButton.classList.toggle('danger', Boolean(danger));
     input.hidden = !prompt;
     input.value = prompt?.value ?? '';
     input.placeholder = prompt?.placeholder || '';
     input.type = prompt?.type || 'text';
     if (preview) {
-      preview.hidden = !previewOptions?.src;
-      preview.src = previewOptions?.src || '';
+      const previewSrc = resolvePreviewSource(previewOptions?.src);
+      preview.hidden = !previewSrc;
+      if (previewSrc) preview.src = previewSrc;
+      else preview.removeAttribute('src');
       preview.alt = previewOptions?.alt || '';
     }
     dialog.dataset.dialogMode = prompt ? 'prompt' : 'confirm';
@@ -26,6 +53,7 @@ export const createDialogService = ({ dialog, title, message, preview, closeButt
     setContent(options);
     const finish = () => {
       dialog.removeEventListener('close', finish);
+      releaseOwnedPreviewUrl();
       const accepted = dialog.returnValue === 'confirm';
       resolve(options.prompt ? (accepted ? input.value : null) : accepted);
     };

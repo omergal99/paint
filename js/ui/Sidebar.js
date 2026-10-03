@@ -15,6 +15,25 @@ import { historyMirrorDescriptor } from './mirrors/historyMirror.js';
 import { t } from '../i18n/messages.js';
 import { formatUnambiguousDate, formatUnambiguousTime } from '../utils/datetime.js';
 
+const getHistoryPreviewEntry = (entry) => entry?._sourceEntry || entry;
+const getHistoryPreviewSource = (entry) => {
+	const sourceEntry = getHistoryPreviewEntry(entry);
+	return sourceEntry?.thumb || sourceEntry?.objectUrl
+		|| (!sourceEntry?.pending ? sourceEntry?.dataUrl : '')
+		|| sourceEntry?.blob || '';
+};
+const getHistoryPreviewUrl = (entry) => {
+	const source = getHistoryPreviewSource(entry);
+	return typeof source === 'string' ? source : '';
+};
+const getRestoreConfirmOptions = ({ src, alt } = {}) => ({
+	title: t('ui.restoreOverrideTitle'),
+	message: t('ui.restoreOverrideMessage'),
+	confirmLabel: t('ui.restoreOverrideAction'),
+	danger: true,
+	preview: { src, alt },
+});
+
 // Phase 2 step-03: every ribbon group resolves through one descriptor table
 // (data-ribbon-key -> RibbonMirror descriptor). The mirror never owns state;
 // Sidebar only mounts it and re-syncs it from app events.
@@ -844,20 +863,14 @@ export class Sidebar {
 
 			const img = document.createElement('img');
 			img.loading = 'lazy';
-			img.src = session.thumb || session.dataUrl;
+			img.src = getHistoryPreviewUrl(session);
 			img.alt = `Import history image ${index + 1} of ${sessions.length}`;
 			img.title = 'Click to import this image';
 			img.addEventListener('click', async () => {
-				const confirmed = await this.dialogService.confirm({
-					title: t('ui.restoreOverrideTitle'),
-					message: t('ui.restoreOverrideMessage'),
-					confirmLabel: t('ui.restoreOverrideAction'),
-					danger: true,
-					preview: {
-						src: session.thumb || session.dataUrl,
-						alt: `Preview of saved image ${index + 1}`,
-					},
-				});
+				const confirmed = await this.dialogService.confirm(getRestoreConfirmOptions({
+					src: getHistoryPreviewSource(session),
+					alt: `Preview of saved image ${index + 1}`,
+				}));
 				if (confirmed) {
 					await this.canvasManager.loadImageDataUrl(session.dataUrl, session.width, session.height);
 					this.statusBar.flash('Loaded from history');
@@ -920,20 +933,22 @@ export class Sidebar {
 			item.dataset.historyId = String(entry.id);
 			const img = document.createElement('img');
 			img.loading = 'lazy';
-			img.src = entry.thumb || entry.dataUrl;
+			const previewSrc = getHistoryPreviewUrl(entry);
+			if (previewSrc) img.src = previewSrc;
+			else if (entry.pending && entry.ready) {
+				void entry.ready.then(() => {
+					const readyPreviewSrc = getHistoryPreviewUrl(entry);
+					if (readyPreviewSrc && img.isConnected) img.src = readyPreviewSrc;
+				});
+			}
 			img.alt = `Session step ${index + 1} of ${entries.length}`;
 			img.title = 'Click to restore this session step';
 			img.addEventListener('click', async () => {
-				const confirmed = await this.dialogService.confirm({
-					title: t('ui.restoreOverrideTitle'),
-					message: t('ui.restoreOverrideMessage'),
-					confirmLabel: t('ui.restoreOverrideAction'),
-					danger: true,
-					preview: {
-						src: entry.thumb || entry.dataUrl,
-						alt: `Preview of ${entry.label || `session step ${index + 1}`}`,
-					},
-				});
+				if (entry.pending) await entry.ready;
+				const confirmed = await this.dialogService.confirm(getRestoreConfirmOptions({
+					src: getHistoryPreviewSource(entry),
+					alt: `Preview of ${entry.label || `session step ${index + 1}`}`,
+				}));
 				if (confirmed) {
 					await this.historyManager.restore(entry);
 					this.statusBar.flash('Restored session step');

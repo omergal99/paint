@@ -92,6 +92,7 @@ export const ES_MESSAGES = Object.freeze({
     restoreOverrideTitle: "Restaurar y reemplazar imagen",
     restoreOverrideMessage: "¿Reemplazar el lienzo actual por esta imagen guardada? Se perderán los cambios sin guardar.",
     restoreOverrideAction: "Reemplazar",
+    textFontFamily: "Familia tipográfica",
     blackOutlineStrokeColor: "Color del contorno negro",
     selectionMenu: "Selección",
     blackOutlineStrokeWidth: "Grosor del contorno negro",

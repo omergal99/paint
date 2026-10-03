@@ -11,6 +11,7 @@ relevant note before editing; read `AGENTS.md` first for the required baseline.
   positioning, keyboard, responsive, and browser-matrix checks.
 - [`seo.md`](seo.md) - metadata, accessibility, and discoverability.
 - [`validation.md`](validation.md) - tests, smoke checks, and safe handoff.
+- [`token-efficiency.md`](token-efficiency.md) - surgical edits and deterministic verification.
 - [`community-standards-audit/SKILL.md`](community-standards-audit/SKILL.md) - open-source community, security, documentation, and contribution readiness.
 - [`work3-delivery.md`](work3-delivery.md) - Work 3 phased delivery: one reusable
   mirror/control per phase, SSOT hooks, i18n + validation habit.

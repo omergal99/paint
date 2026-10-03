@@ -65,6 +65,7 @@ export const initializeHe = (english) => {
     "ui.restoreOverrideTitle": "שחזור והחלפת התמונה",
     "ui.restoreOverrideMessage": "להחליף את הבד הנוכחי בתמונה השמורה? שינויים שלא נשמרו יאבדו.",
     "ui.restoreOverrideAction": "החלפה",
+    "ui.textFontFamily": "משפחת גופנים",
     "ui.blackOutlineStrokeColor": "צבע המתאר השחור",
     "ui.selectionMenu": "בחירה",
     "ui.blackOutlineStrokeWidth": "רוחב המתאר השחור",

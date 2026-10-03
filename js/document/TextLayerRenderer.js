@@ -18,6 +18,16 @@ export const getTextStyleSet = (styles = []) => {
 	return new Set(Array.isArray(styles) ? styles : styles ? [styles] : []);
 };
 
+export const getTextStrokeWidth = ({ fontSize, strokeWidth = 0, styles = [] } = {}) => {
+	const styleSet = getTextStyleSet(styles);
+	if (!styleSet.has('outline') && !styleSet.has('black-outline')) return 0;
+	const size = Math.max(1, Number(fontSize) || 16);
+	const configuredWidth = Number(strokeWidth);
+	return styleSet.has('black-outline') && configuredWidth > 0
+		? configuredWidth
+		: Math.max(1, size * .06);
+};
+
 export const getTextFont = ({ fontSize, fontFamily = 'Segoe UI', styles = [] } = {}) => {
 	const styleSet = getTextStyleSet(styles);
 	const fontStyle = styleSet.has('italic') ? 'italic' : 'normal';
@@ -78,9 +88,11 @@ export const renderTextObject = ({ context, object } = {}) => {
 			context.strokeStyle = styleSet.has('black-outline')
 				? (/^#[\da-f]{6}$/i.test(String(object.strokeColor || '')) ? object.strokeColor : '#000')
 				: color;
-			context.lineWidth = styleSet.has('black-outline') && Number(object.strokeWidth) > 0
-				? Number(object.strokeWidth)
-				: Math.max(1, fontSize * .06);
+			context.lineWidth = getTextStrokeWidth({
+				fontSize,
+				strokeWidth: object.strokeWidth,
+				styles: styleSet,
+			});
 			context.strokeText(line, lineX, lineY);
 		}
 		context.fillText(line, lineX, lineY);

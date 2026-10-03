@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { measureTextObject, renderTextObject } from '../js/document/TextLayerRenderer.js';
+import { measureTextObject, renderTextObject, getTextStrokeWidth } from '../js/document/TextLayerRenderer.js';
+import { DEFAULT_TEXT_FONT_FAMILY, TEXT_FONT_FAMILIES } from '../js/core/constants.js';
 
 const fakeContext = () => {
 	const calls = [];
@@ -56,6 +57,22 @@ test('committed black-outline text rasterizes its configured width and color', (
 	assert.equal(renderTextObject({ context, object }), true);
 	assert.equal(context.strokeStyle, '#e02040');
 	assert.equal(context.lineWidth, 7);
+	assert.equal(context.lineWidth, getTextStrokeWidth({
+		fontSize: object.fontSize,
+		strokeWidth: object.strokeWidth,
+		styles: object.styles,
+	}));
 	assert.deepEqual(context.calls.find((call) => Array.isArray(call) && call[0] === 'strokeText'),
 		['strokeText', 'Stroke', 1, 0]);
+});
+
+test('text font picker options include at least twenty choices and preserve the system default', () => {
+	assert.ok(TEXT_FONT_FAMILIES.length >= 20);
+	assert.ok(TEXT_FONT_FAMILIES.some(({ value }) => value === DEFAULT_TEXT_FONT_FAMILY));
+});
+
+test('outline preview and raster strokes share the same width calculation', () => {
+	assert.equal(getTextStrokeWidth({ fontSize: 20, styles: ['outline'] }), 1.2);
+	assert.equal(getTextStrokeWidth({ fontSize: 8, styles: ['outline'] }), 1);
+	assert.equal(getTextStrokeWidth({ fontSize: 24, strokeWidth: 5, styles: ['black-outline'] }), 5);
 });

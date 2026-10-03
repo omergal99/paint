@@ -42,6 +42,7 @@ export const UI_TEXT_KEYS = Object.freeze({
 	'Black outline': 'ui.blackOutline',
 	'Black outline width': 'ui.blackOutlineStrokeWidth',
 	'Black outline color': 'ui.blackOutlineStrokeColor',
+	'Text font family': 'ui.textFontFamily',
 	Selection: 'ui.selectionMenu',
 	'Restore Image by Override': 'ui.restoreOverrideTitle',
 	'Replace the current canvas with this saved image? Unsaved changes will be lost.': 'ui.restoreOverrideMessage',
