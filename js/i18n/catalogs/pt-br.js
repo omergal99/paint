@@ -104,6 +104,7 @@ export const initializePtBr = (english) => {
     "ui.aiProvider": "Provedor de IA",
     "ui.send": "Enviar",
     "ui.resizeCanvas": "Redimensionar tela",
+    "ui.resizeSummary": "Tamanho atual: {currentWidth} × {currentHeight} px. Novo tamanho: {newWidth} × {newHeight} px.",
     "ui.quickSizes": "Tamanhos rápidos",
     "ui.square": "Quadrado",
     "ui.a4Landscape": "A4 paisagem",

@@ -117,6 +117,7 @@ export const EN_MESSAGES = deepFreeze({
 		selectTextAfterDraw: 'Select text after draw', textFocusHelp: 'Focus targets are safe; editing existing text remains deferred.',
 		textStyle: 'Text style', outline: 'Outline', blackOutline: 'Black outline', blackOutlineStrokeWidth: 'Black outline width', blackOutlineStrokeColor: 'Black outline color', shadow: 'Shadow', neon: 'Neon', bold: 'Bold',
 		textFontFamily: 'Text font family',
+		resizeSummary: 'Current size: {currentWidth} × {currentHeight}px. New size: {newWidth} × {newHeight}px.',
 		restoreOverrideTitle: 'Restore Image by Override', restoreOverrideMessage: 'Replace the current canvas with this saved image? Unsaved changes will be lost.', restoreOverrideAction: 'Override',
 		italic: 'Italic', underline: 'Underline', handPan: 'Hand / Pan', recentStyles: 'Recent styles', line: 'Line', arrow: 'Arrow',
 		rectangle: 'Rectangle', rounded: 'Rounded', rightTriangle: 'Right Tri', diamond: 'Diamond', pentagon: 'Pentagon', hexagon: 'Hexagon',

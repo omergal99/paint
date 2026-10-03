@@ -23,13 +23,38 @@ const configureCloseButton = (button, dialog, documentRef) => {
 	return button;
 };
 
+const groupDialogHeader = ({ header, closeButton, documentRef }) => {
+	let content = [...header.children].find((child) => child.classList.contains('dialog-header-content'));
+	let closeGroup = [...header.children].find((child) => child.classList.contains('dialog-header-close'));
+
+	if (!content) {
+		content = documentRef.createElement('div');
+		content.className = 'dialog-header-content';
+		[...header.childNodes].forEach((node) => {
+			if (node !== closeButton && node !== closeGroup) content.append(node);
+		});
+		header.prepend(content);
+	}
+	if (!closeGroup) {
+		closeGroup = documentRef.createElement('div');
+		closeGroup.className = 'dialog-header-close';
+		header.append(closeGroup);
+	}
+	if (closeButton.parentNode !== closeGroup) closeGroup.append(closeButton);
+};
+
 export const standardizeDialogFrame = ({ dialog, documentRef = globalThis.document } = {}) => {
 	if (!dialog || !documentRef?.createElement) {
 		throw new TypeError('Dialog frame requires a dialog and document');
 	}
 
 	if (dialog.id === 'settings-dialog') {
-		dialog.querySelector('.settings-header')?.classList.add('dialog-header');
+		const header = dialog.querySelector('.settings-header');
+		if (header) {
+			const closeButton = header.querySelector('button.settings-close');
+			groupDialogHeader({ header, closeButton, documentRef });
+			header.classList.add('dialog-header');
+		}
 		dialog.querySelector('.settings-footer')?.classList.add('dialog-footer');
 		dialog.dataset.dialogFrame = 'settings';
 		return Object.freeze({ dialog, frame: dialog.querySelector('.settings-shell'), destroy() {} });
@@ -49,7 +74,11 @@ export const standardizeDialogFrame = ({ dialog, documentRef = globalThis.docume
 	const header = existingHeader || documentRef.createElement('header');
 	header.classList.add('dialog-header');
 	if (!existingHeader) header.append(title);
-	header.append(configureCloseButton(closeButton, dialog, documentRef));
+	groupDialogHeader({
+		header,
+		closeButton: configureCloseButton(closeButton, dialog, documentRef),
+		documentRef,
+	});
 
 	if (!title.id) title.id = `${dialog.id || 'dialog'}-title`;
 	dialog.setAttribute('aria-labelledby', title.id);

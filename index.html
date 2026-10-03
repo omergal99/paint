@@ -1212,9 +1212,11 @@
 					data-tag="resize-keep-aspect" checked />
 				<label for="resize-keep-aspect">Maintain aspect ratio</label>
 			</div>
+			<p class="resize-summary" id="resize-summary" role="status" aria-live="polite"></p>
 			<div class="dialog-actions">
 				<button type="button" id="resize-cancel" class="dialog-button-secondary" data-tag="resize-cancel">Cancel</button>
-				<button type="submit" id="resize-ok" class="dialog-button-primary" data-tag="resize-ok">OK</button>
+				<button type="submit" id="resize-ok" class="dialog-button-primary" data-tag="resize-ok"
+					data-i18n="ribbon.image.resize">Resize</button>
 			</div>
 		</form>
 	</dialog>
@@ -1660,12 +1662,15 @@
 					<label for="adjustment-value" id="adjustment-value-label" data-i18n="ui.adjustmentValue">Amount</label>
 				</legend>
 				<div class="adjustment-value-controls">
-					<input id="adjustment-value" data-tag="adjustment-value" type="range" min="0" max="200" value="100"
-						aria-describedby="adjustment-error" />
+					<div class="adjustment-range-wrap">
+						<input id="adjustment-value" data-tag="adjustment-value" type="range" min="0" max="200" value="100"
+							aria-describedby="adjustment-error" />
+						<output id="adjustment-value-output" class="adjustment-slider-tooltip" for="adjustment-value"
+							aria-hidden="true"></output>
+					</div>
 					<input id="adjustment-value-number" data-tag="adjustment-value-number" type="number" min="0" max="200"
 						step="1" value="100" aria-labelledby="adjustment-value-label"
 						aria-describedby="adjustment-error" />
-					<output id="adjustment-value-output" for="adjustment-value adjustment-value-number"></output>
 				</div>
 			</fieldset>
 			<fieldset class="adjustments-group adjustments-preview-group">

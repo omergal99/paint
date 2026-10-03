@@ -10,6 +10,8 @@ class FakeControl {
 		this.options = options;
 		this.listeners = new Map();
 		this.attributes = new Map();
+		this.style = { setProperty() {} };
+		this.classList = { add() {}, remove() {} };
 		this.disabled = false;
 		this.hidden = false;
 		this.open = false;
@@ -25,6 +27,7 @@ class FakeControl {
 		return !event.defaultPrevented;
 	}
 	setAttribute(name, value) { this.attributes.set(name, value); }
+	getAttribute(name) { return this.attributes.get(name) ?? null; }
 	focus() { this.focused = true; }
 	showModal() { this.open = true; }
 	close() {

@@ -183,6 +183,7 @@ export const ES_MESSAGES = Object.freeze({
       "Usa acciones rápidas o escribe un comando compatible. Mostraré exactamente lo que aplico.",
     send: "Enviar",
     resizeCanvas: "Cambiar tamaño del lienzo",
+    resizeSummary: "Tamaño actual: {currentWidth} × {currentHeight} px. Nuevo tamaño: {newWidth} × {newHeight} px.",
     quickSizes: "Tamaños rápidos",
     square: "Cuadrado",
     a4Landscape: "A4 horizontal",

@@ -8,6 +8,7 @@ const setLabel = (node, key) => {
 
 export const createAdjustmentsDialog = ({
 	dialog,
+	documentRef = globalThis.document,
 	adjustmentSelect,
 	targetSelect,
 	valueInput,
@@ -45,6 +46,7 @@ export const createAdjustmentsDialog = ({
 	let applied = false;
 	let cancelHandled = false;
 	let preserveMaskOnClose = false;
+	let tooltipTimer = null;
 
 	const currentMetadata = () => ADJUSTMENTS[currentId];
 	const renderSlider = () => {
@@ -54,6 +56,7 @@ export const createAdjustmentsDialog = ({
 		valueInput.step = '1';
 		valueInput.disabled = metadata.kind === 'pattern';
 		valueInput.value = String(currentValue);
+		valueInput.title = String(currentValue);
 		if (valueNumberInput) {
 			valueNumberInput.min = String(metadata.min);
 			valueNumberInput.max = String(metadata.max);
@@ -63,6 +66,12 @@ export const createAdjustmentsDialog = ({
 		}
 		valueInput.setAttribute('aria-valuetext', `${currentValue}`);
 		valueOutput.value = `${currentValue}`;
+		const span = Math.max(1, metadata.max - metadata.min);
+		let position = ((currentValue - metadata.min) / span) * 100;
+		if (documentRef?.defaultView?.getComputedStyle?.(valueInput)?.direction === 'rtl') {
+			position = 100 - position;
+		}
+		valueOutput.style?.setProperty('--adjustment-value-position', `${position}%`);
 	};
 
 	const drawPreview = () => {
@@ -120,6 +129,14 @@ export const createAdjustmentsDialog = ({
 		onValueChange?.({ id: currentId, value: currentValue });
 		schedulePreview();
 	};
+	const showSliderValue = () => {
+		if (tooltipTimer !== null) clearTimeout(tooltipTimer);
+		valueOutput.classList?.add('is-visible');
+		tooltipTimer = setTimeout(() => {
+			valueOutput.classList?.remove('is-visible');
+			tooltipTimer = null;
+		}, 750);
+	};
 
 	const setAdjustment = () => {
 		currentId = adjustmentSelect.value;
@@ -136,7 +153,7 @@ export const createAdjustmentsDialog = ({
 			adjustmentSelect.value = id;
 			setAdjustment();
 		}
-		returnFocus = document.activeElement;
+		returnFocus = documentRef?.activeElement;
 		applied = false;
 		cancelHandled = false;
 		preserveMaskOnClose = false;
@@ -164,7 +181,10 @@ export const createAdjustmentsDialog = ({
 	targetSelect.addEventListener('change', setTarget);
 	valueInput.addEventListener('input', () => {
 		setValue(valueInput.value);
+		showSliderValue();
 	});
+	valueInput.addEventListener('pointerdown', showSliderValue);
+	valueInput.addEventListener('keydown', showSliderValue);
 	valueNumberInput?.addEventListener('input', () => {
 		setValue(valueNumberInput.value);
 	});
@@ -228,6 +248,8 @@ export const createAdjustmentsDialog = ({
 		destroy: () => {
 			if (frame !== null) cancelAnimationFrame(frame);
 			frame = null;
+			if (tooltipTimer !== null) clearTimeout(tooltipTimer);
+			tooltipTimer = null;
 			dialog.removeEventListener('cancel', handleCancel);
 			if (dialog.open) dialog.close();
 		},

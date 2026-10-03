@@ -100,6 +100,7 @@ export const initializeAr = (english) => {
     "ui.aiProvider": "موفر الذكاء الاصطناعي",
     "ui.send": "إرسال",
     "ui.resizeCanvas": "تغيير حجم اللوحة",
+    "ui.resizeSummary": "الحجم الحالي: {currentWidth} × {currentHeight} بكسل. الحجم الجديد: {newWidth} × {newHeight} بكسل.",
     "ui.quickSizes": "أحجام سريعة",
     "ui.square": "مربع",
     "ui.widthPx": "العرض (بكسل)",

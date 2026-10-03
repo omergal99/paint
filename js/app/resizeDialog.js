@@ -6,6 +6,7 @@
 import { assessImageAdmission } from '../storage/ImageAdmission.js';
 import { scaleCanvas } from '../utils/transform.js';
 import { router } from './router.js';
+import { t } from '../i18n/messages.js';
 
 export const initResizeDialog = ({
   canvasManager,
@@ -21,6 +22,7 @@ export const initResizeDialog = ({
   const resizeHeightInput = document.getElementById('resize-height');
   const resizePercentInput = document.getElementById('resize-percent');
   const resizeTargetStatus = document.getElementById('resize-target-status');
+  const resizeSummary = document.getElementById('resize-summary');
   const keepAspectInput = document.getElementById('resize-keep-aspect');
   let aspectRatio = 1;
   let resizeTarget = { kind: 'canvas', x: 0, y: 0, width: 800, height: 600 };
@@ -45,6 +47,16 @@ export const initResizeDialog = ({
     resizePercentInput.value = String(Math.max(1, Math.round((width / resizeTarget.width) * 100)));
   };
 
+  const updateResizeSummary = () => {
+    if (!resizeSummary) return;
+    resizeSummary.textContent = t('ui.resizeSummary', {
+      currentWidth: resizeTarget.width,
+      currentHeight: resizeTarget.height,
+      newWidth: Number(resizeWidthInput.value) || 0,
+      newHeight: Number(resizeHeightInput.value) || 0,
+    });
+  };
+
   const setResizeTargetFields = () => {
     resizeWidthInput.value = resizeTarget.width;
     resizeHeightInput.value = resizeTarget.height;
@@ -56,6 +68,7 @@ export const initResizeDialog = ({
         ? `Selection ${resizeTarget.width} × ${resizeTarget.height}px`
         : 'Whole canvas';
     }
+    updateResizeSummary();
   };
 
   const openResizeDialog = () => {
@@ -71,6 +84,7 @@ export const initResizeDialog = ({
       resizeWidthInput.value = width;
       resizeHeightInput.value = height;
       syncResizePercent();
+      updateResizeSummary();
       document.querySelectorAll('[data-resize-preset]').forEach((item) => item.classList.toggle('selected', item === button));
     });
   });
@@ -78,16 +92,19 @@ export const initResizeDialog = ({
   resizeWidthInput.addEventListener('input', () => {
     if (keepAspectInput.checked) resizeHeightInput.value = Math.round(resizeWidthInput.value / aspectRatio);
     syncResizePercent();
+    updateResizeSummary();
   });
   resizeHeightInput.addEventListener('input', () => {
     if (keepAspectInput.checked) resizeWidthInput.value = Math.round(resizeHeightInput.value * aspectRatio);
     syncResizePercent();
+    updateResizeSummary();
   });
   resizePercentInput.addEventListener('input', () => {
     const percent = Math.max(1, Math.min(1000, Number(resizePercentInput.value) || 100));
     resizePercentInput.value = String(percent);
     resizeWidthInput.value = Math.max(1, Math.round(resizeTarget.width * percent / 100));
     resizeHeightInput.value = Math.max(1, Math.round(resizeTarget.height * percent / 100));
+    updateResizeSummary();
   });
 
   document.getElementById('resize-cancel').addEventListener('click', () => resizeDialog.close());

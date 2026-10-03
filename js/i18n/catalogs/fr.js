@@ -100,6 +100,7 @@ export const initializeFr = (english) => {
     "ui.aiProvider": "Fournisseur IA",
     "ui.send": "Envoyer",
     "ui.resizeCanvas": "Redimensionner la zone",
+    "ui.resizeSummary": "Taille actuelle : {currentWidth} × {currentHeight} px. Nouvelle taille : {newWidth} × {newHeight} px.",
     "ui.quickSizes": "Tailles rapides",
     "ui.square": "Carré",
     "ui.a4Landscape": "A4 paysage",

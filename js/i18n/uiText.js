@@ -111,6 +111,7 @@ export const UI_TEXT_KEYS = Object.freeze({
 	'Use Quick actions or type a supported command. I will show exactly what I apply.': 'ui.aiHelp',
 	Send: 'ui.send',
 	'Resize canvas': 'ui.resizeCanvas',
+	'Current size: {currentWidth} × {currentHeight}px. New size: {newWidth} × {newHeight}px.': 'ui.resizeSummary',
 	'Quick sizes': 'ui.quickSizes',
 	'Square': 'ui.square',
 	'A4 landscape': 'ui.a4Landscape',

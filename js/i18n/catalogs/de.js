@@ -100,6 +100,7 @@ export const initializeDe = (english) => {
     "ui.aiProvider": "KI-Anbieter",
     "ui.send": "Senden",
     "ui.resizeCanvas": "Leinwandgröße ändern",
+    "ui.resizeSummary": "Aktuelle Größe: {currentWidth} × {currentHeight} px. Neue Größe: {newWidth} × {newHeight} px.",
     "ui.quickSizes": "Schnellgrößen",
     "ui.square": "Quadrat",
     "ui.a4Landscape": "A4 quer",

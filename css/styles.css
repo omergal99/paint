@@ -1,5 +1,12 @@
 /* css/styles.css */
 
+.icon {
+	display: block;
+	width: 16px;
+	height: 16px;
+	flex: 0 0 auto;
+}
+
 :root {
 	/* Selection frame. Two states: the marquee being dragged paints with the
 	   thin "selecting" colour, an established selection switches to the
@@ -1641,11 +1648,17 @@ html[dir="rtl"] .mirror-section[open] > .mirror-section-title .menu-arrow {
 }
 .mirror-section-icon {
 	flex: 0 0 auto;
+	width: 14px;
+	height: 14px;
 }
 .mirror-adjustment-action {
 	display: inline-flex;
 	align-items: center;
 	gap: 8px;
+}
+.mirror-adjustment-action > .icon {
+	width: 16px;
+	height: 16px;
 }
 .mirror-slider-row {
 	display: grid;
@@ -3014,7 +3027,7 @@ html[dir="rtl"] .resize-ghost {
 dialog {
 	border: 1px solid var(--w10-border-strong);
 	border-radius: 4px;
-	padding: 16px 16px;
+	padding: 10px;
 	font-family: var(--font-ui);
 	background: var(--w10-bg);
 	color: var(--w10-text);
@@ -3027,24 +3040,34 @@ dialog {
 	width: 100%;
 	max-height: min(86vh, 820px);
 }
-.dialog-header {
-	position: relative;
+.dialog-header,
+.settings-header {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	gap: 12px;
-	min-height: 38px;
-	padding: 4px 38px 8px 4px;
+	gap: 8px;
+	padding: 0 0 6px 4px;
 	border-bottom: 1px solid var(--w10-border);
+}
+.dialog-header {
+	min-height: 38px;
+}
+.dialog-header-content {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	flex: 1 1 auto;
+	min-width: 0;
+}
+.dialog-header-close {
+	display: flex;
+	align-items: center;
+	flex: 0 0 auto;
 }
 .dialog-header h2,
 .dialog-header h3 {
 	margin: 0;
 	font-size: 16px;
-}
-.dialog-header .settings-close {
-	position: static;
-	flex: 0 0 30px;
 }
 .dialog-body {
 	min-height: 0;
@@ -3076,22 +3099,22 @@ dialog h3 {
 .app-dialog {
 	width: min(430px, calc(100vw - 32px));
 	max-width: calc(100vw - 32px);
-	padding: 20px;
 }
 .adjustments-dialog {
-	width: min(520px, calc(100vw - 32px));
+	width: min(460px, calc(100vw - 32px));
 	max-width: calc(100vw - 32px);
 }
 .adjustments-dialog form {
 	display: block;
 }
 .adjustments-dialog .dialog-frame {
-	gap: 8px;
+	gap: 0;
 }
 .adjustments-dialog .dialog-body {
 	display: grid;
 	align-content: start;
-	gap: 8px;
+	gap: 6px;
+	padding-block: 8px;
 }
 .adjustments-dialog h2 {
 	margin: 0;
@@ -3104,17 +3127,17 @@ dialog h3 {
 }
 .adjustments-group {
 	display: grid;
-	gap: 6px;
+	gap: 4px;
 	min-width: 0;
 	margin: 0;
-	padding: 8px;
+	padding: 5px 7px;
 	border: 1px solid var(--w10-border);
 	border-radius: 4px;
 }
 .adjustments-group legend {
-	padding-inline: 4px;
+	padding-inline: 3px;
 	margin: 0;
-	font-size: 12px;
+	font-size: 11px;
 	font-weight: 600;
 }
 .adjustments-group > .adjustments-field-label {
@@ -3127,8 +3150,8 @@ dialog h3 {
 }
 .adjustment-target-choice {
 	flex: 1 1 auto;
-	min-height: 32px;
-	padding: 5px 10px;
+	min-height: 28px;
+	padding: 3px 8px;
 	border: 1px solid var(--w10-border-strong);
 	border-radius: 4px;
 	background: var(--w10-bg);
@@ -3146,19 +3169,42 @@ dialog h3 {
 }
 .adjustment-value-controls {
 	display: grid;
-	grid-template-columns: minmax(0, 1fr) 88px;
+	grid-template-columns: minmax(0, 1fr) 74px;
 	align-items: center;
-	gap: 8px;
+	gap: 6px;
 }
 .adjustment-value-controls input[type="number"] {
-	width: 88px;
-	min-height: 30px;
+	width: 74px;
+	min-height: 26px;
 	margin: 0;
 }
-.adjustment-value-controls output {
-	grid-column: 1 / -1;
-	color: var(--w10-text-dim);
+.adjustment-range-wrap {
+	position: relative;
+	min-width: 0;
+}
+.adjustment-range-wrap input[type="range"] {
+	display: block;
+	width: 100%;
+	margin: 0;
+}
+.adjustment-slider-tooltip {
+	position: absolute;
+	top: -24px;
+	inset-inline-start: var(--adjustment-value-position, 50%);
+	transform: translateX(-50%);
+	padding: 2px 6px;
+	border: 1px solid var(--w10-border-strong);
+	border-radius: 3px;
+	background: var(--w10-text);
+	color: var(--w10-bg);
 	font-size: 11px;
+	line-height: 1.2;
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity 80ms ease;
+}
+.adjustment-slider-tooltip.is-visible {
+	opacity: 1;
 }
 .adjustments-preview-group {
 	grid-template-rows: auto minmax(0, 1fr);
@@ -3177,9 +3223,9 @@ dialog h3 {
 .adjustments-preview-wrap {
 	display: grid;
 	place-items: center;
-	min-height: 120px;
-	max-height: min(42vh, 360px);
-	overflow: auto;
+	min-height: 64px;
+	max-height: 170px;
+	overflow: hidden;
 	border: 1px solid var(--w10-border);
 	background-color: var(--w10-canvas-bg);
 	background-image:
@@ -3192,8 +3238,10 @@ dialog h3 {
 }
 .adjustments-preview-wrap canvas {
 	display: block;
-	max-width: 100%;
-	max-height: min(42vh, 360px);
+	width: auto;
+	height: auto;
+	max-width: min(100%, 280px);
+	max-height: 160px;
 	object-fit: contain;
 }
 .adjustment-mask-actions {
@@ -3480,14 +3528,9 @@ dialog h3 {
 }
 .settings-header {
 	grid-column: 1 / -1;
-	display: flex;
-	align-items: center;
-	gap: 8px;
-	padding: 0 0 6px 4px;
 	font-size: 16px;
 	font-weight: 700;
 	color: var(--w10-text-dim);
-	border-bottom: 1px solid var(--w10-border);
 }
 .settings-search {
 	display: flex;
@@ -3610,12 +3653,9 @@ dialog h3 {
 	cursor: pointer;
 }
 .settings-close {
-	position: absolute;
-	top: 0px;
-	inset-inline-end: 0;
-	z-index: 2;
 	width: 30px;
 	height: 30px;
+	padding: 0;
 	border: 1px solid var(--w10-border-strong);
 	border-radius: 3px;
 	background: var(--w10-hover);
@@ -3623,9 +3663,6 @@ dialog h3 {
 	font-size: 25px;
 	line-height: 1;
 	cursor: pointer;
-}
-.settings-header .settings-close {
-	position: absolute;
 }
 .settings-close:hover,
 .settings-close:focus-visible {
@@ -3982,7 +4019,6 @@ dialog h3 {
 	min-height: 330px;
 }
 #settings-dialog {
-	padding: 10px;
 	max-width: calc(100vw - 24px);
 	overflow: hidden;
 }
@@ -3998,6 +4034,14 @@ dialog h3 {
 }
 .resize-dimension-row input {
 	width: 120px;
+}
+.resize-summary {
+	margin: 8px 0 0;
+	padding: 8px;
+	border: 1px solid var(--w10-border);
+	border-radius: 4px;
+	color: var(--w10-text-dim);
+	font-size: 12px;
 }
 .settings-panel .dialog-actions {
 	margin-top: 14px;

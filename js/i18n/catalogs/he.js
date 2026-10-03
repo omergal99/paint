@@ -153,6 +153,7 @@ export const initializeHe = (english) => {
     "ui.aiHelp": "השתמשו בפעולות מהירות או כתבו פקודה נתמכת. אציג בדיוק מה שהוחל.",
     "ui.send": "שליחה",
     "ui.resizeCanvas": "שינוי גודל הבד",
+    "ui.resizeSummary": "הגודל הנוכחי: {currentWidth} × {currentHeight} פיקסלים. הגודל החדש: {newWidth} × {newHeight} פיקסלים.",
     "ui.quickSizes": "גדלים מהירים",
     "ui.square": "מרובע",
     "ui.a4Landscape": "A4 לרוחב",

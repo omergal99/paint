@@ -100,6 +100,7 @@ export const initializeJa = (english) => {
     "ui.aiProvider": "AIプロバイダー",
     "ui.send": "送信",
     "ui.resizeCanvas": "キャンバスサイズ変更",
+    "ui.resizeSummary": "現在のサイズ: {currentWidth} × {currentHeight}px。新しいサイズ: {newWidth} × {newHeight}px。",
     "ui.quickSizes": "クイックサイズ",
     "ui.square": "正方形",
     "ui.a4Landscape": "A4横",
