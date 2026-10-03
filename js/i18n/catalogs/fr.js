@@ -150,7 +150,6 @@ export const initializeFr = (english) => {
     "ui.mirrorSearchShapes": "Rechercher des formes",
     "ui.mirrorNoShapeMatches": "Aucune forme correspondante",
     "ui.mirrorNoFavorites": "Aucune forme favorite pour le moment.",
-    "ui.mirrorAdjustmentsNote": "Les ajustements arrivent en Phase 4.",
     "ui.mirrorAdvancedNote": "Les options avancées du pinceau arrivent en Phase 5.",
     "ui.adjustments": "Ajustements",
     "ui.adjustment": "Ajustement",

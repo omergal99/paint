@@ -250,7 +250,6 @@ export const initializeHe = (english) => {
     "ui.mirrorSearchShapes": "חיפוש צורות",
     "ui.mirrorNoShapeMatches": "אין צורות תואמות",
     "ui.mirrorNoFavorites": "עדיין אין צורות מועדפות.",
-    "ui.mirrorAdjustmentsNote": "התאמות יגיעו בשלב 4.",
     "ui.mirrorAdvancedNote": "אפשרויות מברש מתקדמות יגיעו בשלב 5.",
     "ui.adjustments": "התאמות",
     "ui.adjustment": "התאמה",

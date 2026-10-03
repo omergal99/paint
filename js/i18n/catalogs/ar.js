@@ -148,7 +148,6 @@ export const initializeAr = (english) => {
     "ui.mirrorSearchShapes": "بحث في الأشكال",
     "ui.mirrorNoShapeMatches": "لا توجد أشكال مطابقة",
     "ui.mirrorNoFavorites": "لا توجد أشكال مفضلة بعد.",
-    "ui.mirrorAdjustmentsNote": "تصل التعديلات في المرحلة 4.",
     "ui.mirrorAdvancedNote": "تصل خيارات الفرشاة المتقدمة في المرحلة 5.",
     "ui.adjustments": "التعديلات",
     "ui.adjustment": "تعديل",

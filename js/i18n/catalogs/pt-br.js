@@ -154,7 +154,6 @@ export const initializePtBr = (english) => {
     "ui.mirrorSearchShapes": "Pesquisar formas",
     "ui.mirrorNoShapeMatches": "Nenhuma forma correspondente",
     "ui.mirrorNoFavorites": "Nenhuma forma favorita ainda.",
-    "ui.mirrorAdjustmentsNote": "Os ajustamentos chegarão na Fase 4.",
     "ui.mirrorAdvancedNote": "As opções avançadas de pincel chegarão na Fase 5.",
     "ui.adjustments": "Ajustes",
     "ui.adjustment": "Ajuste",

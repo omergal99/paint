@@ -76,6 +76,7 @@ import { createWorkspaceStripController } from './ui/WorkspaceStrip.js';
 import { createActionMenuController } from './ui/ActionMenuController.js';
 import { createFontFamilyPicker } from './ui/FontFamilyPicker.js';
 import { createBrushCursorOverlay } from './ui/BrushCursorOverlay.js';
+import { createPersistentDropdown } from './ui/PersistentDropdown.js';
 import { createAdjustmentsDialog, createAdjustmentOption } from './ui/AdjustmentsDialog.js';
 import { createDialogSearch } from './ui/DialogSearch.js';
 import { createSettingsDialog } from './ui/SettingsDialog.js';
@@ -1032,10 +1033,18 @@ Object.entries(ADJUSTMENTS).forEach(([id, metadata]) => {
 		labelKey: metadata.labelKey,
 	}));
 });
+const adjustmentDropdown = createPersistentDropdown({
+	select: document.getElementById('adjustment-select'),
+	labelledBy: 'adjustment-label',
+});
+const adjustmentTargetDropdown = createPersistentDropdown({
+	select: document.getElementById('adjustment-target'),
+	labelledBy: 'adjustment-target-label',
+});
 const adjustmentDialog = createAdjustmentsDialog({
 	dialog: document.getElementById('adjustments-dialog'),
-	adjustmentSelect: document.getElementById('adjustment-select'),
-	targetSelect: document.getElementById('adjustment-target'),
+	adjustmentSelect: adjustmentDropdown,
+	targetSelect: adjustmentTargetDropdown,
 	valueInput: document.getElementById('adjustment-value'),
 	valueOutput: document.getElementById('adjustment-value-output'),
 	previewCanvas: document.getElementById('adjustments-preview'),
@@ -1728,6 +1737,8 @@ const destroyEditor = () => {
 	toolManager.destroy();
 	brushCursorOverlay.destroy();
 	adjustmentDialog.destroy();
+	adjustmentDropdown.destroy();
+	adjustmentTargetDropdown.destroy();
 	adjustmentMask.destroy();
 	canvasResizer.destroy();
 	viewportManager.destroy();

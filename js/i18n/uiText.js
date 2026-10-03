@@ -241,7 +241,6 @@ export const UI_TEXT_KEYS = Object.freeze({
 	'Search shapes': 'ui.mirrorSearchShapes',
 	'No matching shapes': 'ui.mirrorNoShapeMatches',
 	'No favorite shapes yet.': 'ui.mirrorNoFavorites',
-	'Adjustments land in Phase 4.': 'ui.mirrorAdjustmentsNote',
 	'Brush advanced options arrive with Phase 5.': 'ui.mirrorAdvancedNote',
 	Adjustments: 'ui.adjustments',
 	Adjustment: 'ui.adjustment',

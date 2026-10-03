@@ -312,7 +312,6 @@ export const ES_MESSAGES = Object.freeze({
     mirrorSearchShapes: "Buscar formas",
     mirrorNoShapeMatches: "No hay formas coincidentes",
     mirrorNoFavorites: "Aún no hay formas favoritas.",
-    mirrorAdjustmentsNote: "Los ajustes llegarán en la Fase 4.",
     mirrorAdvancedNote: "Las opciones avanzadas de pincel llegarán en la Fase 5.",
     adjustments: "Ajustes",
     adjustment: "Ajuste",

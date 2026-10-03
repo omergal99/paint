@@ -1,3 +1,5 @@
+import { createPersistentDropdown } from './PersistentDropdown.js';
+
 const normalizeEntryText = (text) => String(text || '').replace(/\s+/g, ' ').trim();
 const OPTION_PREVIEW_LENGTH = 80;
 
@@ -24,12 +26,17 @@ export const createRecentTextDropdown = ({
   select.setAttribute('aria-label', label);
   if (labelId) select.setAttribute('aria-labelledby', labelId);
   select.title = placeholder;
+  const persistentDropdown = createPersistentDropdown({
+    select,
+    documentRef,
+    labelledBy: labelId,
+  });
 
   let entries = [];
   const handleChange = () => {
     const entry = entries.find((item) => item.id === select.value);
     if (!entry) return;
-    select.title = entry.text;
+    persistentDropdown.title = entry.text;
     onSelect?.(entry);
   };
   select.addEventListener('change', handleChange);
@@ -57,13 +64,14 @@ export const createRecentTextDropdown = ({
     select.disabled = entries.length === 0;
     select.value = entries.some((entry) => entry.id === selectedId) ? selectedId : '';
     const selected = entries.find((entry) => entry.id === select.value);
-    select.title = selected?.text || placeholder;
+    persistentDropdown.title = selected?.text || placeholder;
+    persistentDropdown.refresh();
   };
 
   const destroy = () => {
     select.removeEventListener('change', handleChange);
-    select.remove();
+    persistentDropdown.destroy();
   };
 
-  return Object.freeze({ element: select, setEntries, destroy });
+  return Object.freeze({ element: persistentDropdown.element, control: persistentDropdown, setEntries, destroy });
 };

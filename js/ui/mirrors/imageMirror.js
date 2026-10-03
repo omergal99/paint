@@ -1,6 +1,6 @@
 // js/ui/mirrors/imageMirror.js
 // Phase 2 step-02 SSOT: Image ribbon group -> RibbonMirror descriptor.
-// Adjustments section is a placeholder deep-link to Phase 4 (no engine here).
+// Adjustment entries route to the shared adjustments dialog.
 import { buildSelectionPropertiesPanel } from '../../services/selection/selectionPropertiesPanel.js';
 import { mountAdjustmentEntries } from '../AdjustmentEntries.js';
 export const imageMirrorDescriptor = Object.freeze({

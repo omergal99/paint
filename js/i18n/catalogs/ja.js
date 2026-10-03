@@ -150,7 +150,6 @@ export const initializeJa = (english) => {
     "ui.mirrorSearchShapes": "図形を検索",
     "ui.mirrorNoShapeMatches": "一致する図形がありません",
     "ui.mirrorNoFavorites": "お気に入りの図形はまだありません。",
-    "ui.mirrorAdjustmentsNote": "調整機能はフェーズ4で追加されます。",
     "ui.mirrorAdvancedNote": "ブラシの詳細オプションはフェーズ5で追加されます。",
     "ui.adjustments": "調整",
     "ui.adjustment": "調整項目",

@@ -11,25 +11,47 @@ class FakeElement {
 		this.listeners = new Map();
 		this.textContent = '';
 		this.title = '';
-		this.value = '';
 		this.disabled = false;
+		this.dataset = {};
+		this.classList = {
+			add() {},
+			toggle() {},
+		};
 	}
 
-	appendChild(node) { this.children.push(node); return node; }
-	replaceChildren() { this.children = []; }
+	append(...nodes) { nodes.forEach((node) => { this.children.push(node); node.parentNode = this; }); }
+	appendChild(node) { this.append(node); return node; }
+	replaceChildren(...nodes) { this.children.forEach((node) => { node.parentNode = null; }); this.children = []; this.append(...nodes); }
 	setAttribute(name, value) { this.attributes.set(name, value); }
 	getAttribute(name) { return this.attributes.get(name) ?? null; }
+	removeAttribute(name) { this.attributes.delete(name); }
 	addEventListener(name, listener) { this.listeners.set(name, listener); }
 	removeEventListener(name) { this.listeners.delete(name); }
-	dispatch(name) { this.listeners.get(name)?.({ target: this }); }
+	dispatch(name, details = {}) { this.listeners.get(name)?.({ target: this, preventDefault() {}, ...details }); }
+	dispatchEvent(event) { this.dispatch(event.type); }
+	focus() { this.focused = true; }
+	scrollIntoView() {}
 	remove() { this.removed = true; }
 }
 
+class FakeSelect extends FakeElement {
+	constructor() {
+		super('select');
+		this._value = '';
+	}
+	get options() { return this.children; }
+	get value() { return this._value; }
+	set value(value) {
+		this._value = this.children.some((option) => option.value === value) ? value : '';
+	}
+}
+
 const createDocument = () => ({
-	createElement: (tagName) => new FakeElement(tagName),
+	createElement: (tagName) => tagName === 'select' ? new FakeSelect() : new FakeElement(tagName),
+	defaultView: { Event: class { constructor(type) { this.type = type; } } },
 });
 
-test('recent-text select has form names and preserves full text through truncated options', () => {
+test('recent-text dropdown retains names and titles for full text in custom options', () => {
 	const selected = [];
 	const dropdown = createRecentTextDropdown({
 		documentRef: createDocument(),
@@ -38,45 +60,52 @@ test('recent-text select has form names and preserves full text through truncate
 		placeholder: 'Recent text…',
 		onSelect: (entry) => selected.push(entry),
 	});
-	const select = dropdown.element;
+	const control = dropdown.control;
+	const select = control.source;
+	const root = dropdown.element;
 	const entry = {
 		id: 'entry-1',
 		text: 'A very long recent text value that exceeds the preview limit so the option preview is truncated while its title keeps all of the original content.',
 	};
 
 	dropdown.setEntries([entry]);
-	assert.equal(select.tagName, 'select');
-	assert.equal(select.id, 'text-history-select');
-	assert.equal(select.name, 'textHistorySelect');
-	assert.equal(select.getAttribute('aria-labelledby'), 'text-history-label');
-	assert.equal(select.title, 'Recent text…');
-	assert.equal(select.children[1].title, entry.text);
-	assert.match(select.children[1].textContent, /…$/);
+	assert.equal(root.tagName, 'div');
+	assert.equal(root.id, 'text-history-select');
+	assert.equal(root.getAttribute('name'), 'textHistorySelect');
+	assert.equal(control.trigger.getAttribute('aria-labelledby'), 'text-history-label');
+	assert.equal(control.title, 'Recent text…');
+	assert.equal(control.listbox.children[1].title, entry.text);
+	assert.match(control.listbox.children[1].textContent, /…$/);
 
-	select.value = entry.id;
-	select.dispatch('change');
-	assert.equal(select.title, entry.text);
+	control.setValue(entry.id);
+	assert.equal(control.title, entry.text);
 	assert.deepEqual(selected, [entry]);
 
 	dropdown.setEntries([entry, { id: 'entry-2', text: 'Another entry' }]);
 	assert.equal(select.value, entry.id, 'rerendering entries preserves the active choice');
-	assert.equal(select.title, entry.text);
+	assert.equal(control.title, entry.text);
+	control.trigger.dispatch('click');
+	assert.equal(control.listbox.hidden, false);
+	control.trigger.dispatch('blur');
+	assert.equal(control.listbox.hidden, false, 'focus loss does not collapse the options');
+	control.trigger.dispatch('keydown', { key: 'Escape' });
+	assert.equal(control.listbox.hidden, true, 'Escape is an explicit close action');
 	dropdown.destroy();
-	assert.equal(select.removed, true);
+	assert.equal(root.removed, true);
 });
 
-test('recent-text select remains enabled only when history has entries', () => {
+test('recent-text dropdown remains enabled only when history has entries', () => {
 	const dropdown = createRecentTextDropdown({
 		documentRef: createDocument(),
 		label: 'Restore recent text',
 		placeholder: 'Recent text…',
 	});
-	const select = dropdown.element;
+	const control = dropdown.control;
 
 	dropdown.setEntries([]);
-	assert.equal(select.disabled, true);
+	assert.equal(control.disabled, true);
 	dropdown.setEntries([{ id: 'entry-1', text: 'Earlier text' }]);
-	assert.equal(select.disabled, false);
-	assert.equal(select.title, 'Recent text…');
+	assert.equal(control.disabled, false);
+	assert.equal(control.title, 'Recent text…');
 	dropdown.destroy();
 });

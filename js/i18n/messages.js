@@ -197,7 +197,7 @@ export const EN_MESSAGES = deepFreeze({
 		mirrorDrawing: 'Drawing', mirrorAdvanced: 'Advanced', mirrorAllShapes: 'All shapes',
 		mirrorFavorites: 'Favorites', mirrorSize: 'Size', mirrorOpacity: 'Opacity', mirrorLineSize: 'Line size',
 		mirrorSearchShapes: 'Search shapes', mirrorNoShapeMatches: 'No matching shapes',
-		mirrorNoFavorites: 'No favorite shapes yet.', mirrorAdjustmentsNote: 'Adjustments land in Phase 4.',
+		mirrorNoFavorites: 'No favorite shapes yet.',
 		mirrorAdvancedNote: 'Brush advanced options arrive with Phase 5.',
 		adjustments: 'Adjustments', adjustment: 'Adjustment', adjustmentTarget: 'Apply to',
 		adjustmentDocument: 'Entire image', adjustmentSelection: 'Selection', adjustmentBrushArea: 'Painted area',

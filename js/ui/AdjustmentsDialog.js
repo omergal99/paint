@@ -80,6 +80,7 @@ export const createAdjustmentsDialog = ({
 		[...targetSelect.options].forEach((option) => {
 			if (option.value === 'selection') option.disabled = !hasSelection?.();
 		});
+		targetSelect.refresh?.();
 		paintMaskButton.hidden = !brushArea;
 		clearMaskButton.hidden = !brushArea;
 		invertMaskButton.hidden = !brushArea;
