@@ -66,6 +66,14 @@ for (const asset of [...existingShell, ...missing]) {
   // names must count even though there is nothing to read yet.
   if (fs.existsSync(file)) shellHash.update(fs.readFileSync(file));
 }
+// Include worker behavior in the cache key without making the key depend on
+// its own generated value. This makes cacheShell/install/activate changes
+// invalidate the development/release worker just like changes to app modules.
+const normalizedWorker = worker.replace(
+  /const CACHE_NAME\s*=\s*['"][^'"]+['"];/,
+  "const CACHE_NAME = '__PAINT_CACHE_NAME__';",
+).replace(/const SHELL = \[[\s\S]*?\];/, 'const SHELL = __PAINT_SHELL__;');
+shellHash.update(normalizedWorker);
 const cacheDigest = shellHash.digest('hex').slice(0, 8);
 const expectedCacheName = `paint-shell-v${version.replace(/\./g, '-')}-${cacheDigest}`;
 

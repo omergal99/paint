@@ -66,7 +66,9 @@ test('a selection move records one atomic history entry, not a half-applied step
   assert.match(history, /beginTransaction\(\) \{/);
   assert.match(history, /commitTransaction\(\) \{/);
   assert.match(history, /abortTransaction\(\) \{/);
+  assert.match(history, /const captured = this\.snapshot\(\{ force: true \}\);/);
   assert.match(select, /ctx\.historyManager\.beginTransaction\(\);/);
+  assert.match(select, /setTransactionChanged\?\.\(Boolean\(dx \|\| dy\)\)/);
   assert.doesNotMatch(select, /ctx\.historyManager\.snapshot\(\);/);
 
   // The entry is recorded when the selection is committed, not at pointerdown.

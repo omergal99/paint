@@ -652,7 +652,7 @@ test('settings search keeps text intact and reports only deepest areas', () => {
   assert.match(read('css/styles.css'), /\.settings-tab\.dialog-search-tab-active\s*\{[\s\S]*box-shadow: inset 0 0 0 2px var\(--w10-search-accent\)/);
   assert.match(search, /firstResultIndex = results\.findIndex/);
   assert.match(read('css/styles.css'), /right: 2px[\s\S]*bottom: 2px[\s\S]*min-width: 10px[\s\S]*padding: 0 1px[\s\S]*font-size: 10px[\s\S]*line-height: 12px/);
-  assert.match(main, /if \(\(e\.ctrlKey \|\| e\.metaKey\)[\s\S]*e\.preventDefault\(\);\s*selectAll\(\);/);
+  assert.match(main, /if \(\(e\.ctrlKey \|\| e\.metaKey\)[\s\S]*e\.preventDefault\(\);\s*e\.stopPropagation\(\);\s*selectAll\(\);/);
 });
 
 test('History auto-save toggle + export-all are wired and guarded', () => {
@@ -1331,6 +1331,28 @@ test('the offline shell is generated from the import graph and version-synced', 
 
   // The sync script is the documented way to fix drift.
   assert.match(read('scripts/sync-service-worker-shell.mjs'), /--check/);
+  assert.match(packageJson.scripts.prebuild, /sync-service-worker-shell\.mjs/);
+  assert.match(packageJson.scripts['preverify:release'], /sync-service-worker-shell\.mjs/);
+});
+
+test('global Ctrl+A capture prevents native selection before shortcut dispatch', () => {
+  const capture = main.slice(main.indexOf("window.addEventListener('keydown'"), main.indexOf("window.addEventListener('keydown'") + 400);
+  assert.match(capture, /if \(\(e\.ctrlKey \|\| e\.metaKey\)[\s\S]*e\.preventDefault\(\);\s*e\.stopPropagation\(\);\s*selectAll\(\);\s*\}\s*\}, true\);/);
+  assert.match(main, /window\.addEventListener\('keydown', \(e\) => \{\s*if \(e\.defaultPrevented\) return;/);
+});
+
+test('Delete prioritizes a selected text object over pixel selection deletion', () => {
+  assert.match(read('js/ui/TextSelectionOverlay.js'), /const deleteSelected = \(\) =>/);
+  assert.match(main, /textSelectionOverlay\.deleteSelected\?\.\(\) \|\| deleteSelection\(\)/);
+});
+
+test('text outline preview and raster defaults share a one-pixel width and stored color', () => {
+  assert.match(html, /id="text-outline-stroke-width"[^>]*value="1"/);
+  assert.match(html, /id="text-outline-stroke-width-value"[^>]*>1px</);
+  assert.match(main, /value >= 1 && value <= 20 \? value : 1/);
+  assert.match(read('js/tools/TextTool.js'), /ctx\.getTextStrokeWidth\?\.\(\) \|\| 1/);
+  assert.match(read('js/document/TextLayerRenderer.js'), /context\.strokeStyle = styleSet\.has\('black-outline'\)/);
+  assert.match(read('js/document/TextLayerRenderer.js'), /context\.strokeText\(line, lineX, lineY\)/);
 });
 
 test('sidebar identity, panels and disclosure sections behave as one contract', () => {

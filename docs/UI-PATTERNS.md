@@ -85,18 +85,18 @@ before handoff, not at release time.
 npm run version:patch  # bumps package.json, then version:sync
 ```
 
-`version:sync` writes `js/version.js` (`APP_VERSION`) and the service-worker
-cache name, and re-runs `sw:sync`. The convention is fixed:
+`version:sync` writes `js/version.js` (`APP_VERSION`) and regenerates the
+service-worker cache key from the app version and precache content. Build and
+release-verification lifecycle hooks also run this sync automatically:
 
 | Source | Value |
 |---|---|
 | `package.json` | `1.7.0` |
 | `js/version.js` | `APP_VERSION = '1.7.0'` |
-| `sw.js` | `CACHE_NAME = 'paint-shell-v1-7-0'` |
+| `sw.js` | `CACHE_NAME = 'paint-shell-v1-7-0-<shell-hash>'` |
 
-The cache name is always `paint-shell-v<version with dots replaced by dashes>`.
-A hand-written cache name (for example `paint-shell-v1-8-0` at version 1.7.0)
-is a release-check failure, not a workaround.
+The hash changes whenever a precached source changes. Never edit `CACHE_NAME`
+by hand; run `npm run sw:sync` only when syncing manually during development.
 
 ## Production builds need none of this
 

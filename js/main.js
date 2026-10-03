@@ -874,9 +874,9 @@ const TEXT_STYLE_NAMES = ['outline', 'black-outline', 'shadow', 'neon', 'bold', 
 let currentTextStrokeWidth = (() => {
 	try {
 		const value = Number(localStorage.getItem(TEXT_STROKE_WIDTH_KEY));
-		return Number.isFinite(value) && value >= 1 && value <= 20 ? value : 2;
+		return Number.isFinite(value) && value >= 1 && value <= 20 ? value : 1;
 	} catch {
-		return 2;
+		return 1;
 	}
 })();
 let currentTextStrokeColor = (() => {
@@ -929,7 +929,7 @@ if (textStrokeWidthInput) {
 	textStrokeWidthInput.value = String(currentTextStrokeWidth);
 	if (textStrokeWidthOutput) textStrokeWidthOutput.value = `${currentTextStrokeWidth}px`;
 	textStrokeWidthInput.addEventListener('input', () => {
-		currentTextStrokeWidth = Math.max(1, Math.min(20, Number(textStrokeWidthInput.value) || 2));
+		currentTextStrokeWidth = Math.max(1, Math.min(20, Number(textStrokeWidthInput.value) || 1));
 		if (textStrokeWidthOutput) textStrokeWidthOutput.value = `${currentTextStrokeWidth}px`;
 		try { localStorage.setItem(TEXT_STROKE_WIDTH_KEY, String(currentTextStrokeWidth)); } catch {}
 		window.dispatchEvent(new Event('paint:text-stroke-style-change'));
@@ -1738,7 +1738,7 @@ window.addEventListener('keydown', (e) => {
 		return;
 	}
 	if (action === SHORTCUT_ACTIONS.deleteSelection) {
-		if (deleteSelection()) e.preventDefault();
+		if (textSelectionOverlay.deleteSelected?.() || deleteSelection()) e.preventDefault();
 		return;
 	}
 	const tool = SHORTCUT_TOOL_TARGETS[action];

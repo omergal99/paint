@@ -74,7 +74,7 @@ export const createSelectTool = () => {
       const dy = Math.round(pt.y - state.start.y);
       const x = state.liftedOrigin.x + dx;
       const y = state.liftedOrigin.y + dy;
-      
+      ctx.historyManager.setTransactionChanged?.(Boolean(dx || dy));
       // Update coordinates of the selection. Since setSelection draws floatingCanvas at new coordinates on the overlay, this is all we need!
       ctx.setSelection({ x, y, w: ctx.canvasManager.floatingCanvas.width, h: ctx.canvasManager.floatingCanvas.height });
       return;

@@ -691,22 +691,76 @@ test('selection lift, drag, and drop undo as one pre-lift state', async () => {
 	assert.equal(pixels, 'dropped', 'redo restores the committed destination');
 });
 
-test('consecutive selection moves each reserve a distinct undo snapshot', () => {
+test('consecutive selection moves undo one at a time even when sampled signatures collide', async () => {
 	let pixels = 'start';
 	const history = new HistoryManager({
 		width: 8,
 		height: 8,
-		_pixelsSignature: () => pixels,
+		_pixelsSignature: () => 'same-sampled-signature',
 		canvas: { toDataURL: () => `data:image/png;base64,${pixels}` },
+		loadImageDataUrl: async (source) => {
+			pixels = source.slice('data:image/png;base64,'.length);
+			return true;
+		},
+		persistToStorage: () => {},
 	}, { sessionStorage: memoryStorage() });
 	history.beginTransaction();
 	pixels = 'move-1';
+	history.setTransactionChanged(true);
 	history.commitTransaction();
 	history.beginTransaction();
 	assert.ok(history._transaction?.entry, 'the second move captures the first move’s committed pixels');
 	pixels = 'move-2';
+	history.setTransactionChanged(true);
 	history.commitTransaction();
 	assert.equal(history.undoStack.length, 2);
+	assert.equal(await history.undo(), true);
+	assert.equal(pixels, 'move-1');
+	assert.equal(await history.undo(), true);
+	assert.equal(pixels, 'start');
+});
+
+test('async Blob snapshots remain owned while a selection transaction is open', async () => {
+	let pixels = 'start';
+	let nextUrl = 0;
+	const blobs = new Map();
+	const history = new HistoryManager({
+		width: 8,
+		height: 8,
+		_pixelsSignature: () => 'sample-collision',
+		toBlob: () => Promise.resolve(new Blob([pixels], { type: 'image/png' })),
+		loadImageDataUrl: async (url) => {
+			pixels = await blobs.get(url).text();
+			return true;
+		},
+		persistToStorage: () => {},
+	}, {
+		sessionStorage: memoryStorage(),
+		urlApi: {
+			createObjectURL: (blob) => {
+				const url = `blob:selection-${++nextUrl}`;
+				blobs.set(url, blob);
+				return url;
+			},
+			revokeObjectURL: (url) => blobs.delete(url),
+		},
+	});
+	history.beginTransaction();
+	pixels = 'move-one';
+	history.setTransactionChanged(true);
+	await history.waitForPendingSnapshots();
+	assert.equal(history._transaction.entry.failed, false);
+	history.commitTransaction();
+	history.beginTransaction();
+	pixels = 'move-two';
+	history.setTransactionChanged(true);
+	await history.waitForPendingSnapshots();
+	history.commitTransaction();
+	assert.equal(history.undoStack.length, 2);
+	assert.equal(await history.undo(), true);
+	assert.equal(pixels, 'move-one');
+	assert.equal(await history.undo(), true);
+	assert.equal(pixels, 'start');
 });
 
 test('color contract normalizes alpha without losing legacy hex input', () => {

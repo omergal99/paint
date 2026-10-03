@@ -207,6 +207,7 @@ export class HistoryManager {
   _isManagedEntry(entry) {
     return this.undoStack.includes(entry)
       || this.redoStack.includes(entry)
+      || this._transaction?.entry === entry
       || this._currentEntry === entry;
   }
 
@@ -252,6 +253,10 @@ export class HistoryManager {
       return true;
     };
     const removed = remove(this.undoStack) || remove(this.redoStack);
+    if (this._transaction?.entry === entry) {
+      this._transaction.entry = null;
+      return true;
+    }
     if (this._currentEntry === entry) {
       this._currentEntry = null;
       this._currentSignature = null;
@@ -450,12 +455,19 @@ export class HistoryManager {
   beginTransaction() {
     if (this._suppressed || this._disposed) return false;
     if (this._transaction) this.commitTransaction();
-    const captured = this.snapshot();
-    // `snapshot()` only pushes when the pixels actually changed; inside a
-    // transaction that is fine - we still need the entry to exist as "before".
-    if (!captured) this._transaction = { entry: null, signature: this.canvasManager._pixelsSignature?.() || null };
-    else this._transaction = { entry: this.undoStack.pop(), signature: this._lastSnapshotSig };
+    // A selection can move just a few pixels and evade the sampled canvas
+    // signature. Always capture the pre-lift state; the owning gesture marks
+    // actual movement, and commit drops an unchanged lift.
+    const captured = this.snapshot({ force: true });
+    if (!captured) this._transaction = { entry: null, signature: this.canvasManager._pixelsSignature?.() || null, changed: false };
+    else this._transaction = { entry: this.undoStack.pop(), signature: this._lastSnapshotSig, changed: false };
     this._notify();
+    return true;
+  }
+
+  setTransactionChanged(changed) {
+    if (!this._transaction) return false;
+    this._transaction.changed = Boolean(changed);
     return true;
   }
 
@@ -467,14 +479,13 @@ export class HistoryManager {
     const sig = this.canvasManager._pixelsSignature?.() || null;
     // Nothing changed inside the transaction (e.g. a click that lifted and
     // dropped the selection in place): record nothing rather than a no-op step.
-    if (!transaction.entry || (sig && sig === transaction.signature)) {
+    if (!transaction.entry || (!transaction.changed && sig && sig === transaction.signature)) {
       if (transaction.entry) this._releaseEntry(transaction.entry);
       this._notify();
       return false;
     }
-    // The transaction entry is the pre-lift state. Do not advance the
-    // dedupe signature to the committed pixels; the next transaction must
-    // capture this newly reached state as its own undo boundary.
+    // A marked move can be visually distinct even when it aliases the sampled
+    // pixel signature; the next transaction always takes its own forced capture.
     this.undoStack.push(transaction.entry);
     this._clearRedoStack();
     this._trimToLimits();

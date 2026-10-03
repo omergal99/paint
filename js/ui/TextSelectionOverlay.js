@@ -28,6 +28,15 @@ export const createTextSelectionOverlay = ({
 	let selectedId = null;
 	let dragState = null;
 
+	const deleteSelected = () => {
+		if (!selectedId) return false;
+		const id = selectedId;
+		selectedId = null;
+		onDelete?.({ id });
+		render(store?.getAll?.() || []);
+		return true;
+	};
+
 	const select = (id) => {
 		const object = store?.getAll().find((item) => item.id === id);
 		if (!object) return null;
@@ -101,9 +110,7 @@ export const createTextSelectionOverlay = ({
 				if (event.key === 'Delete' && object.id === selectedId) {
 					event.preventDefault();
 					event.stopPropagation();
-					selectedId = null;
-					onDelete?.({ id: object.id });
-					render(store?.getAll?.() || []);
+					deleteSelected();
 					return;
 				}
 				const deltas = {
@@ -141,6 +148,7 @@ export const createTextSelectionOverlay = ({
 	return Object.freeze({
 		element: layer,
 		select,
+		deleteSelected,
 		clear() {
 			selectedId = null;
 			dragState = null;

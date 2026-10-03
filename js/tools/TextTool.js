@@ -59,7 +59,7 @@ export const createTextTool = () => {
       ? '2px 2px 3px rgba(0,0,0,.45)'
       : styles.has('neon') ? `0 0 8px ${ctx.canvasManager.primaryColor}` : 'none';
     editor.style.webkitTextStroke = styles.has('black-outline')
-      ? `${ctx.getTextStrokeWidth?.() || Math.max(1, fontSize * .06)}px ${ctx.getTextStrokeColor?.() || '#000000'}`
+      ? `${ctx.getTextStrokeWidth?.() || 1}px ${ctx.getTextStrokeColor?.() || '#000000'}`
       : styles.has('outline') ? `${Math.max(1, fontSize * .06)}px ${ctx.canvasManager.primaryColor}` : 'unset';
     editor.style.color = ctx.canvasManager.primaryColor;
 
@@ -146,7 +146,7 @@ export const createTextTool = () => {
       fontFamily: ctx.getFontFamily(),
       color: { ...rgb, a: Number(ctx.canvasManager.primaryAlpha ?? 1) },
       styles: [...styles],
-      strokeWidth: styles.has('black-outline') ? (ctx.getTextStrokeWidth?.() || 2) : 0,
+      strokeWidth: styles.has('black-outline') ? (ctx.getTextStrokeWidth?.() || 1) : 0,
       strokeColor: ctx.getTextStrokeColor?.() || '#000000',
       zIndex: Date.now(),
     };
