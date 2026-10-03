@@ -81,6 +81,11 @@ export const SHORTCUT_ACTIONS = Object.freeze({
 	nudgeRight: 'nudgeRight',
 });
 
+export const SELECTION_MODES = Object.freeze({
+	rectangle: 'rect',
+	lasso: 'lasso',
+});
+
 export const SHORTCUT_DEFINITIONS = Object.freeze([
 	shortcut(SHORTCUT_ACTIONS.undo, 'Undo', 'mod+z'),
 	shortcut(SHORTCUT_ACTIONS.redo, 'Redo', 'mod+y', ['mod+shift+z']),

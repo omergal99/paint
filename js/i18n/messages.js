@@ -109,6 +109,7 @@ export const EN_MESSAGES = deepFreeze({
 		selectionHandleSize: 'Selection handle size', selectionOutlineColor: 'Selection outline color',
 		selectionActiveColor: 'Active selection outline color', selectionPreview: 'Preview selection without frame', selectionReset: 'Reset to Defaults',
 		selectionLabel: 'Selection:', selectingArea: 'Selecting...', selectionMenu: 'Selection', selectAll: 'Select All',
+		selectRectangle: 'Rectangular Selection', selectLasso: 'Free-form Selection',
 		flip: 'Flip', flipHorizontal: 'Flip Horizontal', flipVertical: 'Flip Vertical', showRecentTextToolbar: 'Show Recent text toolbar',
 		systemUiDefaultFont: 'System UI (Default Sans-Serif)',
 		selectTextAfterDraw: 'Select text after draw', textFocusHelp: 'Focus targets are safe; editing existing text remains deferred.',

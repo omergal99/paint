@@ -57,6 +57,8 @@ export const initializeAr = (english) => {
     "ui.systemUiDefaultFont": "واجهة النظام (Sans-Serif افتراضي)",
     "ui.blackOutlineStrokeColor": "لون المخطط الأسود",
     "ui.selectionMenu": "التحديد",
+    "ui.selectRectangle": "تحديد مستطيل",
+    "ui.selectLasso": "تحديد حر",
     "ui.blackOutlineStrokeWidth": "عرض المخطط الأسود",
     "ui.rotate": "تدوير",
     "ui.rotate90": "تدوير 90",

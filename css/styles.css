@@ -2512,7 +2512,6 @@ html[dir="rtl"] .resize-ghost {
    Only the surrounding chrome (toolbar and resize affordances) is UI and must
    stay a fixed on-screen size; those are normalised individually below.
 */
-.text-editor-toolbar,
 .text-editor-shell > .text-editor-resize {
 	transform: scale(var(--zoom-inverse, 1));
 	transform-origin: top left;
@@ -2520,7 +2519,7 @@ html[dir="rtl"] .resize-ghost {
 .text-editor-toolbar {
 	display: grid;
 	grid-template-columns: max-content minmax(0, 1fr) max-content minmax(0, 1fr);
-	align-items: center;
+	align-items: start;
 	gap: 3px;
 	/* Track the shell instead of floating at its own width: the toolbar holds the
 	   recent-text controls, so a narrower shell used to clip them while a wider
@@ -2533,13 +2532,17 @@ html[dir="rtl"] .resize-ghost {
 	box-sizing: border-box;
 	min-height: 24px;
 	width: 100%;
-	padding: 2px 3px;
+	padding: 0 3px;
 	background: color-mix(in srgb, var(--w10-panel-bg, var(--w10-ribbon-bg)) 92%, transparent);
 	border: 1px solid var(--w10-border-strong);
 	border-radius: 3px;
-	font-size: 11px;
+	font-size: 13px;
 	color: var(--w10-text-dim);
 	cursor: move;
+}
+.text-editor-toolbar > * {
+	transform: scale(var(--zoom-inverse, 1));
+	transform-origin: top left;
 }
 .text-editor-toolbar.is-empty {
 	min-height: 24px;
@@ -3871,6 +3874,10 @@ html[dir="rtl"] .submenu-arrow {
 .action-submenu-items {
 	grid-template-columns: minmax(160px, 1fr);
 	min-width: 170px;
+}
+.action-submenu-items [aria-checked="true"] {
+	background: color-mix(in srgb, var(--w10-accent) 18%, var(--w10-ribbon-bg));
+	border-inline-start: 2px solid var(--w10-accent);
 }
 
 /* Shapes gallery (Word/Office style) */

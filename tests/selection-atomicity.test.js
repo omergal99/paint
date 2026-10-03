@@ -45,14 +45,14 @@ test('the handles really are inside the zoom-transformed box', () => {
 });
 
 test('selection handle offsets follow the configured size and distinguish bounds from floats', () => {
-  const main = read('js/main.js');
+  const overlay = read('js/app/selectionOverlayController.js');
   const css = read('css/styles.css');
-  const handles = main.slice(main.indexOf('const handleHalfSize ='), main.indexOf('const bindSelectionHandles ='));
-  assert.match(handles, /--selection-handle-size/);
-  assert.match(handles, /\? size : 9\) \/ 2/);
-  const resize = main.slice(main.indexOf('const bindSelectionHandles ='), main.indexOf('const commitFloatingPixels ='));
-  assert.match(resize, /if \(canvasManager\.floatingCanvas\) canvasManager\.floatingCanvas = scaleCanvas/);
-  assert.match(resize, /setSelection\(\{ x, y, w, h \}, \{ preview: true \}\)/);
+  assert.match(overlay, /--selection-handle-size/);
+  assert.match(overlay, /\? size : 9\) \/ 2/);
+  const resize = overlay.slice(overlay.indexOf('const bindSelectionHandles ='));
+  assert.match(resize, /if \(canvasManager\.floatingCanvas\) \{\s*canvasManager\.floatingCanvas = scaleCanvas/);
+  assert.match(resize, /path: fitPathToBounds\(original\.path, original, nextBounds\)/);
+  assert.match(resize, /setSelection\(\{[\s\S]*?\}, \{ preview: true \}\)/);
   assert.match(css, /\.selection-handle\s*\{[\s\S]*?width: var\(--selection-handle-size/);
 });
 
@@ -105,13 +105,12 @@ test('the selection frame paints differently while selecting and when active', (
   // Two states driven by the *gesture*, not by the size of the region: the frame
   // must stay in the "selecting" colour for the whole marquee drag, otherwise
   // "Selection outline color" shows for about one frame and looks broken.
-  const main = read('js/main.js');
+  const overlay = read('js/app/selectionOverlayController.js');
   const appearance = read('js/services/selection/selectionAppearance.js');
   const css = read('css/styles.css');
 
-  assert.match(main, /const isFloatingSelection = \(\) => Boolean\(canvasManager\.floatingCanvas\);/);
-  assert.match(main, /active: isFloatingSelection\(\)/);
-  assert.doesNotMatch(main, /active: isActiveSelection\(\)/);
+  assert.match(overlay, /active: Boolean\(canvasManager\.floatingCanvas\)/);
+  assert.doesNotMatch(overlay, /active: isActiveSelection\(\)/);
 
   // Two distinct colours, thicker stroke when active.
   assert.match(appearance, /activeOutlineColor/);
@@ -125,15 +124,16 @@ test('the selection frame paints differently while selecting and when active', (
 
 test('preview mode hides the frame and every handle but keeps the float', () => {
   const main = read('js/main.js');
+  const overlay = read('js/app/selectionOverlayController.js');
   const appearance = read('js/services/selection/selectionAppearance.js');
   const panel = read('js/services/selection/selectionPropertiesPanel.js');
 
   // Preview is a sidebar toggle; there is no canvas button.
   assert.match(panel, /id="setting-selection-preview"/);
   assert.match(appearance, /if \(!context \|\| !region \|\| !region\.w \|\| !region\.h \|\| preview\) return false;/);
-  assert.match(main, /preview: selectionPreviewActive/);
+  assert.match(overlay, /preview: isPreviewActive\(\)/);
   // Handles, rotate and the frame all hide while previewing.
-  assert.match(main, /const hidden = selectionPreviewActive \|\| !selectionToolActive/);
+  assert.match(overlay, /const hidden = isPreviewActive\(\) \|\| !isToolActive\(\)/);
   // The preview control lives in the sidebar panel, not the overlay.
   assert.match(main, /document\.getElementById\('setting-selection-preview'\)\?\.checked === true/);
 });
@@ -166,8 +166,8 @@ test('clicking inside a selection does not flash the background fill', () => {
   // pointerdown and the first move. The lift now repaints immediately.
   const select = read('js/tools/SelectTool.js');
   const lift = select.slice(select.indexOf('if (!ctx.canvasManager.floatingCanvas)'));
-  assert.match(lift.slice(0, 700), /fillRegion\(sel, ctx\.canvasManager\.backgroundColor\);/);
-  assert.match(lift.slice(0, 700), /ctx\.setSelection\(\{ \.\.\.sel \}\);/);
+  assert.match(lift.slice(0, 700), /fillRegion\(selection, ctx\.canvasManager\.backgroundColor\);/);
+  assert.match(lift.slice(0, 700), /ctx\.setSelection\(\{ \.\.\.selection \}\);/);
 });
 
 test('selection appearance controls are translated, not hard-coded English', () => {
@@ -238,10 +238,11 @@ test('preview is driven only from the sidebar, not the canvas overlay', () => {
   assert.ok(overlay.includes('id="selection-rotate"'));
   assert.ok(!html.includes('id="selection-preview"'), 'no canvas preview button');
   const main = read('js/main.js');
+  const overlayController = read('js/app/selectionOverlayController.js');
   assert.doesNotMatch(main, /selectionPreviewButton/);
   assert.match(main, /const isSelectionPreviewEnabled = \(\) => document\.getElementById\('setting-selection-preview'\)\?\.checked === true;/);
   // Preview still hides the frame and every handle.
-  assert.match(main, /const hidden = selectionPreviewActive \|\|/);
+  assert.match(overlayController, /const hidden = isPreviewActive\(\) \|\|/);
 });
 
 test('the selection overlay carries the rotate handle', () => {
@@ -358,11 +359,13 @@ test('the text editor shell previews at true canvas scale, chrome stays fixed', 
   // zoom other than 100%. The shell must scale WITH the canvas; only chrome is
   // normalised.
   const css = read('css/styles.css');
-  const shell = css.slice(css.indexOf('.text-editor-shell {'), css.indexOf('.text-editor-toolbar,'));
+  const shell = css.slice(css.indexOf('.text-editor-shell {'), css.indexOf('.text-editor-shell > .text-editor-resize {'));
   assert.ok(!/transform:\s*scale\(var\(--zoom-inverse/.test(shell),
     'the editor shell must not be zoom-inverted: it is a preview of canvas output');
   // The chrome is UI and does get normalised.
-  assert.match(css, /\.text-editor-toolbar,\s*\n\.text-editor-shell > \.text-editor-resize \{[\s\S]{0,200}?transform: scale\(var\(--zoom-inverse, 1\)\)/);
+  assert.match(css, /\.text-editor-toolbar > \* \{[\s\S]{0,100}?transform: scale\(var\(--zoom-inverse, 1\)\)/);
+  assert.match(css, /\.text-editor-toolbar \{[\s\S]{0,500}?width: 100%;/);
+  assert.match(read('js/tools/TextTool.js'), /toolbar\.style\.minHeight = `\$\{24 \/ zoom\}px`/);
   // ViewportManager must actually publish the variable it consumes.
   assert.match(read('js/canvas/ViewportManager.js'), /setProperty\('--zoom-inverse', String\(1 \/ scale\)\)/);
 });
@@ -454,12 +457,11 @@ test('every undo trigger routes through one runUndo/runRedo pair', () => {
 test('selection handles centre on their point at any configured size', () => {
   // Regression: the offset was hardcoded to 4 (half of the 9px default), so
   // growing the handle in Settings shifted every affordance by half the growth.
-  const main = read('js/main.js');
-  assert.match(main, /const handleHalfSize = \(\) => \{/);
-  assert.match(main, /--selection-handle-size/);
-  assert.match(main, /handle\.style\.left = `\$\{x - half\}px`;/);
-  assert.match(main, /handle\.style\.top = `\$\{y - half\}px`;/);
-  assert.doesNotMatch(main, /handle\.style\.left = `\$\{x - 4\}px`;/);
+  const overlay = read('js/app/selectionOverlayController.js');
+  assert.match(overlay, /getPropertyValue\('--selection-handle-size'\)/);
+  assert.match(overlay, /handle\.style\.left = `\$\{x - half\}px`;/);
+  assert.match(overlay, /handle\.style\.top = `\$\{y - half\}px`;/);
+  assert.doesNotMatch(overlay, /handle\.style\.left = `\$\{x - 4\}px`;/);
   // The handle scales about its own centre, so the layout half-size is correct
   // and must not be divided by zoom as well.
   assert.match(read('css/styles.css'), /\.selection-handle \{[\s\S]{0,900}?transform-origin: center/);

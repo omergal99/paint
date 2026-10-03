@@ -5,8 +5,11 @@ import { CanvasResizer } from './canvas/CanvasResizer.js';
 import { HistoryManager } from './history/HistoryManager.js';
 import { ClipboardManager } from './clipboard/ClipboardManager.js';
 import { createClipboardService } from './services/clipboard/clipboardService.js';
-import { paintSelectionFrame, readSelectionAppearance } from './services/selection/selectionAppearance.js';
 import { createSelectionSettings } from './services/selection/selectionSettings.js';
+import { translatePath } from './services/selection/selectionGeometry.js';
+import { createSelectionModeController } from './app/selectionModeController.js';
+import { createSelectionOverlayController } from './app/selectionOverlayController.js';
+import { createImageDropController } from './app/imageDropController.js';
 import { ToolManager } from './tools/ToolManager.js';
 import { createSelectTool } from './tools/SelectTool.js';
 import { appState } from './app/appState.js';
@@ -41,7 +44,7 @@ import { createDeterministicCommandService } from './ai/DeterministicCommandServ
 import { createAiConnectionStore } from './ai/AiConnectionStore.js';
 import { getReleaseNotes } from './releaseNotes.js';
 import { hexToRgb } from './utils/color.js';
-import { rotateCanvas, rotateCanvasByAngle, flipCanvas, scaleCanvas } from './utils/transform.js';
+import { rotateCanvas, rotateCanvasByAngle, flipCanvas } from './utils/transform.js';
 import { APP_VERSION } from './version.js';
 import {
 	DEFAULT_SETTINGS,
@@ -516,6 +519,7 @@ const setDialogUrl = (dialog, extra = {}) => {
 // "this is a real selection, drag inside it to move it". Both colours come from
 // CSS custom properties, so Settings can change them without editing this file.
 let selectionPreviewActive = false;
+let activeToolName = 'select';
 
 // Two genuinely different selection modes, and the difference is whether the
 // pixels have been lifted off the canvas:
@@ -530,7 +534,7 @@ let selectionPreviewActive = false;
 // Driving this off the region's size (the original `isActiveSelection()`) made
 // "active" true on the first pointermove, so the selecting colour showed for
 // about one frame and "Selection outline color" looked like it did nothing.
-const isFloatingSelection = () => Boolean(canvasManager.floatingCanvas);
+let selectionOverlayController;
 
 // Repaint the frame after a mode change. `setSelection` only runs while a gesture
 // is in flight, so without this the last painted frame stayed on screen after the
@@ -553,14 +557,7 @@ const setMarqueeStatus = (active) => {
 	if (!active) repaintSelectionFrame();
 };
 
-const drawSelectionOutline = (region) => {
-	paintSelectionFrame(canvasManager.octx, region, {
-		appearance: readSelectionAppearance(),
-		active: isFloatingSelection(),
-		preview: selectionPreviewActive,
-		zoom: viewportManager.zoom / 100,
-	});
-}
+const drawSelectionOutline = (region) => selectionOverlayController.drawSelectionOutline(region);
 
 const getSelection = () => {
 	return canvasManager.selection;
@@ -602,9 +599,17 @@ const setSelection = (region, opts = {}) => {
 		}
 		drawSelectionOutline(region);
 	}
-	updateSelectionHandles(region);
+	selectionOverlayController.updateSelectionHandles(region);
 	updateCropActionState();
 }
+
+selectionOverlayController = createSelectionOverlayController({
+	canvasManager,
+	viewportManager,
+	setSelection,
+	isToolActive: () => activeToolName === 'select',
+	isPreviewActive: () => selectionPreviewActive,
+});
 
 updateCropActionState();
 
@@ -626,15 +631,10 @@ const nudgeSelection = (dx, dy) => {
 		y: selection.y + dy,
 		w: width,
 		h: height,
+		path: translatePath(selection.path, dx, dy),
 	});
 	return true;
 }
-
-const selectionHandles = [...document.querySelectorAll('[data-selection-handle]')];
-const rotateSelectionHandle = document.getElementById('selection-rotate');
-const selectionActionsBar = document.querySelector('.selection-overlay-actions');
-let activeToolName = 'select';
-let activeSelectionHandleDragCleanup = null;
 
 // Preview mode hides the frame, the corner handles and the rotate control while
 // still compositing the floating pixels. It is driven solely by the
@@ -660,132 +660,6 @@ const selectionSettings = createSelectionSettings({
 	},
 });
 selectionSettings.start();
-
-const stopSelectionHandleDrag = () => {
-	const cleanup = activeSelectionHandleDragCleanup;
-	activeSelectionHandleDragCleanup = null;
-	cleanup?.();
-};
-
-const updateSelectionHandles = (region) => {
-	const selectionToolActive = activeToolName === 'select';
-	// Preview hides every affordance: nothing should suggest the selection can
-	// still be dragged while the user is judging the composite.
-	const hidden = selectionPreviewActive || !selectionToolActive || !region || !region.w || !region.h;
-	selectionHandles.forEach((handle) => {
-		handle.hidden = hidden;
-	});
-	// The rotate + preview pair travels together above the selection.
-	if (selectionActionsBar) {
-		const actionsVisible = !selectionPreviewActive && selectionToolActive && region && region.w && region.h;
-		selectionActionsBar.hidden = !actionsVisible;
-		if (actionsVisible) {
-			// Centre with a transform, not arithmetic on `offsetWidth`: the bar is
-			// `hidden` while previewing, and a hidden element measures 0, so
-			// subtracting half of it shifted the rotate handle right when the
-			// frame came back.
-			selectionActionsBar.style.left = `${region.x + region.w / 2}px`;
-			selectionActionsBar.style.top = `${Math.max(0, region.y - 40)}px`;
-		}
-	}
-	if (rotateSelectionHandle) {
-		rotateSelectionHandle.hidden = hidden || !document.getElementById('rotate-selection-toggle')?.checked;
-	}
-	if (hidden) return;
-	const points = {
-		nw: [region.x, region.y], n: [region.x + region.w / 2, region.y], ne: [region.x + region.w, region.y],
-		e: [region.x + region.w, region.y + region.h / 2], se: [region.x + region.w, region.y + region.h],
-		s: [region.x + region.w / 2, region.y + region.h], sw: [region.x, region.y + region.h], w: [region.x, region.y + region.h / 2],
-	};
-	// Half the handle size, so the square's *centre* lands on the corner/edge point.
-// The old code hardcoded 4 (half of the 9px default), which centred correctly
-// only at that one size: growing the handle in Settings pushed every affordance
-// down and right by half the growth. The handle is scaled about its own centre
-// by `--zoom-inverse`, so dividing by zoom here would double-correct - the
-// layout width is what matters.
-const handleHalfSize = () => {
-	const raw = getComputedStyle(document.documentElement).getPropertyValue('--selection-handle-size').trim();
-	const size = parseFloat(raw);
-	return (Number.isFinite(size) ? size : 9) / 2;
-};
-selectionHandles.forEach((handle) => {
-		const [x, y] = points[handle.dataset.selectionHandle];
-		const half = handleHalfSize();
-		handle.style.left = `${x - half}px`;
-		handle.style.top = `${y - half}px`;
-	});
-}
-
-const bindSelectionHandles = () => {
-	const handleBindings = [];
-	selectionHandles.forEach((handle) => {
-		const onPointerDown = (event) => {
-			stopSelectionHandleDrag();
-			event.preventDefault();
-			event.stopPropagation();
-			const original = { ...canvasManager.selection };
-			const direction = handle.dataset.selectionHandle;
-			const start = viewportManager.clientToImage(event.clientX, event.clientY);
-			const fixed = {
-				x: direction.includes('w') ? original.x + original.w : original.x,
-				y: direction.includes('n') ? original.y + original.h : original.y,
-			};
-			const onMove = (moveEvent) => {
-				const point = viewportManager.clientToImage(moveEvent.clientX, moveEvent.clientY);
-				let x = original.x;
-				let y = original.y;
-				let w = original.w;
-				let h = original.h;
-				if (direction.includes('e')) w = Math.max(1, Math.round(point.x - original.x));
-				if (direction.includes('w')) { w = Math.max(1, Math.round(fixed.x - point.x)); x = fixed.x - w; }
-				if (direction.includes('s')) h = Math.max(1, Math.round(point.y - original.y));
-				if (direction.includes('n')) { h = Math.max(1, Math.round(fixed.y - point.y)); y = fixed.y - h; }
-				// Word-style: hold Shift to keep the aspect ratio while resizing.
-				if (moveEvent.shiftKey && w > 0 && h > 0) {
-					const ratio = original.w / Math.max(1, original.h);
-					if (direction.length === 1) {
-						// Edge handle: derive the other dimension from the ratio.
-						if (direction === 'e' || direction === 'w') h = Math.max(1, Math.round(w / ratio));
-						else w = Math.max(1, Math.round(h * ratio));
-					} else {
-						// Corner handle: fit the dragged box into the ratio.
-						if (w / h > ratio) w = Math.max(1, Math.round(h * ratio));
-						else h = Math.max(1, Math.round(w / ratio));
-					}
-					if (direction.includes('w')) x = fixed.x - w;
-					if (direction.includes('n')) y = fixed.y - h;
-				}
-				if (canvasManager.floatingCanvas) canvasManager.floatingCanvas = scaleCanvas(canvasManager.floatingCanvas, w, h);
-				setSelection({ x, y, w, h }, { preview: true });
-			};
-			let finished = false;
-			const cleanup = () => {
-				if (finished) return;
-				finished = true;
-				window.removeEventListener('pointermove', onMove);
-				window.removeEventListener('pointerup', onUp);
-				window.removeEventListener('pointercancel', onCancel);
-				if (activeSelectionHandleDragCleanup === cleanup) activeSelectionHandleDragCleanup = null;
-			};
-			const onUp = () => {
-				cleanup();
-				canvasManager.persistToStorage();
-			};
-			const onCancel = () => cleanup();
-			window.addEventListener('pointermove', onMove);
-			window.addEventListener('pointerup', onUp, { once: true });
-			window.addEventListener('pointercancel', onCancel, { once: true });
-			activeSelectionHandleDragCleanup = cleanup;
-			void start;
-		};
-		handle.addEventListener('pointerdown', onPointerDown);
-		handleBindings.push(() => handle.removeEventListener('pointerdown', onPointerDown));
-	});
-	return () => {
-		stopSelectionHandleDrag();
-		handleBindings.forEach((dispose) => dispose());
-	};
-}
 
 const commitFloatingPixels = (region) => {
 	return commitLayerWithSourceOver(canvasManager.ctx, canvasManager.floatingCanvas, region);
@@ -1034,8 +908,9 @@ fontFamilyPicker = createFontFamilyPicker({
 
 // ---------- Tools ----------
 const toolManager = new ToolManager({ surface: overlayEl, viewportManager, toolContext, statusBar });
+const selectTool = createSelectTool();
 [
-	createSelectTool(),
+	selectTool,
 	createPencilTool(),
 	createBrushTool(),
 	createEraserTool(),
@@ -1058,6 +933,12 @@ toolManager.setActive = (name) => {
 	saveToolSelection(name);
 	appState.dispatch({ type: 'tool/changed', payload: name });
 };
+createSelectionModeController({
+	selectTool,
+	toolManager,
+	rectangleButton: document.getElementById('btn-select-rectangle'),
+	lassoButton: document.getElementById('btn-select-lasso'),
+});
 
 // Text-only clipboard paste opens the text tool prefilled at the same
 // placement anchor as image paste: current pointer, or 0,0 on a clean doc.
@@ -1169,7 +1050,7 @@ const transforms = initCanvasTransforms({
 	getActiveToolName: () => activeToolName,
 });
 const { applyTransformation, destroyRotateSelectionHandleBinding } = transforms;
-const destroySelectionHandleBindings = bindSelectionHandles();
+const destroySelectionHandleBindings = selectionOverlayController.bindSelectionHandles();
 
 // Panels that keep their own controls open (Shapes gallery, Text options) are
 // declared in markup with .menu-stay-open. ActionMenuController owns that rule;
@@ -1488,7 +1369,7 @@ defaultCanvasHeightInput?.addEventListener('input', () => {
 document.getElementById('btn-settings').addEventListener('click', () => openSettingsDialog());
 document.getElementById('settings-footer-close')?.addEventListener('click', () => settingsDialog.close());
 document.getElementById('rotate-selection-toggle')?.addEventListener('change', (event) => {
-	updateSelectionHandles(canvasManager.selection);
+	selectionOverlayController.updateSelectionHandles(canvasManager.selection);
 	saveSettings();
 });
 
@@ -1588,7 +1469,7 @@ const toolbarToolChange = toolManager.onToolChange;
 toolManager.onToolChange = (name) => {
 	activeToolName = name;
 	toolbarToolChange?.(name);
-	updateSelectionHandles(canvasManager.selection);
+	selectionOverlayController.updateSelectionHandles(canvasManager.selection);
 };
 
 document.querySelectorAll('.text-style-option').forEach((button) => {
@@ -1738,16 +1619,9 @@ const clipboardService = createClipboardService({
 clipboardService.attach();
 
 // ---------- Drag and Drop ----------
-window.addEventListener('dragover', (e) => e.preventDefault());
-window.addEventListener('drop', async (e) => {
-	e.preventDefault();
-	const file = e.dataTransfer?.files?.[0];
-	if (file && file.type.startsWith('image/')) {
-		const result = await clipboardManager.insertImageBlob(file, {
-			sourceLabel: `Dropped ${file.name}`,
-		});
-		if (result) fileHandle = null;
-	}
+const imageDropController = createImageDropController({
+	insertImageBlob: (file, options) => clipboardManager.insertImageBlob(file, options),
+	onImageImported: () => { fileHandle = null; },
 });
 
 let editorDestroyed = false;
@@ -1759,6 +1633,7 @@ const destroyEditor = () => {
 	// pointer handlers, geometry observers, history Blob URLs, or panel frames.
 	historyManager.persistSession();
 	dataTagObserver?.disconnect();
+	imageDropController.destroy();
 	destroySelectionHandleBindings();
 	destroyRotateSelectionHandleBinding();
 	toolManager.destroy();

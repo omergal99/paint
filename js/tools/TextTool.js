@@ -50,6 +50,12 @@ export const createTextTool = () => {
   const applyEditorStyle = (ctx) => {
     if (!editor) return;
 
+    const zoom = Math.max(0.01, Number(ctx.viewportManager.zoom || 100) / 100);
+    const toolbar = editorShell?.querySelector('.text-editor-toolbar');
+    if (toolbar) {
+      toolbar.style.minHeight = `${24 / zoom}px`;
+      toolbar.style.gridTemplateRows = `${Math.max(0, 24 / zoom - 2)}px`;
+    }
     const fontSize = getRenderSize(ctx);
     const styles = getStyleSet(ctx);
     editor.style.font = getFontDeclaration(ctx, fontSize, styles);

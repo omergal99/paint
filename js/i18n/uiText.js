@@ -45,6 +45,8 @@ export const UI_TEXT_KEYS = Object.freeze({
 	'Text font family': 'ui.textFontFamily',
 	'System UI (Default Sans-Serif)': 'ui.systemUiDefaultFont',
 	Selection: 'ui.selectionMenu',
+	'Rectangular Selection': 'ui.selectRectangle',
+	'Free-form Selection': 'ui.selectLasso',
 	'Restore Image by Override': 'ui.restoreOverrideTitle',
 	'Replace the current canvas with this saved image? Unsaved changes will be lost.': 'ui.restoreOverrideMessage',
 	Override: 'ui.restoreOverrideAction',

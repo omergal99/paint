@@ -6,6 +6,7 @@
 // spread across the outline painter, the handle positioner and the stylesheet.
 // Settings write CSS custom properties; nothing here reads them back, so the
 // stylesheet stays the single source for colour and size.
+import { traceSelectionPath } from './selectionGeometry.js';
 
 export const DEFAULT_SELECTION_APPEARANCE = Object.freeze({
   // Canvas-pixel stroke widths. Divided by zoom at paint time so the dashes
@@ -69,8 +70,14 @@ export const paintSelectionFrame = (context, region, {
   context.strokeStyle = active ? appearance.activeOutlineColor : appearance.outlineColor;
   context.lineWidth = (active ? appearance.activeOutlineWidth : appearance.outlineWidth) / scale;
   context.setLineDash(appearance.dashPattern.map((value) => value / scale));
-  // Half-pixel offset keeps a 1px stroke from smearing across two pixels.
-  context.strokeRect(region.x + 0.5 / scale, region.y + 0.5 / scale, region.w, region.h);
+  if (traceSelectionPath(context, region)) {
+    context.lineJoin = 'round';
+    context.lineCap = 'round';
+    context.stroke();
+  } else {
+    // Half-pixel offset keeps a 1px stroke from smearing across two pixels.
+    context.strokeRect(region.x + 0.5 / scale, region.y + 0.5 / scale, region.w, region.h);
+  }
   context.restore();
   return true;
 };

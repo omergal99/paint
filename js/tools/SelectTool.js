@@ -1,133 +1,182 @@
-// js/tools/SelectTool.js
-// Default tool. Drag on empty canvas to draw a marquee. Drag inside an existing
-// selection to move it (lifting the pixels and leaving a background-color hole,
-// same as classic Paint's "move selection" behavior).
+import { SELECTION_MODES } from '../core/constants.js';
+import {
+	appendLassoPoint,
+	getPathBounds,
+	isPointInPath,
+	translatePath,
+} from '../services/selection/selectionGeometry.js';
 
-export const createSelectTool = () => {
-  const state = { start: null, moving: false, liftedOrigin: null };
+const inside = (point, selection) => point.x >= selection.x && point.x <= selection.x + selection.w
+	&& point.y >= selection.y && point.y <= selection.y + selection.h;
 
-  const onActivate = (ctx) => {
-    // Keep selection if it's already floating (e.g. on paste). Also drop any
-    // gesture state a mid-gesture tool switch may have left behind - otherwise
-    // the next plain mouse move would ghost-draw a marquee from a stale
-    // pointerdown point.
-    state.start = null;
-    state.moving = false;
-    ctx.setMarqueeStatus?.(false);
-  }
+export const createSelectTool = ({
+	requestFrame = globalThis.requestAnimationFrame?.bind(globalThis) ?? ((callback) => setTimeout(callback, 0)),
+	cancelFrame = globalThis.cancelAnimationFrame?.bind(globalThis) ?? clearTimeout,
+} = {}) => {
+	const state = {
+		mode: SELECTION_MODES.rectangle,
+		start: null,
+		moving: false,
+		liftedOrigin: null,
+		originalSelection: null,
+		path: [],
+		pendingFrame: null,
+	};
 
-  const onDeactivate = (ctx) => {
-    ctx.setMarqueeStatus?.(false);
-    ctx.commitFloatingSelection();
-  }
+	const cancelPreview = () => {
+		if (state.pendingFrame === null) return;
+		cancelFrame(state.pendingFrame);
+		state.pendingFrame = null;
+	};
 
-  const onDown = (pt, ctx) => {
-    // A normal pixel selection must own any committed text pixels first.
-    // Text focus targets do not reach this surface, so moving text itself never
-    // takes this path.
-    ctx.flattenLayers?.();
-    const sel = ctx.getSelection();
-    if (sel && inside(pt, sel)) {
-      // Begin moving the existing selection.
-      state.moving = true;
-      state.start = pt;
-      state.liftedOrigin = { x: sel.x, y: sel.y };
+	const updateLassoPreview = (ctx) => {
+		if (state.pendingFrame !== null) return;
+		state.pendingFrame = requestFrame(() => {
+			state.pendingFrame = null;
+			const bounds = getPathBounds(state.path);
+			if (bounds) ctx.setSelection({ ...bounds, path: [...state.path] });
+		});
+	};
 
-      // If it's not floating yet, lift the pixels now. The whole move is one
-      // atomic history entry: `beginTransaction` captures the "before" pixels
-      // and the entry is recorded when the selection is committed, so a single
-      // Ctrl+Z steps back over the entire move instead of half of it.
-      if (!ctx.canvasManager.floatingCanvas) {
-        ctx.historyManager.beginTransaction();
-        ctx.canvasManager.floatingCanvas = ctx.canvasManager.extractRegion(sel);
-        ctx.canvasManager.fillRegion(sel, ctx.canvasManager.backgroundColor);
-        // Re-composite the lifted pixels onto the overlay straight away.
-        // Without this the region showed the background fill (usually white)
-        // from pointerdown until the first pointermove, which is the "white
-        // flash" when clicking inside an active selection.
-        ctx.setSelection({ ...sel });
-      }
-      return;
-    }
+	const clampPoint = (point, canvasManager) => ({
+		x: Math.max(0, Math.min(canvasManager.width, point.x)),
+		y: Math.max(0, Math.min(canvasManager.height, point.y)),
+	});
 
-    // Clicked outside: commit the existing floating selection first!
-    ctx.commitFloatingSelection();
+	const onActivate = (ctx) => {
+		state.start = null;
+		state.moving = false;
+		state.path = [];
+		state.originalSelection = null;
+		ctx.setMarqueeStatus?.(false);
+	};
 
-    // Start drawing a new marquee box. Tell the user a gesture is in progress:
-    // until the pointer is released this region only defines an area and its
-    // pixels cannot be moved yet.
-    state.moving = false;
-    state.start = pt;
-    ctx.setMarqueeStatus?.(true);
-    ctx.setSelection({ x: Math.round(pt.x), y: Math.round(pt.y), w: 0, h: 0 });
-  }
+	const onDeactivate = (ctx) => {
+		cancelPreview();
+		ctx.setMarqueeStatus?.(false);
+		ctx.commitFloatingSelection();
+	};
 
-  const onMove = (pt, ctx) => {
-    if (!state.start) return;
-    // A *new* marquee may only define an area inside the canvas: dragging past
-    // the edge must not create a selection that hangs over the border. Moving an
-    // existing float is deliberately NOT clamped here, so a drag can push it
-    // off-canvas exactly like the arrow-key nudge does.
-    const bound = (value, limit) => Math.max(0, Math.min(limit, value));
-    if (state.moving) {
-      const dx = Math.round(pt.x - state.start.x);
-      const dy = Math.round(pt.y - state.start.y);
-      const x = state.liftedOrigin.x + dx;
-      const y = state.liftedOrigin.y + dy;
-      ctx.historyManager.setTransactionChanged?.(Boolean(dx || dy));
-      // Update coordinates of the selection. Since setSelection draws floatingCanvas at new coordinates on the overlay, this is all we need!
-      ctx.setSelection({ x, y, w: ctx.canvasManager.floatingCanvas.width, h: ctx.canvasManager.floatingCanvas.height });
-      return;
-    }
-    const x = Math.min(state.start.x, pt.x);
-    const y = Math.min(state.start.y, pt.y);
-    const w = Math.abs(pt.x - state.start.x);
-    const h = Math.abs(pt.y - state.start.y);
-    // Clamp the marquee rectangle itself to the canvas, so neither edge can be
-    // dragged past the border.
-    const limitW = ctx.canvasManager.width;
-    const limitH = ctx.canvasManager.height;
-    const rx = bound(x, limitW);
-    const ry = bound(y, limitH);
-    const rw = Math.min(w, limitW - rx);
-    const rh = Math.min(h, limitH - ry);
-    ctx.setSelection({ x: Math.round(rx), y: Math.round(ry), w: Math.round(rw), h: Math.round(rh) });
-  }
+	const onDown = (point, ctx) => {
+		ctx.flattenLayers?.();
+		const selection = ctx.getSelection();
+		const hitsSelection = selection && (
+			Array.isArray(selection.path) ? isPointInPath(point, selection.path) : inside(point, selection)
+		);
+		if (hitsSelection) {
+			state.moving = true;
+			state.start = point;
+			state.liftedOrigin = { x: selection.x, y: selection.y };
+			state.originalSelection = {
+				...selection,
+				path: Array.isArray(selection.path) ? [...selection.path] : undefined,
+			};
+			if (!ctx.canvasManager.floatingCanvas) {
+				ctx.historyManager.beginTransaction();
+				ctx.canvasManager.floatingCanvas = ctx.canvasManager.extractRegion(selection);
+				ctx.canvasManager.fillRegion(selection, ctx.canvasManager.backgroundColor);
+				ctx.setSelection({ ...selection });
+			}
+			return;
+		}
 
-  const onUp = (pt, ctx) => {
-    // Clear the marquee indicator before any early return: a gesture that ends
-    // without a start (tool switched mid-drag, cancelled pointer) would otherwise
-    // leave "Selecting..." stuck in the status bar forever.
-    ctx.setMarqueeStatus?.(false);
-        // Lifting the pixels switches the selection into the "active float" mode,
-        // which changes the frame colour and stroke. `setSelection` below already
-        // repaints, and the early return here would skip it, so ask for a repaint.
-        ctx.repaintSelectionFrame?.();
-        if (!state.start) return;
-    if (state.moving) {
-      state.moving = false;
-      ctx.canvasManager.persistToStorage();
-    } else {
-      // If we were drawing a marquee, check if it has 0 area.
-      const sel = ctx.getSelection();
-      if (sel && (sel.w === 0 || sel.h === 0)) {
-        ctx.setSelection(null);
-      }
-    }
-    state.start = null;
-  }
+		ctx.commitFloatingSelection();
+		state.moving = false;
+		state.originalSelection = null;
+		state.start = point;
+		ctx.setMarqueeStatus?.(true);
+		if (state.mode === SELECTION_MODES.lasso) {
+			state.path = [clampPoint(point, ctx.canvasManager)];
+			ctx.setSelection(null);
+			return;
+		}
+		state.path = [];
+		ctx.setSelection({ x: Math.round(point.x), y: Math.round(point.y), w: 0, h: 0 });
+	};
 
-  const onCancel = (_pt, ctx) => {
-    if (!state.moving) ctx.setSelection(null);
-    ctx.setMarqueeStatus?.(false);
-    state.start = null;
-    state.moving = false;
-    state.liftedOrigin = null;
-  }
+	const onMove = (point, ctx) => {
+		if (!state.start) return;
+		if (state.moving) {
+			const dx = Math.round(point.x - state.start.x);
+			const dy = Math.round(point.y - state.start.y);
+			const x = state.liftedOrigin.x + dx;
+			const y = state.liftedOrigin.y + dy;
+			ctx.historyManager.setTransactionChanged?.(Boolean(dx || dy));
+			ctx.setSelection({
+				x,
+				y,
+				w: ctx.canvasManager.floatingCanvas.width,
+				h: ctx.canvasManager.floatingCanvas.height,
+				path: translatePath(state.originalSelection.path, dx, dy),
+			});
+			return;
+		}
+		if (state.mode === SELECTION_MODES.lasso) {
+			appendLassoPoint(state.path, clampPoint(point, ctx.canvasManager));
+			updateLassoPreview(ctx);
+			return;
+		}
 
-  const inside = (pt, sel) => {
-    return pt.x >= sel.x && pt.x <= sel.x + sel.w && pt.y >= sel.y && pt.y <= sel.y + sel.h;
-  }
+		const x = Math.min(state.start.x, point.x);
+		const y = Math.min(state.start.y, point.y);
+		const rx = Math.max(0, Math.min(ctx.canvasManager.width, x));
+		const ry = Math.max(0, Math.min(ctx.canvasManager.height, y));
+		const w = Math.min(Math.abs(point.x - state.start.x), ctx.canvasManager.width - rx);
+		const h = Math.min(Math.abs(point.y - state.start.y), ctx.canvasManager.height - ry);
+		ctx.setSelection({ x: Math.round(rx), y: Math.round(ry), w: Math.round(w), h: Math.round(h) });
+	};
 
-  return { name: 'select', cursor: 'crosshair', onActivate, onDeactivate, onDown, onMove, onUp, onCancel, _inside: inside };
-}
+	const onUp = (point, ctx) => {
+		ctx.setMarqueeStatus?.(false);
+		ctx.repaintSelectionFrame?.();
+		if (!state.start) return;
+		if (state.moving) {
+			state.moving = false;
+			state.originalSelection = null;
+			ctx.canvasManager.persistToStorage();
+		} else if (state.mode === SELECTION_MODES.lasso) {
+			cancelPreview();
+			appendLassoPoint(state.path, clampPoint(point, ctx.canvasManager));
+			const bounds = getPathBounds(state.path);
+			ctx.setSelection(bounds ? { ...bounds, path: [...state.path] } : null);
+			state.path = [];
+		} else {
+			const selection = ctx.getSelection();
+			if (selection && (!selection.w || !selection.h)) ctx.setSelection(null);
+		}
+		state.start = null;
+		state.liftedOrigin = null;
+	};
+
+	const onCancel = (_point, ctx) => {
+		cancelPreview();
+		if (!state.moving) ctx.setSelection(null);
+		ctx.setMarqueeStatus?.(false);
+		state.start = null;
+		state.moving = false;
+		state.liftedOrigin = null;
+		state.originalSelection = null;
+		state.path = [];
+	};
+
+	const setMode = (mode) => {
+		if (mode !== SELECTION_MODES.rectangle && mode !== SELECTION_MODES.lasso) {
+			throw new RangeError(`Unsupported selection mode: ${mode}`);
+		}
+		state.mode = mode;
+	};
+
+	return {
+		name: 'select',
+		cursor: 'crosshair',
+		onActivate,
+		onDeactivate,
+		onDown,
+		onMove,
+		onUp,
+		onCancel,
+		setMode,
+		getMode: () => state.mode,
+		_inside: inside,
+	};
+};

@@ -8,6 +8,7 @@
 import { assessImageAdmission } from '../storage/ImageAdmission.js';
 import { EVENTS } from '../core/constants.js';
 import { LEGACY_WORKING_CANVAS_KEY } from '../storage.js';
+import { traceSelectionPath } from '../services/selection/selectionGeometry.js';
 
 // Memory guard for shape-layer measurement: reading more than this many pixels
 // in one getImageData call (16M px ≈ 64 MB RGBA) risks a failed allocation on
@@ -362,7 +363,17 @@ export class CanvasManager {
     const out = document.createElement('canvas');
     out.width = r.w;
     out.height = r.h;
-    out.getContext('2d').drawImage(this.createCompositeCanvas(), r.x, r.y, r.w, r.h, 0, 0, r.w, r.h);
+    const context = out.getContext('2d');
+    if (Array.isArray(r.path) && r.path.length >= 3) {
+      context.save();
+      context.translate(-r.x, -r.y);
+      traceSelectionPath(context, r);
+      context.clip();
+      context.drawImage(this.createCompositeCanvas(), r.x, r.y, r.w, r.h, 0, 0, r.w, r.h);
+      context.restore();
+    } else {
+      context.drawImage(this.createCompositeCanvas(), r.x, r.y, r.w, r.h, 0, 0, r.w, r.h);
+    }
     return out;
   }
 
@@ -474,6 +485,7 @@ export class CanvasManager {
   /** Fill a region with a color (used when cutting/moving a selection). */
   fillRegion(region, color) {
     this.ctx.save();
+    if (traceSelectionPath(this.ctx, region)) this.ctx.clip();
     this._paintBackground(this.ctx, region.x, region.y, region.w, region.h, color);
     this.ctx.restore();
   }

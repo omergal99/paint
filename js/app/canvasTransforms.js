@@ -4,6 +4,7 @@
 // main.js now lives here, and main.js reaches it only through the exported
 // state helpers, so there is exactly one owner for the rotation snapshot.
 import { rotateCanvas, rotateCanvasByAngle, flipCanvas, scaleCanvas } from '../utils/transform.js';
+import { flipPathInBounds, rotatePathToBounds } from '../services/selection/selectionGeometry.js';
 import { t } from '../i18n/messages.js';
 
 // Rotation snapshot for the current selection. Kept module-scoped so
@@ -56,7 +57,7 @@ export const initCanvasTransforms = ({
     activeSelectionRotationDragCleanup = null;
     cleanup?.();
   };
-const applyTransformation = (transformFn) => {
+const applyTransformation = (transformFn, transformSelectionPath = null) => {
 	// A menu transform starts a new operation; do not use a previous rotate
 	// handle's base canvas for it.
 	selectionRotation = null;
@@ -78,12 +79,16 @@ const applyTransformation = (transformFn) => {
 		const nw = newCanvas.width;
 		const nh = newCanvas.height;
 
-		setSelection({
+		const nextRegion = {
 			x: cx - nw / 2,
 			y: cy - nh / 2,
 			w: nw,
-			h: nh
-		});
+			h: nh,
+		};
+		if (selection.path) nextRegion.path = transformSelectionPath
+			? transformSelectionPath(selection.path, selection, nextRegion)
+			: undefined;
+		setSelection(nextRegion);
 	} else {
 		// Transform entire canvas
 		const newCanvas = transformFn(canvasManager.canvas);
@@ -92,9 +97,18 @@ const applyTransformation = (transformFn) => {
 	persistSession();
 }
 
-document.getElementById('btn-rotate-90').addEventListener('click', () => applyTransformation(c => rotateCanvas(c, 1)));
-document.getElementById('btn-rotate-180').addEventListener('click', () => applyTransformation(c => rotateCanvas(c, 2)));
-document.getElementById('btn-rotate-270').addEventListener('click', () => applyTransformation(c => rotateCanvas(c, 3)));
+document.getElementById('btn-rotate-90').addEventListener('click', () => applyTransformation(
+	(c) => rotateCanvas(c, 1),
+	(path, from, to) => rotatePathToBounds(path, from, to, 90),
+));
+document.getElementById('btn-rotate-180').addEventListener('click', () => applyTransformation(
+	(c) => rotateCanvas(c, 2),
+	(path, from, to) => rotatePathToBounds(path, from, to, 180),
+));
+document.getElementById('btn-rotate-270').addEventListener('click', () => applyTransformation(
+	(c) => rotateCanvas(c, 3),
+	(path, from, to) => rotatePathToBounds(path, from, to, 270),
+));
 document.getElementById('btn-rotate-free').addEventListener('click', async () => {
 	const value = await dialogService.prompt({
 		title: t('ui.freeRotate'),
@@ -104,10 +118,19 @@ document.getElementById('btn-rotate-free').addEventListener('click', async () =>
 		confirmLabel: t('ui.rotate'),
 	});
 	const degrees = Number.parseFloat(value);
-	if (Number.isFinite(degrees)) applyTransformation(c => rotateCanvasByAngle(c, degrees));
+	if (Number.isFinite(degrees)) applyTransformation(
+		(c) => rotateCanvasByAngle(c, degrees),
+		(path, from, to) => rotatePathToBounds(path, from, to, degrees),
+	);
 });
-document.getElementById('btn-flip-horizontal').addEventListener('click', () => applyTransformation(c => flipCanvas(c, true)));
-document.getElementById('btn-flip-vertical').addEventListener('click', () => applyTransformation(c => flipCanvas(c, false)));
+document.getElementById('btn-flip-horizontal').addEventListener('click', () => applyTransformation(
+	(c) => flipCanvas(c, true),
+	(path, bounds) => flipPathInBounds(path, bounds, true),
+));
+document.getElementById('btn-flip-vertical').addEventListener('click', () => applyTransformation(
+	(c) => flipCanvas(c, false),
+	(path, bounds) => flipPathInBounds(path, bounds, false),
+));
 document.getElementById('btn-crop').addEventListener('click', crop);
 document.getElementById('btn-remove-bg').addEventListener('click', () => { void backgroundRemovalController.open(); });
 const bindRotateSelectionHandle = () => {
@@ -240,6 +263,12 @@ const renderSelectionRotation = (rotationState) => {
 			y: center.y - canvas.height / 2,
 			w: canvas.width,
 			h: canvas.height,
+			path: rotatePathToBounds(rotationState.selection.path, rotationState.selection, {
+				x: center.x - canvas.width / 2,
+				y: center.y - canvas.height / 2,
+				w: canvas.width,
+				h: canvas.height,
+			}, degrees),
 		},
 	};
 }

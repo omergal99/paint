@@ -1020,7 +1020,7 @@ test('Round-2 fixes: V glyph, session persistence, view-aware actions, storage m
   assert.match(read('js/tools/EmojiStore.js'), /EMOJI_CATALOG/);
   assert.match(read('js/tools/ShapeTool.js'), /case 'emoji'/);
   assert.match(read('js/ui/Toolbar.js'), /getSelectedEmoji/);
-  assert.match(main, /hold Shift to keep the aspect ratio/);
+  assert.match(read('js/app/selectionOverlayController.js'), /moveEvent\.shiftKey && w > 0 && h > 0/);
   assert.match(read('css/styles.css'), /\.shape-emoji-grid/);
   // Emoji tiles live inside `.action-menu-items`, so their rules must be scoped
   // under `.shape-gallery` (0,2,0 > 0,1,1) to out-specify `.action-menu-items
@@ -1151,7 +1151,7 @@ test('select after draw: a lifted shape is a layer, and unload bakes it', () => 
   assert.match(main, /pagehide'[\s\S]{0,200}?commitFloatingSelection\(\)/);
   // Moving a lifted layer must not lift + erase again (that erased artwork under
   // the shape). SelectTool only lifts when nothing is floating yet.
-  assert.match(read('js/tools/SelectTool.js'), /if \(!ctx\.canvasManager\.floatingCanvas\) \{[\s\S]*?fillRegion\(sel, ctx\.canvasManager\.backgroundColor\)/);
+  assert.match(read('js/tools/SelectTool.js'), /if \(!ctx\.canvasManager\.floatingCanvas\) \{[\s\S]*?fillRegion\(selection, ctx\.canvasManager\.backgroundColor\)/);
   // The click that places the shape is mid-gesture: the tool restore must be
   // deferred to that gesture's pointerup (ToolManager), never applied during
   // onDown - an immediate switch leaves SelectTool a stale drag start + 0x0
@@ -1170,8 +1170,9 @@ test('select after draw: a lifted shape is a layer, and unload bakes it', () => 
 
 test('selection-handle drags are explicitly released with the editor', () => {
 	const destroyEditorBlock = main.match(/const destroyEditor = \(\) => \{[\s\S]*?\n\};/)?.[0] || '';
-	assert.match(main, /const bindSelectionHandles = \(\) => \{[\s\S]*?handle\.removeEventListener\('pointerdown', onPointerDown\)[\s\S]*?stopSelectionHandleDrag\(\)/);
-	assert.match(main, /const destroySelectionHandleBindings = bindSelectionHandles\(\);/);
+	const selectionOverlay = read('js/app/selectionOverlayController.js');
+	assert.match(selectionOverlay, /const bindSelectionHandles = \(\) => \{[\s\S]*?handle\.removeEventListener\('pointerdown', onPointerDown\)[\s\S]*?stopDrag\(\)/);
+	assert.match(main, /const destroySelectionHandleBindings = selectionOverlayController\.bindSelectionHandles\(\);/);
 	const transforms = read('js/app/canvasTransforms.js');
 	assert.match(transforms, /const bindRotateSelectionHandle = \(\) => \{[\s\S]*?stopSelectionRotationDrag\(\)[\s\S]*?rotateSelectionHandle\.removeEventListener\('pointerdown', onPointerDown\)/);
 	assert.match(transforms, /window\.addEventListener\('pointercancel', onCancel, \{ once: true \}\);/);
