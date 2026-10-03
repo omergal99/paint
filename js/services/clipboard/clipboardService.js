@@ -72,6 +72,11 @@ export const createClipboardService = ({
    */
   const handlePaste = async (event) => {
     if (isEditableTarget(event.target)) return; // let the field paste normally
+    if (clipboardManager.pendingInternalPaste && clipboardManager.lastCopiedBlob) {
+      event.preventDefault();
+      await clipboardManager.pasteLastCopied();
+      return;
+    }
     if (await pasteEventImage(event)) return;
     // Image-less paste: route text/plain into the text tool instead of doing
     // nothing. Still clipboardData only - Cmd+V never calls clipboard.read().
@@ -79,6 +84,11 @@ export const createClipboardService = ({
     if (text && text.trim()) {
       event.preventDefault();
       await routeText?.(text);
+      return;
+    }
+    if (clipboardManager.pendingInternalPaste && clipboardManager.lastCopiedBlob && clipboardManager.pasteLastCopied) {
+      event.preventDefault();
+      await clipboardManager.pasteLastCopied();
       return;
     }
     flash('Clipboard has no image to paste');

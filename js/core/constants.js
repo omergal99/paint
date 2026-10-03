@@ -195,4 +195,5 @@ export const DEFAULT_SETTINGS = Object.freeze({
 	favoriteShapes: [],
 	showRotateInSelection: true,
 	shortcuts: DEFAULT_SHORTCUT_BINDINGS,
+	adjustParams: {},
 });

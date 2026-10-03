@@ -259,11 +259,22 @@
 									</button>
 									<div class="action-menu-items action-submenu-items" role="menu" data-i18n-attr="aria-label:ui.selectionMenu">
 										<button type="button" id="btn-select-rectangle" role="menuitemradio" aria-checked="true"
-											data-i18n="ui.selectRectangle">Rectangular Selection</button>
+											data-selection-mode="rect"><svg class="icon size4" viewBox="0 0 20 20" aria-hidden="true">
+												<rect x="3" y="3" width="14" height="14" rx="1" fill="none" stroke="currentColor"
+													stroke-dasharray="2.5 2" />
+											</svg><span data-i18n="ui.selectRectangle">Rectangular Selection</span></button>
 										<button type="button" id="btn-select-lasso" role="menuitemradio" aria-checked="false"
-											data-i18n="ui.selectLasso">Free-form Selection</button>
-										<button type="button" id="btn-select-all" role="menuitem" data-i18n="ui.selectAll"
-											title="Select All">Select All</button>
+											data-selection-mode="lasso"><svg class="icon size4" viewBox="0 0 20 20" aria-hidden="true">
+												<path d="M4 10c0-4 3-7 7-7s6 2 6 6-3 8-7 8c-3 0-5-2-5-4 0-1 1-2 2-2"
+													fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" />
+											</svg><span data-i18n="ui.selectLasso">Free-form Selection</span></button>
+										<button type="button" id="btn-select-all" role="menuitem" title="Select All"
+											data-i18n-attr="title:ui.selectAll">
+											<svg class="icon size4" viewBox="0 0 20 20" aria-hidden="true">
+												<path d="M3 7V3h4M13 3h4v4M17 13v4h-4M7 17H3v-4" fill="none" stroke="currentColor"
+													stroke-linecap="round" stroke-linejoin="round" />
+												<path d="M7 7h6v6H7z" fill="none" stroke="currentColor" />
+											</svg><span data-i18n="ui.selectAll">Select All</span></button>
 									</div>
 								</div>
 								<div class="action-menu action-submenu">

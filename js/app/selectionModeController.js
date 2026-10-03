@@ -5,6 +5,7 @@ export const createSelectionModeController = ({
 	toolManager,
 	rectangleButton,
 	lassoButton,
+	selectionButtons = [],
 } = {}) => {
 	if (!selectTool || !toolManager) throw new Error('Selection mode controller requires the Select tool and ToolManager');
 	const buttons = new Map([
@@ -18,6 +19,12 @@ export const createSelectionModeController = ({
 			const active = buttonMode === mode;
 			button.classList.toggle('active', active);
 			button.setAttribute('aria-checked', String(active));
+		}
+		const iconSource = buttons.get(mode)?.querySelector('svg');
+		if (!iconSource) return;
+		for (const button of selectionButtons) {
+			const icon = button?.querySelector('svg');
+			if (icon) icon.innerHTML = iconSource.innerHTML;
 		}
 	};
 	const setMode = (mode) => {

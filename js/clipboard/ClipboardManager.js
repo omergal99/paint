@@ -26,6 +26,7 @@ export class ClipboardManager {
     this.routeText = routeText;
     // Last PNG we produced ourselves - fallback when the OS clipboard is blocked.
     this.lastCopiedBlob = null;
+    this.pendingInternalPaste = false;
   }
 
   // Synchronous canvas -> PNG Blob (no awaits, keeps user activation alive).
@@ -106,10 +107,12 @@ export class ClipboardManager {
       return false;
     }
     this.lastCopiedBlob = blob;
+    this.pendingInternalPaste = true;
 
     try {
       if (typeof ClipboardItem !== 'function') throw new Error('ClipboardItem unsupported');
       await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+      this.pendingInternalPaste = false;
       this.statusBar?.flash('Copied to clipboard');
     } catch (err) {
       console.error('OS clipboard write failed:', err);
@@ -117,6 +120,11 @@ export class ClipboardManager {
       this.statusBar?.flash('Copied internally - OS clipboard unavailable');
     }
     return true;
+  }
+
+  async pasteLastCopied() {
+    if (!this.lastCopiedBlob) return false;
+    return await this.insertImageBlob(this.lastCopiedBlob, { sourceLabel: 'Pasted (in-app)' }) !== null;
   }
 
   async cut() {
@@ -149,6 +157,7 @@ export class ClipboardManager {
   }
 
   async paste() {
+    if (this.pendingInternalPaste && await this.pasteLastCopied()) return;
     try {
       const items = await navigator.clipboard.read();
       for (const item of items) {
@@ -168,13 +177,17 @@ export class ClipboardManager {
           return;
         }
       }
+      if (this.lastCopiedBlob) {
+        await this.pasteLastCopied();
+        return;
+      }
       this.statusBar?.flash('Clipboard has no image to paste');
     } catch (err) {
       console.error('Paste failed:', err);
       // OS clipboard read denied - fall back to the last image copied here.
       if (this.lastCopiedBlob) {
         try {
-          await this.insertImageBlob(this.lastCopiedBlob, { sourceLabel: 'Pasted (in-app)' });
+          await this.pasteLastCopied();
           return;
         } catch (fallbackErr) {
           console.error('In-app paste fallback failed:', fallbackErr);

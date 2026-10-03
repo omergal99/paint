@@ -365,12 +365,14 @@ export class CanvasManager {
     out.height = r.h;
     const context = out.getContext('2d');
     if (Array.isArray(r.path) && r.path.length >= 3) {
-      context.save();
-      context.translate(-r.x, -r.y);
-      traceSelectionPath(context, r);
+      context.beginPath();
+      context.moveTo(r.path[0].x - r.x, r.path[0].y - r.y);
+      for (let index = 1; index < r.path.length; index += 1) {
+        context.lineTo(r.path[index].x - r.x, r.path[index].y - r.y);
+      }
+      context.closePath();
       context.clip();
       context.drawImage(this.createCompositeCanvas(), r.x, r.y, r.w, r.h, 0, 0, r.w, r.h);
-      context.restore();
     } else {
       context.drawImage(this.createCompositeCanvas(), r.x, r.y, r.w, r.h, 0, 0, r.w, r.h);
     }

@@ -938,6 +938,7 @@ createSelectionModeController({
 	toolManager,
 	rectangleButton: document.getElementById('btn-select-rectangle'),
 	lassoButton: document.getElementById('btn-select-lasso'),
+	selectionButtons: [...document.querySelectorAll('.tool-btn[data-tool="select"]')],
 });
 
 // Text-only clipboard paste opens the text tool prefilled at the same

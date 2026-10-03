@@ -2517,9 +2517,11 @@ html[dir="rtl"] .resize-ghost {
 	transform-origin: top left;
 }
 .text-editor-toolbar {
-	display: grid;
-	grid-template-columns: max-content minmax(0, 1fr) max-content minmax(0, 1fr);
-	align-items: start;
+	display: flex;
+	flex-direction: row;
+	direction: ltr;
+	justify-content: flex-end;
+	align-items: center;
 	gap: 3px;
 	/* Track the shell instead of floating at its own width: the toolbar holds the
 	   recent-text controls, so a narrower shell used to clip them while a wider
@@ -2546,12 +2548,16 @@ html[dir="rtl"] .resize-ghost {
 }
 .text-editor-toolbar.is-empty {
 	min-height: 24px;
-	grid-template-columns: 1fr;
+	justify-content: flex-start;
 	background: color-mix(in srgb, var(--w10-panel-bg, var(--w10-ribbon-bg)) 82%, transparent);
 }
 .text-editor-toolbar-label {
 	padding: 0 2px;
 	white-space: nowrap;
+	text-align: right;
+}
+.text-history-select {
+	text-align: right;
 }
 .text-history-select,
 .text-history-clear,

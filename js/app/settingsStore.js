@@ -5,6 +5,21 @@
 // composition root.
 import { createSettingsStore } from '../settings/SettingsStore.js';
 import { DEFAULT_SETTINGS, HISTORY_LIMIT_OPTIONS, STORAGE_KEYS } from '../core/constants.js';
+import { ADJUSTMENTS } from '../canvas/AdjustmentEngine.js';
+
+const isAdjustmentParams = (value) => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  return Object.entries(value).every(([id, params]) => {
+    const metadata = ADJUSTMENTS[id];
+    if (!metadata || !params || typeof params !== 'object' || Array.isArray(params)) return false;
+    if (metadata.kind === 'pattern') return Object.keys(params).length === 0;
+    const amount = Number(params.value);
+    if (!Number.isFinite(amount) || amount < metadata.min || amount > metadata.max) return false;
+    if (id === 'noise' && params.seed !== undefined
+      && (!Number.isInteger(params.seed) || params.seed < 0 || params.seed > 0xffffffff)) return false;
+    return Object.keys(params).every((key) => key === 'value' || (id === 'noise' && key === 'seed'));
+  });
+};
 
 /** Validators gate what may be persisted; anything else falls back to the default. */
 const SETTINGS_VALIDATORS = Object.freeze({
@@ -15,6 +30,7 @@ const SETTINGS_VALIDATORS = Object.freeze({
   historyAutoSaveMode: (value) => ['all', 'close', 'lifecycle'].includes(value),
   historyLimit: (value) => HISTORY_LIMIT_OPTIONS.includes(Number(value)),
   favoriteShapes: (value) => Array.isArray(value) && value.every((item) => typeof item === 'string' && item),
+  adjustParams: isAdjustmentParams,
 });
 
 /**

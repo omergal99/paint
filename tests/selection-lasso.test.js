@@ -2,6 +2,9 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import { CanvasManager } from '../js/canvas/CanvasManager.js';
+import { ClipboardManager } from '../js/clipboard/ClipboardManager.js';
+import { createSelectionModeController } from '../js/app/selectionModeController.js';
+import { createClipboardService } from '../js/services/clipboard/clipboardService.js';
 import { createSelectTool } from '../js/tools/SelectTool.js';
 import {
 	appendLassoPoint,
@@ -115,6 +118,115 @@ test('lasso hit-testing does not treat empty corners inside the bounds as select
 	assert.equal(context.getSelection(), null, 'outside polygon starts a new lasso instead of lifting');
 });
 
+test('selection mode updates visible toolbar icons and keeps the active mode state', () => {
+	const makeButton = (icon) => {
+		const classes = new Set();
+		const attributes = {};
+		const listeners = new Map();
+		const svg = { innerHTML: icon };
+		return {
+			classList: {
+				toggle: (name, active) => active ? classes.add(name) : classes.delete(name),
+				contains: (name) => classes.has(name),
+			},
+			setAttribute: (name, value) => { attributes[name] = value; },
+			getAttribute: (name) => attributes[name],
+			querySelector: () => svg,
+			addEventListener: (name, listener) => listeners.set(name, listener),
+			removeEventListener: (name, listener) => {
+				if (listeners.get(name) === listener) listeners.delete(name);
+			},
+			svg,
+		};
+	};
+	const rectangleButton = makeButton('<rect />');
+	const lassoButton = makeButton('<path />');
+	const toolbarButton = makeButton('<rect />');
+	const calls = [];
+	const tool = createSelectTool();
+	const controller = createSelectionModeController({
+		selectTool: tool,
+		toolManager: { setActive: (name) => calls.push(name) },
+		rectangleButton,
+		lassoButton,
+		selectionButtons: [toolbarButton],
+	});
+
+	controller.setMode('lasso');
+	assert.equal(toolbarButton.svg.innerHTML, '<path />');
+	assert.equal(lassoButton.getAttribute('aria-checked'), 'true');
+	assert.equal(rectangleButton.getAttribute('aria-checked'), 'false');
+	assert.deepEqual(calls, ['select']);
+	controller.setMode('rect');
+	assert.equal(toolbarButton.svg.innerHTML, '<rect />');
+	controller.destroy();
+});
+
+test('copy captures current pixels for a static selection without lifting it', async () => {
+	const previousClipboard = Object.getOwnPropertyDescriptor(globalThis.navigator, 'clipboard');
+	const previousClipboardItem = Object.getOwnPropertyDescriptor(globalThis, 'ClipboardItem');
+	const regions = [];
+	const written = [];
+	const selection = { x: 12, y: 18, w: 24, h: 16, path: [{ x: 12, y: 18 }, { x: 36, y: 18 }, { x: 24, y: 34 }] };
+	const manager = new ClipboardManager({
+		canvasManager: {
+			floatingCanvas: null,
+			extractRegion: (region) => {
+				regions.push(region);
+				return { toDataURL: () => 'data:image/png;base64,cG5n' };
+			},
+		},
+		historyManager: {},
+		getSelection: () => selection,
+		setSelection: () => {},
+		statusBar: { flash: () => {} },
+		setActiveTool: () => {},
+		commitFloatingSelection: () => {},
+	});
+	globalThis.ClipboardItem = class {
+		constructor(items) { this.items = items; }
+	};
+	Object.defineProperty(globalThis.navigator, 'clipboard', {
+		value: { write: async (items) => written.push(items) },
+		configurable: true,
+	});
+	try {
+		assert.equal(await manager.copy(), true);
+		assert.equal(regions[0], selection, 'the current marquee path is sent to canvas extraction');
+		assert.equal(manager.lastCopiedBlob.type, 'image/png');
+		assert.equal(await manager.lastCopiedBlob.text(), 'png');
+		assert.equal(written.length, 1);
+		assert.equal(manager.canvasManager?.floatingCanvas, null);
+
+		selection.x = 20;
+		await manager.copy();
+		assert.equal(regions[1].x, 20, 'a subsequent copy uses the resized/moved current bounds');
+	} finally {
+		if (previousClipboard) Object.defineProperty(globalThis.navigator, 'clipboard', previousClipboard);
+		else delete globalThis.navigator.clipboard;
+		if (previousClipboardItem) Object.defineProperty(globalThis, 'ClipboardItem', previousClipboardItem);
+		else delete globalThis.ClipboardItem;
+	}
+});
+
+test('pending in-app image copy wins paste when the OS still exposes stale pixels', async () => {
+	let pasteCount = 0;
+	let defaultPrevented = false;
+	const clipboardManager = {
+		pendingInternalPaste: true,
+		lastCopiedBlob: new Blob(['latest']),
+		pasteLastCopied: async () => { pasteCount += 1; },
+	};
+	const service = createClipboardService({ clipboardManager, documentRef: null });
+	await service.handlePaste({
+		target: { tagName: 'DIV' },
+		clipboardData: { items: [{ type: 'image/png', getAsFile: () => new Blob(['stale']) }] },
+		preventDefault: () => { defaultPrevented = true; },
+	});
+	assert.equal(defaultPrevented, true);
+	assert.equal(pasteCount, 1);
+});
+
 class RecordingContext {
 	constructor() { this.calls = []; }
 	save() { this.calls.push(['save']); }
@@ -157,8 +269,18 @@ test('CanvasManager clips lasso extraction and background clearing to the path',
 		const extracted = manager.extractRegion(region);
 		assert.equal(extracted.width, 20);
 		assert.equal(extracted.height, 20);
-		assert.ok(outputs[0].context.calls.some(([name]) => name === 'clip'));
-		assert.ok(outputs[0].context.calls.some(([name, image]) => name === 'drawImage' && image === source));
+		const calls = outputs[0].context.calls;
+		assert.ok(calls.some(([name]) => name === 'clip'));
+		assert.deepEqual(calls.find(([name]) => name === 'moveTo'), ['moveTo', 0, 0],
+			'absolute polygon coordinates are made local to the extracted bounding box');
+		assert.deepEqual(calls.filter(([name]) => name === 'lineTo'), [
+			['lineTo', 20, 0],
+			['lineTo', 10, 20],
+		]);
+		assert.ok(calls.some(([name, image, ...args]) => name === 'drawImage'
+			&& image === source && args.join(',') === '10,10,20,20,0,0,20,20'));
+		assert.equal(calls.some(([name]) => name === 'translate'), false,
+			'the crop draw is not shifted by the path-origin transform');
 
 		manager.ctx = new RecordingContext();
 		manager.backgroundMode = 'solid';
