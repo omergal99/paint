@@ -904,6 +904,21 @@ test('Dialogs and palette settings have persistent UX hooks', () => {
   assert.match(read('js/ui/ColorPalette.js'), /defaultPrimary/);
 });
 
+test('Dialog headers share in-flow content and close groups with uniform shell padding', () => {
+	const dialogFrame = read('js/ui/DialogFrame.js');
+	const css = read('css/styles.css');
+	assert.match(dialogFrame, /groupDialogHeader/);
+	assert.match(dialogFrame, /dialog-header-content/);
+	assert.match(dialogFrame, /dialog-header-close/);
+	assert.match(css, /\.dialog-header,\s*\.settings-header\s*\{[\s\S]*?justify-content:\s*space-between;[\s\S]*?gap:\s*8px;/);
+	assert.doesNotMatch(css, /\.settings-close\s*\{[^}]*position:\s*absolute/s);
+	assert.doesNotMatch(css, /\.dialog-header\s+\.settings-close\s*\{/);
+	assert.match(css, /dialog\s*\{[^}]*padding:\s*10px;/);
+	assert.doesNotMatch(css, /#settings-dialog\s*\{[^}]*padding:/s);
+	assert.match(html, /id="resize-summary"[^>]*role="status"/);
+	assert.match(html, /id="resize-ok"[^>]*data-i18n="ribbon\.image\.resize">Resize/);
+});
+
 test('app state store and router are the single owners of view state and URLs', () => {
   const appStateModule = read('js/app/appState.js');
   const routerModule = read('js/app/router.js');

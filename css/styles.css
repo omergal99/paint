@@ -4693,7 +4693,6 @@ dialog input[type="number"] {
 		min-height: 100dvh;
 	}
 	#settings-dialog {
-		padding: 2px;
 		max-width: 100%;
 	}
 	.settings-shell {

@@ -51,7 +51,11 @@ export const standardizeDialogFrame = ({ dialog, documentRef = globalThis.docume
 	if (dialog.id === 'settings-dialog') {
 		const header = dialog.querySelector('.settings-header');
 		if (header) {
-			const closeButton = header.querySelector('button.settings-close');
+			const closeButton = configureCloseButton(
+				header.querySelector('button.settings-close'),
+				dialog,
+				documentRef,
+			);
 			groupDialogHeader({ header, closeButton, documentRef });
 			header.classList.add('dialog-header');
 		}
