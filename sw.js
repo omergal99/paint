@@ -1,4 +1,4 @@
-const CACHE_NAME = 'paint-shell-v1-8-0-2d257480';
+const CACHE_NAME = 'paint-shell-v1-8-0-da1307b9';
 const CACHE_PREFIX = 'paint-shell-';
 const SHELL = [
   './index.html',
@@ -120,6 +120,12 @@ const SHELL = [
   './js/services/selection/selectionGeometry.js',
   './js/canvas/AdjustmentEngine.js',
   './js/ui/RecentTextDropdown.js',
+  './js/canvas/AdjustmentService.js',
+  './js/canvas/BrushAreaMask.js',
+  './js/tools/AdjustmentMaskTool.js',
+  './js/ui/AdjustmentEntries.js',
+  './js/ui/AdjustmentsDialog.js',
+  './js/ui/BrushCursorOverlay.js',
   './css/assets/icon.svg',
   './css/assets/icon-192.png',
   './css/assets/icon-512.png',

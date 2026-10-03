@@ -2351,6 +2351,42 @@ body.dark-mode #history-clear-btn {
 	pointer-events: none;
 }
 
+.adjustment-mask-canvas {
+	z-index: 3;
+	pointer-events: none;
+}
+.adjustment-mask-finish {
+	position: absolute;
+	z-index: 12;
+	inset-inline-start: 10px;
+	bottom: 10px;
+	min-height: 32px;
+	padding: 5px 10px;
+	transform: scale(var(--zoom-inverse, 1));
+	transform-origin: bottom left;
+	border: 1px solid var(--w10-border-strong);
+	border-radius: 4px;
+	background: var(--w10-ribbon-bg);
+	color: var(--w10-text);
+	cursor: pointer;
+}
+html[dir="rtl"] .adjustment-mask-finish {
+	transform-origin: bottom right;
+}
+.brush-cursor-overlay {
+	position: absolute;
+	z-index: 14;
+	box-sizing: border-box;
+	border: 1px solid var(--w10-text);
+	border-radius: 50%;
+	box-shadow: 0 0 0 1px var(--w10-bg);
+	pointer-events: none;
+	transform: translate(-50%, -50%);
+}
+.brush-cursor-overlay[hidden] {
+	display: none;
+}
+
 .text-object-focus-layer {
 	position: absolute;
 	inset: 0;
@@ -2888,6 +2924,61 @@ dialog h3 {
 	width: min(430px, calc(100vw - 32px));
 	max-width: calc(100vw - 32px);
 	padding: 20px;
+}
+.adjustments-dialog {
+	width: min(520px, calc(100vw - 32px));
+	max-width: calc(100vw - 32px);
+}
+.adjustments-dialog form {
+	display: grid;
+	gap: 10px;
+}
+.adjustments-dialog h2 {
+	margin: 0;
+	font-size: 16px;
+}
+.adjustments-dialog select,
+.adjustments-dialog input[type="range"] {
+	width: 100%;
+	min-width: 0;
+}
+.adjustments-preview-wrap {
+	display: grid;
+	place-items: center;
+	min-height: 120px;
+	max-height: min(42vh, 360px);
+	overflow: auto;
+	border: 1px solid var(--w10-border);
+	background-color: var(--w10-canvas-bg);
+	background-image:
+		linear-gradient(45deg, #d8d8d8 25%, transparent 25%),
+		linear-gradient(-45deg, #d8d8d8 25%, transparent 25%),
+		linear-gradient(45deg, transparent 75%, #d8d8d8 75%),
+		linear-gradient(-45deg, transparent 75%, #d8d8d8 75%);
+	background-size: 16px 16px;
+	background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+}
+.adjustments-preview-wrap canvas {
+	display: block;
+	max-width: 100%;
+	max-height: min(42vh, 360px);
+	object-fit: contain;
+}
+.adjustment-mask-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+}
+.adjustment-mask-actions button {
+	min-height: 30px;
+}
+.adjustment-error {
+	margin: 0;
+	color: var(--w10-danger, #a12622);
+	font-size: 12px;
+}
+.adjustment-error:empty {
+	display: none;
 }
 .app-dialog form {
 	display: grid;

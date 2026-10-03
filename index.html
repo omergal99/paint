@@ -380,6 +380,16 @@
 								</div>
 							</div>
 						</div>
+						<button class="rbtn small" type="button" id="btn-adjustments" data-tag="btn-adjustments"
+							data-i18n-attr="title:ui.adjustments" title="Adjustments">
+							<svg class="icon size4" viewBox="0 0 20 20" aria-hidden="true">
+								<path d="M3 5h14M3 10h14M3 15h14" fill="none" stroke="currentColor" stroke-linecap="round" />
+								<circle cx="7" cy="5" r="1.6" fill="var(--w10-ribbon-bg)" stroke="currentColor" />
+								<circle cx="12" cy="10" r="1.6" fill="var(--w10-ribbon-bg)" stroke="currentColor" />
+								<circle cx="8" cy="15" r="1.6" fill="var(--w10-ribbon-bg)" stroke="currentColor" />
+							</svg>
+							<span data-i18n="ui.adjustments">Adjustments</span>
+						</button>
 					</div>
 				</div>
 				<div class="ribbon-group-title">Image</div>
@@ -981,6 +991,10 @@
 							<canvas id="text-layer-canvas" class="text-layer-canvas" data-tag="text-layer-canvas" width="800"
 								height="600" aria-hidden="true"></canvas>
 							<canvas id="overlay-canvas" data-tag="overlay-canvas" width="800" height="600"></canvas>
+							<canvas id="adjustment-mask-canvas" class="adjustment-mask-canvas" data-tag="adjustment-mask-canvas"
+								width="800" height="600" aria-hidden="true"></canvas>
+							<button type="button" id="adjustment-mask-finish" class="adjustment-mask-finish"
+								data-tag="adjustment-mask-finish" data-i18n="ui.adjustmentFinishMask" hidden>Finish mask</button>
 							<div class="resize-handle handle-right" id="handle-right" data-tag="handle-right"></div>
 							<div class="resize-handle handle-bottom" id="handle-bottom" data-tag="handle-bottom"></div>
 							<div class="resize-handle handle-corner" id="handle-corner" data-tag="handle-corner"></div>
@@ -1609,6 +1623,44 @@
 			<div class="dialog-actions">
 				<button type="button" id="app-dialog-cancel">Cancel</button>
 				<button type="submit" id="app-dialog-confirm">Continue</button>
+			</div>
+		</form>
+	</dialog>
+
+	<dialog id="adjustments-dialog" class="adjustments-dialog" aria-labelledby="adjustments-dialog-title">
+		<form method="dialog" id="adjustments-form">
+			<h2 id="adjustments-dialog-title" data-i18n="ui.adjustments">Adjustments</h2>
+			<label for="adjustment-select" data-i18n="ui.adjustment">Adjustment</label>
+			<select id="adjustment-select" data-tag="adjustment-select"></select>
+			<label for="adjustment-target" data-i18n="ui.adjustmentTarget">Apply to</label>
+			<select id="adjustment-target" data-tag="adjustment-target">
+				<option value="document" data-i18n="ui.adjustmentDocument">Entire image</option>
+				<option value="selection" data-i18n="ui.adjustmentSelection">Selection</option>
+				<option value="brushArea" data-i18n="ui.adjustmentBrushArea">Painted area</option>
+			</select>
+			<label for="adjustment-value">
+				<span id="adjustment-value-label" data-i18n="ui.adjustmentValue">Amount</span>
+				<output id="adjustment-value-output" for="adjustment-value"></output>
+			</label>
+			<input id="adjustment-value" data-tag="adjustment-value" type="range" min="0" max="200" value="100"
+				aria-describedby="adjustment-error" />
+			<div class="adjustments-preview-wrap">
+				<canvas id="adjustments-preview" data-tag="adjustments-preview" width="1" height="1"
+					aria-hidden="true"></canvas>
+			</div>
+			<p id="adjustment-error" class="adjustment-error" role="status" aria-live="polite"></p>
+			<div class="adjustment-mask-actions">
+				<button type="button" id="adjustment-paint-mask" data-tag="adjustment-paint-mask"
+					data-i18n="ui.adjustmentPaintMask" hidden>Paint mask</button>
+				<button type="button" id="adjustment-clear-mask" data-tag="adjustment-clear-mask"
+					data-i18n="ui.adjustmentClearMask" hidden>Clear mask</button>
+				<button type="button" id="adjustment-invert-mask" data-tag="adjustment-invert-mask"
+					data-i18n="ui.adjustmentInvertMask" hidden>Invert mask</button>
+			</div>
+			<div class="dialog-actions">
+				<button type="button" id="adjustment-reset" data-tag="adjustment-reset" data-i18n="ui.adjustmentReset">Reset</button>
+				<button type="button" id="adjustment-cancel" data-tag="adjustment-cancel" data-i18n="common.actions.cancel">Cancel</button>
+				<button type="button" id="adjustment-apply" data-tag="adjustment-apply" data-i18n="common.actions.apply">Apply</button>
 			</div>
 		</form>
 	</dialog>

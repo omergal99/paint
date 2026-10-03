@@ -4,6 +4,7 @@
 // inputs (`input` event), so palette state, canvasManager, the inspector
 // event, and the mirror always share one source; no color state lives here.
 import { t } from '../../i18n/messages.js';
+import { mountAdjustmentEntries } from '../AdjustmentEntries.js';
 const createAlphaSlider = ({ id, tag, labelKey }) => Object.freeze({
   kind: 'slider',
   tag,
@@ -38,13 +39,18 @@ export const colorsMirrorDescriptor = Object.freeze({
         Object.freeze({ kind: 'action', target: 'primary-alpha-transparent', tag: 'sidebar-mirror-primary-transparent' }),
         createAlphaSlider({ id: 'secondary-alpha', tag: 'sidebar-mirror-secondary-alpha', labelKey: 'ui.background' }),
         Object.freeze({ kind: 'action', target: 'secondary-alpha-transparent', tag: 'sidebar-mirror-secondary-transparent' }),
+      ]),
+    }),
+    Object.freeze({
+      id: 'adjustments',
+      titleKey: 'ui.adjustments',
+      open: false,
+      items: Object.freeze([
         Object.freeze({
           kind: 'custom',
           mount: (host) => {
             host.dataset.tag = 'sidebar-mirror-colors-adjustments';
-            host.classList.add('mirror-note');
-            host.textContent = t('ui.mirrorAdjustmentsNote');
-            host.setAttribute('data-i18n-runtime', 'ui.mirrorAdjustmentsNote');
+            mountAdjustmentEntries(host);
           },
         }),
       ]),

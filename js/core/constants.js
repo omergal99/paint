@@ -37,6 +37,7 @@ export const EVENTS = Object.freeze({
 	historyChanged: 'paint:history-changed',
 	storageError: 'paint:storage-error',
 	textFontFamilyChanged: 'paint:text-font-family-change',
+	openAdjustments: 'paint:open-adjustments',
 });
 
 export const KEYBOARD_KEYS = Object.freeze({

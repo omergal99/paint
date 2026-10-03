@@ -1,8 +1,8 @@
 // js/ui/mirrors/imageMirror.js
 // Phase 2 step-02 SSOT: Image ribbon group -> RibbonMirror descriptor.
 // Adjustments section is a placeholder deep-link to Phase 4 (no engine here).
-import { t } from '../../i18n/messages.js';
 import { buildSelectionPropertiesPanel } from '../../services/selection/selectionPropertiesPanel.js';
+import { mountAdjustmentEntries } from '../AdjustmentEntries.js';
 export const imageMirrorDescriptor = Object.freeze({
   key: 'image',
   titleKey: 'ribbon.groups.image',
@@ -31,10 +31,10 @@ export const imageMirrorDescriptor = Object.freeze({
     }),
     Object.freeze({
       id: 'adjustments',
-      title: 'Adjustments',
+      titleKey: 'ui.adjustments',
       open: false,
       items: Object.freeze([
-        Object.freeze({ kind: 'custom', mount: (host) => { host.dataset.tag = 'sidebar-mirror-adjustments-placeholder'; host.textContent = t('ui.mirrorAdjustmentsNote'); host.setAttribute('data-i18n-runtime', 'ui.mirrorAdjustmentsNote'); } }),
+        Object.freeze({ kind: 'custom', mount: (host) => { host.dataset.tag = 'sidebar-mirror-adjustments'; mountAdjustmentEntries(host); } }),
       ]),
     }),
   ]),

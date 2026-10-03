@@ -1,5 +1,8 @@
 // js/main.js
 import { CanvasManager, commitLayerWithSourceOver } from './canvas/CanvasManager.js';
+import { ADJUSTMENTS } from './canvas/AdjustmentEngine.js';
+import { createAdjustmentService } from './canvas/AdjustmentService.js';
+import { createBrushAreaMask } from './canvas/BrushAreaMask.js';
 import { ViewportManager } from './canvas/ViewportManager.js';
 import { CanvasResizer } from './canvas/CanvasResizer.js';
 import { HistoryManager } from './history/HistoryManager.js';
@@ -31,6 +34,7 @@ import { createTextTool } from './tools/TextTool.js';
 import { createEyedropperTool } from './tools/EyedropperTool.js';
 import { createZoomTool } from './tools/ZoomTool.js';
 import { createPanTool } from './tools/PanTool.js';
+import { createAdjustmentMaskTool } from './tools/AdjustmentMaskTool.js';
 import { createColorPalette } from './ui/ColorPalette.js';
 import { createColorInspector } from './ui/ColorInspector.js';
 import { createStatusBar } from './ui/StatusBar.js';
@@ -71,6 +75,8 @@ import { createSplitView } from './ui/SplitView.js';
 import { createWorkspaceStripController } from './ui/WorkspaceStrip.js';
 import { createActionMenuController } from './ui/ActionMenuController.js';
 import { createFontFamilyPicker } from './ui/FontFamilyPicker.js';
+import { createBrushCursorOverlay } from './ui/BrushCursorOverlay.js';
+import { createAdjustmentsDialog, createAdjustmentOption } from './ui/AdjustmentsDialog.js';
 import { createDialogSearch } from './ui/DialogSearch.js';
 import { createSettingsDialog } from './ui/SettingsDialog.js';
 import { createBrowserInfoPanel } from './ui/BrowserInfoPanel.js';
@@ -260,6 +266,11 @@ const shouldAutoSaveOnNew = () => {
 // ---------- Core managers ----------
 const eventBus = createEventBus();
 const canvasManager = new CanvasManager({ canvas: canvasEl, overlay: overlayEl, width: 800, height: 600, eventBus });
+const adjustmentMask = createBrushAreaMask({
+	width: canvasManager.width,
+	height: canvasManager.height,
+	previewCanvas: document.getElementById('adjustment-mask-canvas'),
+});
 const historyManager = new HistoryManager(canvasManager, {
 	captureState: () => ({
 		selection: canvasManager.selection ? { ...canvasManager.selection } : null,
@@ -434,6 +445,7 @@ canvasManager.onSizeChange = (w, h) => {
 	statusBar.setCanvasSize(w, h);
 	canvasResizer.reposition();
 	textLayerService.resize({ width: w, height: h });
+	adjustmentMask.resize(w, h);
 	// Redraw any selection that CanvasManager.resize() preserved (clamped to the
 	// new bounds) so resizing the canvas no longer drops an active marquee.
 	setSelection(canvasManager.selection);
@@ -908,7 +920,14 @@ fontFamilyPicker = createFontFamilyPicker({
 
 // ---------- Tools ----------
 const toolManager = new ToolManager({ surface: overlayEl, viewportManager, toolContext, statusBar });
+const brushCursorOverlay = createBrushCursorOverlay({
+	root: scaleEl,
+	surface: overlayEl,
+	viewportManager,
+	getLineWidth: () => canvasManager.lineWidth,
+});
 const selectTool = createSelectTool();
+const adjustmentMaskTool = createAdjustmentMaskTool({ mask: adjustmentMask, getSelection });
 [
 	selectTool,
 	createPencilTool(),
@@ -920,6 +939,7 @@ const selectTool = createSelectTool();
 	createEyedropperTool(),
 	createZoomTool(),
 	createPanTool(),
+	adjustmentMaskTool,
 ].forEach((t) => toolManager.register(t));
 
 viewportManager.onZoomChange = () => {
@@ -996,6 +1016,70 @@ const {
 	showToast,
 	crop,
 } = fileActions;
+
+const adjustmentService = createAdjustmentService({
+	canvasManager,
+	historyManager,
+	getSelection,
+	commitFloatingSelection,
+	setSelection,
+	persistSession,
+	mask: adjustmentMask,
+});
+Object.entries(ADJUSTMENTS).forEach(([id, metadata]) => {
+	document.getElementById('adjustment-select').append(createAdjustmentOption({
+		id,
+		labelKey: metadata.labelKey,
+	}));
+});
+const adjustmentDialog = createAdjustmentsDialog({
+	dialog: document.getElementById('adjustments-dialog'),
+	adjustmentSelect: document.getElementById('adjustment-select'),
+	targetSelect: document.getElementById('adjustment-target'),
+	valueInput: document.getElementById('adjustment-value'),
+	valueOutput: document.getElementById('adjustment-value-output'),
+	previewCanvas: document.getElementById('adjustments-preview'),
+	applyButton: document.getElementById('adjustment-apply'),
+	resetButton: document.getElementById('adjustment-reset'),
+	cancelButton: document.getElementById('adjustment-cancel'),
+	paintMaskButton: document.getElementById('adjustment-paint-mask'),
+	clearMaskButton: document.getElementById('adjustment-clear-mask'),
+	invertMaskButton: document.getElementById('adjustment-invert-mask'),
+	errorMessage: document.getElementById('adjustment-error'),
+	apply: adjustmentService.apply,
+	preview: adjustmentService.preview,
+	getValue: (id) => readSettings().adjustParams?.[id]?.value,
+	hasSelection: () => Boolean(getSelection()?.w && getSelection()?.h),
+	hasBrushMask: () => adjustmentMask.hasContent(),
+	onValueChange: ({ id, value }) => settingsStore.set({
+		adjustParams: { ...readSettings().adjustParams, [id]: { value } },
+	}),
+	onPaintMask: () => {
+		document.getElementById('adjustment-mask-finish').hidden = false;
+		toolManager.setActive('adjustment-mask');
+	},
+	onClearMask: () => adjustmentMask.clear(),
+	onInvertMask: () => adjustmentMask.invert(getSelection()),
+	onCancel: () => {
+		adjustmentMask.clear();
+		document.getElementById('adjustment-mask-finish').hidden = true;
+		if (toolManager.active?.name === 'adjustment-mask') toolManager.setActive('select');
+	},
+	onApplied: () => {
+		adjustmentMask.clear();
+		document.getElementById('adjustment-mask-finish').hidden = true;
+		if (toolManager.active?.name === 'adjustment-mask') toolManager.setActive('select');
+	},
+});
+const openAdjustments = (event) => adjustmentDialog.open({ id: event?.detail?.id });
+window.addEventListener(EVENTS.openAdjustments, openAdjustments);
+document.getElementById('btn-adjustments')?.addEventListener('click', () => adjustmentDialog.open());
+document.getElementById('adjustment-mask-finish')?.addEventListener('click', () => {
+	adjustmentMaskTool.preserveMaskOnDeactivate();
+	toolManager.setActive('select');
+	document.getElementById('adjustment-mask-finish').hidden = true;
+	adjustmentDialog.open();
+});
 
 const selectAll = () => {
 	commitFloatingSelection();
@@ -1445,7 +1529,10 @@ appNameEntry?.addEventListener('keydown', (event) => {
 const toolbar = new Toolbar({
 	root: document.getElementById('ribbon'),
 	toolManager,
-	setLineWidth: (w) => (canvasManager.lineWidth = w),
+	setLineWidth: (w) => {
+		canvasManager.lineWidth = w;
+		brushCursorOverlay.refresh();
+	},
 	setFontSize: (size) => toolContext.setFontSize(size),
 	handlers: {
 		newFile: () => commandRegistry.execute({ action: SHORTCUT_ACTIONS.newFile }),
@@ -1469,6 +1556,7 @@ const toolbar = new Toolbar({
 const toolbarToolChange = toolManager.onToolChange;
 toolManager.onToolChange = (name) => {
 	activeToolName = name;
+	brushCursorOverlay.setTool(name);
 	toolbarToolChange?.(name);
 	selectionOverlayController.updateSelectionHandles(canvasManager.selection);
 };
@@ -1638,6 +1726,9 @@ const destroyEditor = () => {
 	destroySelectionHandleBindings();
 	destroyRotateSelectionHandleBinding();
 	toolManager.destroy();
+	brushCursorOverlay.destroy();
+	adjustmentDialog.destroy();
+	adjustmentMask.destroy();
 	canvasResizer.destroy();
 	viewportManager.destroy();
 	directionEventTarget.removeEventListener('paint:locale-change', refreshCanvasDirectionGeometry);
@@ -1646,6 +1737,7 @@ const destroyEditor = () => {
 	document.documentElement?.removeEventListener('paint:locale-change', refreshAboutOnLocaleChange);
 	document.documentElement?.removeEventListener('paint:locale-change', refreshReleaseNotesOnLocaleChange);
 	window.removeEventListener('paint:ribbon-change', onRibbonChange);
+	window.removeEventListener(EVENTS.openAdjustments, openAdjustments);
 	ribbonLayoutManager.destroy();
 	actionMenuController.destroy();
 	backgroundRemovalController.destroy();
