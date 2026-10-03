@@ -58,6 +58,7 @@ export const initializePtBr = (english) => {
     "ui.restoreOverrideMessage": "Substituir a tela atual por esta imagem salva? As alterações não salvas serão perdidas.",
     "ui.restoreOverrideAction": "Substituir",
     "ui.textFontFamily": "Família da fonte",
+    "ui.systemUiDefaultFont": "Interface do sistema (sans-serif padrão)",
     "ui.blackOutlineStrokeColor": "Cor do contorno preto",
     "ui.selectionMenu": "Seleção",
     "ui.blackOutlineStrokeWidth": "Espessura do contorno preto",

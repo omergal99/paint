@@ -29,6 +29,37 @@ const normalizeKey = (value) => {
 	return KEY_ALIASES[key] || key.replace(/\s+/g, '');
 };
 
+const KEY_FROM_CODE = Object.freeze({
+	Backspace: 'backspace',
+	Delete: 'delete',
+	Escape: 'escape',
+	Enter: 'enter',
+	Space: 'space',
+	ArrowUp: 'arrowup',
+	ArrowDown: 'arrowdown',
+	ArrowLeft: 'arrowleft',
+	ArrowRight: 'arrowright',
+	Minus: '-',
+	Equal: '=',
+	BracketLeft: '[',
+	BracketRight: ']',
+	Backslash: '\\',
+	Semicolon: ';',
+	Quote: "'",
+	Backquote: '`',
+	Comma: ',',
+	Period: '.',
+	Slash: '/',
+});
+
+export const isModifierPressed = (event = {}) => Boolean(event.ctrlKey || event.metaKey);
+
+const shortcutKeyFromCode = (code) => {
+	if (/^Key[A-Z]$/.test(code)) return code.slice(3).toLowerCase();
+	if (/^Digit[0-9]$/.test(code)) return code.slice(5);
+	return KEY_FROM_CODE[code] || null;
+};
+
 export const normalizeShortcut = (value) => {
 	if (Array.isArray(value)) value = value.join('+');
 	if (typeof value !== 'string' || !value.trim()) return null;
@@ -50,12 +81,14 @@ export const normalizeShortcut = (value) => {
 };
 
 export const shortcutFromEvent = (event) => {
-	if (!event || ['Control', 'Meta', 'Alt', 'Shift'].includes(event.key)) return null;
+	if (!event) return null;
+	const key = shortcutKeyFromCode(event.code);
+	if (!key) return null;
 	const modifiers = [];
-	if (event.ctrlKey || event.metaKey) modifiers.push('mod');
+	if (isModifierPressed(event)) modifiers.push('mod');
 	if (event.altKey) modifiers.push('alt');
 	if (event.shiftKey) modifiers.push('shift');
-	return normalizeShortcut([...modifiers, event.key].join('+'));
+	return normalizeShortcut([...modifiers, key].join('+'));
 };
 
 export const formatShortcut = (value) => {

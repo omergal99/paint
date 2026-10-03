@@ -68,11 +68,26 @@ test('committed black-outline text rasterizes its configured width and color', (
 
 test('text font picker options include at least twenty choices and preserve the system default', () => {
 	assert.ok(TEXT_FONT_FAMILIES.length >= 20);
-	assert.ok(TEXT_FONT_FAMILIES.some(({ value }) => value === DEFAULT_TEXT_FONT_FAMILY));
+	assert.ok(TEXT_FONT_FAMILIES.some(({ value, label }) => (
+		value === DEFAULT_TEXT_FONT_FAMILY && label === 'System UI (Default Sans-Serif)'
+	)));
 });
 
 test('outline preview and raster strokes share the same width calculation', () => {
 	assert.equal(getTextStrokeWidth({ fontSize: 20, styles: ['outline'] }), 1.2);
 	assert.equal(getTextStrokeWidth({ fontSize: 8, styles: ['outline'] }), 1);
 	assert.equal(getTextStrokeWidth({ fontSize: 24, strokeWidth: 5, styles: ['black-outline'] }), 5);
+	const context = fakeContext();
+	const object = {
+		text: 'Five',
+		x: 0,
+		y: 0,
+		fontSize: 24,
+		fontFamily: 'Arial',
+		color: { r: 0, g: 0, b: 0, a: 1 },
+		styles: ['black-outline'],
+		strokeWidth: 5,
+	};
+	renderTextObject({ context, object });
+	assert.equal(context.lineWidth, 5, 'the raster stroke uses the exact CSS preview width in canvas pixels');
 });

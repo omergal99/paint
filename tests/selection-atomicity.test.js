@@ -153,9 +153,10 @@ test('the clipboard service owns copy, cut and paste for every trigger', () => {
   assert.doesNotMatch(main, /addEventListener\('paste'/);
   assert.doesNotMatch(main, /addEventListener\('copy'/);
   // Ribbon buttons and custom bindings use the same service.
-  assert.match(main, /paste: \(\) => clipboardService\.paste\(\)/);
-  assert.match(main, /copy: \(\) => clipboardService\.copy\(\)/);
-  assert.match(main, /cut: \(\) => clipboardService\.cut\(\)/);
+  assert.match(main, /\[SHORTCUT_ACTIONS\.paste\]: \(\) => clipboardService\.paste\(\)/);
+  assert.match(main, /\[SHORTCUT_ACTIONS\.copy\]: \(\) => clipboardService\.copy\(\)/);
+  assert.match(main, /\[SHORTCUT_ACTIONS\.cut\]: \(\) => clipboardService\.cut\(\)/);
+  assert.match(main, /paste: \(\) => commandRegistry\.execute\(\{ action: SHORTCUT_ACTIONS\.paste \}\)/);
   assert.match(main, /clipboardService\.destroy\(\);/);
 });
 
@@ -441,13 +442,13 @@ test('every undo trigger routes through one runUndo/runRedo pair', () => {
   // `runUndo` also discards a floating selection first, which is what makes a
   // selection move reversible instead of a no-op.
   const main = read('js/main.js');
-  assert.match(main, /const runUndo = \(\) => \{\s*historyManager\.undo\(\);\s*\}/);
-  assert.match(main, /const runRedo = \(\) => \{\s*historyManager\.redo\(\);\s*\}/);
-  assert.match(main, /undo: runUndo,/);
-  assert.match(main, /redo: runRedo,/);
+  assert.match(main, /const runUndo = \(\) => \{\s*return historyManager\.undo\(\);\s*\}/);
+  assert.match(main, /const runRedo = \(\) => \{\s*return historyManager\.redo\(\);\s*\}/);
+  assert.match(main, /\[SHORTCUT_ACTIONS\.undo\]: runUndo/);
+  assert.match(main, /\[SHORTCUT_ACTIONS\.redo\]: runRedo/);
   assert.match(read('js/ui/Toolbar.js'), /getElementById\('btn-undo'\), 'click', \(\) => this\.handlers\.undo\(\)/);
-  assert.match(main, /getElementById\('history-undo-btn'\)\?\.addEventListener\('click', runUndo\)/);
-  assert.match(main, /getElementById\('history-redo-btn'\)\?\.addEventListener\('click', runRedo\)/);
+  assert.match(main, /getElementById\('history-undo-btn'\)\?\.addEventListener\('click', \(\) => commandRegistry\.execute\(\{ action: SHORTCUT_ACTIONS\.undo \}\)\)/);
+  assert.match(main, /getElementById\('history-redo-btn'\)\?\.addEventListener\('click', \(\) => commandRegistry\.execute\(\{ action: SHORTCUT_ACTIONS\.redo \}\)\)/);
 });
 
 test('selection handles centre on their point at any configured size', () => {

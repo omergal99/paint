@@ -54,6 +54,7 @@ export const initializeJa = (english) => {
     "ui.restoreOverrideMessage": "現在のキャンバスをこの保存画像に置き換えますか？未保存の変更は失われます。",
     "ui.restoreOverrideAction": "置き換え",
     "ui.textFontFamily": "フォントファミリー",
+    "ui.systemUiDefaultFont": "システム UI（既定のサンセリフ）",
     "ui.blackOutlineStrokeColor": "黒い輪郭の色",
     "ui.selectionMenu": "選択範囲",
     "ui.blackOutlineStrokeWidth": "黒い輪郭の幅",

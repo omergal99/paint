@@ -54,6 +54,7 @@ export const initializeFr = (english) => {
     "ui.restoreOverrideMessage": "Remplacer le canevas actuel par cette image enregistrée ? Les modifications non enregistrées seront perdues.",
     "ui.restoreOverrideAction": "Remplacer",
     "ui.textFontFamily": "Famille de polices",
+    "ui.systemUiDefaultFont": "Interface système (sans empattement par défaut)",
     "ui.blackOutlineStrokeColor": "Couleur du contour noir",
     "ui.selectionMenu": "Sélection",
     "ui.blackOutlineStrokeWidth": "Épaisseur du contour noir",

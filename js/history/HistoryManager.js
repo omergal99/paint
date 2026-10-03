@@ -136,6 +136,8 @@ export class HistoryManager {
     sessionStorage: sessionStore,
     maxSnapshotPixels = MAX_HISTORY_SNAPSHOT_PIXELS,
     eventTarget = globalThis,
+    captureState = null,
+    restoreState = null,
   } = {}) {
     this.canvasManager = canvasManager;
     this.eventTarget = eventTarget;
@@ -148,6 +150,8 @@ export class HistoryManager {
     this._currentEntry = null;
     this._currentSignature = null;
     this._transaction = null;
+    this.captureState = captureState;
+    this.restoreState = restoreState;
     // Finalizes overlay state before undo/redo/restore captures or replaces
     // canvas pixels, keeping the raster and floating selection in sync.
     this.onBeforeRestore = null;
@@ -297,6 +301,7 @@ export class HistoryManager {
 
   _captureEntry(options = {}) {
     const entry = this._newEntry(options);
+    entry.state = this.captureState?.();
     const admission = this._snapshotAdmission();
     if (!admission.ok) {
       entry.failed = true;
@@ -425,6 +430,7 @@ export class HistoryManager {
     const id = this._newId('session');
     const entry = this._takeCurrentPreviewForSnapshot(sig, id)
       || this._captureEntry({ id, kind: 'session' });
+    entry.state = this.captureState?.();
     entry._persistOnSettle = true;
     if (entry.failed) return false;
 
@@ -534,6 +540,7 @@ export class HistoryManager {
     try {
       const restored = await this.canvasManager.loadImageDataUrl(source, sourceEntry.width, sourceEntry.height);
       if (restored === false) return false;
+      if (sourceEntry.state !== undefined) this.restoreState?.(sourceEntry.state);
       this._lastSnapshotSig = this.canvasManager._pixelsSignature?.() || null;
       this.canvasManager.persistToStorage?.();
       this._showCurrent = true;

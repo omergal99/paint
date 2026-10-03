@@ -54,6 +54,7 @@ export const initializeDe = (english) => {
     "ui.restoreOverrideMessage": "Die aktuelle Leinwand durch dieses gespeicherte Bild ersetzen? Ungespeicherte Änderungen gehen verloren.",
     "ui.restoreOverrideAction": "Ersetzen",
     "ui.textFontFamily": "Schriftfamilie",
+    "ui.systemUiDefaultFont": "Systemoberfläche (Standardschrift ohne Serifen)",
     "ui.blackOutlineStrokeColor": "Farbe der schwarzen Kontur",
     "ui.selectionMenu": "Auswahl",
     "ui.blackOutlineStrokeWidth": "Breite der schwarzen Kontur",

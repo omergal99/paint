@@ -4,6 +4,7 @@ import { DEFAULT_SHORTCUT_BINDINGS, SHORTCUT_ACTIONS } from '../js/core/constant
 import {
 	createShortcutManager,
 	formatShortcut,
+	isModifierPressed,
 	normalizeShortcut,
 	shortcutFromEvent,
 } from '../js/settings/ShortcutManager.js';
@@ -12,7 +13,10 @@ import { createSettingsStore } from '../js/settings/SettingsStore.js';
 test('shortcut normalization is stable across keyboard naming conventions', () => {
 	assert.equal(normalizeShortcut('Ctrl + Shift + Z'), 'mod+shift+z');
 	assert.equal(normalizeShortcut('Command+Arrow Up'), 'mod+arrowup');
-	assert.equal(shortcutFromEvent({ key: 's', ctrlKey: true, metaKey: false, altKey: false, shiftKey: false }), 'mod+s');
+	assert.equal(shortcutFromEvent({ code: 'KeyS', key: 'ы', ctrlKey: true, metaKey: false, altKey: false, shiftKey: false }), 'mod+s');
+	assert.equal(shortcutFromEvent({ code: 'KeyA', key: 'ש', ctrlKey: false, metaKey: true, altKey: false, shiftKey: false }), 'mod+a');
+	assert.equal(shortcutFromEvent({ code: 'KeyZ', key: 'x', ctrlKey: false, metaKey: false, altKey: false, shiftKey: false }), 'z');
+	assert.equal(isModifierPressed({ ctrlKey: false, metaKey: true }), true);
 	assert.equal(formatShortcut('mod+arrowright'), 'Ctrl/Cmd+→');
 });
 

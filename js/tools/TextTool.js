@@ -3,7 +3,7 @@
 // metadata is rendered by TextLayerService. Layout values stay shared so the
 // editor and committed layer keep the same font-size-dependent geometry.
 
-import { KEYBOARD_KEYS, TEXT_FONT_FAMILIES } from '../core/constants.js';
+import { EVENTS, KEYBOARD_KEYS } from '../core/constants.js';
 import { hexToRgb } from '../utils/color.js';
 import { t } from '../i18n/messages.js';
 import {
@@ -43,6 +43,7 @@ export const createTextTool = () => {
   let historyUnsubscribe = null;
   let historyToolbarListener = null;
   let strokeStyleListener = null;
+  let fontFamilyListener = null;
 
   const getEditorParent = (ctx) => ctx.scaleEl || ctx.stage;
 
@@ -101,9 +102,11 @@ export const createTextTool = () => {
     historyUnsubscribe?.();
     if (historyToolbarListener) window.removeEventListener('paint:text-history-toolbar-change', historyToolbarListener);
     if (strokeStyleListener) window.removeEventListener('paint:text-stroke-style-change', strokeStyleListener);
+    if (fontFamilyListener) window.removeEventListener(EVENTS.textFontFamilyChanged, fontFamilyListener);
     historyUnsubscribe = null;
     historyToolbarListener = null;
     strokeStyleListener = null;
+    fontFamilyListener = null;
     editor = null;
     editorShell = null;
     historySelect = null;
@@ -188,7 +191,7 @@ export const createTextTool = () => {
       // to reposition when recent-text controls were disabled.
       toolbar.hidden = false;
       toolbar.classList.toggle('is-empty', !historyVisible);
-      toolbar.setAttribute('aria-hidden', String(!historyVisible));
+      toolbar.removeAttribute('aria-hidden');
       [historyLabel, nextHistorySelect, clearHistoryButton].forEach((control) => {
         control.hidden = !historyVisible;
       });
@@ -199,22 +202,12 @@ export const createTextTool = () => {
     const nextHistorySelect = document.createElement('select');
     nextHistorySelect.className = 'text-history-select';
     nextHistorySelect.setAttribute('aria-label', 'Restore recent text');
-    const fontFamilySelect = document.createElement('select');
-    fontFamilySelect.className = 'text-font-family-select';
-    fontFamilySelect.setAttribute('aria-label', t('ui.textFontFamily'));
-    TEXT_FONT_FAMILIES.forEach(({ label, value }) => {
-      const option = document.createElement('option');
-      option.value = value;
-      option.textContent = label;
-      fontFamilySelect.appendChild(option);
-    });
-    fontFamilySelect.value = ctx.getFontFamily();
     const clearHistoryButton = document.createElement('button');
     clearHistoryButton.type = 'button';
     clearHistoryButton.className = 'text-history-clear';
     clearHistoryButton.textContent = 'Clear';
     clearHistoryButton.setAttribute('aria-label', 'Clear recent text history');
-    toolbar.append(historyLabel, nextHistorySelect, clearHistoryButton, fontFamilySelect);
+    toolbar.append(historyLabel, nextHistorySelect, clearHistoryButton);
     setHistoryToolbarVisibility(ctx.getTextHistoryToolbarVisible?.() !== false);
 
     const nextEditor = document.createElement('textarea');
@@ -235,6 +228,8 @@ export const createTextTool = () => {
     origin = point;
     strokeStyleListener = () => applyEditorStyle(ctx);
     window.addEventListener('paint:text-stroke-style-change', strokeStyleListener);
+    fontFamilyListener = () => applyEditorStyle(ctx);
+    window.addEventListener(EVENTS.textFontFamilyChanged, fontFamilyListener);
     applyEditorStyle(ctx);
     renderHistoryOptions();
 
@@ -244,10 +239,6 @@ export const createTextTool = () => {
       nextEditor.value = entry.text;
       nextEditor.focus();
       nextEditor.setSelectionRange(nextEditor.value.length, nextEditor.value.length);
-    });
-    fontFamilySelect.addEventListener('change', () => {
-      ctx.setFontFamily?.(fontFamilySelect.value);
-      applyEditorStyle(ctx);
     });
     clearHistoryButton.addEventListener('click', () => {
       ctx.textHistoryStore?.clear();

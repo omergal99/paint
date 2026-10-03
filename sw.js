@@ -1,4 +1,4 @@
-const CACHE_NAME = 'paint-shell-v1-8-0-3cd92b47';
+const CACHE_NAME = 'paint-shell-v1-8-0-2b6c1764';
 const CACHE_PREFIX = 'paint-shell-';
 const SHELL = [
   './index.html',
@@ -111,6 +111,9 @@ const SHELL = [
   './js/services/selection/selectionSettings.js',
   './js/services/selection/selectionPreview.js',
   './js/services/selection/selectionPropertiesPanel.js',
+  './js/app/CommandRegistry.js',
+  './js/app/GlobalShortcutController.js',
+  './js/ui/FontFamilyPicker.js',
   './css/assets/icon.svg',
   './css/assets/icon-192.png',
   './css/assets/icon-512.png',

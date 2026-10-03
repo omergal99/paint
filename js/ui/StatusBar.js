@@ -5,6 +5,9 @@ export const createStatusBar = ({ pointerEl, selectionEl, canvasSizeEl, flashEl,
   let currentPointer = null;
   let flashTimer = null;
   let lastSelection = null;
+  selectionEl?.setAttribute?.('data-i18n-ignore', '');
+  selectionEl?.removeAttribute?.('data-i18n-runtime');
+  selectionEl?.removeAttribute?.('data-i18n-runtime-source');
 
   const setPointer = (pt) => {
     currentPointer = pt;
@@ -18,6 +21,8 @@ export const createStatusBar = ({ pointerEl, selectionEl, canvasSizeEl, flashEl,
   // the region, and re-renders itself on every locale change instead.
   const setSelection = (region) => {
     lastSelection = region && region.w && region.h ? region : null;
+    selectionEl?.removeAttribute?.('data-i18n-runtime');
+    selectionEl?.removeAttribute?.('data-i18n-runtime-source');
     selectionEl.textContent = lastSelection
       ? `${t('ui.selectionLabel')} ${lastSelection.w} × ${lastSelection.h}px`
       : '';
@@ -32,11 +37,13 @@ export const createStatusBar = ({ pointerEl, selectionEl, canvasSizeEl, flashEl,
   const setMarqueeSelecting = (active) => {
     if (!active) {
       selectionEl.textContent = '';
-      selectionEl.removeAttribute('data-i18n-runtime');
+      selectionEl?.removeAttribute?.('data-i18n-runtime');
+      selectionEl?.removeAttribute?.('data-i18n-runtime-source');
       return;
     }
     selectionEl.textContent = t('ui.selectingArea');
-    selectionEl.setAttribute('data-i18n-runtime', 'ui.selectingArea');
+    selectionEl?.removeAttribute?.('data-i18n-runtime');
+    selectionEl?.removeAttribute?.('data-i18n-runtime-source');
   }
 
   const setCanvasSize = (w, h) => {

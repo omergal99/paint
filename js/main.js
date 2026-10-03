@@ -57,7 +57,8 @@ import {
 	TEXT_FONT_FAMILIES,
 } from './core/constants.js';
 import { createPaintSettingsStore } from './app/settingsStore.js';
-import { createShortcutManager, formatShortcut, shortcutFromEvent } from './settings/ShortcutManager.js';
+import { createCommandRegistry } from './app/CommandRegistry.js';
+import { createGlobalShortcutController } from './app/GlobalShortcutController.js';
 import { createTextDocumentStore } from './document/TextDocumentStore.js';
 import { createTextHistoryStore } from './document/TextHistoryStore.js';
 import { createTextLayerService } from './document/TextLayerService.js';
@@ -66,6 +67,7 @@ import { createTabBar } from './ui/TabBar.js';
 import { createSplitView } from './ui/SplitView.js';
 import { createWorkspaceStripController } from './ui/WorkspaceStrip.js';
 import { createActionMenuController } from './ui/ActionMenuController.js';
+import { createFontFamilyPicker } from './ui/FontFamilyPicker.js';
 import { createDialogSearch } from './ui/DialogSearch.js';
 import { createSettingsDialog } from './ui/SettingsDialog.js';
 import { createBrowserInfoPanel } from './ui/BrowserInfoPanel.js';
@@ -255,7 +257,15 @@ const shouldAutoSaveOnNew = () => {
 // ---------- Core managers ----------
 const eventBus = createEventBus();
 const canvasManager = new CanvasManager({ canvas: canvasEl, overlay: overlayEl, width: 800, height: 600, eventBus });
-const historyManager = new HistoryManager(canvasManager);
+const historyManager = new HistoryManager(canvasManager, {
+	captureState: () => ({
+		selection: canvasManager.selection ? { ...canvasManager.selection } : null,
+	}),
+	restoreState: ({ selection } = {}) => {
+		canvasManager.floatingCanvas = null;
+		setSelection(selection ? { ...selection } : null);
+	},
+});
 const backgroundRemovalService = createBackgroundRemovalService({
 	localProvider: createLocalColorKeyProvider(),
 });
@@ -831,10 +841,10 @@ historyManager.onBeforeRestore = () => {
 // the History tab, keyboard). A floating selection is dropped first so undo
 // restores the canvas, not the lifted shape.
 const runUndo = () => {
-	historyManager.undo();
+	return historyManager.undo();
 }
 const runRedo = () => {
-	historyManager.redo();
+	return historyManager.redo();
 }
 
 // ---------- Shared tool context ----------
@@ -880,6 +890,7 @@ let currentTextFontFamily = (() => {
 		return DEFAULT_TEXT_FONT_FAMILY;
 	}
 })();
+let fontFamilyPicker = null;
 
 const TEXT_STYLES_KEY = 'paint:text-styles';
 const TEXT_STROKE_WIDTH_KEY = 'paint:text-outline-stroke-width';
@@ -1004,13 +1015,22 @@ const toolContext = {
 	setFontFamily: (family) => {
 		if (!TEXT_FONT_FAMILIES.some(({ value }) => value === family)) return;
 		currentTextFontFamily = family;
+		fontFamilyPicker?.setValue(family);
 		try {
 			localStorage.setItem(TEXT_FONT_FAMILY_KEY, currentTextFontFamily);
 		} catch (err) {
 			console.warn('Unable to save text font family:', err);
 		}
+		window.dispatchEvent(new Event(EVENTS.textFontFamilyChanged));
 	},
 };
+
+fontFamilyPicker = createFontFamilyPicker({
+	root: document.getElementById('text-font-family-picker'),
+	families: TEXT_FONT_FAMILIES,
+	value: currentTextFontFamily,
+	onChange: (family) => toolContext.setFontFamily(family),
+});
 
 // ---------- Tools ----------
 const toolManager = new ToolManager({ surface: overlayEl, viewportManager, toolContext, statusBar });
@@ -1082,7 +1102,7 @@ const {
 	fileInput,
 	persistSession,
 	backgroundRemovalController,
-	selectAll,
+	selectAll: selectAllCanvas,
 	deleteSelection,
 	newFile,
 	doNewFile,
@@ -1094,6 +1114,46 @@ const {
 	showToast,
 	crop,
 } = fileActions;
+
+const selectAll = () => {
+	commitFloatingSelection();
+	if (toolManager.active?.name !== 'select') toolManager.setActive('select');
+	selectAllCanvas();
+}
+
+const commandRegistry = createCommandRegistry({
+	commands: {
+		[SHORTCUT_ACTIONS.undo]: runUndo,
+		[SHORTCUT_ACTIONS.redo]: runRedo,
+		[SHORTCUT_ACTIONS.selectAll]: selectAll,
+		[SHORTCUT_ACTIONS.copy]: () => clipboardService.copy(),
+		[SHORTCUT_ACTIONS.cut]: () => clipboardService.cut(),
+		[SHORTCUT_ACTIONS.paste]: () => clipboardService.paste(),
+		[SHORTCUT_ACTIONS.save]: () => save(),
+		[SHORTCUT_ACTIONS.open]: () => openFile(),
+		[SHORTCUT_ACTIONS.newFile]: () => newFile(),
+		[SHORTCUT_ACTIONS.deleteSelection]: () => textSelectionOverlay.deleteSelected?.() || deleteSelection(),
+		[SHORTCUT_ACTIONS.selectTool]: () => toolManager.setActive('select'),
+		[SHORTCUT_ACTIONS.pencilTool]: () => toolManager.setActive('pencil'),
+		[SHORTCUT_ACTIONS.brushTool]: () => toolManager.setActive('brush'),
+		[SHORTCUT_ACTIONS.fillTool]: () => toolManager.setActive('fill'),
+		[SHORTCUT_ACTIONS.eraserTool]: () => toolManager.setActive('eraser'),
+		[SHORTCUT_ACTIONS.textTool]: () => toolManager.setActive('text'),
+		[SHORTCUT_ACTIONS.eyedropperTool]: () => toolManager.setActive('eyedropper'),
+		[SHORTCUT_ACTIONS.zoomTool]: () => toolManager.setActive('zoom'),
+		[SHORTCUT_ACTIONS.panTool]: () => toolManager.setActive('pan'),
+		[SHORTCUT_ACTIONS.nudgeUp]: ({ event } = {}) => nudgeSelection(0, event?.shiftKey ? -10 : -1),
+		[SHORTCUT_ACTIONS.nudgeDown]: ({ event } = {}) => nudgeSelection(0, event?.shiftKey ? 10 : 1),
+		[SHORTCUT_ACTIONS.nudgeLeft]: ({ event } = {}) => nudgeSelection(event?.shiftKey ? -10 : -1, 0),
+		[SHORTCUT_ACTIONS.nudgeRight]: ({ event } = {}) => nudgeSelection(event?.shiftKey ? 10 : 1, 0),
+	},
+});
+const globalShortcutController = createGlobalShortcutController({
+	commandRegistry,
+	shortcutManager,
+});
+globalShortcutController.bind();
+
 // ---------- Transformations ----------
 const actionMenuController = createActionMenuController({ root: document });
 actionMenuController.bind();
@@ -1506,18 +1566,18 @@ const toolbar = new Toolbar({
 	setLineWidth: (w) => (canvasManager.lineWidth = w),
 	setFontSize: (size) => toolContext.setFontSize(size),
 	handlers: {
-		newFile,
-		openFile,
+		newFile: () => commandRegistry.execute({ action: SHORTCUT_ACTIONS.newFile }),
+		openFile: () => commandRegistry.execute({ action: SHORTCUT_ACTIONS.open }),
 		importFile,
-		save,
+		save: () => commandRegistry.execute({ action: SHORTCUT_ACTIONS.save }),
 		saveAs: saveImageAs,
-		paste: () => clipboardService.paste(),
-		cut: () => clipboardService.cut(),
-		copy: () => clipboardService.copy(),
+		paste: () => commandRegistry.execute({ action: SHORTCUT_ACTIONS.paste }),
+		cut: () => commandRegistry.execute({ action: SHORTCUT_ACTIONS.cut }),
+		copy: () => commandRegistry.execute({ action: SHORTCUT_ACTIONS.copy }),
 		crop,
 		openResizeDialog,
-		undo: runUndo,
-		redo: runRedo,
+		undo: () => commandRegistry.execute({ action: SHORTCUT_ACTIONS.undo }),
+		redo: () => commandRegistry.execute({ action: SHORTCUT_ACTIONS.redo }),
 		setPrimaryColor: (hex, alpha) => colorPalette.setPrimary(hex, alpha),
 	},
 });
@@ -1559,14 +1619,14 @@ renderTextStyleControls();
 document.getElementById('btn-history-panel').addEventListener('click', () => sidebar.toggleHistory());
 // Phase 2 step-04: the History tab's undo/redo buttons use the same path as
 // data-tag="btn-undo" / "btn-redo" and Ctrl+Z / Ctrl+Shift+Z.
-document.getElementById('history-undo-btn')?.addEventListener('click', runUndo);
-document.getElementById('history-redo-btn')?.addEventListener('click', runRedo);
+document.getElementById('history-undo-btn')?.addEventListener('click', () => commandRegistry.execute({ action: SHORTCUT_ACTIONS.undo }));
+document.getElementById('history-redo-btn')?.addEventListener('click', () => commandRegistry.execute({ action: SHORTCUT_ACTIONS.redo }));
 sidebar.setHistoryDeepLinks({ openPreferences: () => openSettingsDialog('history') });
 document.getElementById('btn-ai-chat').addEventListener('click', () => sidebar.toggleAi());
 document.getElementById('history-settings-link')?.addEventListener('click', () => openSettingsDialog('history'));
 // Select All lives in the Image ▸ More menu and in the Image sidebar mirror;
 // both reach the same implementation as the Ctrl+A binding.
-document.getElementById('btn-select-all')?.addEventListener('click', () => fileActions.selectAll());
+document.getElementById('btn-select-all')?.addEventListener('click', () => commandRegistry.execute({ action: SHORTCUT_ACTIONS.selectAll }));
 
 document.querySelectorAll('.ribbon-group-title').forEach(titleEl => {
 	titleEl.addEventListener('click', () => {
@@ -1666,124 +1726,6 @@ if (viewportEl) {
 		}
 	});
 }
-
-// ---------- Keyboard shortcuts ----------
-const SHORTCUT_TOOL_TARGETS = Object.freeze({
-	[SHORTCUT_ACTIONS.selectTool]: 'select',
-	[SHORTCUT_ACTIONS.pencilTool]: 'pencil',
-	[SHORTCUT_ACTIONS.brushTool]: 'brush',
-	[SHORTCUT_ACTIONS.fillTool]: 'fill',
-	[SHORTCUT_ACTIONS.eraserTool]: 'eraser',
-	[SHORTCUT_ACTIONS.textTool]: 'text',
-	[SHORTCUT_ACTIONS.eyedropperTool]: 'eyedropper',
-	[SHORTCUT_ACTIONS.zoomTool]: 'zoom',
-	[SHORTCUT_ACTIONS.panTool]: 'pan',
-});
-
-const SHORTCUT_NUDGE_DELTAS = Object.freeze({
-	[SHORTCUT_ACTIONS.nudgeUp]: [0, -1],
-	[SHORTCUT_ACTIONS.nudgeDown]: [0, 1],
-	[SHORTCUT_ACTIONS.nudgeLeft]: [-1, 0],
-	[SHORTCUT_ACTIONS.nudgeRight]: [1, 0],
-});
-
-// Only genuine text fields own the browser's native edit-undo stack. Range
-// sliders, checkboxes, color wells, and numeric spinners are drawing controls:
-// keyboard focus stays on them while the user keeps painting (the canvas
-// pointerdown is prevented), so they must never swallow Ctrl/Cmd+Z.
-const TEXT_EDITING_INPUT_TYPES = Object.freeze(['text', 'search', 'email', 'url', 'password', 'tel']);
-const ownsTextEditing = (element) => element instanceof HTMLTextAreaElement
-	|| Boolean(element?.isContentEditable)
-	|| (element instanceof HTMLInputElement && TEXT_EDITING_INPUT_TYPES.includes(element.type));
-
-window.addEventListener('keydown', (e) => {
-	if (e.defaultPrevented) return;
-	if ((e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === 'a') {
-		e.preventDefault();
-		e.stopPropagation();
-		selectAll();
-	}
-	const action = shortcutManager.resolve(shortcutFromEvent(e));
-	if (action === SHORTCUT_ACTIONS.undo && !ownsTextEditing(document.activeElement)) {
-		e.preventDefault();
-		e.stopPropagation();
-		runUndo();
-	}
-}, true);
-
-window.addEventListener('keydown', (e) => {
-	if (e.defaultPrevented) return;
-	const tag = document.activeElement?.tagName;
-	const typing = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
-	const shortcut = shortcutFromEvent(e);
-	const action = shortcutManager.resolve(shortcut);
-	if (!action) return;
-	const activeElement = document.activeElement;
-	const editable = activeElement instanceof HTMLTextAreaElement || activeElement?.isContentEditable ||
-		(activeElement instanceof HTMLInputElement &&
-			!['checkbox', 'radio', 'range', 'color', 'button', 'submit'].includes(activeElement.type));
-	const hasTextSelection = editable && typeof activeElement.selectionStart === 'number'
-		&& activeElement.selectionStart !== activeElement.selectionEnd;
-
-	if (action === SHORTCUT_ACTIONS.undo || action === SHORTCUT_ACTIONS.redo) {
-		if (ownsTextEditing(activeElement)) return;
-		e.preventDefault();
-		if (action === SHORTCUT_ACTIONS.undo) runUndo();
-		else runRedo();
-		return;
-	}
-	if (action === SHORTCUT_ACTIONS.copy || action === SHORTCUT_ACTIONS.cut) {
-		if (editable && hasTextSelection) return;
-		e.preventDefault();
-		// The native copy/cut events route here too, so the keyboard and the
-		// ribbon button share one implementation.
-		if (action === SHORTCUT_ACTIONS.copy) clipboardService.copy();
-		else clipboardService.cut();
-		return;
-	}
-	if (action === SHORTCUT_ACTIONS.paste) {
-		// The default Ctrl/Cmd+V stays on the native paste event owned by the
-		// clipboard service (no permission prompt, works on Safari). Custom
-		// bindings use the explicit clipboard-read fallback while preserving
-		// user activation.
-		if (shortcutManager.isDefault(action, shortcut) || typing) return;
-		e.preventDefault();
-		void clipboardService.paste();
-		return;
-	}
-	if (typing) return;
-	if (action === SHORTCUT_ACTIONS.save) {
-		e.preventDefault();
-		save();
-		return;
-	}
-	if (action === SHORTCUT_ACTIONS.open) {
-		e.preventDefault();
-		openFile();
-		return;
-	}
-	if (action === SHORTCUT_ACTIONS.newFile) {
-		e.preventDefault();
-		newFile();
-		return;
-	}
-	if (action === SHORTCUT_ACTIONS.deleteSelection) {
-		if (textSelectionOverlay.deleteSelected?.() || deleteSelection()) e.preventDefault();
-		return;
-	}
-	const tool = SHORTCUT_TOOL_TARGETS[action];
-	if (tool) {
-		e.preventDefault();
-		toolManager.setActive(tool);
-		return;
-	}
-	const delta = SHORTCUT_NUDGE_DELTAS[action];
-	if (delta && canvasManager.selection?.w && canvasManager.selection?.h) {
-		e.preventDefault();
-		const step = e.shiftKey ? 10 : 1;
-		nudgeSelection(delta[0] * step, delta[1] * step);
-	}
-});
 
 // ---------- Clipboard ----------
 // One service owns copy/cut/paste for every trigger: the ribbon buttons, the

@@ -54,6 +54,7 @@ export const initializeAr = (english) => {
     "ui.restoreOverrideMessage": "هل تريد استبدال اللوحة الحالية بهذه الصورة المحفوظة؟ ستُفقد التغييرات غير المحفوظة.",
     "ui.restoreOverrideAction": "استبدال",
     "ui.textFontFamily": "عائلة الخط",
+    "ui.systemUiDefaultFont": "واجهة النظام (Sans-Serif افتراضي)",
     "ui.blackOutlineStrokeColor": "لون المخطط الأسود",
     "ui.selectionMenu": "التحديد",
     "ui.blackOutlineStrokeWidth": "عرض المخطط الأسود",

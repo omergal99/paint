@@ -36,6 +36,7 @@ export const EVENTS = Object.freeze({
 	selectionChanged: 'paint:selection-changed',
 	historyChanged: 'paint:history-changed',
 	storageError: 'paint:storage-error',
+	textFontFamilyChanged: 'paint:text-font-family-change',
 });
 
 export const KEYBOARD_KEYS = Object.freeze({
@@ -117,7 +118,7 @@ export const HISTORY_VIEWS = Object.freeze({
 
 export const DEFAULT_TEXT_FONT_FAMILY = "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
 export const TEXT_FONT_FAMILIES = Object.freeze([
-	Object.freeze({ label: 'System UI', value: DEFAULT_TEXT_FONT_FAMILY }),
+	Object.freeze({ label: 'System UI (Default Sans-Serif)', value: DEFAULT_TEXT_FONT_FAMILY }),
 	...[
 		'Arial',
 		'Helvetica',

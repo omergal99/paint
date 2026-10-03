@@ -288,12 +288,11 @@ test('History tab exposes undo/redo, one concise preferences row, and event-driv
   assert.match(read('css/styles.css'), /\.history-preferences\s*\{\s*display: flex;/);
   assert.match(read('css/styles.css'), /\.history-undo-row\s*\{/);
   // One undo/redo path: ribbon handlers, the History tab, and the keyboard.
-  assert.match(main, /const runUndo = \(\) => \{\s*historyManager\.undo\(\);/);
-  assert.match(main, /const runRedo = \(\) => \{\s*historyManager\.redo\(\);/);
-  assert.match(main, /undo: runUndo,\s*redo: runRedo,/);
-  assert.match(main, /history-undo-btn'\)\?\.addEventListener\('click', runUndo\)/);
-  assert.match(main, /history-redo-btn'\)\?\.addEventListener\('click', runRedo\)/);
-  assert.match(main, /if \(action === SHORTCUT_ACTIONS\.undo\) runUndo\(\);\s*else runRedo\(\);/);
+  assert.match(main, /const runUndo = \(\) => \{\s*return historyManager\.undo\(\);/);
+  assert.match(main, /const runRedo = \(\) => \{\s*return historyManager\.redo\(\);/);
+  assert.match(main, /\[SHORTCUT_ACTIONS\.undo\]: runUndo/);
+  assert.match(main, /history-undo-btn'\)\?\.addEventListener\('click', \(\) => commandRegistry\.execute\(\{ action: SHORTCUT_ACTIONS\.undo \}\)\)/);
+  assert.match(main, /history-redo-btn'\)\?\.addEventListener\('click', \(\) => commandRegistry\.execute\(\{ action: SHORTCUT_ACTIONS\.redo \}\)\)/);
   // State flows through one event, so no surface polls.
   assert.match(historyManager, /EVENTS\.historyChanged/);
   assert.match(main, /window\.addEventListener\(EVENTS\.historyChanged/);
@@ -502,21 +501,20 @@ test('keyboard shortcuts are SSOT-backed, editable in Settings, and persisted', 
   assert.match(html, /id="shortcut-settings-list"/);
   assert.match(read('js/core/constants.js'), /SHORTCUT_DEFINITIONS/);
   assert.match(read('js/settings/ShortcutManager.js'), /normalizeShortcut/);
-  assert.match(main, /createShortcutManager/);
+  assert.match(read('js/app/shortcutSettings.js'), /createShortcutManager/);
   assert.match(read('js/app/shortcutSettings.js'), /settingsStore\.set\(\{ shortcuts: shortcutManager\.get\(\) \}\)/);
-  assert.match(main, /shortcutManager\.resolve\(shortcut\)/);
+  assert.match(main, /createGlobalShortcutController/);
+  assert.match(read('js/app/GlobalShortcutController.js'), /shortcutManager\.resolve\(shortcut\)/);
 });
 
 test('canvas undo/redo is not swallowed by focused ribbon or status controls', () => {
-  assert.match(main, /const TEXT_EDITING_INPUT_TYPES = Object\.freeze\(\[/);
-  assert.match(main, /const ownsTextEditing = \(element\) => element instanceof HTMLTextAreaElement/);
-  assert.match(main, /if \(ownsTextEditing\(activeElement\)\) return;[\s\S]*runUndo\(\)/);
-  // Phase 2 step-04: the keyboard guard now routes through the one shared path.
-  assert.match(main, /const runUndo = \(\) => \{\s*historyManager\.undo\(\);/);
-  const undoBranch = main.match(/if \(action === SHORTCUT_ACTIONS\.undo[\s\S]*?\n\t\}/)?.[0] || '';
-  assert.ok(undoBranch, 'undo/redo branch must exist');
-  assert.doesNotMatch(undoBranch, /if \(typing\) return;/,
-    'sliders, checkboxes, and number spinners keep focus while painting, so undo must ignore them');
+  const keyboard = read('js/app/GlobalShortcutController.js');
+  assert.match(keyboard, /\['INPUT', 'TEXTAREA', 'SELECT'\]\.includes\(tagName\)/);
+  assert.match(keyboard, /target\?\.isContentEditable/);
+  assert.match(keyboard, /event\.preventDefault\(\);\s*event\.stopPropagation\(\);\s*commandRegistry\.execute/);
+  assert.match(main, /const runUndo = \(\) => \{\s*return historyManager\.undo\(\);/);
+  assert.match(main, /\[SHORTCUT_ACTIONS\.undo\]: runUndo/);
+  assert.match(main, /undo: \(\) => commandRegistry\.execute\(\{ action: SHORTCUT_ACTIONS\.undo \}\)/);
 });
 
 test('the first paint matches the default visual settings', () => {
@@ -652,7 +650,7 @@ test('settings search keeps text intact and reports only deepest areas', () => {
   assert.match(read('css/styles.css'), /\.settings-tab\.dialog-search-tab-active\s*\{[\s\S]*box-shadow: inset 0 0 0 2px var\(--w10-search-accent\)/);
   assert.match(search, /firstResultIndex = results\.findIndex/);
   assert.match(read('css/styles.css'), /right: 2px[\s\S]*bottom: 2px[\s\S]*min-width: 10px[\s\S]*padding: 0 1px[\s\S]*font-size: 10px[\s\S]*line-height: 12px/);
-  assert.match(main, /if \(\(e\.ctrlKey \|\| e\.metaKey\)[\s\S]*e\.preventDefault\(\);\s*e\.stopPropagation\(\);\s*selectAll\(\);/);
+  assert.match(read('js/app/GlobalShortcutController.js'), /event\.preventDefault\(\);\s*event\.stopPropagation\(\);\s*commandRegistry\.execute/);
 });
 
 test('History auto-save toggle + export-all are wired and guarded', () => {
@@ -751,7 +749,7 @@ test('Hand/Pan is available as a shared tool and shortcut', () => {
 	const pan = read('js/tools/PanTool.js');
 	assert.match(html, /data-tool="pan"/);
 	assert.match(main, /createPanTool/);
-	assert.match(main, /SHORTCUT_ACTIONS\.panTool\]:\s*'pan'/);
+	assert.match(main, /\[SHORTCUT_ACTIONS\.panTool\]: \(\) => toolManager\.setActive\('pan'\)/);
 	assert.match(pan, /scrollLeft/);
 	assert.match(pan, /scrollTop/);
 	assert.match(read('css/styles.css'), /#canvas-viewport\.pan-mode/);
@@ -1085,7 +1083,10 @@ test('Round-2 stabilization: alpha, text commit, and nested image actions', () =
 	assert.match(textTool, /commit\(\);[\s\S]*getTextSelectAfterDraw\?\.\(\) === true/);
 	assert.match(css, /\.text-editor-toolbar\.is-empty\s*\{/);
 	assert.match(textTool, /toolbar\.hidden = false/);
-	assert.match(textTool, /toolbar\.setAttribute\('aria-hidden', String\(!historyVisible\)\)/);
+	assert.match(textTool, /toolbar\.removeAttribute\('aria-hidden'\)/);
+	assert.match(read('js/ui/FontFamilyPicker.js'), /preview\.textContent = 'Aa'/);
+	assert.match(read('js/ui/FontFamilyPicker.js'), /preview\.style\.fontFamily = family\.value/);
+	assert.match(textTool, /EVENTS\.textFontFamilyChanged/);
 	assert.match(textTool, /control\.hidden = !historyVisible/);
 	assert.match(controller, /const ancestorsOf = \(menu\) =>/);
 	assert.match(controller, /const handleKeyboard = \(event\) =>/);
@@ -1094,7 +1095,7 @@ test('Round-2 stabilization: alpha, text commit, and nested image actions', () =
 	assert.match(controller, /paint:action-menu-open-at/);
 	assert.match(read('js/ui/ColorPalette.js'), /paint:action-menu-open-at/);
 	assert.match(main, /const nudgeSelection = \(dx, dy\) =>/);
-	assert.match(main, /if \(e\.defaultPrevented\) return/);
+	assert.match(read('js/app/GlobalShortcutController.js'), /event\.defaultPrevented/);
 	assert.match(historyPanel, /export const createHistoryPanel/);
 	assert.match(sidebar, /createHistoryPanel/);
 	assert.match(settingsDialog, /export const createSettingsDialog/);
@@ -1336,12 +1337,14 @@ test('the offline shell is generated from the import graph and version-synced', 
 });
 
 test('global Ctrl+A capture prevents native selection before shortcut dispatch', () => {
-  const start = main.indexOf("window.addEventListener('keydown'");
-  const end = main.indexOf('}, true);', start);
-  const capture = main.slice(start, end);
-  assert.match(capture, /if \(\(e\.ctrlKey \|\| e\.metaKey\)[\s\S]*?e\.preventDefault\(\);\s*e\.stopPropagation\(\);\s*selectAll\(\);/);
-  assert.match(main.slice(end), /^\}, true\);/);
-  assert.match(main, /window\.addEventListener\('keydown', \(e\) => \{\s*if \(e\.defaultPrevented\) return;/);
+  const keyboard = read('js/app/GlobalShortcutController.js');
+  const shortcuts = read('js/settings/ShortcutManager.js');
+  assert.match(keyboard, /addEventListener\?\.\('keydown', handleKeydown, true\)/);
+  assert.match(keyboard, /event\.preventDefault\(\);\s*event\.stopPropagation\(\);\s*commandRegistry\.execute/);
+  assert.match(shortcuts, /shortcutKeyFromCode\(event\.code\)/);
+  assert.doesNotMatch(shortcuts.match(/export const shortcutFromEvent =[\s\S]*?;\n};/)?.[0] || '', /event\.key/);
+  assert.match(main, /\[SHORTCUT_ACTIONS\.selectAll\]: selectAll/);
+  assert.match(main, /btn-select-all'\)\?\.addEventListener\('click', \(\) => commandRegistry\.execute\(\{ action: SHORTCUT_ACTIONS\.selectAll \}\)\)/);
 });
 
 test('pending session previews resolve the settled snapshot source', () => {
