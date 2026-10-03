@@ -362,10 +362,15 @@ test('the text editor shell previews at true canvas scale, chrome stays fixed', 
   const shell = css.slice(css.indexOf('.text-editor-shell {'), css.indexOf('.text-editor-shell > .text-editor-resize {'));
   assert.ok(!/transform:\s*scale\(var\(--zoom-inverse/.test(shell),
     'the editor shell must not be zoom-inverted: it is a preview of canvas output');
-  // The chrome is UI and does get normalised.
-  assert.match(css, /\.text-editor-toolbar > \* \{[\s\S]{0,100}?transform: scale\(var\(--zoom-inverse, 1\)\)/);
+  // The toolbar and its children share one screen-space layout box, so flex
+  // sizing is constrained by the zoomed editor width instead of overflowing it.
+  assert.match(css, /\.text-editor-toolbar \{[\s\S]{0,900}?transform: scale\(var\(--zoom-inverse, 1\)\)/);
+  assert.match(css, /\.text-editor-toolbar \{[\s\S]{0,120}?position: absolute;[\s\S]{0,100}?top: 100%;/);
   assert.match(css, /\.text-editor-toolbar \{[\s\S]{0,500}?width: 100%;/);
-  assert.match(read('js/tools/TextTool.js'), /toolbar\.style\.minHeight = `\$\{24 \/ zoom\}px`/);
+  assert.match(css, /\.text-history-select \{[\s\S]{0,240}?flex: 0 1 160px;[\s\S]{0,180}?min-width: 0;/);
+  const textTool = read('js/tools/TextTool.js');
+  assert.match(textTool, /toolbar\.style\.width = `\$\{editor\.offsetWidth \* zoom\}px`/);
+  assert.match(textTool, /new ResizeObserver\(\(\) => syncToolbarWidth\(ctx\)\)/);
   // ViewportManager must actually publish the variable it consumes.
   assert.match(read('js/canvas/ViewportManager.js'), /setProperty\('--zoom-inverse', String\(1 \/ scale\)\)/);
 });

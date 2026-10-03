@@ -2517,21 +2517,21 @@ html[dir="rtl"] .resize-ghost {
 	transform-origin: top left;
 }
 .text-editor-toolbar {
+	position: absolute;
+	top: 100%;
+	left: 0;
 	display: flex;
 	flex-direction: row;
 	direction: ltr;
 	justify-content: space-between;
 	align-items: center;
 	gap: 3px;
-	/* Track the shell instead of floating at its own width: the toolbar holds the
-	   recent-text controls, so a narrower shell used to clip them while a wider
-	   one left the toolbar hanging over the edge. `width: 100%` + `min-width: 0`
-	   lets the grid shrink below its content without overflowing. */
+	/* The toolbar is out of shell flow so its zoom-adjusted width cannot resize
+	   the text editor itself. TextTool sets this width in canvas units. */
 	width: 100%;
 	min-width: 0;
-	max-width: 100%;
-	align-self: stretch;
 	box-sizing: border-box;
+	margin-top: 3px;
 	min-height: 24px;
 	padding: 0 3px;
 	background: color-mix(in srgb, var(--w10-panel-bg, var(--w10-ribbon-bg)) 92%, transparent);
@@ -2540,8 +2540,6 @@ html[dir="rtl"] .resize-ghost {
 	font-size: 13px;
 	color: var(--w10-text-dim);
 	cursor: move;
-}
-.text-editor-toolbar > * {
 	transform: scale(var(--zoom-inverse, 1));
 	transform-origin: top left;
 }
@@ -2552,7 +2550,7 @@ html[dir="rtl"] .resize-ghost {
 }
 .text-history-controls {
 	display: flex;
-	flex: 1 1 auto;
+	flex: 1 1 0;
 	align-items: center;
 	gap: 5px;
 	min-width: 0;
@@ -2569,11 +2567,12 @@ html[dir="rtl"] .resize-ghost {
 	font: inherit;
 }
 .text-history-select {
-	flex: 1 1 240px;
+	flex: 0 1 160px;
 	display: block;
-	width: 100%;
-	min-width: 150px;
-	max-width: 320px;
+	width: 160px;
+	min-width: 0;
+	max-width: 160px;
+	box-sizing: border-box;
 	overflow: hidden;
 	padding: 2px 6px;
 	text-align: start;

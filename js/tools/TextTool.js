@@ -45,17 +45,22 @@ export const createTextTool = () => {
   let historyToolbarListener = null;
   let strokeStyleListener = null;
   let fontFamilyListener = null;
+  let editorResizeObserver = null;
 
   const getEditorParent = (ctx) => ctx.scaleEl || ctx.stage;
+
+  const syncToolbarWidth = (ctx) => {
+    if (!editor || !editorShell) return;
+    const toolbar = editorShell.querySelector('.text-editor-toolbar');
+    if (!toolbar) return;
+    const zoom = Math.max(0.01, Number(ctx.viewportManager.zoom || 100) / 100);
+    toolbar.style.width = `${editor.offsetWidth * zoom}px`;
+  };
 
   const applyEditorStyle = (ctx) => {
     if (!editor) return;
 
-    const zoom = Math.max(0.01, Number(ctx.viewportManager.zoom || 100) / 100);
-    const toolbar = editorShell?.querySelector('.text-editor-toolbar');
-    if (toolbar) {
-      toolbar.style.minHeight = `${24 / zoom}px`;
-    }
+    syncToolbarWidth(ctx);
     const fontSize = getRenderSize(ctx);
     const styles = getStyleSet(ctx);
     editor.style.font = getFontDeclaration(ctx, fontSize, styles);
@@ -91,11 +96,13 @@ export const createTextTool = () => {
   };
 
   const clearEditorReferences = () => {
+    editorResizeObserver?.disconnect();
     historyUnsubscribe?.();
     if (historyToolbarListener) window.removeEventListener('paint:text-history-toolbar-change', historyToolbarListener);
     if (strokeStyleListener) window.removeEventListener('paint:text-stroke-style-change', strokeStyleListener);
     if (fontFamilyListener) window.removeEventListener(EVENTS.textFontFamilyChanged, fontFamilyListener);
     historyUnsubscribe = null;
+    editorResizeObserver = null;
     historyToolbarListener = null;
     strokeStyleListener = null;
     fontFamilyListener = null;
@@ -284,6 +291,11 @@ export const createTextTool = () => {
     });
 
     getEditorParent(ctx).appendChild(shell);
+    applyEditorStyle(ctx);
+    if (typeof ResizeObserver === 'function') {
+      editorResizeObserver = new ResizeObserver(() => syncToolbarWidth(ctx));
+      editorResizeObserver.observe(nextEditor);
+    }
     nextEditor.focus();
     if (initialText) nextEditor.setSelectionRange(nextEditor.value.length, nextEditor.value.length);
     nextEditor.addEventListener('keydown', (event) => {

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'paint-shell-v1-8-0-c036069c';
+const CACHE_NAME = 'paint-shell-v1-8-0-2d257480';
 const CACHE_PREFIX = 'paint-shell-';
 const SHELL = [
   './index.html',
