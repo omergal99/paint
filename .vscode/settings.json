@@ -17,7 +17,7 @@
     "sideBarSectionHeader.background": "#eeeef0",
     "sideBarSectionHeader.foreground": "#0f2731",
     // Tabs (optional but usually part of the “top” look)
-    "tab.activeBackground": "#6363da",
+    "tab.activeBackground": "#d7d7ff",
     "tab.inactiveBackground": "#f2f2f5",
     "tab.activeBorderTop": "#81d7ff"
   },
