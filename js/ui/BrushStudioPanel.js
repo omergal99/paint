@@ -220,6 +220,7 @@ export const createBrushStudioPanel = ({ brushState, getPrimaryColor, setPrimary
 				rename.setAttribute('aria-label', t('common.actions.rename'));
 				rename.title = t('common.actions.rename');
 				rename.append(makeRenameIcon());
+				rename.addEventListener('click', () => beginPresetRename(group));
 				const nameInput = document.createElement('input');
 				nameInput.type = 'text';
 				nameInput.className = 'brush-studio-preset-name-input';
@@ -228,6 +229,22 @@ export const createBrushStudioPanel = ({ brushState, getPrimaryColor, setPrimary
 				nameInput.hidden = true;
 				nameInput.dataset.tag = 'brush-preset-name-input';
 				nameInput.setAttribute('aria-label', t('common.actions.rename'));
+				nameInput.addEventListener('keydown', (event) => {
+					if (event.key === 'Enter') {
+						event.preventDefault();
+						finishPresetRename(nameInput, true);
+					} else if (event.key === 'Escape') {
+						event.preventDefault();
+						finishPresetRename(nameInput, false);
+					}
+				});
+				nameInput.addEventListener('blur', () => {
+					if (!nameInput.hidden) finishPresetRename(nameInput, true);
+				});
+				label.addEventListener('dblclick', (event) => {
+					event.preventDefault();
+					beginPresetRename(group);
+				});
 				const remove = document.createElement('button');
 				remove.type = 'button';
 				remove.className = 'brush-studio-delete-preset';
@@ -311,7 +328,7 @@ export const createBrushStudioPanel = ({ brushState, getPrimaryColor, setPrimary
 		});
 
 		const beginPresetRename = (group) => {
-			const label = group?.querySelector('[data-brush-preset-name]');
+			const label = group?.querySelector('[data-tag="brush-preset-name"]');
 			const input = group?.querySelector('.brush-studio-preset-name-input');
 			if (!label || !input) return;
 			label.hidden = true;
@@ -322,7 +339,7 @@ export const createBrushStudioPanel = ({ brushState, getPrimaryColor, setPrimary
 		};
 		const finishPresetRename = (input, commit) => {
 			const group = input.closest('.brush-studio-custom-preset');
-			const label = group?.querySelector('[data-brush-preset-name]');
+			const label = group?.querySelector('[data-tag="brush-preset-name"]');
 			const applyButton = group?.querySelector('[data-brush-custom-preset]');
 			if (!label || !applyButton) return;
 			const name = input.value.trim().slice(0, input.maxLength);
@@ -357,10 +374,6 @@ export const createBrushStudioPanel = ({ brushState, getPrimaryColor, setPrimary
 		host.addEventListener('click', (event) => {
 			const button = event.target.closest?.('button');
 			if (!button || !host.contains(button)) return;
-			if (button.classList.contains('brush-studio-rename-preset')) {
-				beginPresetRename(button.closest('.brush-studio-custom-preset'));
-				return;
-			}
 			const preset = BUILT_IN_BRUSH_PRESETS.find((item) => item.id === button.dataset.brushPreset);
 			if (preset) {
 				brushState.set(presetPatch(preset));
@@ -400,29 +413,6 @@ export const createBrushStudioPanel = ({ brushState, getPrimaryColor, setPrimary
 				if (color) setPrimaryColor?.(color);
 			}
 		});
-		host.addEventListener('dblclick', (event) => {
-			const label = event.target.closest?.('[data-brush-preset-name]');
-			if (!label || !host.contains(label)) return;
-			event.preventDefault();
-			beginPresetRename(label.closest('.brush-studio-custom-preset'));
-		});
-		host.addEventListener('keydown', (event) => {
-			const input = event.target.closest?.('.brush-studio-preset-name-input');
-			if (!input) return;
-			if (event.key === 'Enter') {
-				event.preventDefault();
-				finishPresetRename(input, true);
-			} else if (event.key === 'Escape') {
-				event.preventDefault();
-				finishPresetRename(input, false);
-			}
-		});
-		host.addEventListener('focusout', (event) => {
-			if (event.target.matches?.('.brush-studio-preset-name-input') && !event.target.hidden) {
-				finishPresetRename(event.target, true);
-			}
-		});
-
 		const refreshLocale = () => {
 			host.querySelectorAll('[data-brush-i18n]').forEach((node) => {
 				node.textContent = t(node.dataset.brushI18n);

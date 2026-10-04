@@ -284,6 +284,7 @@ const shouldAutoSaveOnNew = () => {
 const eventBus = createEventBus();
 const canvasManager = new CanvasManager({ canvas: canvasEl, overlay: overlayEl, width: 800, height: 600, eventBus });
 const brushState = createBrushState();
+let brushTipShape = brushState.get().tipShape;
 canvasManager.lineWidth = brushState.get().size;
 const adjustmentMask = createBrushAreaMask({
 	width: canvasManager.width,
@@ -946,7 +947,7 @@ const brushCursorOverlay = createBrushCursorOverlay({
 	surface: overlayEl,
 	viewportManager,
 	getLineWidth: () => canvasManager.lineWidth,
-	getTipShape: () => brushState.get().tipShape,
+	getTipShape: () => brushTipShape,
 });
 const selectTool = createSelectTool();
 const adjustmentMaskTool = createAdjustmentMaskTool({ mask: adjustmentMask, getSelection });
@@ -1589,6 +1590,7 @@ const toolbar = new Toolbar({
 });
 brushState.subscribe((state) => {
 	canvasManager.lineWidth = state.size;
+	brushTipShape = state.tipShape;
 	toolbar.syncBrushState(state);
 	brushCursorOverlay.refresh();
 	sidebar.syncRibbonMirror();
