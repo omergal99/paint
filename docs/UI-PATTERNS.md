@@ -54,14 +54,18 @@ options inside the sidebar.
 - Titles/labels prefer a `*Key` field and carry `data-i18n-runtime` so a locale
   switch re-translates JS-built nodes.
 
-## Disclosure sections (`<details class="mirror-section">`)
+## Disclosure sections (`<details class="disclosure-section">`)
 
+- **Named for what they are** (expand/collapse), not where they live — the
+  Sidebar settings panels reuse the same card for the "Toolbar view" /
+  "Tools Header" visibility rows and the custom palette.
 - **Open by default**; the user's own choice is remembered per section id in
-  `paint:mirror-sections`.
+  `paint:disclosure-sections` (the old `paint:mirror-sections` value is read
+  once as a fallback so remembered choices survive the rename).
 - The chevron rotates (`-90deg` collapsed → `0deg` open) and mirrors under RTL.
-- One helper (`applySectionState`) owns the rule for every builder, including
-  the visibility block — a second builder is exactly how one section stayed
-  collapsed by accident.
+- One helper (`applySectionState`, exported from `RibbonMirror.js`) owns the
+  rule for every builder, including the visibility block — a second builder is
+  exactly how one section stayed collapsed by accident.
 
 ## Static labels vs dynamic text
 

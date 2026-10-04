@@ -4,6 +4,7 @@
 // Advanced hosts the state-backed Brush controls.
 import { createLineSizeSlider } from './lineSizeControl.js';
 import { createBrushStudioPanel } from '../BrushStudioPanel.js';
+import { t } from '../../i18n/messages.js';
 
 const QUICK_TOOL_TAGS = Object.freeze([
   'tool-pencil', 'tool-brush', 'tool-fill', 'tool-eraser',
@@ -11,7 +12,7 @@ const QUICK_TOOL_TAGS = Object.freeze([
 ]);
 const FILLMODE_TAGS = Object.freeze(['fillmode-outline', 'fillmode-outline-fill', 'fillmode-fill']);
 
-export const toolsMirrorDescriptor = ({ brushState, getPrimaryColor, setPrimaryColor } = {}) => Object.freeze({
+export const toolsMirrorDescriptor = ({ brushState, getPrimaryColor, setPrimaryColor, getPalette } = {}) => Object.freeze({
   key: 'tools',
   titleKey: 'ribbon.groups.tools',
   layout: 'tabs',
@@ -49,10 +50,32 @@ export const toolsMirrorDescriptor = ({ brushState, getPrimaryColor, setPrimaryC
             const title = document.createElement('strong');
             title.textContent = 'Brush';
             title.setAttribute('data-i18n-runtime', 'ui.brushStudio');
-            host.append(icon, title);
+            // Reset restores the regular brush defaults. It is the escape hatch
+            // from an experimental tip/scatter/jitter combination, so it sits on
+            // the heading next to the panel it resets.
+            const reset = document.createElement('button');
+            reset.type = 'button';
+            reset.className = 'brush-studio-reset';
+            reset.dataset.tag = 'brush-studio-reset';
+            reset.title = t('ui.brushResetToDefault');
+            reset.setAttribute('aria-label', t('ui.brushResetToDefault'));
+            const resetIcon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            resetIcon.setAttribute('viewBox', '0 0 20 20');
+            resetIcon.setAttribute('class', 'icon size3');
+            resetIcon.setAttribute('aria-hidden', 'true');
+            const resetPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            resetPath.setAttribute('d', 'M4 10a6 6 0 1 1 1.8 4.3M4 10V6M4 10h4');
+            resetPath.setAttribute('fill', 'none');
+            resetPath.setAttribute('stroke', 'currentColor');
+            resetPath.setAttribute('stroke-linecap', 'round');
+            resetPath.setAttribute('stroke-linejoin', 'round');
+            resetIcon.append(resetPath);
+            reset.append(resetIcon);
+            reset.addEventListener('click', () => brushState?.reset?.());
+            host.append(icon, title, reset);
           },
         },
-        createBrushStudioPanel({ brushState, getPrimaryColor, setPrimaryColor }),
+        createBrushStudioPanel({ brushState, getPrimaryColor, setPrimaryColor, getPalette }),
       ],
     },
   ],

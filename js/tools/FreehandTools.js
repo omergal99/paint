@@ -8,6 +8,15 @@ const makeBrushHistoryEntry = (brush, color) => ({
 	spacing: brush.spacing,
 	tipShape: brush.tipShape,
 	stabilizer: brush.stabilizer,
+	roundness: brush.roundness,
+	angle: brush.angle,
+	angleJitter: brush.angleJitter,
+	scatter: brush.scatter,
+	texture: brush.texture,
+	blendMode: brush.blendMode,
+	colorMode: brush.colorMode,
+	colors: brush.colors,
+	randomShape: brush.randomShape,
 	color,
 });
 
@@ -102,6 +111,15 @@ const createFreehandTool = (name, { sizeAware = true } = {}) => {
 				spacing: 0.2,
 				tipShape: 'round',
 				stabilizer: 0,
+				roundness: 1,
+				angle: 0,
+				angleJitter: 0,
+				scatter: 0,
+				texture: 0,
+				blendMode: 'normal',
+				colorMode: 'single',
+				colors: [],
+				randomShape: false,
 			};
 			activeColor = strokeColorFor(point.button, ctx);
 			activeColorAlpha = point.button === 2

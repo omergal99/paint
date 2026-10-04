@@ -30,6 +30,15 @@ test('brush state persists validated settings and notifies subscribers', () => {
 		tipShape: 'round',
 		stabilizer: 0,
 		style: 'round',
+		roundness: 1,
+		angle: 0,
+		angleJitter: 0,
+		scatter: 0,
+		texture: 0,
+		blendMode: 'normal',
+		colorMode: 'single',
+		colors: [],
+		randomShape: false,
 		presets: [],
 		history: [],
 		dynamics: { pressureSize: false, pressureFlow: false, speedSize: 0, speedFlow: 0 },
@@ -59,6 +68,21 @@ test('brush state rejects invalid fields and ignores unsupported persisted schem
 	assert.throws(() => brushState.set({ flow: 'invalid' }), /Invalid brush setting/);
 	assert.throws(() => brushState.set({ tipShape: 'triangle' }), /Invalid brush setting/);
 	assert.throws(() => brushState.set({ invented: true }), /Unknown brush setting/);
+	assert.equal(brushState.set({ roundness: 0 }).roundness, 0.05, 'roundness is clamped to its supported minimum');
+	assert.equal(brushState.set({ angle: 720 }).angle, 360, 'angle is clamped to a full turn');
+	assert.equal(brushState.set({ scatter: 5 }).scatter, 1, 'scatter is clamped to 0-1');
+	assert.equal(brushState.set({ blendMode: 'multiply' }).blendMode, 'multiply');
+	assert.throws(() => brushState.set({ blendMode: 'invented' }), /Invalid brush setting/);
+	// Stamp colour sets + random shape (Phase 5 finalization).
+	assert.equal(brushState.set({ colorMode: 'series' }).colorMode, 'series');
+	assert.throws(() => brushState.set({ colorMode: 'invented' }), /Invalid brush setting/);
+	assert.deepEqual(
+		brushState.set({ colors: ['#FF0000', 'not-a-colour', '#00ff00'] }).colors,
+		['#ff0000', '#00ff00'],
+		'colour sets keep only valid lower-cased hex values',
+	);
+	assert.equal(brushState.set({ randomShape: true }).randomShape, true);
+	assert.throws(() => brushState.set({ randomShape: 'yes' }), /Invalid brush setting/);
 });
 
 test('brush opacity and flow affect strokes without changing pencil or eraser behavior', () => {

@@ -1,5 +1,7 @@
 import { BUILT_IN_BRUSH_PRESETS } from '../tools/BrushState.js';
 import { createBrushStrokeRenderer } from '../tools/BrushStrokeRenderer.js';
+import { BRUSH_EXAMPLE_GRIDS, brushExampleValueLabel } from '../tools/BrushExamples.js';
+import { hexToHsl, withSaturation, withLightness } from '../utils/color.js';
 import { t } from '../i18n/messages.js';
 
 const RANGE_FIELDS = Object.freeze([
@@ -9,6 +11,11 @@ const RANGE_FIELDS = Object.freeze([
 	{ field: 'hardness', min: 0, max: 100, scale: 100, unit: '%', label: 'ui.brushHardness' },
 	{ field: 'spacing', min: 5, max: 200, scale: 100, unit: '%', label: 'ui.brushSpacing' },
 	{ field: 'stabilizer', min: 0, max: 100, scale: 100, unit: '%', label: 'ui.brushStabilizer' },
+	{ field: 'roundness', min: 5, max: 100, scale: 100, unit: '%', label: 'ui.brushRoundness' },
+	{ field: 'angle', min: 0, max: 360, scale: 1, unit: '°', label: 'ui.brushAngle' },
+	{ field: 'angleJitter', min: 0, max: 100, scale: 100, unit: '%', label: 'ui.brushAngleJitter' },
+	{ field: 'scatter', min: 0, max: 100, scale: 100, unit: '%', label: 'ui.brushScatter' },
+	{ field: 'texture', min: 0, max: 100, scale: 100, unit: '%', label: 'ui.brushTexture' },
 ]);
 
 const makeBrushIcon = (shape) => {
@@ -56,7 +63,7 @@ const fieldLabel = (key) => {
 	return label;
 };
 
-export const createBrushStudioPanel = ({ brushState, getPrimaryColor, setPrimaryColor } = {}) => ({
+export const createBrushStudioPanel = ({ brushState, getPrimaryColor, setPrimaryColor, getPalette } = {}) => ({
 	kind: 'custom',
 	mount(host) {
 		host.classList.add('brush-studio');
@@ -112,7 +119,19 @@ export const createBrushStudioPanel = ({ brushState, getPrimaryColor, setPrimary
 			tipChoices.append(button);
 		});
 		tipSection.append(tipLegend, tipChoices);
-		host.append(tipSection);
+		// Per-stamp tip picking previews like any other advanced option: the
+		// renderer walks BRUSH_TIP_OPTIONS when this is on.
+		const randomShapeRow = document.createElement('label');
+		randomShapeRow.className = 'brush-studio-check';
+		const randomShapeInput = document.createElement('input');
+		randomShapeInput.type = 'checkbox';
+		randomShapeInput.dataset.brushRandomShape = '';
+		randomShapeInput.dataset.tag = 'brush-studio-random-shape';
+		const randomShapeText = document.createElement('span');
+		randomShapeText.dataset.brushI18n = 'ui.brushRandomShape';
+		randomShapeText.textContent = t('ui.brushRandomShape');
+		randomShapeRow.append(randomShapeInput, randomShapeText);
+		host.append(tipSection, randomShapeRow);
 
 		const dynamics = document.createElement('div');
 		dynamics.className = 'brush-studio-dynamics';
@@ -152,6 +171,119 @@ export const createBrushStudioPanel = ({ brushState, getPrimaryColor, setPrimary
 			dynamics.append(row);
 		});
 		host.append(dynamics);
+
+		const examplesSection = document.createElement('section');
+		examplesSection.className = 'brush-studio-examples';
+		examplesSection.dataset.tag = 'dom-section-brush-studio-examples';
+		const examplesHeading = document.createElement('h4');
+		examplesHeading.dataset.brushI18n = 'ui.brushExamples';
+		examplesHeading.textContent = t('ui.brushExamples');
+		examplesSection.append(examplesHeading);
+		const exampleRows = new Map();
+		BRUSH_EXAMPLE_GRIDS.forEach((grid) => {
+			const row = document.createElement('div');
+			row.className = 'brush-studio-example-row';
+			row.dataset.tag = `brush-example-${grid.id}`;
+			// Numeric rows show the live value in a number input first, then the
+			// quick buttons; mode rows (blend/colour mode) stay button-only.
+			const numeric = grid.kind === 'color'
+				|| (grid.kind === 'brush' && !['blendMode', 'colorMode'].includes(grid.field));
+			const head = document.createElement('div');
+			head.className = 'brush-studio-example-head';
+			const label = document.createElement(numeric ? 'label' : 'span');
+			label.className = 'brush-studio-example-label';
+			label.dataset.brushI18n = grid.labelKey;
+			label.textContent = t(grid.labelKey);
+			let numberInput = null;
+			if (numeric) {
+				numberInput = document.createElement('input');
+				numberInput.type = 'number';
+				numberInput.id = `brush-example-value-${grid.id}`;
+				numberInput.dataset.brushExampleInput = grid.id;
+				numberInput.dataset.tag = `brush-example-input-${grid.id}`;
+				numberInput.min = String(grid.id === 'size' ? 1 : 0);
+				numberInput.max = String(grid.id === 'size' ? 300 : 100);
+				numberInput.step = '1';
+				numberInput.setAttribute('aria-label', t(grid.labelKey));
+				label.htmlFor = numberInput.id;
+				head.append(label, numberInput);
+			} else {
+				head.append(label);
+			}
+			const values = document.createElement('div');
+			values.className = 'brush-example-values';
+			grid.values.forEach((value) => {
+				const button = document.createElement('button');
+				button.type = 'button';
+				button.className = 'brush-example';
+				button.dataset.brushExample = grid.id;
+				button.dataset.brushExampleValue = String(value);
+				const resolved = brushExampleValueLabel(grid, value);
+				const text = resolved.labelKey ? t(resolved.labelKey) : resolved.text;
+				button.textContent = text;
+				button.title = text;
+				button.setAttribute('aria-label', `${t(grid.labelKey)}: ${text}`);
+				if (grid.kind === 'color') button.classList.add('brush-example-color');
+				values.append(button);
+			});
+			row.append(head, values);
+			examplesSection.append(row);
+			exampleRows.set(grid.id, { grid, values, input: numberInput });
+		});
+		host.append(examplesSection);
+
+		// Stamp colours: select several palette colours here, then choose how
+		// each stamp uses them with the colour-mode example row (random/series).
+		const stampColorsSection = document.createElement('section');
+		stampColorsSection.className = 'brush-studio-stamp-colors';
+		const stampColorsHeading = document.createElement('h4');
+		stampColorsHeading.dataset.brushI18n = 'ui.brushStampColors';
+		stampColorsHeading.textContent = t('ui.brushStampColors');
+		const colorChips = document.createElement('div');
+		colorChips.className = 'brush-color-chips';
+		stampColorsSection.append(stampColorsHeading, colorChips);
+		const renderColorChips = () => {
+			const selected = new Set(brushState.get().colors);
+			colorChips.replaceChildren();
+			(getPalette?.() || []).forEach((hex) => {
+				const button = document.createElement('button');
+				button.type = 'button';
+				button.className = 'brush-color-chip';
+				button.dataset.brushColor = hex;
+				button.style.background = hex;
+				button.title = hex;
+				button.setAttribute('aria-label', `Palette color ${hex}`);
+				const active = selected.has(hex);
+				button.classList.toggle('active', active);
+				button.setAttribute('aria-pressed', String(active));
+				colorChips.append(button);
+			});
+		};
+		const syncColorChips = (state) => {
+			const selected = new Set(state.colors || []);
+			colorChips.querySelectorAll('[data-brush-color]').forEach((chip) => {
+				const active = selected.has(chip.dataset.brushColor);
+				chip.classList.toggle('active', active);
+				chip.setAttribute('aria-pressed', String(active));
+			});
+		};
+		renderColorChips();
+		host.append(stampColorsSection);
+
+		const refreshExampleColors = () => {
+			const base = getPrimaryColor?.() || '#000000';
+			exampleRows.forEach(({ grid, values }) => {
+				if (grid.kind !== 'color') return;
+				values.querySelectorAll('[data-brush-example]').forEach((button) => {
+					const value = Number(button.dataset.brushExampleValue);
+					const hex = grid.transform === 'saturation'
+						? withSaturation(base, value)
+						: withLightness(base, value);
+					button.dataset.brushExampleColor = hex;
+					button.style.background = hex;
+				});
+			});
+		};
 
 		const presetSection = document.createElement('section');
 		presetSection.className = 'brush-studio-presets';
@@ -298,6 +430,46 @@ export const createBrushStudioPanel = ({ brushState, getPrimaryColor, setPrimary
 					if (output) output.value = `${Math.round(value * 100)}%`;
 				}
 			});
+			host.querySelectorAll('[data-brush-random-shape]').forEach((input) => {
+				input.checked = Boolean(state.randomShape);
+			});
+			// Example rows: colour rows reflect the current primary's saturation/
+			// lightness (so the active chip reads as selected), brush rows reflect
+			// the state, and the number input always shows the live value.
+			const primaryHsl = hexToHsl(getPrimaryColor?.() || '');
+			exampleRows.forEach(({ grid, values, input }) => {
+				if (grid.kind === 'color') {
+					const current = primaryHsl
+						? (grid.transform === 'saturation' ? primaryHsl.s : primaryHsl.l)
+						: null;
+					if (input && current !== null && document.activeElement !== input) {
+						input.value = String(current);
+					}
+					values.querySelectorAll('[data-brush-example]').forEach((button) => {
+						const matches = current !== null
+							&& Number(button.dataset.brushExampleValue) === current;
+						button.classList.toggle('active', matches);
+						button.setAttribute('aria-pressed', String(matches));
+					});
+					return;
+				}
+				if (input && document.activeElement !== input) {
+					const display = grid.field === 'size'
+						? Math.round(state[grid.field] || 0)
+						: Math.round((state[grid.field] || 0) * 100);
+					input.value = String(display);
+				}
+				values.querySelectorAll('[data-brush-example]').forEach((button) => {
+					const raw = button.dataset.brushExampleValue;
+					const matches = grid.field === 'blendMode' || grid.field === 'colorMode'
+						? state[grid.field] === raw
+						: Number(state[grid.field]) === Number(raw);
+					button.classList.toggle('active', matches);
+					button.setAttribute('aria-pressed', String(matches));
+				});
+			});
+			syncColorChips(state);
+			refreshExampleColors();
 			updatePresetAndHistory(state);
 			renderPreview(state);
 		};
@@ -325,6 +497,15 @@ export const createBrushStudioPanel = ({ brushState, getPrimaryColor, setPrimary
 			hardness: preset.hardness,
 			spacing: preset.spacing,
 			tipShape: preset.tipShape,
+			roundness: preset.roundness ?? 1,
+			angle: preset.angle ?? 0,
+			angleJitter: preset.angleJitter ?? 0,
+			scatter: preset.scatter ?? 0,
+			texture: preset.texture ?? 0,
+			blendMode: preset.blendMode ?? 'normal',
+			colorMode: preset.colorMode ?? 'single',
+			colors: Array.isArray(preset.colors) ? preset.colors : [],
+			randomShape: preset.randomShape ?? false,
 		});
 
 		const beginPresetRename = (group) => {
@@ -369,11 +550,55 @@ export const createBrushStudioPanel = ({ brushState, getPrimaryColor, setPrimary
 				const field = input.dataset.brushDynamic;
 				const value = input.type === 'checkbox' ? input.checked : Number(input.value) / 100;
 				brushState.set({ dynamics: { ...brushState.get().dynamics, [field]: value } });
+				return;
 			}
+			if (input.matches?.('[data-brush-random-shape]')) {
+				brushState.set({ randomShape: input.checked });
+			}
+		});
+		// Number inputs commit on change so clearing the field mid-edit does not
+		// clamp the state on every keystroke.
+		host.addEventListener('change', (event) => {
+			const input = event.target;
+			if (!input.matches?.('[data-brush-example-input]')) return;
+			const grid = BRUSH_EXAMPLE_GRIDS.find((entry) => entry.id === input.dataset.brushExampleInput);
+			if (!grid) return;
+			const raw = Number(input.value);
+			if (!Number.isFinite(raw)) return;
+			if (grid.kind === 'color') {
+				const base = getPrimaryColor?.() || '#000000';
+				const value = Math.max(0, Math.min(100, Math.round(raw)));
+				setPrimaryColor?.(grid.transform === 'saturation'
+					? withSaturation(base, value)
+					: withLightness(base, value));
+				return;
+			}
+			brushState.set({ [grid.field]: grid.field === 'size' ? raw : raw / 100 });
 		});
 		host.addEventListener('click', (event) => {
 			const button = event.target.closest?.('button');
 			if (!button || !host.contains(button)) return;
+			if (button.dataset.brushColor) {
+				const hex = button.dataset.brushColor;
+				const colors = brushState.get().colors;
+				const next = colors.includes(hex)
+					? colors.filter((entry) => entry !== hex)
+					: [...colors, hex];
+				brushState.set({ colors: next });
+				return;
+			}
+			if (button.dataset.brushExample) {
+				const grid = BRUSH_EXAMPLE_GRIDS.find((entry) => entry.id === button.dataset.brushExample);
+				if (!grid) return;
+				if (grid.kind === 'color') {
+					const hex = button.dataset.brushExampleColor;
+					if (hex) setPrimaryColor?.(hex);
+					return;
+				}
+				const raw = button.dataset.brushExampleValue;
+				brushState.set({ [grid.field]: grid.field === 'blendMode' ? raw : Number(raw) });
+				return;
+			}
 			const preset = BUILT_IN_BRUSH_PRESETS.find((item) => item.id === button.dataset.brushPreset);
 			if (preset) {
 				brushState.set(presetPatch(preset));
@@ -427,17 +652,43 @@ export const createBrushStudioPanel = ({ brushState, getPrimaryColor, setPrimary
 				const config = RANGE_FIELDS.find((entry) => entry.field === input.dataset.brushControl);
 				if (config) input.setAttribute('aria-label', t(config.label));
 			});
+			host.querySelectorAll('[data-brush-example]').forEach((button) => {
+				const grid = BRUSH_EXAMPLE_GRIDS.find((entry) => entry.id === button.dataset.brushExample);
+				if (!grid) return;
+				const resolved = brushExampleValueLabel(
+					grid,
+					grid.field === 'blendMode' || grid.field === 'colorMode'
+						? button.dataset.brushExampleValue
+						: Number(button.dataset.brushExampleValue),
+				);
+				const text = resolved.labelKey ? t(resolved.labelKey) : resolved.text;
+				if (grid.kind === 'brush' && ['blendMode', 'colorMode'].includes(grid.field)) {
+					button.textContent = text;
+				}
+				button.title = text;
+				button.setAttribute('aria-label', `${t(grid.labelKey)}: ${text}`);
+			});
+			host.querySelectorAll('[data-brush-example-input]').forEach((input) => {
+				const grid = BRUSH_EXAMPLE_GRIDS.find((entry) => entry.id === input.dataset.brushExampleInput);
+				if (grid) input.setAttribute('aria-label', t(grid.labelKey));
+			});
 			update(latestState);
 		};
 		update(latestState);
 		const unsubscribe = brushState.subscribe(update);
 		window.addEventListener('paint:locale-change', refreshLocale);
-		const refreshPreviewColor = () => renderPreview(latestState);
+		// The primary colour drives the colour-example chips and the preview, so
+		// one update pass re-renders both (and their selected states).
+		const refreshPreviewColor = () => update(latestState);
 		window.addEventListener('paint:primary-color-change', refreshPreviewColor);
+		// Palette edits (ribbon context menu, settings picker, presets) rebuild
+		// the stamp-colour chips from the same source of truth.
+		window.addEventListener('paint:palette-change', renderColorChips);
 		return () => {
 			unsubscribe();
 			window.removeEventListener('paint:locale-change', refreshLocale);
 			window.removeEventListener('paint:primary-color-change', refreshPreviewColor);
+			window.removeEventListener('paint:palette-change', renderColorChips);
 		};
 	},
 });

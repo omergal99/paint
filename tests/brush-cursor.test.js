@@ -20,6 +20,7 @@ test('brush cursor follows image coordinates and reflects the active stroke size
 	const surface = makeTarget();
 	let cursor;
 	let tipShape = 'diamond';
+	let rotation = { angle: 30, angleJitter: 0 };
 	const documentRef = {
 		createElement() {
 			cursor = {
@@ -41,6 +42,7 @@ test('brush cursor follows image coordinates and reflects the active stroke size
 		viewportManager: { clientToImage: (x, y) => ({ x: x / 2, y: y / 2 }) },
 		getLineWidth: () => 10,
 		getTipShape: () => tipShape,
+		getRotation: () => rotation,
 	});
 	overlay.setTool('brush');
 	surface.listeners.get('pointermove')({ clientX: 40, clientY: 30 });
@@ -50,9 +52,16 @@ test('brush cursor follows image coordinates and reflects the active stroke size
 	assert.equal(cursor.style['--brush-cursor-size'], '10px');
 	assert.equal(cursor.hidden, false);
 	assert.equal(cursor.dataset.tipShape, 'diamond');
+	// The pointer previews BrushState.angle and wobbles while jitter is active.
+	assert.equal(cursor.style['--brush-cursor-rotation'], '30deg');
+	rotation = { angle: 30, angleJitter: 1 };
+	overlay.refresh();
+	assert.match(cursor.style['--brush-cursor-rotation'], /^-?\d+(\.\d+)?deg$/);
+	rotation = { angle: 0, angleJitter: 0 };
 	tipShape = 'square';
 	overlay.refresh();
 	assert.equal(cursor.dataset.tipShape, 'square');
+	assert.equal(cursor.style['--brush-cursor-rotation'], '0deg');
 	overlay.setTool('select');
 	assert.equal(cursor.hidden, true);
 	overlay.destroy();

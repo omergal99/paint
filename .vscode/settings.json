@@ -28,5 +28,6 @@
   "accessibility.signals.chatUserActionRequired": {
     "sound": "on"
 	},
-	"liveServer.settings.port": 5510
+	"liveServer.settings.port": 5511,
+	"continue.autoApproveTerminalCommands": true
 }

@@ -70,12 +70,17 @@ const buildSlider = (item) => {
   row.append(label, input, val);
   return { node: row, sync: () => { input.value = String(Number(item.get?.()) || 0); val.textContent = `${input.value}${item.unit ?? ''}`; } };
 };
-const SECTION_STATE_KEY = 'paint:mirror-sections';
+// Disclosure sections are named for what they are (expand/collapse), not for
+// the mirror they live in; the legacy key is read once so remembered open/
+// closed choices survive the rename.
+const SECTION_STATE_KEY = 'paint:disclosure-sections';
+const LEGACY_SECTION_STATE_KEY = 'paint:mirror-sections';
 // Sections start open so nothing is hidden on first visit; the user's own
-// expand/collapse choice is remembered per mirror section id.
+// expand/collapse choice is remembered per section id.
 const readSectionState = () => {
   try {
-    const raw = globalThis.localStorage?.getItem(SECTION_STATE_KEY);
+    const raw = globalThis.localStorage?.getItem(SECTION_STATE_KEY)
+      ?? globalThis.localStorage?.getItem(LEGACY_SECTION_STATE_KEY);
     return raw ? JSON.parse(raw) : {};
   } catch {
     return {};
@@ -89,8 +94,9 @@ const writeSectionState = (id, open) => {
 };
 // Open by default; an explicit remembered choice wins. Mirror descriptors may
 // carry a legacy `open` flag, but the product rule is "nothing hidden on first
-// visit", so only the user's own choice overrides the default.
-const applySectionState = (details, id) => {
+// visit", so only the user's own choice overrides the default. Exported because
+// the Sidebar builds the same disclosure pattern for its settings panels.
+export const applySectionState = (details, id) => {
   const remembered = readSectionState()[id];
   details.open = typeof remembered === 'boolean' ? remembered : true;
   details.addEventListener('toggle', () => writeSectionState(id, details.open));
@@ -119,10 +125,10 @@ const SECTION_ICON_PATHS = Object.freeze({
   'selection-properties': 'M3 3h14v14H3zM6 7h8M6 10h8M6 13h5',
 });
 const sectionTitleNode = (section) => {
-  const wrapper = mk('span', 'mirror-section-heading');
+  const wrapper = mk('span', 'disclosure-heading');
   const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   icon.setAttribute('viewBox', '0 0 20 20');
-  icon.setAttribute('class', 'icon size4 mirror-section-icon');
+  icon.setAttribute('class', 'icon size4 disclosure-icon');
   icon.setAttribute('aria-hidden', 'true');
   const iconPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
   iconPath.setAttribute('d', SECTION_ICON_PATHS[section.icon || section.id] || SECTION_ICON_PATHS.advanced);
@@ -154,10 +160,10 @@ const buildItems = (section, hooks) => {
   return { list, syncers, disposers };
 };
 const buildSection = (section, hooks) => {
-  const details = mk('details', 'mirror-section');
+  const details = mk('details', 'disclosure-section');
   details.dataset.tag = `sidebar-mirror-${section.id}`;
   applySectionState(details, section.id);
-  const summary = mk('summary', 'mirror-section-title');
+  const summary = mk('summary', 'disclosure-title');
   summary.append(chevron(), sectionTitleNode(section));
   details.append(summary);
   const { list, syncers, disposers } = buildItems(section, hooks);
@@ -207,7 +213,7 @@ const buildTabs = (sections, hooks, layoutKey) => {
     tab.dataset.tag = `sidebar-mirror-tab-${section.id}`;
     tab.id = `sidebar-mirror-tab-${section.id}`;
     const { list, syncers: itemSyncers, disposers: itemDisposers } = buildItems(section, hooks);
-    const panel = mk('div', 'mirror-section mirror-tab-panel');
+    const panel = mk('div', 'disclosure-section mirror-tab-panel');
     panel.dataset.tag = `sidebar-mirror-${section.id}`;
     panel.id = `sidebar-mirror-panel-${section.id}`;
     panel.setAttribute('role', 'tabpanel');
@@ -276,9 +282,9 @@ export const createRibbonMirror = ({ descriptor = null, hooks = {} } = {}) => {
       });
     }
     if (next.visibility) {
-      const block = applySectionState(mk('details', 'mirror-section mirror-visibility'), 'visibility');
+      const block = applySectionState(mk('details', 'disclosure-section mirror-visibility'), 'visibility');
       block.dataset.tag = 'sidebar-mirror-visibility';
-      const summary = mk('summary', 'mirror-section-title');
+      const summary = mk('summary', 'disclosure-title');
       summary.append(chevron(), runtimeKey(mk('span', '', t('ui.mirrorVisibility')), 'ui.mirrorVisibility'));
       block.append(summary, runtimeKey(mk('p', 'mirror-visibility-note', t('ui.mirrorVisibilityNote')), 'ui.mirrorVisibilityNote'));
       root.append(block);

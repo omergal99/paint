@@ -3,7 +3,8 @@ import { GlobalHistory } from '../history/GlobalHistory.js';
 import { AI_PROVIDERS } from '../ai/AiConnectionStore.js';
 import { HISTORY_VIEWS } from '../core/constants.js';
 import { createHistoryPanel } from './HistoryPanel.js';
-import { createRibbonMirror } from './RibbonMirror.js';
+import { applySectionState, createRibbonMirror } from './RibbonMirror.js';
+import { colorPalettePreset } from '../utils/color.js';
 import { fileMirrorDescriptor } from './mirrors/fileMirror.js';
 import { clipboardMirrorDescriptor } from './mirrors/clipboardMirror.js';
 import { imageMirrorDescriptor } from './mirrors/imageMirror.js';
@@ -43,10 +44,11 @@ const MIRROR_DESCRIPTORS = Object.freeze({
   file: fileMirrorDescriptor,
   clipboard: clipboardMirrorDescriptor,
   image: imageMirrorDescriptor,
-  tools: ({ brushState, getPrimaryColor, setPrimaryColor }) => toolsMirrorDescriptor({
+  tools: ({ brushState, getPrimaryColor, setPrimaryColor, getPalette }) => toolsMirrorDescriptor({
     brushState,
     getPrimaryColor,
     setPrimaryColor,
+    getPalette,
   }),
   shapes: shapesMirrorDescriptor,
   colors: colorsMirrorDescriptor,
@@ -105,12 +107,23 @@ export class Sidebar {
 		this.groupSettingsContainer = document.getElementById('group-settings-container');
 		this.ribbonMirror = null;
 		this.ribbonMirrorTitle = null;
+		// Palette settings panel hooks: the refresh closure re-renders the
+		// settings grids after any palette write, the picker element tracks the
+		// extended swatch grid so its selected outline follows the primary.
+		this._palettePanelRefresh = null;
+		this._palettePickerEl = null;
 		this.globalHistory = new GlobalHistory();
 		this.activeTab = null;
 
 		// Mirror settings sliders follow the shared color state; undo/redo
 		// disabled parity is re-run from the history callback in main.js.
-		window.addEventListener('paint:primary-color-change', () => this.syncRibbonMirror());
+		window.addEventListener('paint:primary-color-change', () => {
+			this.syncRibbonMirror();
+			this._syncPalettePicker();
+		});
+		// Palette slot writes (ribbon context menu, presets, custom grid) rebuild
+		// the open Colors settings panel from the same source of truth.
+		window.addEventListener('paint:palette-change', () => this._palettePanelRefresh?.());
 
 		// Initialization state tracking for race condition prevention
 		this._initComplete = false;
@@ -484,6 +497,11 @@ export class Sidebar {
 
 		this.ribbonMirror?.destroy?.();
 		this.groupSettingsContainer.innerHTML = '';
+		this._palettePanelRefresh = null;
+		if (this._palettePickerEl) {
+			this.palette?.unmountGrid?.(this._palettePickerEl);
+			this._palettePickerEl = null;
+		}
 		this.ribbonMirrorTitle = titleText;
 		// Descriptor-driven option mirror mounts above the legacy visibility
 		// rows; actions click the ribbon control so the two never diverge.
@@ -495,11 +513,37 @@ export class Sidebar {
 				brushState: this.brushState,
 				getPrimaryColor: () => this.palette?.primary,
 				setPrimaryColor: (color) => this.palette?.setPrimary(color),
+				getPalette: () => this.palette?.getPalette?.() || [],
 			})
 			: descriptorEntry)
 			|| { key: mirrorKey, layout: 'sections', sections: [], visibility: false };
 		this.ribbonMirror = createRibbonMirror({ descriptor: mirrorDescriptor });
 		this.groupSettingsContainer.appendChild(this.ribbonMirror.element);
+
+		// Everything that controls the header ribbon lives in one disclosure so
+		// the narrow sidebar stays scannable: "Toolbar view" everywhere, except
+		// the Tools group which reads "Tools Header". The visibility rows come
+		// first; the custom palette follows because its swatches are what the
+		// ribbon grid renders.
+		const visibilityDetails = applySectionState(document.createElement('details'), 'toolbar-view');
+		visibilityDetails.className = 'disclosure-section';
+		visibilityDetails.dataset.tag = 'sidebar-toolbar-view';
+		const visibilitySummary = document.createElement('summary');
+		visibilitySummary.className = 'disclosure-title';
+		const visibilityChevron = document.createElement('span');
+		visibilityChevron.className = 'menu-arrow';
+		visibilityChevron.setAttribute('aria-hidden', 'true');
+		visibilityChevron.textContent = '▾';
+		const visibilityTitle = document.createElement('span');
+		const visibilityTitleKey = groupSection.classList.contains('ribbon-group-tools')
+			? 'ui.toolsHeader'
+			: 'ui.toolbarView';
+		visibilityTitle.textContent = t(visibilityTitleKey);
+		visibilityTitle.setAttribute('data-i18n-runtime', visibilityTitleKey);
+		visibilitySummary.append(visibilityChevron, visibilityTitle);
+		visibilityDetails.append(visibilitySummary);
+		const hr = document.createElement('hr');
+		this.groupSettingsContainer.append(hr, visibilityDetails);
 
 		const toggleGroup = document.createElement('div');
 		toggleGroup.className = 'checkbox-row';
@@ -535,7 +579,7 @@ export class Sidebar {
 			this._saveRibbonButtonState();
 			window.dispatchEvent(new CustomEvent('paint:ribbon-change'));
 		});
-		this.groupSettingsContainer.appendChild(toggleGroup);
+		visibilityDetails.appendChild(toggleGroup);
 
 		if (groupSection.classList.contains('ribbon-group-tools')) {
 			const currentToolToggle = document.createElement('div');
@@ -555,15 +599,8 @@ export class Sidebar {
 			currentToolLabel.dataset.tag = 'show-current-tool-label';
 			currentToolLabel.textContent = t('ui.showCurrentTool');
 			currentToolToggle.append(currentToolCheckbox, currentToolLabel);
-			this.groupSettingsContainer.appendChild(currentToolToggle);
+			visibilityDetails.appendChild(currentToolToggle);
 		}
-
-		if (groupSection.classList.contains('ribbon-group-colors') && this.palette) {
-			this._appendPaletteSettings();
-		}
-
-		const hr = document.createElement('hr');
-		this.groupSettingsContainer.appendChild(hr);
 
 		// Keep the original menu-action filter contract visible for compatibility:
 		// .filter((btn) => btn.id !== 'btn-remove-bg' && !btn.closest('.action-menu-items'))
@@ -597,8 +634,13 @@ export class Sidebar {
 				this._saveRibbonButtonState();
 				window.dispatchEvent(new CustomEvent('paint:ribbon-change'));
 			});
-			this.groupSettingsContainer.appendChild(toggleBtn);
+			visibilityDetails.appendChild(toggleBtn);
 		});
+		// The colours group appends its palette picker + custom palette last so
+		// the two visibility checkboxes always read first inside the disclosure.
+		if (groupSection.classList.contains('ribbon-group-colors') && this.palette) {
+			this._appendPaletteSettings(visibilityDetails);
+		}
 		// Restoring a remembered panel must not rewrite the state we just read.
 		if (remember) this._saveSidebarState();
 	}
@@ -640,12 +682,40 @@ export class Sidebar {
 		this._openHistoryPreferences?.();
 	}
 
-	_appendPaletteSettings() {
+	_appendPaletteSettings(parent) {
 		const section = document.createElement('section');
 		section.className = 'palette-settings-editor';
-		const heading = document.createElement('h4');
-		heading.textContent = 'Custom palette';
-		section.appendChild(heading);
+		section.dataset.tag = 'sidebar-palette-settings';
+
+		// Extended copy of the ribbon's palette grid: the sidebar has room for
+		// bigger swatches and lists every built-in palette at once (p1 + p2 plus
+		// the 56 extra swatches from p3/p4). A click writes the foreground colour
+		// through the same ColorPalette source of truth (never a second palette).
+		const picker = document.createElement('div');
+		picker.className = 'palette-grid palette-grid-extended';
+		picker.dataset.tag = 'sidebar-palette-picker';
+		picker.setAttribute('role', 'group');
+		picker.setAttribute('aria-label', t('ui.palettePicker'));
+		section.appendChild(picker);
+		this.palette.mountGrid?.(picker, { mode: 'extended' });
+		this._palettePickerEl = picker;
+
+		// Custom palette collapses like every other disclosure section, because
+		// its swatches shape the header ribbon and rarely need editing.
+		const custom = applySectionState(document.createElement('details'), 'custom-palette');
+		custom.className = 'disclosure-section';
+		custom.dataset.tag = 'sidebar-custom-palette';
+		const summary = document.createElement('summary');
+		summary.className = 'disclosure-title';
+		const chevron = document.createElement('span');
+		chevron.className = 'menu-arrow';
+		chevron.setAttribute('aria-hidden', 'true');
+		chevron.textContent = '▾';
+		const heading = document.createElement('span');
+		heading.textContent = t('ui.customPalette');
+		heading.setAttribute('data-i18n-runtime', 'ui.customPalette');
+		summary.append(chevron, heading);
+		custom.appendChild(summary);
 
 		const defaultRow = document.createElement('div');
 		defaultRow.className = 'palette-default-row';
@@ -653,35 +723,128 @@ export class Sidebar {
 		defaultInput.type = 'color';
 		defaultInput.value = this.palette.defaultPrimary;
 		const defaultLabel = document.createElement('span');
-		defaultLabel.textContent = 'Default selected color';
+		defaultLabel.textContent = t('ui.defaultSelectedColor');
+		defaultLabel.setAttribute('data-i18n-runtime', 'ui.defaultSelectedColor');
 		const useCurrent = document.createElement('button');
 		useCurrent.type = 'button';
-		useCurrent.textContent = 'Use current';
+		useCurrent.textContent = t('ui.useCurrent');
+		useCurrent.setAttribute('data-i18n-runtime', 'ui.useCurrent');
 		useCurrent.addEventListener('click', () => {
 			this.palette.setDefaultPrimary(this.palette.primary);
 			defaultInput.value = this.palette.defaultPrimary;
 		});
 		defaultInput.addEventListener('input', () => this.palette.setDefaultPrimary(defaultInput.value));
 		defaultRow.append(defaultLabel, defaultInput, useCurrent);
-		section.appendChild(defaultRow);
+		custom.appendChild(defaultRow);
+
+		// Switch between COLOR_PALETTE_1 (default), COLOR_PALETTE_2 (classic),
+		// the saved snapshot, or snapshot whatever palette is currently shown.
+		const presetRow = document.createElement('div');
+		presetRow.className = 'palette-preset-row';
+		const presetButtons = [
+			['p1', 'ui.palettePreset1', 'palette-preset-1'],
+			['p2', 'ui.palettePreset2', 'palette-preset-2'],
+			['custom', 'ui.paletteCustom', 'palette-preset-custom'],
+			['save', 'ui.paletteSaveCurrent', 'palette-preset-save'],
+		].map(([preset, key, tag]) => {
+			const button = document.createElement('button');
+			button.type = 'button';
+			button.className = 'palette-preset';
+			button.dataset.tag = tag;
+			button.dataset.palettePreset = preset;
+			button.textContent = t(key);
+			button.setAttribute('data-i18n-runtime', key);
+			presetRow.appendChild(button);
+			return { button, preset };
+		});
+		custom.appendChild(presetRow);
 
 		const grid = document.createElement('div');
 		grid.className = 'palette-settings-grid';
-		const colors = this.palette.getPalette();
-		colors.forEach((color, index) => {
-			const input = document.createElement('input');
-			input.type = 'color';
-			input.value = color;
-			input.title = `Palette color ${index + 1}`;
-			input.addEventListener('input', () => {
-				const next = this.palette.getPalette();
-				next[index] = input.value;
-				this.palette.setPalette(next);
+		grid.dataset.tag = 'sidebar-palette-settings-grid';
+		const renderSettingsGrid = () => {
+			const colors = this.palette.getPalette();
+			const existing = [...grid.querySelectorAll('input[type="color"]')];
+			if (existing.length === colors.length) {
+				// Update in place so dragging one colour input is never
+				// interrupted by a rebuild from its own write.
+				existing.forEach((input, index) => {
+					if (input.value !== colors[index]) input.value = colors[index];
+				});
+				return;
+			}
+			grid.replaceChildren();
+			colors.forEach((color, index) => {
+				const input = document.createElement('input');
+				input.type = 'color';
+				input.value = color;
+				input.title = `Palette color ${index + 1}`;
+				input.addEventListener('input', () => {
+					const next = this.palette.getPalette();
+					next[index] = input.value;
+					this.palette.setPalette(next);
+				});
+				grid.appendChild(input);
 			});
-			grid.appendChild(input);
+		};
+		custom.appendChild(grid);
+
+		const syncPresetButtons = () => {
+			const colors = this.palette.getPalette();
+			const saved = this.palette.savedPalette;
+			const sameAs = (other) => Array.isArray(other)
+				&& other.length === colors.length
+				&& other.every((hex, index) => hex === colors[index]);
+			const presetId = colorPalettePreset(colors);
+			presetButtons.forEach(({ button, preset }) => {
+				if (preset === 'save') return;
+				const active = preset === 'custom' ? sameAs(saved) : presetId === preset;
+				button.classList.toggle('active', active);
+				button.setAttribute('aria-pressed', String(active));
+				if (preset === 'custom') button.disabled = !saved;
+			});
+		};
+		presetRow.addEventListener('click', (event) => {
+			const button = event.target.closest?.('button[data-palette-preset]');
+			if (!button || !presetRow.contains(button)) return;
+			const preset = button.dataset.palettePreset;
+			if (preset === 'save') {
+				this.palette.savePaletteSnapshot?.();
+				syncPresetButtons();
+				return;
+			}
+			if (preset === 'custom') {
+				if (this.palette.savedPalette) this.palette.applySavedPalette?.();
+				return;
+			}
+			// Preset writes dispatch `paint:palette-change`, which re-runs this
+			// panel's refresh closure so grids and buttons stay in step.
+			this.palette.applyPalette?.(preset);
 		});
-		section.appendChild(grid);
-		this.groupSettingsContainer.appendChild(section);
+
+		const refresh = () => {
+			renderSettingsGrid();
+			syncPresetButtons();
+			this._syncPalettePicker();
+		};
+		this._palettePanelRefresh = refresh;
+		refresh();
+
+		section.appendChild(custom);
+		parent.appendChild(section);
+	}
+
+	// Selected-state outline for the extended picker: one click already writes
+	// the primary, this just keeps the "chosen" swatch visible.
+	_syncPalettePicker() {
+		const picker = this._palettePickerEl;
+		if (!picker) return;
+		const primary = this.palette?.primary;
+		picker.querySelectorAll('button[data-color]').forEach((button) => {
+			const active = button.dataset.color === primary;
+			button.classList.toggle('active', active);
+			button.setAttribute('aria-pressed', String(active));
+		});
 	}
 
 	hide() {

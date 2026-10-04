@@ -1,4 +1,4 @@
-const CACHE_NAME = 'paint-shell-v1-8-0-cba18b4c';
+const CACHE_NAME = 'paint-shell-v1-8-0-74386ccd';
 const CACHE_PREFIX = 'paint-shell-';
 const SHELL = [
   './index.html',
@@ -132,6 +132,7 @@ const SHELL = [
   './js/tools/BrushStrokeRenderer.js',
   './js/ui/BrushStudioPanel.js',
   './js/ui/DialogIndicator.js',
+  './js/tools/BrushExamples.js',
   './css/assets/icon.svg',
   './css/assets/icon-192.png',
   './css/assets/icon-512.png',

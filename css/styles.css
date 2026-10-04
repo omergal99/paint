@@ -452,6 +452,9 @@ body {
 	display: flex;
 	align-items: flex-start;
 	gap: 2px;
+	/* The ribbon control band is 50px; the 3-row palette grid (3 x 16px + gaps)
+	   fills it exactly so no group can push the header past its compact height. */
+	height: var(--ribbon-control-band);
 }
 
 .rbtn-stack {
@@ -1141,6 +1144,75 @@ body {
 .palette-grid button[data-bootstrap-palette] {
 	pointer-events: none;
 }
+/* The trailing two cells of the ribbon grid are pager arrows that cycle the
+   built-in palettes. They reuse the swatch cell box so the grid stays exactly
+   3 x 10 and the control band keeps its 50px height. */
+.palette-grid .palette-pager {
+	display: grid;
+	place-items: center;
+	background: var(--w10-control-bg);
+	color: var(--w10-text);
+	border: 1px solid var(--w10-border);
+}
+.palette-grid .palette-pager:hover {
+	background: var(--w10-control-hover, var(--w10-accent));
+	color: var(--w10-accent-contrast, #fff);
+	outline: 1px solid var(--w10-accent);
+}
+.palette-pager-icon {
+	width: 12px;
+	height: 12px;
+	display: block;
+	/* LTR: prev points inline-start (left), next is mirrored to inline-end. */
+	transform: scaleX(-1);
+}
+.palette-pager[data-direction="-1"] .palette-pager-icon {
+	transform: none;
+}
+/* RTL mirrors the whole pair so "previous" stays physically before "next". */
+html[dir="rtl"] .palette-pager .palette-pager-icon {
+	transform: none;
+}
+html[dir="rtl"] .palette-pager[data-direction="-1"] .palette-pager-icon {
+	transform: scaleX(-1);
+}
+/* A vertical ribbon lays the grid out along the block axis, so the arrows read
+   as up/down instead of left/right. */
+#app.ribbon-left .palette-pager .palette-pager-icon,
+#app.ribbon-right .palette-pager .palette-pager-icon {
+	transform: rotate(90deg);
+}
+#app.ribbon-left .palette-pager[data-direction="-1"] .palette-pager-icon,
+#app.ribbon-right .palette-pager[data-direction="-1"] .palette-pager-icon {
+	transform: rotate(-90deg);
+}
+html[dir="rtl"] #app.ribbon-left .palette-pager .palette-pager-icon,
+html[dir="rtl"] #app.ribbon-right .palette-pager .palette-pager-icon {
+	transform: rotate(90deg);
+}
+html[dir="rtl"] #app.ribbon-left .palette-pager[data-direction="-1"] .palette-pager-icon,
+html[dir="rtl"] #app.ribbon-right .palette-pager[data-direction="-1"] .palette-pager-icon {
+	transform: rotate(-90deg);
+}
+/* Colors settings: the same swatch grid, sized for the roomier sidebar. A
+   click selects the foreground colour; the active swatch stays outlined. Cells
+   are square (aspect-ratio) so the 10-column grid reads as a tidy swatch board
+   instead of stretched rectangles. */
+.palette-grid-extended {
+	width: 100%;
+	grid-template-columns: repeat(10, minmax(0, 1fr));
+	grid-auto-rows: auto;
+	gap: 3px;
+	margin-bottom: 8px;
+}
+.palette-grid-extended button {
+	height: auto;
+	aspect-ratio: 1 / 1;
+	min-height: 18px;
+}
+.palette-grid-extended button.active {
+	box-shadow: inset 0 0 0 2px var(--w10-accent);
+}
 .color-palette-context-menu {
 	z-index: 120;
 }
@@ -1343,6 +1415,9 @@ html[dir="rtl"] .ci-toggle[aria-expanded="false"] .menu-arrow {
 #app.ribbon-right .rbtn-row {
 	flex-wrap: wrap;
 	justify-content: center;
+	/* The vertical ribbon scrolls instead of clipping, so rows keep their
+	   natural height here. */
+	height: auto;
 }
 #app.ribbon-left .ribbon-group-colors .rbtn-row,
 #app.ribbon-right .ribbon-group-colors .rbtn-row {
@@ -1587,15 +1662,41 @@ html[dir="rtl"] .ci-toggle[aria-expanded="false"] .menu-arrow {
 	min-height: 28px;
 	margin: 0;
 }
+/* The editor nests inside the "Toolbar view" disclosure card, so it no longer
+   needs its own frame - just breathing room around the picker and controls. */
 .palette-settings-editor {
-	margin: 10px 0;
-	padding: 8px 0;
-	border-top: 1px solid var(--w10-border);
-	border-bottom: 1px solid var(--w10-border);
+	margin: 0;
+	padding: 8px;
 }
-.palette-settings-editor h4 {
-	margin: 0 0 8px;
-	font-size: 12px;
+.palette-preset-row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+	margin-bottom: 6px;
+}
+.palette-preset {
+	padding: 4px 8px;
+	border: 1px solid var(--w10-border);
+	border-radius: 3px;
+	background: var(--w10-bg);
+	color: var(--w10-text);
+	font-size: 11px;
+	cursor: pointer;
+}
+.palette-preset:hover:not(:disabled),
+.palette-preset:focus-visible {
+	border-color: var(--w10-accent);
+	background: var(--w10-hover);
+	outline: none;
+}
+.palette-preset.active {
+	border-color: var(--w10-accent);
+	background: var(--w10-active);
+	box-shadow: inset 0 0 0 1px var(--w10-accent);
+}
+.palette-preset:disabled {
+	opacity: 0.5;
+	cursor: default;
 }
 .palette-default-row {
 	display: grid;
@@ -1626,19 +1727,21 @@ html[dir="rtl"] .ci-toggle[aria-expanded="false"] .menu-arrow {
 	margin-top: 8px;
 }
 
-/* Phase 2 step-01: reusable ribbon mirror shell (SSOT, no per-group CSS). */
+/* Phase 2 step-01: reusable ribbon mirror shell (SSOT, no per-group CSS).
+   `disclosure-section` is the shared expand/collapse card - it names what the
+   component *is*, so the Sidebar settings panels reuse it for free. */
 .ribbon-mirror {
 	display: flex;
 	flex-direction: column;
 	gap: 6px;
 	min-width: 0;
 }
-.mirror-section {
+.disclosure-section {
 	border: 1px solid var(--w10-border);
 	border-radius: 4px;
 	background: var(--w10-ribbon-bg);
 }
-.mirror-section-title {
+.disclosure-title {
 	display: flex;
 	align-items: center;
 	gap: 6px;
@@ -1647,23 +1750,23 @@ html[dir="rtl"] .ci-toggle[aria-expanded="false"] .menu-arrow {
 	font-weight: 600;
 	list-style: none;
 }
-.mirror-section-title::-webkit-details-marker {
+.disclosure-title::-webkit-details-marker {
 	display: none;
 }
 /* The chevron points down when open and sideways when collapsed, mirroring the
    color-inspector toggle so both disclosure affordances read the same way. */
-.mirror-section-title .menu-arrow {
+.disclosure-title .menu-arrow {
 	display: inline-block;
 	transition: transform 120ms ease;
 	transform: rotate(-90deg);
 }
-.mirror-section[open] > .mirror-section-title .menu-arrow {
+.disclosure-section[open] > .disclosure-title .menu-arrow {
 	transform: rotate(0deg);
 }
-html[dir="rtl"] .mirror-section-title .menu-arrow {
+html[dir="rtl"] .disclosure-title .menu-arrow {
 	transform: rotate(90deg);
 }
-html[dir="rtl"] .mirror-section[open] > .mirror-section-title .menu-arrow {
+html[dir="rtl"] .disclosure-section[open] > .disclosure-title .menu-arrow {
 	transform: rotate(0deg);
 }
 .mirror-items {
@@ -1681,12 +1784,12 @@ html[dir="rtl"] .mirror-section[open] > .mirror-section-title .menu-arrow {
 	color: var(--w10-text);
 	cursor: pointer;
 }
-.mirror-section-heading {
+.disclosure-heading {
 	display: inline-flex;
 	align-items: center;
 	gap: 6px;
 }
-.mirror-section-icon {
+.disclosure-icon {
 	flex: 0 0 auto;
 	width: 14px;
 	height: 14px;
@@ -2451,7 +2554,9 @@ html[dir="rtl"] .adjustment-mask-finish {
 	border-radius: 50%;
 	box-shadow: 0 0 0 1px var(--w10-bg);
 	pointer-events: none;
-	transform: translate(-50%, -50%);
+	/* `--brush-cursor-rotation` mirrors BrushState.angle (plus live jitter) so
+	   the pointer previews the stamp rotation, including square tips. */
+	transform: translate(-50%, -50%) rotate(var(--brush-cursor-rotation, 0deg));
 }
 .brush-cursor-overlay[hidden] {
 	display: none;
@@ -2461,7 +2566,7 @@ html[dir="rtl"] .adjustment-mask-finish {
 }
 .brush-cursor-overlay[data-tip-shape="diamond"] {
 	border-radius: 0;
-	transform: translate(-50%, -50%) rotate(45deg);
+	transform: translate(-50%, -50%) rotate(calc(45deg + var(--brush-cursor-rotation, 0deg)));
 }
 .brush-cursor-overlay[data-tip-shape="soft"] {
 	border-style: dashed;
@@ -3246,8 +3351,8 @@ dialog h3 {
 	display: grid;
 	grid-template-columns: minmax(0, 1fr) auto;
 	align-items: center;
-	gap: 2px 8px;
-	padding: 4px 6px;
+	gap: 0px 6px;
+	padding: 2px 6px;
 }
 .brush-option-row label {
 	font-size: 12px;
@@ -3268,16 +3373,22 @@ dialog h3 {
 	gap: 7px;
 	width: 100%;
 	margin-top: 3px;
-	padding: 6px;
-	border: 0;
-	background: transparent;
+	margin-bottom: 2px;
+	padding: 6px 8px;
+	border: 1px solid var(--w10-border);
+	border-radius: 4px;
+	/* Reads as a real button, not a stray row: a raised field background that
+	   picks up the accent on hover/focus. */
+	background: var(--w10-field-bg, #eef3f8);
 	color: var(--w10-text);
+	font-weight: 600;
 	text-align: start;
 	cursor: pointer;
 }
 .brush-more-action:hover,
 .brush-more-action:focus-visible {
 	background: var(--w10-hover);
+	border-color: var(--w10-accent);
 	outline: none;
 }
 .brush-studio-heading {
@@ -3290,6 +3401,40 @@ dialog h3 {
 .brush-studio-heading .icon {
 	width: 16px;
 	height: 16px;
+}
+/* Reset sits on the inline-end of the heading so it never competes with the
+   title for the start of the line in either direction. */
+.brush-studio-heading strong {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.brush-studio-reset {
+	margin-inline-start: auto;
+	display: grid;
+	place-items: center;
+	width: 22px;
+	height: 22px;
+	padding: 0;
+	border: 1px solid transparent;
+	border-radius: 3px;
+	background: transparent;
+	color: var(--w10-text);
+	cursor: pointer;
+}
+.brush-studio-reset .icon {
+	width: 14px;
+	height: 14px;
+}
+.brush-studio-reset:hover {
+	background: var(--w10-hover);
+	border-color: var(--w10-accent);
+	color: var(--w10-accent);
+}
+.brush-studio-reset:focus-visible {
+	outline: 1px solid var(--w10-accent);
+	outline-offset: 1px;
 }
 .brush-studio {
 	display: grid;
@@ -3466,6 +3611,112 @@ dialog h3 {
 }
 .brush-studio-save-preset {
 	justify-self: start;
+}
+.brush-studio-examples {
+	display: grid;
+	gap: 5px;
+}
+.brush-studio-examples h4 {
+	margin: 0;
+	padding-inline: 3px;
+	font-size: 11px;
+	font-weight: 600;
+}
+.brush-studio-example-row {
+	display: grid;
+	gap: 3px;
+	min-width: 0;
+}
+.brush-studio-example-label {
+	font-size: 10px;
+	color: var(--w10-text-dim);
+}
+/* Label + live number input on one line, quick buttons below. */
+.brush-studio-example-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 6px;
+	min-width: 0;
+}
+.brush-studio-example-head input[type="number"] {
+	width: 64px;
+	box-sizing: border-box;
+	padding: 2px 4px;
+	border: 1px solid var(--w10-border);
+	border-radius: 3px;
+	background: var(--w10-bg);
+	color: var(--w10-text);
+	font-size: 10px;
+	font-variant-numeric: tabular-nums;
+	text-align: end;
+}
+.brush-studio-example-head input[type="number"]:focus-visible {
+	border-color: var(--w10-accent);
+	outline: none;
+}
+.brush-example-values {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 3px;
+}
+.brush-example {
+	min-width: 30px;
+	min-height: 24px;
+	padding: 2px 6px;
+	border: 1px solid var(--w10-border);
+	border-radius: 3px;
+	background: var(--w10-bg);
+	color: var(--w10-text);
+	font-size: 10px;
+	cursor: pointer;
+}
+.brush-example:hover,
+.brush-example:focus-visible {
+	border-color: var(--w10-accent);
+	background: var(--w10-hover);
+	outline: none;
+}
+.brush-example.active {
+	border-color: var(--w10-accent);
+	background: var(--w10-active);
+	box-shadow: inset 0 0 0 1px var(--w10-accent);
+}
+.brush-example-color {
+	min-width: 26px;
+	color: transparent;
+}
+/* Stamp colours: palette chips whose selected state feeds colorMode rows. */
+.brush-studio-stamp-colors {
+	display: grid;
+	gap: 5px;
+}
+.brush-studio-stamp-colors h4 {
+	margin: 0;
+	padding-inline: 3px;
+	font-size: 11px;
+	font-weight: 600;
+}
+.brush-color-chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+}
+.brush-color-chip {
+	width: 26px;
+	height: 24px;
+	padding: 0;
+	border: 1px solid rgba(0, 0, 0, 0.25);
+	border-radius: 3px;
+	cursor: pointer;
+}
+.brush-color-chip:hover,
+.brush-color-chip:focus-visible {
+	outline: 1px solid var(--w10-accent);
+	outline-offset: 0;
+}
+.brush-color-chip.active {
+	box-shadow: inset 0 0 0 2px var(--w10-accent);
 }
 .brush-studio-history-chip {
 	width: 30px;

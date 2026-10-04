@@ -1487,10 +1487,17 @@ test('sidebar identity, panels and disclosure sections behave as one contract', 
   assert.match(mirror, /details\.addEventListener\('toggle', \(\) => writeSectionState\(id, details\.open\)\);/);
   // Both section builders (descriptor sections and the visibility block) share it.
   assert.match(mirror, /applySectionState\(details, section\.id\);/);
-  assert.match(mirror, /applySectionState\(mk\('details', 'mirror-section mirror-visibility'\), 'visibility'\)/);
-  assert.match(mirror, /const SECTION_STATE_KEY = 'paint:mirror-sections';/);
-  assert.match(css, /\.mirror-section\[open\] > \.mirror-section-title \.menu-arrow \{\s*transform: rotate\(0deg\);/);
-  assert.match(css, /html\[dir="rtl"\] \.mirror-section-title \.menu-arrow \{/);
+  assert.match(mirror, /applySectionState\(mk\('details', 'disclosure-section mirror-visibility'\), 'visibility'\)/);
+  assert.match(mirror, /const SECTION_STATE_KEY = 'paint:disclosure-sections';/);
+  assert.match(mirror, /LEGACY_SECTION_STATE_KEY = 'paint:mirror-sections';/);
+  assert.match(css, /\.disclosure-section\[open\] > \.disclosure-title \.menu-arrow \{\s*transform: rotate\(0deg\);/);
+  assert.match(css, /html\[dir="rtl"\] \.disclosure-title \.menu-arrow \{/);
+  // The Sidebar reuses the same disclosure for everything that shapes the
+  // header ribbon (visibility rows first, then the custom palette).
+  assert.match(sidebar, /applySectionState\(document\.createElement\('details'\), 'toolbar-view'\)/);
+  assert.match(sidebar, /applySectionState\(document\.createElement\('details'\), 'custom-palette'\)/);
+  assert.match(sidebar, /_appendPaletteSettings\(visibilityDetails\)/);
+  assert.match(sidebar, /'palette-grid palette-grid-extended'/);
 
   // 5. Shortcuts is the last Settings tab.
   const tabs = [...html.matchAll(/data-settings-tab="([a-z]+)"/g)].map((match) => match[1]);

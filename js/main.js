@@ -284,8 +284,11 @@ const shouldAutoSaveOnNew = () => {
 const eventBus = createEventBus();
 const canvasManager = new CanvasManager({ canvas: canvasEl, overlay: overlayEl, width: 800, height: 600, eventBus });
 const brushState = createBrushState();
-let brushTipShape = brushState.get().tipShape;
-canvasManager.lineWidth = brushState.get().size;
+const initialBrush = brushState.get();
+let brushTipShape = initialBrush.tipShape;
+// The cursor overlay reads these without cloning BrushState on every move.
+let brushRotation = { angle: initialBrush.angle, angleJitter: initialBrush.angleJitter };
+canvasManager.lineWidth = initialBrush.size;
 const adjustmentMask = createBrushAreaMask({
 	width: canvasManager.width,
 	height: canvasManager.height,
@@ -948,6 +951,7 @@ const brushCursorOverlay = createBrushCursorOverlay({
 	viewportManager,
 	getLineWidth: () => canvasManager.lineWidth,
 	getTipShape: () => brushTipShape,
+	getRotation: () => brushRotation,
 });
 const selectTool = createSelectTool();
 const adjustmentMaskTool = createAdjustmentMaskTool({ mask: adjustmentMask, getSelection });
@@ -1591,6 +1595,7 @@ const toolbar = new Toolbar({
 brushState.subscribe((state) => {
 	canvasManager.lineWidth = state.size;
 	brushTipShape = state.tipShape;
+	brushRotation = { angle: state.angle, angleJitter: state.angleJitter };
 	toolbar.syncBrushState(state);
 	brushCursorOverlay.refresh();
 	sidebar.syncRibbonMirror();

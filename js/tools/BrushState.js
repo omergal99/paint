@@ -4,6 +4,34 @@ export const BRUSH_STATE_SCHEMA_VERSION = 1;
 export const BRUSH_STYLE_OPTIONS = Object.freeze(['round', 'calligraphic']);
 export const BRUSH_TIP_OPTIONS = Object.freeze(['round', 'square', 'diamond', 'soft']);
 
+// SSOT for stamp blending: the panel select, the renderer, and tests all read
+// this one table. `composite` is the canvas `globalCompositeOperation` value.
+export const BRUSH_BLEND_MODES = Object.freeze([
+	Object.freeze({ id: 'normal', composite: 'source-over', labelKey: 'ui.brushBlendNormal' }),
+	Object.freeze({ id: 'multiply', composite: 'multiply', labelKey: 'ui.brushBlendMultiply' }),
+	Object.freeze({ id: 'darken', composite: 'darken', labelKey: 'ui.brushBlendDarken' }),
+	Object.freeze({ id: 'lighten', composite: 'lighten', labelKey: 'ui.brushBlendLighten' }),
+	Object.freeze({ id: 'screen', composite: 'screen', labelKey: 'ui.brushBlendScreen' }),
+	Object.freeze({ id: 'overlay', composite: 'overlay', labelKey: 'ui.brushBlendOverlay' }),
+	Object.freeze({ id: 'soft-light', composite: 'soft-light', labelKey: 'ui.brushBlendSoftLight' }),
+	Object.freeze({ id: 'color-dodge', composite: 'color-dodge', labelKey: 'ui.brushBlendColorDodge' }),
+	Object.freeze({ id: 'color-burn', composite: 'color-burn', labelKey: 'ui.brushBlendColorBurn' }),
+	Object.freeze({ id: 'difference', composite: 'difference', labelKey: 'ui.brushBlendDifference' }),
+]);
+export const BRUSH_BLEND_MODE_IDS = Object.freeze(BRUSH_BLEND_MODES.map((mode) => mode.id));
+export const BRUSH_BLEND_COMPOSITE = Object.freeze(
+	Object.fromEntries(BRUSH_BLEND_MODES.map((mode) => [mode.id, mode.composite])),
+);
+// SSOT for stamp colour selection: `single` paints the stroke colour, `random`
+// picks one of BrushState.colors per stamp, `series` cycles through them in
+// order. The panel example row, the renderer, and tests all read this table.
+export const BRUSH_COLOR_MODES = Object.freeze([
+	Object.freeze({ id: 'single', labelKey: 'ui.brushColorModeSingle' }),
+	Object.freeze({ id: 'random', labelKey: 'ui.brushColorModeRandom' }),
+	Object.freeze({ id: 'series', labelKey: 'ui.brushColorModeSeries' }),
+]);
+export const BRUSH_COLOR_MODE_IDS = Object.freeze(BRUSH_COLOR_MODES.map((mode) => mode.id));
+
 export const BUILT_IN_BRUSH_PRESETS = Object.freeze([
 	{ id: 'pencil', name: 'Pencil', size: 2, alpha: 1, flow: 1, hardness: 1, spacing: 0.18, tipShape: 'round' },
 	{ id: 'hard-round', name: 'Hard Round', size: 12, alpha: 1, flow: 1, hardness: 1, spacing: 0.2, tipShape: 'round' },
@@ -21,6 +49,18 @@ const DEFAULT_BRUSH_STATE = Object.freeze({
 	tipShape: 'round',
 	stabilizer: 0,
 	style: 'round',
+	// Advanced stamp controls (Phase 5 finalization): elliptical tip, stamp
+	// rotation jitter, scatter, texture mask, stamp blending, per-stamp colour
+	// sets (random/series), and per-stamp tip shape.
+	roundness: 1,
+	angle: 0,
+	angleJitter: 0,
+	scatter: 0,
+	texture: 0,
+	blendMode: 'normal',
+	colorMode: 'single',
+	colors: Object.freeze([]),
+	randomShape: false,
 	presets: Object.freeze([]),
 	history: Object.freeze([]),
 	dynamics: Object.freeze({
@@ -51,6 +91,28 @@ const normalizeValue = (key, value) => {
 	if (key === 'spacing') {
 		const number = Number(value);
 		return Number.isFinite(number) ? Math.max(0.05, Math.min(2, number)) : null;
+	}
+	if (key === 'roundness') {
+		const number = Number(value);
+		return Number.isFinite(number) ? Math.max(0.05, Math.min(1, number)) : null;
+	}
+	if (key === 'angle') {
+		const number = Number(value);
+		return Number.isFinite(number) ? Math.max(0, Math.min(360, number)) : null;
+	}
+	if (key === 'angleJitter' || key === 'scatter' || key === 'texture') {
+		const number = Number(value);
+		return Number.isFinite(number) ? Math.max(0, Math.min(1, number)) : null;
+	}
+	if (key === 'blendMode') return BRUSH_BLEND_MODE_IDS.includes(value) ? value : null;
+	if (key === 'colorMode') return BRUSH_COLOR_MODE_IDS.includes(value) ? value : null;
+	if (key === 'randomShape') return typeof value === 'boolean' ? value : null;
+	if (key === 'colors') {
+		if (!Array.isArray(value)) return null;
+		const valid = value
+			.filter((hex) => typeof hex === 'string' && /^#[0-9a-f]{6}$/i.test(hex))
+			.map((hex) => hex.toLowerCase());
+		return clone(valid.slice(0, 30));
 	}
 	if (key === 'tipShape') return BRUSH_TIP_OPTIONS.includes(value) ? value : null;
 	if (key === 'style') return BRUSH_STYLE_OPTIONS.includes(value) ? value : null;

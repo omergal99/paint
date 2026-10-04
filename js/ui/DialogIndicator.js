@@ -30,7 +30,7 @@ export const createDialogArrowIcon = ({ documentRef = globalThis.document } = {}
 
   const path = documentRef.createElementNS(SVG_NAMESPACE, 'path');
   path.setAttribute('d', 'M9 3h8a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3H9a3 3 0 0 1-3-3v-0.5 M6 8V6a3 3 0 0 1 3-3 M6 16v2a3 3 0 0 0 3 3');
-  path.setAttribute('opacity', '0.4');
+  path.setAttribute('opacity', '0.6');
   const line = documentRef.createElementNS(SVG_NAMESPACE, 'line');
   line.setAttribute('x1', '2');
   line.setAttribute('y1', '12');

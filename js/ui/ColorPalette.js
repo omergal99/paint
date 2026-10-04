@@ -1,10 +1,25 @@
 // Functional palette controller. State stays private in this factory and the
 // returned API preserves the small contract used by Sidebar and main.js.
-import { DEFAULT_PALETTE } from '../utils/color.js';
+import {
+  COLOR_PALETTE_1,
+  COLOR_PALETTE_2,
+  COLOR_PALETTE_3,
+  COLOR_PALETTE_4,
+  COLOR_PALETTES,
+  COLOR_PALETTE_MAX,
+  PALETTE_PAGE_IDS,
+  colorPalettePreset,
+  extendedPickerColors,
+  migrateLegacyPalette,
+  normalizePalettePage,
+} from '../utils/color.js';
 import { colorStateToCss } from '../utils/colorContract.js';
+import { t } from '../i18n/messages.js';
 
 const COLOR_RE = /^#[0-9a-f]{6}$/i;
-const COLOR_SCHEMA_VERSION = 2;
+// v3 refreshes the default palette; the loader keeps customised colours and
+// only upgrades a still-untouched legacy palette (see migrateLegacyPalette).
+const COLOR_SCHEMA_VERSION = 3;
 
 const openColorPicker = (input) => {
   if (!input) return;
@@ -35,7 +50,14 @@ export const createColorPalette = ({
   onSecondaryChange,
 }) => {
   const savedColors = loadSavedColors();
-  let palette = normalizePalette(savedColors.palette || DEFAULT_PALETTE);
+  let palette = normalizePalette(migrateLegacyPalette(savedColors.palette) || COLOR_PALETTE_1);
+  // Optional snapshot so the settings can offer "Custom (saved)" next to the
+  // built-in presets without losing the user's edited swatches on a switch.
+  let savedPalette = normalizeSavedPalette(savedColors.savedPalette);
+  // Which built-in page the ribbon arrows show: cycles p1 -> p2 -> p3 -> p4.
+  // Persisted so the chosen palette survives reloads and stays in sync with
+  // whatever page the user arrowed to before editing a swatch.
+  let palettePage = normalizePalettePage(savedColors.palettePage, palette);
   let defaultPrimary = COLOR_RE.test(savedColors.defaultPrimary || '') ? savedColors.defaultPrimary.toLowerCase() : '#a349a4';
   let primary = COLOR_RE.test(savedColors.primary || '') ? savedColors.primary.toLowerCase() : defaultPrimary;
   let secondary = COLOR_RE.test(savedColors.secondary || '') ? savedColors.secondary.toLowerCase() : '#ffffff';
@@ -73,20 +95,92 @@ export const createColorPalette = ({
     renderAlphaControl(secondaryAlphaInput, secondaryAlphaOutput, secondaryAlpha);
   };
 
-  const renderGrid = () => {
-    gridEl.innerHTML = '';
-    palette.forEach((hex, index) => {
-      const button = document.createElement('button');
-      button.style.background = hex;
-      button.title = hex;
-      button.setAttribute('aria-label', `Palette color ${hex}`);
-      button.addEventListener('click', () => setPrimary(hex));
+  // The ribbon grid plus any extra grids (the sidebar picker) render from the
+  // same palette, so one slot edit updates every surface at once.
+  // `mode` decides the shape: the compact ribbon shows the active page plus the
+  // two pager arrows; the roomy sidebar picker lists every built-in palette.
+  const grids = new Map();
+  const RIBBON_MODE = 'ribbon';
+  const EXTENDED_MODE = 'extended';
+  // The ribbon grid is the controller's primary surface; later surfaces (the
+  // sidebar picker) register themselves through mountGrid.
+  if (gridEl) grids.set(gridEl, RIBBON_MODE);
+  const createSwatchButton = (hex, index = null) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.style.background = hex;
+    button.title = hex;
+    button.dataset.tag = 'palette-swatch';
+    button.dataset.color = hex;
+    button.setAttribute('aria-label', t('ui.paletteSwatch', { hex }));
+    button.addEventListener('click', () => setPrimary(hex));
+    // Slot editing only makes sense for the ribbon grid, where the index maps to
+    // a cell the user can actually overwrite. The extended picker just selects.
+    if (Number.isInteger(index)) {
       button.addEventListener('contextmenu', (event) => {
         event.preventDefault();
         openPaletteMenu(index, event);
       });
-      gridEl.appendChild(button);
+    }
+    return button;
+  };
+  // The two trailing cells of the 3x10 ribbon grid are pager arrows instead of
+  // colours. They cycle the built-in palettes in order, so a user reaches all
+  // four pages without leaving the ribbon.
+  const createPagerArrow = (direction) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'palette-pager';
+    button.dataset.tag = direction < 0 ? 'palette-page-prev' : 'palette-page-next';
+    button.dataset.direction = String(direction);
+    button.title = t(direction < 0 ? 'ui.palettePagePrevious' : 'ui.palettePageNext');
+    button.setAttribute('aria-label', button.title);
+    const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    icon.setAttribute('viewBox', '0 0 20 20');
+    icon.setAttribute('class', 'palette-pager-icon');
+    icon.setAttribute('aria-hidden', 'true');
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    // Chevron pointing inline-start; CSS flips it per direction/ribbon side.
+    path.setAttribute('d', 'M12.5 4 7 10l5.5 6');
+    path.setAttribute('fill', 'none');
+    path.setAttribute('stroke', 'currentColor');
+    path.setAttribute('stroke-width', '2');
+    icon.append(path);
+    button.append(icon);
+    button.addEventListener('click', () => cyclePalettePage(direction));
+    return button;
+  };
+  const renderGridInto = (grid, mode) => {
+    grid.innerHTML = '';
+    if (mode === EXTENDED_MODE) {
+      extendedPickerColors().forEach((hex) => grid.appendChild(createSwatchButton(hex)));
+      return;
+    }
+    palette.forEach((hex, index) => grid.appendChild(createSwatchButton(hex, index)));
+    grid.append(createPagerArrow(-1), createPagerArrow(1));
+  }
+  const renderGrid = () => {
+    [...grids].forEach(([grid, mode]) => {
+      if (grid.isConnected === false) {
+        grids.delete(grid);
+        return;
+      }
+      renderGridInto(grid, mode);
     });
+  }
+  const mountGrid = (grid, { mode = RIBBON_MODE } = {}) => {
+    if (!grid) return;
+    grids.set(grid, mode);
+    renderGridInto(grid, mode);
+  }
+  const unmountGrid = (grid) => {
+    if (grid) grids.delete(grid);
+  }
+  // Keeps every mounted grid (ribbon + sidebar picker) listening to the same
+  // write path instead of mirroring palette logic in the Sidebar.
+  const notifyPaletteChange = () => {
+    if (typeof window === 'undefined' || typeof CustomEvent !== 'function') return;
+    window.dispatchEvent(new CustomEvent('paint:palette-change'));
   }
 
   const closePaletteMenu = ({ preserveEditing = false } = {}) => {
@@ -170,7 +264,8 @@ export const createColorPalette = ({
         if (action === 'primary') { setPrimary(hex); closePaletteMenu(); }
         if (action === 'secondary') { setSecondary(hex); closePaletteMenu(); }
         if (action === 'reset') {
-          updatePaletteSlot(index, DEFAULT_PALETTE[index] || '#ffffff');
+          const preset = colorPalettePreset(palette) === 'p2' ? COLOR_PALETTE_2 : COLOR_PALETTE_1;
+          updatePaletteSlot(index, preset[index] || '#ffffff');
           closePaletteMenu();
         }
       });
@@ -232,8 +327,47 @@ export const createColorPalette = ({
     palette = next;
     renderGrid();
     saveColors();
+    notifyPaletteChange();
     return true;
   }
+
+  const getPageColors = (page) => {
+    if (page === 'p1') return [...COLOR_PALETTE_1];
+    if (page === 'p2') return [...COLOR_PALETTE_2];
+    if (page === 'p3') return [...COLOR_PALETTE_3];
+    if (page === 'p4') return [...COLOR_PALETTE_4];
+    return [...COLOR_PALETTE_1];
+  };
+  // Ribbon pager arrows cycle the built-in palettes in order (1 -> 2 -> 3 -> 4).
+  // Persisted, so the chosen page survives reloads next to the edited palette.
+  const setPalettePage = (page, { persist = true } = {}) => {
+    if (!PALETTE_PAGE_IDS.includes(page)) return false;
+    palettePage = page;
+    palette = normalizePalette(getPageColors(page));
+    renderGrid();
+    if (persist) saveColors();
+    notifyPaletteChange();
+    return true;
+  };
+  const cyclePalettePage = (direction = 1) => {
+    const order = PALETTE_PAGE_IDS;
+    const current = order.indexOf(palettePage);
+    const next = order[(current < 0 ? 0 : current + direction + order.length) % order.length];
+    return setPalettePage(next);
+  };
+
+  // Settings-side preset switcher: pages are plain palette writes so every
+  // grid follows; p3/p4 mirror the sidebar picker views.
+  const applyPalette = (preset) => {
+    if (preset === 'p3' || preset === 'p4') return setPalettePage(preset);
+    return setPalette([...(preset === 'p2' ? COLOR_PALETTE_2 : COLOR_PALETTE_1)]);
+  };
+  const applySavedPalette = () => (savedPalette ? setPalette([...savedPalette]) : false);
+  const savePaletteSnapshot = () => {
+    savedPalette = [...palette];
+    saveColors();
+    return true;
+  };
 
   const setDefaultPrimary = (hex) => {
     if (!COLOR_RE.test(hex)) return false;
@@ -243,7 +377,8 @@ export const createColorPalette = ({
   }
 
   const resetToDefaults = () => {
-    palette = [...DEFAULT_PALETTE];
+    palette = [...COLOR_PALETTE_1];
+    palettePage = 'p1';
     defaultPrimary = '#a349a4';
     primary = defaultPrimary;
     secondary = '#ffffff';
@@ -253,6 +388,7 @@ export const createColorPalette = ({
     renderPrimary();
     renderSecondary();
     saveColors();
+    notifyPaletteChange();
     onPrimaryChange?.(primary, primaryAlpha);
     onSecondaryChange?.(secondary, secondaryAlpha);
   }
@@ -267,6 +403,8 @@ export const createColorPalette = ({
         secondaryAlpha,
         defaultPrimary,
         palette,
+        savedPalette,
+        palettePage,
       }));
     } catch (error) {
       console.warn('Unable to save colors:', error);
@@ -286,12 +424,21 @@ export const createColorPalette = ({
     get primaryAlpha() { return primaryAlpha; },
     get secondaryAlpha() { return secondaryAlpha; },
     get defaultPrimary() { return defaultPrimary; },
+    get savedPalette() { return savedPalette ? [...savedPalette] : null; },
+    get palettePage() { return palettePage; },
     setPrimary,
     setSecondary,
     getPalette,
     setPalette,
     setDefaultPrimary,
     resetToDefaults,
+    mountGrid,
+    unmountGrid,
+    applyPalette,
+    applySavedPalette,
+    savePaletteSnapshot,
+    setPalettePage,
+    cyclePalettePage,
   });
 }
 
@@ -301,9 +448,20 @@ const normalizeAlpha = (value) => {
 }
 
 const normalizePalette = (colors) => {
-  if (!Array.isArray(colors)) return [...DEFAULT_PALETTE];
+  if (!Array.isArray(colors)) return [...COLOR_PALETTE_1];
+  const valid = colors
+    .filter((hex) => typeof hex === 'string' && COLOR_RE.test(hex))
+    .map((hex) => hex.toLowerCase())
+    // The ribbon grid is exactly 3x10; longer arrays would wrap into a fourth
+    // row and break the 50px control band.
+    .slice(0, COLOR_PALETTE_MAX);
+  return valid.length ? valid : [...COLOR_PALETTE_1];
+}
+
+const normalizeSavedPalette = (colors) => {
+  if (!Array.isArray(colors)) return null;
   const valid = colors.filter((hex) => typeof hex === 'string' && COLOR_RE.test(hex));
-  return valid.length ? valid.map((hex) => hex.toLowerCase()) : [...DEFAULT_PALETTE];
+  return valid.length ? normalizePalette(valid) : null;
 }
 
 const loadSavedColors = () => {
