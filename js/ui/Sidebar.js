@@ -43,7 +43,11 @@ const MIRROR_DESCRIPTORS = Object.freeze({
   file: fileMirrorDescriptor,
   clipboard: clipboardMirrorDescriptor,
   image: imageMirrorDescriptor,
-  tools: toolsMirrorDescriptor,
+  tools: ({ brushState, getPrimaryColor, setPrimaryColor }) => toolsMirrorDescriptor({
+    brushState,
+    getPrimaryColor,
+    setPrimaryColor,
+  }),
   shapes: shapesMirrorDescriptor,
   colors: colorsMirrorDescriptor,
   extras: createExtrasMirrorDescriptor,
@@ -51,8 +55,9 @@ const MIRROR_DESCRIPTORS = Object.freeze({
 });
 
 export class Sidebar {
-	constructor({ canvasManager, statusBar, palette, aiCommandService = null, dialogService, aiConnectionStore = null, historyManager = null }) {
+	constructor({ canvasManager, statusBar, palette, aiCommandService = null, dialogService, aiConnectionStore = null, historyManager = null, brushState = null }) {
 		this.canvasManager = canvasManager;
+		this.brushState = brushState;
 		this.historyManager = historyManager;
 		this.statusBar = statusBar;
 		this.palette = palette;
@@ -477,6 +482,7 @@ export class Sidebar {
 		this.groupSettingsContent.style.display = 'block';
 		this.sidebar.style.display = 'flex';
 
+		this.ribbonMirror?.destroy?.();
 		this.groupSettingsContainer.innerHTML = '';
 		this.ribbonMirrorTitle = titleText;
 		// Descriptor-driven option mirror mounts above the legacy visibility
@@ -486,6 +492,9 @@ export class Sidebar {
 			? descriptorEntry({
 				openHistoryView: (view, options) => this.openHistoryView(view, options),
 				openHistoryPreferences: (trigger) => this.openHistoryPreferences(trigger),
+				brushState: this.brushState,
+				getPrimaryColor: () => this.palette?.primary,
+				setPrimaryColor: (color) => this.palette?.setPrimary(color),
 			})
 			: descriptorEntry)
 			|| { key: mirrorKey, layout: 'sections', sections: [], visibility: false };

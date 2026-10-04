@@ -300,7 +300,7 @@ export const createTextTool = () => {
     if (initialText) nextEditor.setSelectionRange(nextEditor.value.length, nextEditor.value.length);
     nextEditor.addEventListener('keydown', (event) => {
       event.stopPropagation();
-      if (event.key === 'Escape' || event.key === 'Delete') {
+      if (event.key === 'Escape') {
         event.preventDefault();
         cancel();
       }

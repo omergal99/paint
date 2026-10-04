@@ -15,6 +15,7 @@ export const STORAGE_KEYS = Object.freeze({
 	textHistoryToolbar: 'paint:text-history-toolbar',
 	toolStyles: 'paint:tool-styles',
 	styleHistory: 'paint:style-history',
+	brushState: 'paint:brush',
 	showCurrentTool: 'paint:show-current-tool',
 	colorInspectorCollapsed: 'paint:color-inspector-collapsed',
 	panelLayout: 'paint:panel-layout',

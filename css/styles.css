@@ -621,7 +621,19 @@ body {
 	align-items: stretch;
 	gap: 0;
 }
+.brush-tool-menu {
+	display: flex;
+	align-items: stretch;
+	min-width: 0;
+}
 .text-tool-split {
+	display: flex;
+	align-items: stretch;
+	border: 1px solid var(--w10-border-strong);
+	border-radius: 2px;
+	overflow: hidden;
+}
+.brush-tool-split {
 	display: flex;
 	align-items: stretch;
 	border: 1px solid var(--w10-border-strong);
@@ -632,7 +644,22 @@ body {
 	border: 0;
 	border-radius: 0;
 }
+.brush-tool-main {
+	border: 0;
+	border-radius: 0;
+}
 .rbtn.cell.text-tool-menu-arrow {
+	box-sizing: border-box;
+	width: 22px;
+	min-width: 20px;
+	min-height: 22px;
+	padding: 0 2px;
+	border: 0;
+	border-inline-start: 1px solid var(--w10-border-strong);
+	border-radius: 0;
+	background: var(--w10-ribbon-bg);
+}
+.rbtn.cell.brush-tool-menu-arrow {
 	box-sizing: border-box;
 	width: 22px;
 	min-width: 20px;
@@ -651,6 +678,14 @@ body {
 	color: var(--w10-text);
 	outline: none;
 }
+.brush-tool-menu-arrow:hover,
+.brush-tool-menu-arrow:focus-visible,
+.brush-tool-menu-arrow[aria-expanded="true"] {
+	background: var(--w10-hover);
+	border-inline-start-color: var(--w10-accent);
+	color: var(--w10-text);
+	outline: none;
+}
 /* Open dropdown / menu toggles must read as *pressed*, not merely hovered.
    Hover fades as soon as the pointer leaves, which left users unsure whether a
    second click would close the menu. `ActionMenuController` already publishes
@@ -658,6 +693,7 @@ body {
    instead of a per-button patch. */
 .rbtn[aria-expanded="true"],
 .text-tool-menu-arrow[aria-expanded="true"],
+.brush-tool-menu-arrow[aria-expanded="true"],
 .ci-toggle[aria-expanded="true"],
 .mirror-action[aria-expanded="true"] {
 	background: var(--w10-hover);
@@ -678,6 +714,10 @@ body {
 }
 
 .text-tool-menu-arrow .menu-arrow {
+	margin: 0;
+	font-size: 14px;
+}
+.brush-tool-menu-arrow .menu-arrow {
 	margin: 0;
 	font-size: 14px;
 }
@@ -3130,9 +3170,13 @@ dialog h3 {
 	gap: 4px;
 	min-width: 0;
 	margin: 0;
-	padding: 5px 7px;
+	padding: 4px;
 	border: 1px solid var(--w10-border);
 	border-radius: 4px;
+}
+.adjustments-group.adjustments-value-group {
+	gap: 6px;
+	padding: 4px 6px;
 }
 .adjustments-group legend {
 	padding-inline: 3px;
@@ -3172,6 +3216,211 @@ dialog h3 {
 	grid-template-columns: minmax(0, 1fr) 74px;
 	align-items: center;
 	gap: 6px;
+}
+.brush-tool-menu-items {
+	min-width: 210px;
+}
+.brush-option-row {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto;
+	align-items: center;
+	gap: 2px 8px;
+	padding: 4px 6px;
+}
+.brush-option-row label {
+	font-size: 12px;
+	font-weight: 600;
+}
+.brush-option-row output {
+	font-size: 11px;
+	font-variant-numeric: tabular-nums;
+}
+.brush-option-row input[type="range"] {
+	grid-column: 1 / -1;
+	width: 100%;
+	margin: 0;
+}
+.brush-more-action {
+	display: flex;
+	align-items: center;
+	gap: 7px;
+	width: 100%;
+	margin-top: 3px;
+	padding: 6px;
+	border: 0;
+	background: transparent;
+	color: var(--w10-text);
+	text-align: start;
+	cursor: pointer;
+}
+.brush-more-action:hover,
+.brush-more-action:focus-visible {
+	background: var(--w10-hover);
+	outline: none;
+}
+.brush-studio-heading {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	margin: 0 0 5px;
+	font-size: 12px;
+}
+.brush-studio-heading .icon {
+	width: 16px;
+	height: 16px;
+}
+.brush-studio {
+	display: grid;
+	gap: 7px;
+	min-width: 0;
+}
+.brush-studio-preview {
+	width: 100%;
+	height: 54px;
+	border: 1px solid var(--w10-border);
+	border-radius: 3px;
+	background-color: var(--w10-bg);
+	background-image:
+		linear-gradient(45deg, var(--w10-hover) 25%, transparent 25%),
+		linear-gradient(-45deg, var(--w10-hover) 25%, transparent 25%),
+		linear-gradient(45deg, transparent 75%, var(--w10-hover) 75%),
+		linear-gradient(-45deg, transparent 75%, var(--w10-hover) 75%);
+	background-size: 12px 12px;
+	background-position: 0 0, 0 6px, 6px -6px, -6px 0;
+}
+.brush-studio-controls,
+.brush-studio-dynamics {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 5px 8px;
+}
+.brush-studio-control,
+.brush-studio-dynamic-range {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto;
+	align-items: center;
+	gap: 2px 5px;
+	min-width: 0;
+	font-size: 11px;
+}
+.brush-studio-control input[type="range"],
+.brush-studio-dynamic-range input[type="range"] {
+	grid-column: 1 / -1;
+	width: 100%;
+	margin: 0;
+}
+.brush-studio-control output,
+.brush-studio-dynamic-range output {
+	font-size: 10px;
+	font-variant-numeric: tabular-nums;
+}
+.brush-studio-choice-group {
+	display: grid;
+	gap: 3px;
+	margin: 0;
+	padding: 4px;
+	border: 1px solid var(--w10-border);
+	border-radius: 3px;
+}
+.brush-studio-choice-group legend,
+.brush-studio-presets h4,
+.brush-studio-history h4 {
+	margin: 0;
+	padding-inline: 3px;
+	font-size: 11px;
+	font-weight: 600;
+}
+.brush-studio-tip-choices,
+.brush-studio-preset-buttons,
+.brush-studio-custom-presets,
+.brush-studio-history-buttons {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+}
+.brush-studio-custom-preset {
+	display: flex;
+	min-width: 0;
+	gap: 2px;
+}
+.brush-studio-tip,
+.brush-studio-preset,
+.brush-studio-history-chip,
+.brush-studio-save-preset {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 4px;
+	min-height: 27px;
+	padding: 3px 6px;
+	border: 1px solid var(--w10-border);
+	border-radius: 3px;
+	background: var(--w10-bg);
+	color: var(--w10-text);
+	font-size: 11px;
+	cursor: pointer;
+}
+.brush-studio-tip {
+	width: 30px;
+	padding: 3px;
+}
+.brush-studio-tip.active,
+.brush-studio-preset:hover,
+.brush-studio-history-chip:hover {
+	border-color: var(--w10-accent);
+	background: var(--w10-hover);
+}
+.brush-studio-preset .icon {
+	width: 13px;
+	height: 13px;
+	flex: 0 0 13px;
+}
+.brush-studio-check {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	min-width: 0;
+	font-size: 10px;
+}
+.brush-studio-presets,
+.brush-studio-history {
+	display: grid;
+	gap: 4px;
+}
+.brush-studio-preset-buttons {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.brush-studio-preset {
+	justify-content: flex-start;
+	min-width: 0;
+}
+.brush-studio-delete-preset {
+	min-width: 25px;
+	min-height: 27px;
+	border: 1px solid var(--w10-border);
+	border-radius: 3px;
+	background: var(--w10-bg);
+	color: var(--w10-text-dim);
+	cursor: pointer;
+}
+.brush-studio-preset span {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.brush-studio-save-preset {
+	justify-self: start;
+}
+.brush-studio-history-chip {
+	width: 30px;
+	height: 27px;
+	border-color: var(--brush-history-color, var(--w10-border));
+	background: linear-gradient(135deg, var(--brush-history-color, #000) 50%, var(--w10-bg) 50%);
+}
+.brush-studio-history-chip .icon {
+	color: var(--w10-bg);
+	filter: drop-shadow(0 0 1px #000);
 }
 .adjustment-value-controls input[type="number"] {
 	width: 74px;
@@ -4581,8 +4830,8 @@ dialog label {
 	justify-content: space-between;
 	align-items: center;
 	gap: 10px;
-	margin-bottom: 10px;
-	font-size: 13px;
+	margin-bottom: 0;
+	font-size: 11px;
 }
 dialog .checkbox-row {
 	justify-content: flex-start;
@@ -4639,6 +4888,13 @@ dialog input[type="number"] {
 #new-file-dialog form {
 	display: block;
 	min-height: 215px;
+}
+
+button:not(:disabled) {
+	transition: background-color 100ms ease, border-color 100ms ease, filter 100ms ease;
+}
+button:not(:disabled):hover {
+	filter: brightness(.94);
 }
 #new-file-dialog .dialog-body {
 	display: flex;

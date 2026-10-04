@@ -20,6 +20,7 @@ class FakeElement {
 	}
 
 	append(...nodes) { nodes.forEach((node) => { this.children.push(node); node.parentNode = this; }); }
+	contains(node) { return node === this || this.children.some((child) => child.contains?.(node) || child === node); }
 	appendChild(node) { this.append(node); return node; }
 	replaceChildren(...nodes) { this.children.forEach((node) => { node.parentNode = null; }); this.children = []; this.append(...nodes); }
 	setAttribute(name, value) { this.attributes.set(name, value); }
@@ -46,15 +47,22 @@ class FakeSelect extends FakeElement {
 	}
 }
 
-const createDocument = () => ({
-	createElement: (tagName) => tagName === 'select' ? new FakeSelect() : new FakeElement(tagName),
-	defaultView: { Event: class { constructor(type) { this.type = type; } } },
-});
+const createDocument = () => {
+	const listeners = new Map();
+	return {
+		createElement: (tagName) => tagName === 'select' ? new FakeSelect() : new FakeElement(tagName),
+		defaultView: { Event: class { constructor(type) { this.type = type; } } },
+		addEventListener: (type, listener) => listeners.set(type, listener),
+		removeEventListener: (type) => listeners.delete(type),
+		dispatch: (type, details = {}) => listeners.get(type)?.({ target: null, ...details }),
+	};
+};
 
 test('recent-text dropdown retains names and titles for full text in custom options', () => {
 	const selected = [];
+	const documentRef = createDocument();
 	const dropdown = createRecentTextDropdown({
-		documentRef: createDocument(),
+		documentRef,
 		label: 'Restore recent text',
 		labelId: 'text-history-label',
 		placeholder: 'Recent text…',
@@ -90,6 +98,9 @@ test('recent-text dropdown retains names and titles for full text in custom opti
 	assert.equal(control.listbox.hidden, false, 'focus loss does not collapse the options');
 	control.trigger.dispatch('keydown', { key: 'Escape' });
 	assert.equal(control.listbox.hidden, true, 'Escape is an explicit close action');
+	control.trigger.dispatch('click');
+	documentRef.dispatch('pointerdown', { target: new FakeElement('button') });
+	assert.equal(control.listbox.hidden, true, 'an outside pointer press closes the dropdown');
 	dropdown.destroy();
 	assert.equal(root.removed, true);
 });

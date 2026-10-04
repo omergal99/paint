@@ -76,6 +76,7 @@ import { createWorkspaceStripController } from './ui/WorkspaceStrip.js';
 import { createActionMenuController } from './ui/ActionMenuController.js';
 import { createFontFamilyPicker } from './ui/FontFamilyPicker.js';
 import { createBrushCursorOverlay } from './ui/BrushCursorOverlay.js';
+import { createBrushState } from './tools/BrushState.js';
 import { createPersistentDropdown } from './ui/PersistentDropdown.js';
 import { createAdjustmentsDialog, createAdjustmentOption } from './ui/AdjustmentsDialog.js';
 import { createDialogSearch } from './ui/DialogSearch.js';
@@ -269,6 +270,8 @@ const shouldAutoSaveOnNew = () => {
 // ---------- Core managers ----------
 const eventBus = createEventBus();
 const canvasManager = new CanvasManager({ canvas: canvasEl, overlay: overlayEl, width: 800, height: 600, eventBus });
+const brushState = createBrushState();
+canvasManager.lineWidth = brushState.get().size;
 const adjustmentMask = createBrushAreaMask({
 	width: canvasManager.width,
 	height: canvasManager.height,
@@ -517,7 +520,7 @@ window.addEventListener('paint:primary-color-change', (event) => {
 });
 
 const aiConnectionStore = createAiConnectionStore();
-const sidebar = new Sidebar({ canvasManager, historyManager, statusBar, palette: colorPalette, dialogService, aiConnectionStore });
+const sidebar = new Sidebar({ canvasManager, historyManager, statusBar, palette: colorPalette, dialogService, aiConnectionStore, brushState });
 
 // Dialog URLs are owned by the router; this adapter keeps the historical call
 // shape and publishes the open dialog into app state. It is declared before
@@ -870,6 +873,8 @@ const toolContext = {
 	scaleEl,
 	colorInspector,
 	getSelection,
+	getBrushState: () => brushState.get(),
+	setBrushState: (patch) => brushState.set(patch),
 	setSelection,
 	commitFloatingSelection,
 	discardFloatingSelection,
@@ -1543,6 +1548,7 @@ const toolbar = new Toolbar({
 		brushCursorOverlay.refresh();
 	},
 	setFontSize: (size) => toolContext.setFontSize(size),
+	brushState,
 	handlers: {
 		newFile: () => commandRegistry.execute({ action: SHORTCUT_ACTIONS.newFile }),
 		openFile: () => commandRegistry.execute({ action: SHORTCUT_ACTIONS.open }),
@@ -1557,7 +1563,21 @@ const toolbar = new Toolbar({
 		undo: () => commandRegistry.execute({ action: SHORTCUT_ACTIONS.undo }),
 		redo: () => commandRegistry.execute({ action: SHORTCUT_ACTIONS.redo }),
 		setPrimaryColor: (hex, alpha) => colorPalette.setPrimary(hex, alpha),
+		openBrushStudio: () => {
+			sidebar.openGroupSettings(document.querySelector('[data-ribbon-key="tools"]'));
+			requestAnimationFrame(() => {
+				const advancedTab = document.getElementById('sidebar-mirror-tab-advanced');
+				advancedTab?.click();
+				document.querySelector('[data-tag="sidebar-mirror-brush-size"] input')?.focus();
+			});
+		},
 	},
+});
+brushState.subscribe((state) => {
+	canvasManager.lineWidth = state.size;
+	toolbar.syncBrushState(state);
+	brushCursorOverlay.refresh();
+	sidebar.syncRibbonMirror();
 });
 
 // Toolbar owns the visual tool state; keep selection handles in sync with it

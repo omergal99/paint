@@ -334,11 +334,12 @@ test('Sidebar groups mirror the Tools, Shapes, Colors, Extras, and History ribbo
   assert.match(toolsMirror, /'fillmode-outline', 'fillmode-outline-fill', 'fillmode-fill'/);
   assert.match(toolsMirror, /kind: 'action', targetTag/);
   assert.match(ribbonMirror, /item\.targetTag/);
-  // Tools mirror is tabbed (Drawing / reserved Advanced note).
+  // Tools mirror is tabbed (Drawing / state-backed Brush controls).
   assert.match(toolsMirror, /layout: 'tabs'/);
   assert.match(ribbonMirror, /'role', 'tablist'/);
   assert.match(ribbonMirror, /aria-selected/);
-  assert.match(toolsMirror, /ui\.mirrorAdvancedNote/);
+  assert.match(toolsMirror, /ui\.mirrorAdvanced/);
+  assert.match(toolsMirror, /createBrushStudioPanel/);
   // Shapes: search over translated names + favorites persisted in SettingsStore.
   assert.match(shapesMirror, /matchShapeQuery/);
   assert.match(shapesMirror, /favoriteShapes/);
@@ -1375,6 +1376,48 @@ test('pending session previews resolve the settled snapshot source', () => {
 test('Delete prioritizes a selected text object over pixel selection deletion', () => {
   assert.match(read('js/ui/TextSelectionOverlay.js'), /const deleteSelected = \(\) =>/);
   assert.match(main, /textSelectionOverlay\.deleteSelected\?\.\(\) \|\| deleteSelection\(\)/);
+});
+
+test('text editor Delete remains native while Escape cancels the editor', () => {
+	const textTool = read('js/tools/TextTool.js');
+	const keydown = textTool.match(/nextEditor\.addEventListener\('keydown', \(event\) => \{[\s\S]*?\n    \}\);/)?.[0] || '';
+	assert.match(keydown, /event\.stopPropagation\(\)/);
+	assert.match(keydown, /event\.key === 'Escape'/);
+	assert.doesNotMatch(keydown, /event\.key === 'Delete'/);
+});
+
+test('Sidebar Select All reaches the shared selection command', () => {
+	const selectionPanel = read('js/services/selection/selectionPropertiesPanel.js');
+	assert.match(selectionPanel, /sidebar-mirror-btn-select-all[\s\S]*?document\.getElementById\('btn-select-all'\)\?\.click\(\)/);
+	assert.match(main, /btn-select-all'\)\?\.addEventListener\('click', \(\) => commandRegistry\.execute\(\{ action: SHORTCUT_ACTIONS\.selectAll \}\)\)/);
+	assert.match(main, /\[SHORTCUT_ACTIONS\.selectAll\]: selectAll/);
+	assert.match(main, /const selectAll = \(\) => \{[\s\S]*?selectAllCanvas\(\);/);
+});
+
+test('Brush option surfaces share BrushState and expose accessible controls', () => {
+	const toolbar = read('js/ui/Toolbar.js');
+	const toolsMirror = read('js/ui/mirrors/toolsMirror.js');
+	const brushStudio = read('js/ui/BrushStudioPanel.js');
+	const brushTool = read('js/tools/FreehandTools.js');
+	const brushRenderer = read('js/tools/BrushStrokeRenderer.js');
+	assert.match(html, /id="btn-brush-menu"[^>]*aria-haspopup="menu"/);
+	assert.match(html, /data-brush-option="size"/);
+	assert.match(html, /data-brush-option="alpha"/);
+	assert.match(html, /data-brush-option="flow"/);
+	assert.match(html, /data-brush-option="hardness"/);
+	assert.match(html, /data-brush-option="spacing"/);
+	assert.match(toolbar, /this\.brushState\?\.set\(\{ \[field\]/);
+	assert.match(toolsMirror, /createBrushStudioPanel/);
+	assert.match(brushStudio, /data-brush-control/);
+	assert.match(brushStudio, /BUILT_IN_BRUSH_PRESETS/);
+	assert.match(brushStudio, /dataset\.brushHistory/);
+	assert.match(brushStudio, /createBrushStrokeRenderer/);
+	assert.match(brushTool, /pressureSize/);
+	assert.match(brushTool, /speedFlow/);
+	assert.match(brushTool, /setBrushState\(\{ history:/);
+	assert.match(brushRenderer, /createRadialGradient/);
+	assert.match(brushRenderer, /distanceRemainder/);
+	assert.match(read('js/tools/BrushState.js'), /schemaVersion: BRUSH_STATE_SCHEMA_VERSION/);
 });
 
 test('text outline preview and raster defaults share a one-pixel width and stored color', () => {

@@ -182,9 +182,13 @@ export const createPersistentDropdown = ({
 	};
 	const onSourceChange = () => refresh();
 	const onLocaleChange = () => refresh();
+	const onDocumentPointerDown = (event) => {
+		if (isOpen && !wrapper.contains?.(event.target)) close();
+	};
 	trigger.addEventListener('click', onTriggerClick);
 	trigger.addEventListener('keydown', onKeyDown);
 	select.addEventListener('change', onSourceChange);
+	documentRef.addEventListener?.('pointerdown', onDocumentPointerDown, true);
 	documentRef.documentElement?.addEventListener('paint:locale-change', onLocaleChange);
 	refresh();
 
@@ -213,6 +217,7 @@ export const createPersistentDropdown = ({
 			trigger.removeEventListener('click', onTriggerClick);
 			trigger.removeEventListener('keydown', onKeyDown);
 			select.removeEventListener('change', onSourceChange);
+			documentRef.removeEventListener?.('pointerdown', onDocumentPointerDown, true);
 			documentRef.documentElement?.removeEventListener('paint:locale-change', onLocaleChange);
 			if (parent) {
 				wrapper.replaceWith(select);

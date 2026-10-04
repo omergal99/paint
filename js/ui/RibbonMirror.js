@@ -57,6 +57,8 @@ const buildSlider = (item) => {
   const label = runtimeKey(mk('label', 'mirror-slider-label', localized(item)), item.labelKey);
   const input = mk('input', 'mirror-slider-input');
   input.type = 'range';
+  input.id = item.inputId || `${item.tag || 'mirror-slider'}-input`;
+  label.htmlFor = input.id;
   input.min = String(item.min ?? 0);
   input.max = String(item.max ?? 100);
   input.value = String(Number(item.get?.()) || 0);
@@ -133,11 +135,13 @@ const sectionTitleNode = (section) => {
 const buildItems = (section, hooks) => {
   const list = mk('div', 'mirror-items');
   const syncers = [];
+  const disposers = [];
   (section.items || []).forEach((item) => {
     if (!item) return;
     if (item.kind === 'custom' && isFn(item.mount)) {
       const host = mk('div', 'mirror-custom');
-      item.mount(host);
+      const dispose = item.mount(host);
+      if (isFn(dispose)) disposers.push(dispose);
       list.append(host);
       return;
     }
@@ -145,7 +149,7 @@ const buildItems = (section, hooks) => {
     syncers.push(built.sync);
     list.append(built.node);
   });
-  return { list, syncers };
+  return { list, syncers, disposers };
 };
 const buildSection = (section, hooks) => {
   const details = mk('details', 'mirror-section');
@@ -154,9 +158,9 @@ const buildSection = (section, hooks) => {
   const summary = mk('summary', 'mirror-section-title');
   summary.append(chevron(), sectionTitleNode(section));
   details.append(summary);
-  const { list, syncers } = buildItems(section, hooks);
+  const { list, syncers, disposers } = buildItems(section, hooks);
   details.append(list);
-  return { node: details, syncers };
+  return { node: details, syncers, disposers };
 };
 // Tabs layout: one tab strip plus exclusive panels. Keyboard follows the
 // roving-tabindex pattern and mirrors the arrow direction under RTL.
@@ -165,6 +169,7 @@ const buildTabs = (sections, hooks) => {
   tablist.setAttribute('role', 'tablist');
   const nodes = [tablist];
   const syncers = [];
+  const disposers = [];
   const tabButtons = [];
   const panels = [];
   const activate = (index) => {
@@ -180,7 +185,7 @@ const buildTabs = (sections, hooks) => {
     tab.type = 'button';
     tab.setAttribute('role', 'tab');
     tab.id = `sidebar-mirror-tab-${section.id}`;
-    const { list, syncers: itemSyncers } = buildItems(section, hooks);
+    const { list, syncers: itemSyncers, disposers: itemDisposers } = buildItems(section, hooks);
     const panel = mk('div', 'mirror-section mirror-tab-panel');
     panel.dataset.tag = `sidebar-mirror-${section.id}`;
     panel.id = `sidebar-mirror-panel-${section.id}`;
@@ -193,6 +198,7 @@ const buildTabs = (sections, hooks) => {
     tabButtons.push(tab);
     panels.push(panel);
     syncers.push(...itemSyncers);
+    disposers.push(...itemDisposers);
     tablist.append(tab);
     nodes.push(panel);
   });
@@ -212,13 +218,21 @@ const buildTabs = (sections, hooks) => {
     tabButtons[next].focus();
   });
   activate(Math.max(0, sections.findIndex((s) => s.open)));
-  return { nodes, syncers };
+  return { nodes, syncers, disposers };
 };
 export const createRibbonMirror = ({ descriptor = null, hooks = {} } = {}) => {
   const root = mk('section', 'ribbon-mirror');
   root.dataset.tag = 'sidebar-mirror';
   let syncers = [];
+  let disposers = [];
+  const disposeItems = () => {
+    disposers.forEach((dispose) => {
+      try { dispose(); } catch { /* dispose other mounted items */ }
+    });
+    disposers = [];
+  };
   const render = (next = descriptor) => {
+    disposeItems();
     root.replaceChildren();
     syncers = [];
     if (!next) return;
@@ -227,11 +241,13 @@ export const createRibbonMirror = ({ descriptor = null, hooks = {} } = {}) => {
     if (root.dataset.layout === 'tabs') {
       const tabs = buildTabs(sections, hooks);
       syncers.push(...tabs.syncers);
+      disposers.push(...tabs.disposers);
       tabs.nodes.forEach((node) => root.append(node));
     } else {
       sections.forEach((s) => {
         const b = buildSection(s, hooks);
         syncers.push(...b.syncers);
+        disposers.push(...b.disposers);
         root.append(b.node);
       });
     }
@@ -246,5 +262,5 @@ export const createRibbonMirror = ({ descriptor = null, hooks = {} } = {}) => {
   };
   const sync = () => syncers.forEach((fn) => { try { fn(); } catch { /* keep others */ } });
   render(descriptor);
-  return Object.freeze({ element: root, render, sync });
+  return Object.freeze({ element: root, render, sync, destroy: disposeItems });
 };

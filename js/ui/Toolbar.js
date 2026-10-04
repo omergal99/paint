@@ -10,7 +10,7 @@ const STYLE_STORAGE_KEY = 'paint:tool-styles';
 const STYLE_HISTORY_KEY = 'paint:style-history';
 
 export class Toolbar {
-  constructor({ root, toolManager, setLineWidth, setFontSize, handlers }) {
+  constructor({ root, toolManager, setLineWidth, setFontSize, handlers, brushState = null }) {
     this.root = root;
     this.toolManager = toolManager;
     this.handlers = handlers; // {newFile, openFile, importFile, save, saveAs, copy, cut, paste, crop, openResizeDialog, undo, redo}
@@ -42,6 +42,8 @@ export class Toolbar {
 
     this._activeTool = 'select';
     this._previousTool = 'select';
+    this.brushState = brushState;
+    this._bindBrushOptions();
     this._styles = this._loadStyles();
     this._styleHistory = this._loadStyleHistory();
     this._renderStyleHistory();
@@ -313,7 +315,10 @@ export class Toolbar {
       // The two setters stay explicit here because the public size control is
       // shared, while the remembered value is scoped to the active tool.
       if (this._activeTool === 'text') setFontSize(size);
-      else setLineWidth(size);
+      else {
+        setLineWidth(size);
+        this.brushState?.set({ size });
+      }
       // setLineWidth(size); setFontSize(size); (legacy shared-control contract)
       customInput.value = size;
       const sizeLabel = sizeButton?.querySelector('.size-value');
@@ -338,6 +343,50 @@ export class Toolbar {
     this._setLineWidth = setLineWidth;
     this._setFontSize = setFontSize;
     this._sizeSlider = this._mountSizeSlider(applySize);
+  }
+
+  _bindBrushOptions() {
+    const options = [...this.root.querySelectorAll('[data-brush-option]')];
+    const updateControls = (state) => {
+      options.forEach((input) => {
+        const field = input.dataset.brushOption;
+        const value = field === 'size' ? state.size : Math.round(state[field] * 100);
+        input.value = String(value);
+        const output = this.root.querySelector(`[data-brush-value="${field}"]`);
+        if (output) output.textContent = field === 'size' ? `${value} px` : `${value}%`;
+      });
+      const customSize = this.root.querySelector('#custom-line-size');
+      if (customSize && this._activeTool !== 'text') customSize.value = String(state.size);
+      const sizeLabel = this.root.querySelector('#line-size .size-value');
+      if (sizeLabel && this._activeTool !== 'text') sizeLabel.textContent = `${state.size}px`;
+    };
+
+    options.forEach((input) => {
+      input.addEventListener('input', () => {
+        const field = input.dataset.brushOption;
+        const value = Number(input.value);
+        this.brushState?.set({ [field]: field === 'size' ? value : value / 100 });
+      }, { signal: this._eventController.signal });
+    });
+    this._listen(this.root, 'click', (event) => {
+      if (!event.target.closest?.('[data-brush-open-studio]')) return;
+      this.handlers.openBrushStudio?.();
+    });
+    if (this.brushState) {
+      updateControls(this.brushState.get());
+      this._brushStateUnsubscribe = this.brushState.subscribe(updateControls);
+    }
+  }
+
+  syncBrushState(state) {
+    if (!state) return;
+    const customSize = this.root.querySelector('#custom-line-size');
+    if (customSize && this._activeTool !== 'text') customSize.value = String(state.size);
+    const sizeLabel = this.root.querySelector('#line-size .size-value');
+    if (sizeLabel && this._activeTool !== 'text') sizeLabel.textContent = `${state.size}px`;
+    this.root.querySelectorAll('[data-size-option]').forEach((option) => {
+      option.classList.toggle('active', Number(option.dataset.sizeOption) === state.size);
+    });
   }
 
   // Reusable slider (1-120) mounted above the preset boxes. It reuses the
@@ -479,6 +528,7 @@ export class Toolbar {
   destroy() {
     if (this._eventController.signal.aborted) return;
     this._eventController.abort();
+    this._brushStateUnsubscribe?.();
     this._disposeEmojiGrid?.();
     this._disposeEmojiGrid = null;
     if (this.toolManager.onToolChange === this._onToolChange) this.toolManager.onToolChange = null;

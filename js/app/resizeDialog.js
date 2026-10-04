@@ -49,12 +49,17 @@ export const initResizeDialog = ({
 
   const updateResizeSummary = () => {
     if (!resizeSummary) return;
-    resizeSummary.textContent = t('ui.resizeSummary', {
-      currentWidth: resizeTarget.width,
-      currentHeight: resizeTarget.height,
-      newWidth: Number(resizeWidthInput.value) || 0,
-      newHeight: Number(resizeHeightInput.value) || 0,
-    });
+    const newWidth = Number(resizeWidthInput.value) || 0;
+    const newHeight = Number(resizeHeightInput.value) || 0;
+    const unchanged = newWidth === resizeTarget.width && newHeight === resizeTarget.height;
+    resizeSummary.textContent = unchanged
+      ? t('ui.resizeNoChange', { width: resizeTarget.width, height: resizeTarget.height })
+      : t('ui.resizeSummary', {
+        currentWidth: resizeTarget.width,
+        currentHeight: resizeTarget.height,
+        newWidth,
+        newHeight,
+      });
   };
 
   const setResizeTargetFields = () => {
