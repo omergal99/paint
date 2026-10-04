@@ -100,6 +100,20 @@ test('the size mirrors push through the shared #custom-line-size writer', () => 
 	assert.doesNotMatch(toolbar, /customSize\.value = String\(state\.size\)/, 'no bare value assignment left behind');
 });
 
+test('the size mirror never re-enters applySize before the style store loads', () => {
+	// Regression: _bindBrushOptions runs in the constructor *before*
+	// `this._styles = this._loadStyles()`, and applySize reads `this._styles[key]`.
+	// An unconditional dispatch re-entered it with no styles loaded, throwing
+	// "Cannot read properties of undefined (reading 'select')" on every boot and
+	// writing a duplicate style-history entry.
+	const toolbar = readFileSync(new URL('../js/ui/Toolbar.js', import.meta.url), 'utf8');
+	assert.match(toolbar, /if \(this\._styles\) customSize\.dispatchEvent/, 'the dispatch is gated on the loaded store');
+	// The ordering itself is load-bearing: the bind runs first, so only the guard
+	// keeps construction safe. Assert both steps still exist.
+	assert.ok(toolbar.includes('this._bindBrushOptions();'), 'the brush bind still runs during construction');
+	assert.ok(toolbar.includes('this._styles = this._loadStyles();'), 'the style store still loads during construction');
+});
+
 test('the brush studio heading offers a reset back to the default brush', () => {
 	const mirror = readFileSync(new URL('../js/ui/mirrors/toolsMirror.js', import.meta.url), 'utf8');
 	assert.match(mirror, /'brush-studio-reset'/, 'the reset button is tagged');

@@ -1,6 +1,6 @@
 import { BUILT_IN_BRUSH_PRESETS } from '../tools/BrushState.js';
 import { createBrushStrokeRenderer } from '../tools/BrushStrokeRenderer.js';
-import { BRUSH_EXAMPLE_GRIDS, brushExampleValueLabel } from '../tools/BrushExamples.js';
+import { BRUSH_EXAMPLE_GRIDS, brushExampleInputValue, brushExampleValueLabel } from '../tools/BrushExamples.js';
 import { hexToHsl, withSaturation, withLightness } from '../utils/color.js';
 import { t } from '../i18n/messages.js';
 
@@ -596,7 +596,7 @@ export const createBrushStudioPanel = ({ brushState, getPrimaryColor, setPrimary
 					return;
 				}
 				const raw = button.dataset.brushExampleValue;
-				brushState.set({ [grid.field]: grid.field === 'blendMode' ? raw : Number(raw) });
+				brushState.set({ [grid.field]: brushExampleInputValue(grid, raw) });
 				return;
 			}
 			const preset = BUILT_IN_BRUSH_PRESETS.find((item) => item.id === button.dataset.brushPreset);

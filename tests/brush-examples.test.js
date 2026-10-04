@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { BRUSH_EXAMPLE_GRIDS, brushExampleValueLabel } from '../js/tools/BrushExamples.js';
+import { BRUSH_EXAMPLE_GRIDS, brushExampleInputValue, brushExampleValueLabel } from '../js/tools/BrushExamples.js';
 import {
 	BRUSH_BLEND_MODE_IDS,
 	BRUSH_COLOR_MODE_IDS,
@@ -16,6 +16,31 @@ const createStorage = () => {
 		removeItem: (key) => values.delete(key),
 	};
 };
+
+test('every example row coerces to a value BrushState actually accepts', () => {
+	// Regression: the panel used `Number(raw)` for every row except blendMode, so
+	// clicking a colorMode example sent Number('single') -> NaN and BrushState.set
+	// threw "Invalid brush setting: colorMode" at runtime.
+	const brushState = createBrushState({ storage: createStorage() });
+	for (const grid of BRUSH_EXAMPLE_GRIDS) {
+		if (grid.kind !== 'brush') continue;
+		for (const value of grid.values) {
+			const coerced = brushExampleInputValue(grid, String(value));
+			assert.doesNotThrow(
+				() => brushState.set({ [grid.field]: coerced }),
+				`${grid.id} example ${value} is accepted by BrushState`,
+			);
+			assert.equal(brushState.get()[grid.field], coerced, `${grid.id} stored the coerced value`);
+		}
+	}
+	// Mode rows keep their string id; numeric rows keep their number.
+	const colorMode = BRUSH_EXAMPLE_GRIDS.find((grid) => grid.id === 'colorMode');
+	assert.equal(brushExampleInputValue(colorMode, 'random'), 'random');
+	assert.equal(brushExampleInputValue(BRUSH_EXAMPLE_GRIDS.find((g) => g.id === 'size'), '8'), 8);
+	// Colour rows are not written through BrushState at all.
+	const saturation = BRUSH_EXAMPLE_GRIDS.find((grid) => grid.id === 'saturation');
+	assert.equal(saturation.kind, 'color');
+});
 
 test('every brush example grid is well formed and writes a real state field', () => {
 	const state = createBrushState({ storage: createStorage() }).get();

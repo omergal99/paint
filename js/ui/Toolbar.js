@@ -345,17 +345,21 @@ export class Toolbar {
     this._sizeSlider = this._mountSizeSlider(applySize);
   }
 
-  // `#custom-line-size` is the single writer for brush size: _bindLineSize
-  // pushes it to the canvas engine through that input's `input` event. Assigning
-  // `.value` alone left the engine on the previous width until the next stroke,
-  // so mirrors write through the event instead (same contract as
-  // mirrors/lineSizeControl.js). The equality guard stops the
-  // applySize -> brushState.set -> notify -> here loop.
+  // `#custom-line-size` is the single writer for brush size: _bindLineSize pushes
+  // it to the canvas engine through that input's `input` event. Assigning `.value`
+  // alone left the engine on the previous width until the next stroke, so mirrors
+  // write through the event instead (same contract as mirrors/lineSizeControl.js).
+  //
+  // `_bindBrushOptions` runs during construction, before `_styles` is loaded, and
+  // `applySize` reads `this._styles[key]`. Dispatching there would re-enter it with
+  // no styles loaded (and would log a duplicate style-history entry on every
+  // boot), so before the store exists we fall back to a plain value write. The
+  // equality guard also stops applySize -> brushState.set -> notify -> here loops.
   _syncLineSizeMirror(size) {
     const customSize = this.root.querySelector('#custom-line-size');
     if (customSize && this._activeTool !== 'text' && customSize.value !== String(size)) {
       customSize.value = String(size);
-      customSize.dispatchEvent(new Event('input', { bubbles: true }));
+      if (this._styles) customSize.dispatchEvent(new Event('input', { bubbles: true }));
     }
     const sizeLabel = this.root.querySelector('#line-size .size-value');
     if (sizeLabel && this._activeTool !== 'text') sizeLabel.textContent = `${size}px`;

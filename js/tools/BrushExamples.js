@@ -28,6 +28,17 @@ export const BRUSH_EXAMPLE_GRIDS = Object.freeze([
 	Object.freeze({ id: 'lightness', labelKey: 'ui.brushLightness', kind: 'color', transform: 'lightness', values: Object.freeze([15, 35, 50, 70, 90]) }),
 ]);
 
+/**
+ * Coerce a clicked example value into the shape `BrushState.set` expects.
+ * Mode rows (`blendMode`, `colorMode`) carry string ids; every other row
+ * carries a number. Deriving this from the row's own `values` keeps the
+ * descriptor the single source of truth, so adding a new mode row cannot
+ * silently re-introduce a `Number('single') -> NaN` rejection.
+ */
+export const brushExampleInputValue = (grid, raw) => (
+  typeof grid?.values?.[0] === 'string' ? raw : Number(raw)
+);
+
 // Resolve a readable label for one example value. Returns `{ text }` for
 // px/percent rows and `{ labelKey }` for modes so the panel can translate it.
 export const brushExampleValueLabel = (grid, value) => {
