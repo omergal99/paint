@@ -6,6 +6,7 @@
 // The descriptor is a factory because the deep-link callbacks are owned by
 // Sidebar; everything else still clicks the ribbon control.
 import { t } from '../../i18n/messages.js';
+import { appendDialogIndicator } from '../DialogIndicator.js';
 
 const HISTORY_VIEWS_UI = Object.freeze([
   ['history', 'history.title', 'sidebar-mirror-history-tab'],
@@ -26,6 +27,7 @@ const mountHistoryEntries = (host, { openHistoryView, openHistoryPreferences }) 
     button.textContent = label;
     if (key) button.setAttribute('data-i18n-runtime', key);
     else button.setAttribute('data-i18n-runtime', 'ui.historyPreferences');
+    if (view === 'preferences') appendDialogIndicator(button);
     button.addEventListener('click', () => {
       if (view === 'preferences') openHistoryPreferences?.(button);
       else openHistoryView?.(view, { trigger: button });

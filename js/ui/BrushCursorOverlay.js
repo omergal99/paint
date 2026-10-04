@@ -5,6 +5,7 @@ export const createBrushCursorOverlay = ({
 	surface,
 	viewportManager,
 	getLineWidth,
+	getTipShape = () => 'round',
 	documentRef = globalThis.document,
 } = {}) => {
 	if (!root || !surface || !viewportManager || !documentRef?.createElement) {
@@ -16,6 +17,7 @@ export const createBrushCursorOverlay = ({
 	root.append(cursor);
 
 	let active = false;
+	let activeBrush = false;
 	let lastPoint = null;
 	const hide = () => {
 		cursor.hidden = true;
@@ -28,6 +30,11 @@ export const createBrushCursorOverlay = ({
 		cursor.style.width = `${size}px`;
 		cursor.style.height = `${size}px`;
 		cursor.style.setProperty('--brush-cursor-size', `${size}px`);
+		const requestedTipShape = getTipShape?.();
+		const tipShape = ['round', 'square', 'diamond', 'soft'].includes(requestedTipShape)
+			? requestedTipShape
+			: 'round';
+		cursor.dataset.tipShape = activeBrush ? tipShape : 'round';
 		cursor.hidden = false;
 	};
 	const onPointerMove = (event) => {
@@ -44,6 +51,7 @@ export const createBrushCursorOverlay = ({
 
 	return Object.freeze({
 		setTool(name) {
+			activeBrush = name === 'brush';
 			active = BRUSH_TOOLS.has(name);
 			if (!active) onPointerLeave();
 			else render();

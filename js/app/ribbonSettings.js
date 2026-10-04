@@ -2,6 +2,7 @@
 // Settings ▸ Ribbon rows: one visibility checkbox per ribbon group plus the
 // Details shortcut into the group panel. Phase 3 modularisation.
 import { t } from '../i18n/messages.js';
+import { appendDialogIndicator } from '../ui/DialogIndicator.js';
 
 // Stable render order, so the rows do not shuffle when a group is missing.
 const RIBBON_GROUP_ORDER = Object.freeze([
@@ -38,14 +39,18 @@ export const initRibbonSettings = ({ sidebar, saveSettings }) => {
     groups.forEach((groupSection) => {
       const title = groupSection.querySelector('.ribbon-group-title');
       if (!title) return;
+      const groupKey = [...groupSection.classList]
+        .find((name) => name.startsWith('ribbon-group-') && name !== 'ribbon-group')
+        ?.slice('ribbon-group-'.length);
+      if (!groupKey) return;
       const row = document.createElement('div');
       row.className = 'ribbon-setting-row';
       const label = document.createElement('div');
       label.className = 'checkbox-row';
-      label.dataset.tag = `ribbon-group-visibility-row-${groups.indexOf(groupSection)}`;
+      label.dataset.tag = `ribbon-group-visibility-row-${groupKey}`;
       const checkbox = document.createElement('input');
       checkbox.type = 'checkbox';
-      checkbox.id = `ribbon-group-visibility-${groups.indexOf(groupSection)}`;
+      checkbox.id = `ribbon-group-visibility-${groupKey}`;
       checkbox.dataset.tag = checkbox.id;
       const checkboxLabel = document.createElement('label');
       checkboxLabel.htmlFor = checkbox.id;
@@ -74,8 +79,9 @@ export const initRibbonSettings = ({ sidebar, saveSettings }) => {
       const details = document.createElement('button');
       details.type = 'button';
       details.className = 'ribbon-setting-details';
-      details.dataset.tag = `ribbon-group-details-${groups.indexOf(groupSection)}`;
+      details.dataset.tag = `ribbon-group-details-${groupKey}`;
       details.textContent = t('ui.details');
+      appendDialogIndicator(details);
       details.addEventListener('click', () => sidebar.openGroupSettings(groupSection));
       row.append(label, details);
       container.appendChild(row);

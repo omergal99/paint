@@ -569,14 +569,16 @@ export class Sidebar {
 		// .filter((btn) => btn.id !== 'btn-remove-bg' && !btn.closest('.action-menu-items'))
 		const buttons = [...groupSection.querySelectorAll('.rbtn')]
 			.filter((btn) => btn.id !== 'btn-remove-bg' && btn.id !== 'btn-settings' && btn.id !== 'tool-status' && !btn.closest('.action-menu-items'));
-		buttons.forEach((btn, index) => {
+		buttons.forEach((btn) => {
 			let btnLabel = btn.title || btn.dataset.tool || btn.dataset.shape || btn.textContent.trim();
+			const visibilityKey = btn.id || btn.dataset.tag || btn.dataset.tool || btn.dataset.shape;
+			if (!visibilityKey) return;
 			const toggleBtn = document.createElement('div');
 			toggleBtn.className = 'checkbox-row';
-			toggleBtn.dataset.tag = `sidebar-button-visibility-row-${index}`;
+			toggleBtn.dataset.tag = `sidebar-button-visibility-row-${visibilityKey}`;
 			const cbBtn = document.createElement('input');
 			cbBtn.type = 'checkbox';
-			cbBtn.id = `sidebar-button-visibility-${index}`;
+			cbBtn.id = `sidebar-button-visibility-${visibilityKey}`;
 			cbBtn.dataset.tag = cbBtn.id;
 			cbBtn.checked = !btn.hidden && btn.style.display !== 'none';
 			const buttonLabel = document.createElement('label');

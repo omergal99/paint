@@ -90,6 +90,33 @@ test('Image action submenus expose consistent icons and translated labels', () =
 	assert.match(read('css/styles.css'), /\.submenu-arrow\s*\{[\s\S]*margin-inline-start:\s*auto/);
 	assert.match(html, /data-tag="tool-select"[\s\S]*<path\s+d="M3\.5 7V4\.5/);
 });
+
+test('dialog-opening actions use semantic data-tags and the shared indicator', () => {
+  const indicator = read('js/ui/DialogIndicator.js');
+  const styles = read('css/styles.css');
+  const actionMenus = read('js/ui/ActionMenuController.js');
+  [
+    'btn-canvas-size', 'btn-manage-workspace', 'btn-remove-bg',
+    'btn-adjustments', 'btn-rotate-free', 'brush-open-studio',
+    'history-clear-btn', 'settings-history-clear', 'settings-reset',
+    'settings-clear-data', 'history-settings-link', 'ai-connect-button',
+  ].forEach((tag) => {
+    assert.match(indicator, new RegExp(`'${tag}'`));
+    assert.match(html, new RegExp(`data-tag="${tag}"`));
+  });
+  assert.doesNotMatch(html, /data-dialog-action/);
+  assert.doesNotMatch(indicator, /btn-new|btn-settings/);
+  assert.match(indicator, /viewBox', '0 0 24 24'/);
+  assert.match(styles, /\.dialog-arrow-icon\s*\{[\s\S]*flex-shrink: 0/);
+  assert.doesNotMatch(styles.match(/\.dialog-arrow-icon\s*\{[^}]*\}/)?.[0] || '', /margin/);
+  assert.match(styles, /html\[dir="rtl"\] \.dialog-arrow-icon[\s\S]*transform: scaleX\(-1\)/);
+  assert.match(actionMenus, /\.action-menu-items\.brush-tool-menu-items input\[type="range"\]/);
+  assert.doesNotMatch(html, /data-tag="[^"]*\d[^"]*"/);
+  assert.match(read('js/ui/BrushStudioPanel.js'), /finishPresetRename/);
+  assert.match(read('js/ui/RibbonMirror.js'), /paint:mirror-tabs/);
+  assert.doesNotMatch(read('js/ui/mirrors/toolsMirror.js'), /target: 'btn-settings'/);
+  assert.match(html, /data-tag="brush-open-studio" data-brush-open-studio/);
+});
 test('Save is owned by File More actions', () => {
 	const save = html.match(/<button[^>]*id="btn-save"[\s\S]*?<\/button>/)?.[0] || '';
 	assert.match(save, /role="menuitem"/);
@@ -616,7 +643,8 @@ test('checkbox rows keep empty whitespace inert and expose explicit hit targets'
   assert.match(read('js/app/ribbonSettings.js'), /checkboxLabel\.htmlFor = checkbox\.id/);
   assert.match(read('js/ui/Sidebar.js'), /toggleGroup\.dataset\.tag/);
   assert.match(read('js/app/ribbonSettings.js'), /label\.dataset\.tag = `ribbon-group-visibility-row/);
-  assert.match(main, /if \(!element\.dataset\.tag\) element\.dataset\.tag = element\.id/);
+  assert.match(main, /const stableDataTag =/);
+  assert.doesNotMatch(main, /dom-\$\{base\}-\$\{count\}/);
 });
 
 test('settings search keeps text intact and reports only deepest areas', () => {

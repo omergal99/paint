@@ -19,12 +19,14 @@ test('brush cursor follows image coordinates and reflects the active stroke size
 	const root = makeTarget();
 	const surface = makeTarget();
 	let cursor;
+	let tipShape = 'diamond';
 	const documentRef = {
 		createElement() {
 			cursor = {
 				style: {
 					setProperty(name, value) { this[name] = value; },
 				},
+				dataset: {},
 				setAttribute() {},
 				remove() { this.removed = true; },
 				hidden: false,
@@ -38,6 +40,7 @@ test('brush cursor follows image coordinates and reflects the active stroke size
 		documentRef,
 		viewportManager: { clientToImage: (x, y) => ({ x: x / 2, y: y / 2 }) },
 		getLineWidth: () => 10,
+		getTipShape: () => tipShape,
 	});
 	overlay.setTool('brush');
 	surface.listeners.get('pointermove')({ clientX: 40, clientY: 30 });
@@ -46,6 +49,10 @@ test('brush cursor follows image coordinates and reflects the active stroke size
 	assert.equal(cursor.style.width, '10px');
 	assert.equal(cursor.style['--brush-cursor-size'], '10px');
 	assert.equal(cursor.hidden, false);
+	assert.equal(cursor.dataset.tipShape, 'diamond');
+	tipShape = 'square';
+	overlay.refresh();
+	assert.equal(cursor.dataset.tipShape, 'square');
 	overlay.setTool('select');
 	assert.equal(cursor.hidden, true);
 	overlay.destroy();

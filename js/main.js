@@ -76,6 +76,7 @@ import { createWorkspaceStripController } from './ui/WorkspaceStrip.js';
 import { createActionMenuController } from './ui/ActionMenuController.js';
 import { createFontFamilyPicker } from './ui/FontFamilyPicker.js';
 import { createBrushCursorOverlay } from './ui/BrushCursorOverlay.js';
+import { initializeDialogIndicators } from './ui/DialogIndicator.js';
 import { createBrushState } from './tools/BrushState.js';
 import { createPersistentDropdown } from './ui/PersistentDropdown.js';
 import { createAdjustmentsDialog, createAdjustmentOption } from './ui/AdjustmentsDialog.js';
@@ -99,22 +100,34 @@ markBoot('boot:start');
 standardizeDialogFrames({ root: document });
 
 // ---------- DOM refs ----------
-// Every addressable UI element gets a stable inspection hook. Explicit
-// data-tag values remain authoritative; id values provide the safe fallback.
-const dataTagCounts = new Map();
+// Every addressable UI element gets a deterministic inspection hook. Explicit
+// data-tag values remain authoritative; generated tags use semantic context,
+// never render order.
+const DATA_TAG_IDENTITY_ATTRIBUTES = Object.freeze([
+	'tool', 'shape', 'settingsTab', 'brushOption', 'brushControl', 'brushDynamic',
+	'brushTip', 'exportFormat',
+]);
+const stableDataTag = (element) => {
+	if (element.id) return element.id;
+	const classes = [...(element.classList || [])].filter((name) => /^[a-z][a-z-]*$/i.test(name));
+	const identity = DATA_TAG_IDENTITY_ATTRIBUTES
+		.map((name) => element.dataset[name])
+		.filter((value) => value && /^[a-z][a-z-]*$/i.test(value));
+	const parentClass = [...(element.parentElement?.classList || [])]
+		.find((name) => /^[a-z][a-z-]*$/i.test(name));
+	const parts = [...new Set([...identity, ...classes])];
+	if (parts.length === 0 && parentClass) parts.push(parentClass);
+	return `dom-${element.tagName.toLowerCase()}${parts.length ? `-${parts.join('-')}` : ''}`;
+};
 const ensureDataTags = (root = document) => {
 	const elements = root.matches?.('*') ? [root, ...root.querySelectorAll('*')] : [...(root.querySelectorAll?.('*') || [])];
 	elements.forEach((element) => {
 		if (element.dataset.tag) return;
-		const base = element.id || element.tagName.toLowerCase();
-		if (!element.dataset.tag) element.dataset.tag = element.id;
-		if (element.id) return;
-		const count = (dataTagCounts.get(base) || 0) + 1;
-		dataTagCounts.set(base, count);
-		element.dataset.tag = `dom-${base}-${count}`;
+		element.dataset.tag = stableDataTag(element);
 	});
 };
 ensureDataTags();
+initializeDialogIndicators();
 const dataTagObserver = globalThis.MutationObserver ? new MutationObserver((records) => {
 	records.flatMap((record) => [...record.addedNodes])
 		.filter((node) => node.nodeType === 1)
@@ -933,6 +946,7 @@ const brushCursorOverlay = createBrushCursorOverlay({
 	surface: overlayEl,
 	viewportManager,
 	getLineWidth: () => canvasManager.lineWidth,
+	getTipShape: () => brushState.get().tipShape,
 });
 const selectTool = createSelectTool();
 const adjustmentMaskTool = createAdjustmentMaskTool({ mask: adjustmentMask, getSelection });

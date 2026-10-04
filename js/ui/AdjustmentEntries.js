@@ -1,6 +1,7 @@
 import { ADJUSTMENTS } from '../canvas/AdjustmentEngine.js';
 import { EVENTS } from '../core/constants.js';
 import { t } from '../i18n/messages.js';
+import { appendDialogIndicator } from './DialogIndicator.js';
 
 const ICON_PATHS = Object.freeze({
 	invert: 'M10 2a8 8 0 1 0 0 16V2Zm0 0a8 8 0 0 1 0 16',
@@ -43,6 +44,7 @@ export const mountAdjustmentEntries = (host, { buttonClass = 'mirror-action' } =
 		label.textContent = t(metadata.labelKey);
 		label.setAttribute('data-i18n-runtime', metadata.labelKey);
 		button.append(createIcon(documentRef, id), label);
+		appendDialogIndicator(button, { documentRef });
 		button.addEventListener('click', () => {
 			window.dispatchEvent(new CustomEvent(EVENTS.openAdjustments, { detail: { id } }));
 		});

@@ -300,7 +300,7 @@
 													stroke-linecap="round" />
 											</svg>
 											<span data-i18n="ribbon.image.cropToSelection">Crop to selection</span></button>
-										<button type="button" id="btn-remove-bg" role="menuitem" aria-haspopup="dialog"
+										<button type="button" id="btn-remove-bg" data-tag="btn-remove-bg" role="menuitem" aria-haspopup="dialog"
 											title="Open background removal options" data-i18n-attr="title:ui.openBackgroundRemovalOptions">
 											<svg class="icon size4 menu-dialog-icon" viewBox="0 0 20 20" aria-hidden="true">
 												<path d="M4 5h12M4 10h12M4 15h12" stroke="currentColor" stroke-width="1.6"
@@ -344,7 +344,7 @@
 												<path d="M15 3v3h-3" fill="none" stroke="currentColor" stroke-linecap="round" />
 												<path d="M10 10h.01M10 13h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
 											</svg><span data-i18n="ui.rotate270">Rotate 270</span></button>
-										<button type="button" id="btn-rotate-free" role="menuitem" title="Free rotate by angle"
+										<button type="button" id="btn-rotate-free" data-tag="btn-rotate-free" role="menuitem" title="Free rotate by angle"
 											data-i18n-attr="title:ui.freeRotate"><svg class="icon size4" viewBox="0 0 20 20"
 												aria-hidden="true">
 												<circle cx="10" cy="10" r="6" fill="none" stroke="currentColor" />
@@ -459,7 +459,7 @@
 										<input id="brush-menu-spacing" data-brush-option="spacing" type="range" min="5" max="200"
 											value="20" aria-label="Brush spacing" data-i18n-attr="aria-label:ui.brushSpacing" />
 									</div>
-									<button type="button" class="brush-more-action" data-brush-open-studio role="menuitem">
+									<button type="button" class="brush-more-action" data-tag="brush-open-studio" data-brush-open-studio role="menuitem">
 										<svg class="icon size4" viewBox="0 0 20 20" aria-hidden="true">
 											<path d="M3 4h14M3 10h14M3 16h14M7 2v4m6 2v4m-4 2v4" fill="none"
 												stroke="currentColor" stroke-linecap="round" />
@@ -739,7 +739,7 @@
 									</svg><span>Emoji</span>
 								</button>
 							</div>
-							<div class="shape-emoji-row" data-tag="dom-div-45" aria-label="Emoji picker">
+							<div class="shape-emoji-row" data-tag="shape-emoji-picker" aria-label="Emoji picker">
 								<div class="shape-emoji-grid" id="shape-emoji-grid" role="listbox" aria-label="Choose emoji"></div>
 							</div>
 							<div class="menu-checkbox shape-after-draw-row"
@@ -988,7 +988,7 @@
 				<!-- <span class="ci-label">Color picker:</span> -->
 				<div class="ci-swatch-container" data-tag="ci-swatch-container">
 					<span class="ci-swatch" id="ci-swatch" data-tag="ci-swatch"></span>
-					<button class="rbtn cell tool-btn" data-tool="eyedropper" data-tag="tool-eyedropper-2"
+					<button class="rbtn cell tool-btn" data-tool="eyedropper" data-tag="tool-eyedropper-inspector"
 						title="Color picker (K)">
 						<svg class="icon size5" viewBox="0 0 20 20">
 							<path fill="currentColor"
@@ -1101,7 +1101,7 @@
 								<span class="history-pref-sep" aria-hidden="true">·</span>
 								<span class="history-pref-item"><span data-i18n="ui.saveLimitLabel">Save limit</span> <strong id="history-limit-status">50</strong></span>
 								<span class="history-pref-sep" aria-hidden="true">·</span>
-								<button type="button" id="history-settings-link" data-i18n="ui.openHistorySettings">Open</button>
+								<button type="button" id="history-settings-link" data-tag="history-settings-link"><span data-i18n="ui.openHistorySettings">Open</span></button>
 							</div>
 							<!-- Hidden mirrors keep the existing settings/state contract while the
 						     sidebar presents a read-only summary. -->
@@ -1126,7 +1126,7 @@
 								<button type="button" id="history-export-all-btn"
 									title="Export the whole history to your computer">Export
 									All</button>
-								<button type="button" id="history-clear-btn" title="Clear all saved history" data-i18n="history.clearAll">Clear All</button>
+								<button type="button" id="history-clear-btn" data-tag="history-clear-btn" title="Clear all saved history"><span data-i18n="history.clearAll">Clear All</span></button>
 							</div>
 						</div>
 						<div class="history-view-tabs" id="history-view-tabs" role="tablist" aria-label="History views">
@@ -1143,7 +1143,7 @@
 							<select id="ai-provider-select" aria-label="AI provider"></select>
 							<div class="ai-connection-row">
 								<span id="ai-connection-status" role="status"></span>
-								<button type="button" id="ai-connect-button">Connection details</button>
+								<button type="button" id="ai-connect-button" data-tag="ai-connect-button">Connection details</button>
 							</div>
 						</section>
 						<div class="ai-chat-messages" id="ai-chat-messages">
@@ -1289,7 +1289,7 @@
 					data-i18n-attr="aria-label:common.actions.close,title:common.actions.close" aria-label="Close"
 					title="Close">×</button>
 			</header>
-			<nav class="settings-tabs" data-tag="dom-nav-1" aria-label="Settings sections">
+			<nav class="settings-tabs" data-tag="settings-tabs" aria-label="Settings sections">
 				<button type="button" class="settings-tab active" data-settings-tab="general">GENERAL</button>
 				<button type="button" class="settings-tab" data-settings-tab="history">HISTORY</button>
 				<button type="button" class="settings-tab" data-settings-tab="ribbon">RIBBON</button>
@@ -1432,7 +1432,7 @@
 				</div>
 				<div class="dialog-actions">
 					<button type="button" id="settings-history-export-all" data-i18n="ui.exportAllHistory">Export All History</button>
-					<button type="button" id="settings-history-clear" class="danger" data-i18n="history.clearAll">Clear All</button>
+					<button type="button" id="settings-history-clear" data-tag="settings-history-clear" class="danger"><span data-i18n="history.clearAll">Clear All</span></button>
 				</div>
 			</section>
 			<section class="settings-panel settings-body" data-settings-panel="ribbon" hidden>
@@ -1482,8 +1482,8 @@
 					</div>
 				</dl>
 				<div class="dialog-actions">
-					<button type="button" id="settings-reset" class="danger">Reset Settings</button>
-					<button type="button" id="settings-clear-data" class="danger">Clear Data</button>
+					<button type="button" id="settings-reset" data-tag="settings-reset" class="danger">Reset Settings</button>
+					<button type="button" id="settings-clear-data" data-tag="settings-clear-data" class="danger">Clear Data</button>
 				</div>
 			</section>
 			<section class="settings-panel settings-body" data-settings-panel="release" hidden>

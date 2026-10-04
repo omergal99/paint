@@ -304,6 +304,7 @@ export const createActionMenuController = ({ root = document } = {}) => {
   const stayOpenTarget = (event) => event.target?.closest?.([
     '.action-menu-items.menu-stay-open',
     '.action-menu-items .menu-checkbox',
+    '.action-menu-items.brush-tool-menu-items input[type="range"]',
   ].join(', '));
 
   const handleRootClick = (event) => {

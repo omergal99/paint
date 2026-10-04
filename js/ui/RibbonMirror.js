@@ -11,6 +11,7 @@
 // Titles/labels prefer `*Key` fields and carry `data-i18n-runtime` so
 // LocaleController re-translates them when the locale changes.
 import { t } from '../i18n/messages.js';
+import { appendDialogIndicator } from './DialogIndicator.js';
 const isFn = (v) => typeof v === 'function';
 const mk = (tag, cls = '', text = '') => {
   const n = document.createElement(tag);
@@ -36,6 +37,7 @@ const buildAction = (item, onAction) => {
   if (sourceTag) btn.dataset.sourceTag = sourceTag;
   const source = findSource(item);
   btn.textContent = source?.title || source?.textContent?.trim() || sourceTag || '';
+  if (source?.querySelector(':scope > .dialog-arrow-icon')) appendDialogIndicator(btn);
   btn.disabled = !source || source.disabled === true;
   btn.addEventListener('click', () => (isFn(onAction) ? onAction(item) : findSource(item)?.click()));
   return { node: btn, sync: () => { const src = findSource(item); btn.disabled = !src || src.disabled === true; } };
@@ -164,7 +166,24 @@ const buildSection = (section, hooks) => {
 };
 // Tabs layout: one tab strip plus exclusive panels. Keyboard follows the
 // roving-tabindex pattern and mirrors the arrow direction under RTL.
-const buildTabs = (sections, hooks) => {
+const MIRROR_TAB_STATE_KEY = 'paint:mirror-tabs';
+const readMirrorTabState = () => {
+  try {
+    const state = JSON.parse(globalThis.localStorage?.getItem(MIRROR_TAB_STATE_KEY) || '{}');
+    return state && typeof state === 'object' && !Array.isArray(state) ? state : {};
+  } catch {
+    return {};
+  }
+};
+const writeMirrorTabState = (layoutKey, sectionId) => {
+  try {
+    globalThis.localStorage?.setItem(MIRROR_TAB_STATE_KEY, JSON.stringify({
+      ...readMirrorTabState(),
+      [layoutKey]: sectionId,
+    }));
+  } catch { /* remembering the selected tab is best-effort */ }
+};
+const buildTabs = (sections, hooks, layoutKey) => {
   const tablist = mk('div', 'mirror-tablist');
   tablist.setAttribute('role', 'tablist');
   const nodes = [tablist];
@@ -172,18 +191,20 @@ const buildTabs = (sections, hooks) => {
   const disposers = [];
   const tabButtons = [];
   const panels = [];
-  const activate = (index) => {
+  const activate = (index, remember = true) => {
     tabButtons.forEach((tab, i) => {
       const active = i === index;
       tab.setAttribute('aria-selected', String(active));
       tab.tabIndex = active ? 0 : -1;
       if (panels[i]) panels[i].hidden = !active;
     });
+    if (remember && sections[index]) writeMirrorTabState(layoutKey, sections[index].id);
   };
   sections.forEach((section, index) => {
     const tab = mk('button', 'mirror-tab');
     tab.type = 'button';
     tab.setAttribute('role', 'tab');
+    tab.dataset.tag = `sidebar-mirror-tab-${section.id}`;
     tab.id = `sidebar-mirror-tab-${section.id}`;
     const { list, syncers: itemSyncers, disposers: itemDisposers } = buildItems(section, hooks);
     const panel = mk('div', 'mirror-section mirror-tab-panel');
@@ -217,7 +238,10 @@ const buildTabs = (sections, hooks) => {
     activate(next);
     tabButtons[next].focus();
   });
-  activate(Math.max(0, sections.findIndex((s) => s.open)));
+  const rememberedSection = readMirrorTabState()[layoutKey];
+  const rememberedIndex = sections.findIndex((section) => section.id === rememberedSection);
+  const initialIndex = rememberedIndex >= 0 ? rememberedIndex : Math.max(0, sections.findIndex((s) => s.open));
+  activate(initialIndex, false);
   return { nodes, syncers, disposers };
 };
 export const createRibbonMirror = ({ descriptor = null, hooks = {} } = {}) => {
@@ -239,7 +263,7 @@ export const createRibbonMirror = ({ descriptor = null, hooks = {} } = {}) => {
     root.dataset.layout = next.layout === 'tabs' ? 'tabs' : 'sections';
     const sections = (next.sections || []).filter(Boolean);
     if (root.dataset.layout === 'tabs') {
-      const tabs = buildTabs(sections, hooks);
+      const tabs = buildTabs(sections, hooks, next.key);
       syncers.push(...tabs.syncers);
       disposers.push(...tabs.disposers);
       tabs.nodes.forEach((node) => root.append(node));

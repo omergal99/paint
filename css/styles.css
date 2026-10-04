@@ -2456,6 +2456,28 @@ html[dir="rtl"] .adjustment-mask-finish {
 .brush-cursor-overlay[hidden] {
 	display: none;
 }
+.brush-cursor-overlay[data-tip-shape="square"] {
+	border-radius: 0;
+}
+.brush-cursor-overlay[data-tip-shape="diamond"] {
+	border-radius: 0;
+	transform: translate(-50%, -50%) rotate(45deg);
+}
+.brush-cursor-overlay[data-tip-shape="soft"] {
+	border-style: dashed;
+	box-shadow: 0 0 0 1px var(--w10-bg), inset 0 0 3px var(--w10-text);
+	opacity: .8;
+}
+.dialog-arrow-icon {
+	display: inline-block;
+	vertical-align: middle;
+	flex-shrink: 0;
+}
+[dir="rtl"] .dialog-arrow-icon,
+html[dir="rtl"] .dialog-arrow-icon,
+body.rtl .dialog-arrow-icon {
+	transform: scaleX(-1);
+}
 
 .text-object-focus-layer {
 	position: absolute;
@@ -3403,6 +3425,39 @@ dialog h3 {
 	background: var(--w10-bg);
 	color: var(--w10-text-dim);
 	cursor: pointer;
+}
+.brush-studio-rename-preset {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 25px;
+	min-height: 27px;
+	padding: 3px;
+	border: 1px solid var(--w10-border);
+	border-radius: 3px;
+	background: var(--w10-bg);
+	color: var(--w10-text-dim);
+	cursor: pointer;
+}
+.brush-studio-rename-preset:hover,
+.brush-studio-delete-preset:hover {
+	background: var(--w10-hover);
+	border-color: var(--w10-hover-border);
+	color: var(--w10-text);
+}
+.brush-studio-rename-preset .icon {
+	width: 13px;
+	height: 13px;
+}
+.brush-studio-preset-name-input {
+	box-sizing: border-box;
+	width: 100%;
+	min-width: 0;
+	padding: 3px;
+	border: 1px solid var(--w10-border-strong);
+	border-radius: 3px;
+	background: var(--w10-field-bg, #fff);
+	color: var(--w10-text);
 }
 .brush-studio-preset span {
 	overflow: hidden;

@@ -34,6 +34,21 @@ const makeBrushIcon = (shape) => {
 	return icon;
 };
 
+const makeRenameIcon = () => {
+	const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+	icon.setAttribute('viewBox', '0 0 20 20');
+	icon.setAttribute('class', 'icon size4');
+	icon.setAttribute('aria-hidden', 'true');
+	const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+	path.setAttribute('d', 'm3 14.5-.8 3.3 3.3-.8L16 7.5 12.5 4 3 14.5Zm8.5-9 3.5 3.5');
+	path.setAttribute('fill', 'none');
+	path.setAttribute('stroke', 'currentColor');
+	path.setAttribute('stroke-linecap', 'round');
+	path.setAttribute('stroke-linejoin', 'round');
+	icon.append(path);
+	return icon;
+};
+
 const fieldLabel = (key) => {
 	const label = document.createElement('label');
 	label.dataset.brushI18n = key;
@@ -70,6 +85,7 @@ export const createBrushStudioPanel = ({ brushState, getPrimaryColor, setPrimary
 			input.max = String(max);
 			input.step = field === 'size' ? '1' : '1';
 			input.dataset.brushControl = field;
+			input.dataset.tag = `brush-studio-${field}`;
 			label.htmlFor = input.id;
 			input.setAttribute('aria-label', t(labelKey));
 			row.append(label, output, input);
@@ -109,6 +125,7 @@ export const createBrushStudioPanel = ({ brushState, getPrimaryColor, setPrimary
 			const input = document.createElement('input');
 			input.type = 'checkbox';
 			input.dataset.brushDynamic = field;
+			input.dataset.tag = `brush-studio-dynamics-${field}`;
 			const text = document.createElement('span');
 			text.dataset.brushI18n = labelKey;
 			text.textContent = t(labelKey);
@@ -130,6 +147,7 @@ export const createBrushStudioPanel = ({ brushState, getPrimaryColor, setPrimary
 			input.min = '0';
 			input.max = '100';
 			input.dataset.brushDynamic = field;
+			input.dataset.tag = `brush-studio-dynamics-${field}`;
 			row.append(text, output, input);
 			dynamics.append(row);
 		});
@@ -181,22 +199,44 @@ export const createBrushStudioPanel = ({ brushState, getPrimaryColor, setPrimary
 			(state.presets || []).forEach((preset) => {
 				const group = document.createElement('div');
 				group.className = 'brush-studio-custom-preset';
+				group.dataset.tag = 'brush-preset-card';
 				const button = document.createElement('button');
 				button.type = 'button';
 				button.className = 'brush-studio-preset';
 				button.dataset.brushCustomPreset = preset.id;
+				button.dataset.tag = 'brush-preset-apply';
+				button.setAttribute('aria-label', preset.name);
+				button.title = preset.name;
 				button.append(makeBrushIcon(preset.tipShape || 'round'));
 				const label = document.createElement('span');
 				label.textContent = preset.name;
+				label.title = preset.name;
+				label.dataset.tag = 'brush-preset-name';
 				button.append(label);
+				const rename = document.createElement('button');
+				rename.type = 'button';
+				rename.className = 'brush-studio-rename-preset';
+				rename.dataset.tag = 'brush-preset-rename';
+				rename.setAttribute('aria-label', t('common.actions.rename'));
+				rename.title = t('common.actions.rename');
+				rename.append(makeRenameIcon());
+				const nameInput = document.createElement('input');
+				nameInput.type = 'text';
+				nameInput.className = 'brush-studio-preset-name-input';
+				nameInput.value = preset.name;
+				nameInput.maxLength = 40;
+				nameInput.hidden = true;
+				nameInput.dataset.tag = 'brush-preset-name-input';
+				nameInput.setAttribute('aria-label', t('common.actions.rename'));
 				const remove = document.createElement('button');
 				remove.type = 'button';
 				remove.className = 'brush-studio-delete-preset';
 				remove.dataset.brushDeletePreset = preset.id;
+				remove.dataset.tag = 'brush-preset-delete';
 				remove.setAttribute('aria-label', t('common.actions.delete'));
 				remove.title = t('common.actions.delete');
 				remove.textContent = '×';
-				group.append(button, remove);
+				group.append(button, rename, nameInput, remove);
 				customPresets.append(group);
 			});
 			historyButtons.replaceChildren();
@@ -270,6 +310,36 @@ export const createBrushStudioPanel = ({ brushState, getPrimaryColor, setPrimary
 			tipShape: preset.tipShape,
 		});
 
+		const beginPresetRename = (group) => {
+			const label = group?.querySelector('[data-brush-preset-name]');
+			const input = group?.querySelector('.brush-studio-preset-name-input');
+			if (!label || !input) return;
+			label.hidden = true;
+			input.hidden = false;
+			input.value = label.textContent;
+			input.focus();
+			input.select();
+		};
+		const finishPresetRename = (input, commit) => {
+			const group = input.closest('.brush-studio-custom-preset');
+			const label = group?.querySelector('[data-brush-preset-name]');
+			const applyButton = group?.querySelector('[data-brush-custom-preset]');
+			if (!label || !applyButton) return;
+			const name = input.value.trim().slice(0, input.maxLength);
+			input.hidden = true;
+			label.hidden = false;
+			if (!commit || !name) {
+				input.value = label.textContent;
+				return;
+			}
+			if (name === label.textContent) return;
+			brushState.set({
+				presets: brushState.get().presets.map((preset) => (
+					preset.id === applyButton.dataset.brushCustomPreset ? { ...preset, name } : preset
+				)),
+			});
+		};
+
 		host.addEventListener('input', (event) => {
 			const input = event.target;
 			if (input.matches?.('[data-brush-control]')) {
@@ -287,6 +357,10 @@ export const createBrushStudioPanel = ({ brushState, getPrimaryColor, setPrimary
 		host.addEventListener('click', (event) => {
 			const button = event.target.closest?.('button');
 			if (!button || !host.contains(button)) return;
+			if (button.classList.contains('brush-studio-rename-preset')) {
+				beginPresetRename(button.closest('.brush-studio-custom-preset'));
+				return;
+			}
 			const preset = BUILT_IN_BRUSH_PRESETS.find((item) => item.id === button.dataset.brushPreset);
 			if (preset) {
 				brushState.set(presetPatch(preset));
@@ -324,6 +398,28 @@ export const createBrushStudioPanel = ({ brushState, getPrimaryColor, setPrimary
 				const { color, ...patch } = entry;
 				brushState.set(patch);
 				if (color) setPrimaryColor?.(color);
+			}
+		});
+		host.addEventListener('dblclick', (event) => {
+			const label = event.target.closest?.('[data-brush-preset-name]');
+			if (!label || !host.contains(label)) return;
+			event.preventDefault();
+			beginPresetRename(label.closest('.brush-studio-custom-preset'));
+		});
+		host.addEventListener('keydown', (event) => {
+			const input = event.target.closest?.('.brush-studio-preset-name-input');
+			if (!input) return;
+			if (event.key === 'Enter') {
+				event.preventDefault();
+				finishPresetRename(input, true);
+			} else if (event.key === 'Escape') {
+				event.preventDefault();
+				finishPresetRename(input, false);
+			}
+		});
+		host.addEventListener('focusout', (event) => {
+			if (event.target.matches?.('.brush-studio-preset-name-input') && !event.target.hidden) {
+				finishPresetRename(event.target, true);
 			}
 		});
 

@@ -26,7 +26,7 @@ export const createBackgroundMaskEditor = ({ root = null, overlay = null, onChan
 			items.forEach((region, index) => {
 				const element = overlay.ownerDocument.createElement('div');
 				element.className = `background-mask-region background-mask-${kind}`;
-				element.dataset.tag = `background-mask-${kind}-${index + 1}`;
+				element.dataset.tag = `background-mask-${kind}-region`;
 				element.style.left = `${region.x * 100}%`;
 				element.style.top = `${region.y * 100}%`;
 				element.style.width = `${region.w * 100}%`;

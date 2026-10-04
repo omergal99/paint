@@ -71,11 +71,11 @@ export const createTabBar = ({ root = null, sessionService, onSelect, onClose, o
 			tab.className = 'workspace-tab';
 			if (model.active) tab.classList.add('is-active');
 			tab.dataset.documentId = model.id;
-			tab.dataset.tag = `workspace-tab-${model.id}`;
+			tab.dataset.tag = 'workspace-tab';
 			const button = root.ownerDocument.createElement('button');
 			button.type = 'button';
 			button.className = 'workspace-tab-select';
-			button.dataset.tag = `workspace-tab-select-${model.id}`;
+			button.dataset.tag = 'workspace-tab-select';
 			button.setAttribute('role', 'tab');
 			button.setAttribute('aria-selected', String(model.active));
 			button.tabIndex = model.active ? 0 : -1;
@@ -87,7 +87,7 @@ export const createTabBar = ({ root = null, sessionService, onSelect, onClose, o
 			const closeButton = root.ownerDocument.createElement('button');
 			closeButton.type = 'button';
 			closeButton.className = 'workspace-tab-close';
-			closeButton.dataset.tag = `workspace-tab-close-${model.id}`;
+			closeButton.dataset.tag = 'workspace-tab-close';
 			closeButton.setAttribute('aria-label', `Close ${model.label}`);
 			closeButton.textContent = '×';
 			closeButton.addEventListener('click', (event) => {

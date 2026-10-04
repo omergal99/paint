@@ -1,7 +1,7 @@
 // js/ui/mirrors/toolsMirror.js
 // Phase 2 step-03 SSOT: Tools ribbon group -> RibbonMirror descriptor (tabs).
 // Drawing mirrors the quick tools, the shared line size, and the fill modes;
-// Advanced hosts the state-backed Brush controls and settings entry point.
+// Advanced hosts the state-backed Brush controls.
 import { createLineSizeSlider } from './lineSizeControl.js';
 import { createBrushStudioPanel } from '../BrushStudioPanel.js';
 
@@ -53,7 +53,6 @@ export const toolsMirrorDescriptor = ({ brushState, getPrimaryColor, setPrimaryC
           },
         },
         createBrushStudioPanel({ brushState, getPrimaryColor, setPrimaryColor }),
-        Object.freeze({ kind: 'action', target: 'btn-settings', tag: 'sidebar-mirror-brush-settings' }),
       ],
     },
   ],
