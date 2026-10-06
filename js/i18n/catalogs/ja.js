@@ -314,6 +314,8 @@ export const initializeJa = (english) => {
     "ui.collapseColorInspector": "カラーインスペクターを折りたたむ",
     "ui.saveAs": "名前を付けて保存",
     "ui.saveImageAs": "画像を別名で保存",
+    "ui.saveSelectionAs": "選択範囲を別名で保存",
+    "ui.canvasContextMenu": "キャンバス操作",
     "ui.formatPng": "PNG画像",
     "ui.formatJpeg": "JPEG画像",
     "ui.formatWebp": "WebP画像",

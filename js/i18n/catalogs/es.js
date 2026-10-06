@@ -443,6 +443,8 @@ export const ES_MESSAGES = Object.freeze({
       collapseColorInspector: "Contraer inspector de color",
       saveAs: "Guardar como",
       saveImageAs: "Guardar imagen como",
+      saveSelectionAs: "Guardar selección como",
+      canvasContextMenu: "Acciones del lienzo",
       formatPng: "Imagen PNG",
       formatJpeg: "Imagen JPEG",
       formatWebp: "Imagen WebP",

@@ -308,6 +308,8 @@ export const initializeFr = (english) => {
     "ui.collapseColorInspector": "Réduire l’inspecteur de couleurs",
     "ui.saveAs": "Enregistrer sous",
     "ui.saveImageAs": "Enregistrer l’image sous",
+    "ui.saveSelectionAs": "Enregistrer la sélection sous",
+    "ui.canvasContextMenu": "Actions du canevas",
     "ui.formatPng": "Image PNG",
     "ui.formatJpeg": "Image JPEG",
     "ui.formatWebp": "Image WebP",

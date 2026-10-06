@@ -2,6 +2,7 @@
 // Each tool implements: { name, cursor, onDown(pt, ctx), onMove(pt, ctx), onUp(pt, ctx) }
 // `pt` is {x, y, button} in true image-pixel coordinates (zoom already divided out).
 // `ctx` is a small bag of shared collaborators (canvasManager, historyManager, etc).
+import { RIGHT_DRAG_THRESHOLD_PX } from '../core/constants.js';
 
 export class ToolManager {
   constructor({
@@ -22,6 +23,8 @@ export class ToolManager {
     this._dragging = false;
     this._activePointerId = null;
     this._queuedMove = null;
+    // Split right-click: the deferred right-button onDown (see _startPointer).
+    this._pendingRightDown = null;
     this._frameHandle = null;
     this._eventTarget = eventTarget;
     this._windowFallbackAttached = false;
@@ -74,6 +77,7 @@ export class ToolManager {
   }
 
   cancelActiveGesture() {
+    this._pendingRightDown = null;
     if (!this._dragging) return false;
     const pointerId = this._activePointerId;
     this._cancelQueuedMove(pointerId);
@@ -112,7 +116,13 @@ export class ToolManager {
       captured = true;
     } catch {}
     if (!captured) this._attachWindowPointerFallback();
-    this._handle('onDown', event);
+    // Split right-click: hold the right-button onDown until the pointer crosses
+    // RIGHT_DRAG_THRESHOLD_PX. A clean right click never reaches the tool, so
+    // the canvas context menu can open instead; a right drag delivers onDown
+    // retroactively (at the original press point) when the threshold is crossed
+    // and secondary-colour painting keeps working.
+    this._pendingRightDown = event.button === 2 ? event : null;
+    if (this._pendingRightDown === null) this._handle('onDown', event);
   }
 
   _queuePointerMove(event) {
@@ -139,6 +149,15 @@ export class ToolManager {
     if (this._frameHandle !== null) {
       this._cancelFrame(this._frameHandle);
       this._frameHandle = null;
+    }
+    if (this._pendingRightDown) {
+      const down = this._pendingRightDown;
+      const moved = Math.hypot(event.clientX - down.clientX, event.clientY - down.clientY);
+      // Still a click: the tool owns no state yet, so hold the move back.
+      if (moved < RIGHT_DRAG_THRESHOLD_PX) return true;
+      this._pendingRightDown = null;
+      // The drag is real: start the stroke at the original press point.
+      this._handle('onDown', down);
     }
     let samples = [event];
     try {
@@ -167,6 +186,9 @@ export class ToolManager {
   _finishPointer(event, { cancelled = false } = {}) {
     if (this._activePointerId === null || event.pointerId !== this._activePointerId) return false;
     this._flushQueuedMove(event.pointerId);
+    // A right press that never crossed the threshold stays a plain click; the
+    // tool never saw it, so nothing is delivered and the menu may open.
+    this._pendingRightDown = null;
     const point = this._point(event);
     if (this._dragging) {
       if (cancelled) this.active?.onCancel?.(point, this.toolContext, event);
@@ -225,6 +247,7 @@ export class ToolManager {
     this._dragging = false;
     this._activePointerId = null;
     this._queuedMove = null;
+    this._pendingRightDown = null;
     this.statusBar?.setPointer(null);
   }
 }

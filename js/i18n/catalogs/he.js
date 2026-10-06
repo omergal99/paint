@@ -396,6 +396,8 @@ export const initializeHe = (english) => {
     "ui.collapseColorInspector": "צמצום בוחן הצבעים",
     "ui.saveAs": "שמירה בשם",
     "ui.saveImageAs": "שמירת תמונה בשם",
+    "ui.saveSelectionAs": "שמירת הבחירה בשם",
+    "ui.canvasContextMenu": "פעולות משטח הציור",
     "ui.formatPng": "תמונת PNG",
     "ui.formatJpeg": "תמונת JPEG",
     "ui.formatWebp": "תמונת WebP",

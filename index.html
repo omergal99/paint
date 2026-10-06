@@ -77,6 +77,31 @@
 					<path d="M7.5 6V4a1.5 1.5 0 0 1 1.5-1.5h6A1.5 1.5 0 0 1 16.5 4v8a1.5 1.5 0 0 1-1.5 1.5h-1" fill="none"
 						stroke="currentColor" stroke-linejoin="round" />
 				</symbol>
+				<symbol id="icon-cut" viewBox="0 0 20 20">
+					<circle cx="5" cy="5" r="2" fill="currentColor" />
+					<circle cx="5" cy="15" r="2" fill="currentColor" />
+					<path d="M6.5 6.5L17 17M6.5 13.5L17 3" fill="none" stroke="currentColor" stroke-linecap="round" />
+				</symbol>
+				<symbol id="icon-paste" viewBox="0 0 20 20">
+					<path d="M6 4h8.5A1.5 1.5 0 0 1 16 5.5V17a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V5.5A1.5 1.5 0 0 1 6 4Z"
+						fill="none" stroke="currentColor" />
+					<path d="M8 2.5h4a1 1 0 0 1 1 1V5H7V3.5a1 1 0 0 1 1-1ZM8 9h6M8 12h6M8 15h3" fill="none"
+						stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" />
+				</symbol>
+				<symbol id="icon-select-all" viewBox="0 0 20 20">
+					<path d="M3 7V3h4M13 3h4v4M17 13v4h-4M7 17H3v-4" fill="none" stroke="currentColor"
+						stroke-linecap="round" stroke-linejoin="round" />
+					<path d="M7 7h6v6H7z" fill="none" stroke="currentColor" />
+				</symbol>
+				<symbol id="icon-save" viewBox="0 0 20 20">
+					<path d="M3 3h11l3 3v11H3zM6 3v5h7V3M6 13h8v4H6z" fill="none" stroke="currentColor"
+						stroke-linejoin="round" />
+				</symbol>
+				<symbol id="icon-image-file" viewBox="0 0 20 20">
+					<rect x="3" y="3" width="14" height="14" fill="none" stroke="currentColor" />
+					<circle cx="7" cy="7" r="1.5" fill="currentColor" />
+					<path d="m4 15 4-4 2 2 3-4 3 6" fill="none" stroke="currentColor" />
+				</symbol>
 			</defs>
 		</svg>
 
@@ -142,18 +167,38 @@
 								<div class="action-menu action-submenu save-menu">
 									<button type="button" class="action-menu-trigger action-submenu-trigger" id="btn-save"
 										data-tag="btn-save" role="menuitem" data-i18n-attr="title:ui.saveAs" title="Save as" aria-haspopup="menu" aria-expanded="false">
-										<span class="submenu-label"><svg class="icon" viewBox="0 0 20 20" aria-hidden="true">
-											<path d="M3 3h11l3 3v11H3zM6 3v5h7V3M6 13h8v4H6z" fill="none" stroke="currentColor"
-												stroke-linejoin="round" />
-										</svg><span data-i18n="ui.saveAs">Save as</span></span>
+										<span class="submenu-label"><svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><use href="#icon-save" /></svg><span data-i18n="ui.saveAs">Save as</span></span>
 										<span class="submenu-arrow" aria-hidden="true">›</span>
 									</button>
 									<div class="action-menu-items action-submenu-items" role="menu" data-i18n-attr="aria-label:ui.saveImageAs" aria-label="Save image as">
-										<button type="button" role="menuitem" data-export-format="png"><svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="3" width="14" height="14" fill="none" stroke="currentColor"/><circle cx="7" cy="7" r="1.5" fill="currentColor"/><path d="m4 15 4-4 2 2 3-4 3 6" fill="none" stroke="currentColor"/></svg><span data-i18n="ui.formatPng">PNG image</span></button>
-										<button type="button" role="menuitem" data-export-format="jpeg"><svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="3" width="14" height="14" fill="none" stroke="currentColor"/><circle cx="7" cy="7" r="1.5" fill="currentColor"/><path d="m4 15 4-4 2 2 3-4 3 6" fill="none" stroke="currentColor"/></svg><span data-i18n="ui.formatJpeg">JPEG image</span></button>
-										<button type="button" role="menuitem" data-export-format="webp"><svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="3" width="14" height="14" fill="none" stroke="currentColor"/><circle cx="7" cy="7" r="1.5" fill="currentColor"/><path d="m4 15 4-4 2 2 3-4 3 6" fill="none" stroke="currentColor"/></svg><span data-i18n="ui.formatWebp">WebP image</span></button>
+										<button type="button" role="menuitem" data-export-format="png"><svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><use href="#icon-image-file" /></svg><span data-i18n="ui.formatPng">PNG image</span></button>
+										<button type="button" role="menuitem" data-export-format="jpeg"><svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><use href="#icon-image-file" /></svg><span data-i18n="ui.formatJpeg">JPEG image</span></button>
+										<button type="button" role="menuitem" data-export-format="webp"><svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><use href="#icon-image-file" /></svg><span data-i18n="ui.formatWebp">WebP image</span></button>
 									</div>
 								</div>
+							<!-- Clipboard actions live in File > More so the header ribbon can
+							     collapse the whole Clipboard group by default; the items share
+							     the same Toolbar handlers (and commands) as the ribbon. -->
+							<button type="button" id="btn-file-cut" data-tag="btn-file-cut" role="menuitem"
+								data-requires-selection disabled aria-disabled="true" title="Cut (Ctrl+X)">
+								<svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><use href="#icon-cut" /></svg>
+								<span data-i18n="common.actions.cut">Cut</span>
+								<span class="menu-shortcut" aria-hidden="true">Ctrl+X</span>
+							</button>
+							<button type="button" id="btn-file-copy" data-tag="btn-file-copy" role="menuitem"
+								data-requires-selection disabled aria-disabled="true" title="Copy (Ctrl+C)">
+								<svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><use href="#icon-copy" /></svg>
+								<span data-i18n="common.actions.copy">Copy</span>
+								<span class="menu-shortcut" aria-hidden="true">Ctrl+C</span>
+							</button>
+							<button type="button" id="btn-file-paste" data-tag="btn-file-paste" role="menuitem"
+								title="Paste (Ctrl+V)">
+								<svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><use href="#icon-paste" /></svg>
+								<span data-i18n="common.actions.paste">Paste</span>
+								<span class="menu-shortcut" aria-hidden="true">Ctrl+V</span>
+							</button>
+
+
 								<button type="button" id="btn-manage-workspace" data-tag="btn-manage-workspace" role="menuitem"
 									title="Manage multiple Paint documents">
 									<svg class="icon" viewBox="0 0 20 20" aria-hidden="true">
@@ -190,26 +235,19 @@
 			<section class="ribbon-group ribbon-group-clipboard" data-ribbon-key="clipboard">
 				<div class="rbtn-row">
 					<button class="rbtn big" id="btn-paste" data-tag="btn-paste" title="Paste (Ctrl+V)">
-						<svg class="icon size5" viewBox="0 0 20 20">
-							<path d="M6 4h8.5A1.5 1.5 0 0 1 16 5.5V17a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V5.5A1.5 1.5 0 0 1 6 4Z"
-								fill="none" stroke="currentColor" />
-							<path d="M8 2.5h4a1 1 0 0 1 1 1V5H7V3.5a1 1 0 0 1 1-1ZM8 9h6M8 12h6M8 15h3" fill="none"
-								stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" />
-						</svg>
+						<svg class="icon size5" viewBox="0 0 20 20" aria-hidden="true"><use href="#icon-paste" /></svg>
 						<span data-i18n="common.actions.paste">Paste</span></button>
 					<div class="rbtn-col">
 
 					</div>
 					<div class="rbtn-stack">
-						<button class="rbtn small" id="btn-cut" data-tag="btn-cut" title="Cut (Ctrl+X)">
-							<svg class="icon size5" viewBox="0 0 20 20">
-								<circle cx="5" cy="5" r="2" />
-								<circle cx="5" cy="15" r="2" />
-								<path d="M6.5 6.5L17 17M6.5 13.5L17 3" stroke-linecap="round" />
-							</svg>
+						<button class="rbtn small" id="btn-cut" data-tag="btn-cut" data-requires-selection
+							title="Cut (Ctrl+X)">
+							<svg class="icon size5" viewBox="0 0 20 20" aria-hidden="true"><use href="#icon-cut" /></svg>
 							<span>Cut</span></button>
-						<button class="rbtn small" id="btn-copy" data-tag="btn-copy" title="Copy (Ctrl+C)">
-							<svg class="icon size5" viewBox="0 0 20 20">
+						<button class="rbtn small" id="btn-copy" data-tag="btn-copy" data-requires-selection
+							title="Copy (Ctrl+C)">
+							<svg class="icon size5" viewBox="0 0 20 20" aria-hidden="true">
 								<use href="#icon-copy" />
 							</svg>
 							<span>Copy</span></button>
@@ -233,13 +271,6 @@
 						</svg>
 						<span data-i18n="ribbon.tools.select">Select</span></button>
 					<div class="rbtn-stack">
-						<button class="rbtn small" id="btn-canvas-size" data-tag="btn-canvas-size" title="Resize canvas">
-							<svg class="icon size5" viewBox="0 0 20 20">
-								<rect x="3" y="4" width="10" height="12" rx="1" fill="none" stroke="currentColor" />
-								<path d="M14 6V3h3M17 3l-4 4M14 14v3h3M17 17l-4-4" fill="none" stroke="currentColor"
-									stroke-linecap="round" stroke-linejoin="round" />
-							</svg>
-							<span>Resize</span></button>
 						<div class="action-menu image-more-menu">
 							<button class="rbtn small action-menu-trigger" id="btn-image-more" data-tag="btn-image-more"
 								title="More image actions" aria-haspopup="menu" aria-label="More image actions">
@@ -274,11 +305,7 @@
 											</svg><span data-i18n="ui.selectLasso">Free-form Selection</span></button>
 										<button type="button" id="btn-select-all" role="menuitem" title="Select All"
 											data-i18n-attr="title:ui.selectAll">
-											<svg class="icon size4" viewBox="0 0 20 20" aria-hidden="true">
-												<path d="M3 7V3h4M13 3h4v4M17 13v4h-4M7 17H3v-4" fill="none" stroke="currentColor"
-													stroke-linecap="round" stroke-linejoin="round" />
-												<path d="M7 7h6v6H7z" fill="none" stroke="currentColor" />
-											</svg><span data-i18n="ui.selectAll">Select All</span></button>
+											<svg class="icon size4" viewBox="0 0 20 20" aria-hidden="true"><use href="#icon-select-all" /></svg><span data-i18n="ui.selectAll">Select All</span></button>
 									</div>
 								</div>
 								<div class="action-menu action-submenu">
@@ -382,6 +409,17 @@
 											</svg><span data-i18n="ui.flipVertical">Flip Vertical</span></button>
 									</div>
 								</div>
+								<!-- Canvas size moved out of the ribbon row into this menu; the id,
+								     dialog indicator and sidebar mirror all keep working. -->
+								<button type="button" id="btn-canvas-size" data-tag="btn-canvas-size" role="menuitem"
+									title="Resize canvas">
+									<svg class="icon size4" viewBox="0 0 20 20" aria-hidden="true">
+										<rect x="3" y="4" width="10" height="12" rx="1" fill="none" stroke="currentColor" />
+										<path d="M14 6V3h3M17 3l-4 4M14 14v3h3M17 17l-4-4" fill="none" stroke="currentColor"
+											stroke-linecap="round" stroke-linejoin="round" />
+									</svg>
+									<span>Resize</span>
+								</button>
 								<button class="action-menu-item" type="button" id="btn-adjustments" data-tag="btn-adjustments"
 									role="menuitem" data-i18n-attr="title:ui.adjustments" title="Adjustments">
 									<svg class="icon size4" viewBox="0 0 20 20" aria-hidden="true">
@@ -1766,6 +1804,66 @@
 	</dialog>
 
 	<script type="module" src="js/app.js"></script>
+	<!-- Canvas context menu: right-click on the paint area. The split gesture
+	     (clean right click opens the menu, right drag stays a tool stroke) is
+	     decided in js/app/canvasContextMenu.js with the shared drag threshold. -->
+	<div class="action-menu canvas-context-menu" id="canvas-context-menu" hidden>
+		<div class="action-menu-items canvas-context-menu-items" role="menu"
+			data-i18n-attr="aria-label:ui.canvasContextMenu" aria-label="Canvas actions">
+			<button type="button" role="menuitem" data-canvas-action="cut" data-requires-selection
+				disabled aria-disabled="true" title="Cut (Ctrl+X)">
+				<svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><use href="#icon-cut" /></svg>
+				<span data-i18n="common.actions.cut">Cut</span>
+				<span class="menu-shortcut" aria-hidden="true">Ctrl+X</span>
+			</button>
+			<button type="button" role="menuitem" data-canvas-action="copy" data-requires-selection
+				disabled aria-disabled="true" title="Copy (Ctrl+C)">
+				<svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><use href="#icon-copy" /></svg>
+				<span data-i18n="common.actions.copy">Copy</span>
+				<span class="menu-shortcut" aria-hidden="true">Ctrl+C</span>
+			</button>
+			<button type="button" role="menuitem" data-canvas-action="paste" title="Paste (Ctrl+V)">
+				<svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><use href="#icon-paste" /></svg>
+				<span data-i18n="common.actions.paste">Paste</span>
+				<span class="menu-shortcut" aria-hidden="true">Ctrl+V</span>
+			</button>
+			<button type="button" role="menuitem" data-canvas-action="selectAll" title="Select All"
+				data-i18n-attr="title:ui.selectAll">
+				<svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><use href="#icon-select-all" /></svg>
+				<span data-i18n="ui.selectAll">Select All</span>
+				<span class="menu-shortcut" aria-hidden="true">Ctrl+A</span>
+			</button>
+			<div class="action-menu action-submenu">
+				<button class="action-menu-trigger action-submenu-trigger" type="button" role="menuitem"
+					aria-haspopup="menu" aria-expanded="false" aria-label="Save image as"
+					data-i18n-attr="aria-label:ui.saveImageAs">
+					<span class="submenu-label"><svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><use href="#icon-save" /></svg><span data-i18n="ui.saveImageAs">Save image as</span></span>
+					<span class="submenu-arrow" aria-hidden="true">›</span>
+				</button>
+				<div class="action-menu-items action-submenu-items" role="menu" aria-label="Save image as"
+					data-i18n-attr="aria-label:ui.saveImageAs">
+					<button type="button" role="menuitem" data-export-format="png" data-export-scope="image"><svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><use href="#icon-image-file" /></svg><span data-i18n="ui.formatPng">PNG image</span></button>
+					<button type="button" role="menuitem" data-export-format="jpeg" data-export-scope="image"><svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><use href="#icon-image-file" /></svg><span data-i18n="ui.formatJpeg">JPEG image</span></button>
+					<button type="button" role="menuitem" data-export-format="webp" data-export-scope="image"><svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><use href="#icon-image-file" /></svg><span data-i18n="ui.formatWebp">WebP image</span></button>
+				</div>
+			</div>
+			<div class="action-menu action-submenu">
+				<button class="action-menu-trigger action-submenu-trigger" type="button" role="menuitem"
+					aria-haspopup="menu" aria-expanded="false" aria-label="Save selection as"
+					data-i18n-attr="aria-label:ui.saveSelectionAs" data-requires-selection
+					disabled aria-disabled="true">
+					<span class="submenu-label"><svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><use href="#icon-save" /></svg><span data-i18n="ui.saveSelectionAs">Save selection as</span></span>
+					<span class="submenu-arrow" aria-hidden="true">›</span>
+				</button>
+				<div class="action-menu-items action-submenu-items" role="menu" aria-label="Save selection as"
+					data-i18n-attr="aria-label:ui.saveSelectionAs">
+					<button type="button" role="menuitem" data-export-format="png" data-export-scope="selection"><svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><use href="#icon-image-file" /></svg><span data-i18n="ui.formatPng">PNG image</span></button>
+					<button type="button" role="menuitem" data-export-format="jpeg" data-export-scope="selection"><svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><use href="#icon-image-file" /></svg><span data-i18n="ui.formatJpeg">JPEG image</span></button>
+					<button type="button" role="menuitem" data-export-format="webp" data-export-scope="selection"><svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><use href="#icon-image-file" /></svg><span data-i18n="ui.formatWebp">WebP image</span></button>
+				</div>
+			</div>
+		</div>
+	</div>
 </body>
 
 </html>

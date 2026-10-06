@@ -313,6 +313,8 @@ export const initializeDe = (english) => {
     "ui.collapseColorInspector": "Farbbetrachter einklappen",
     "ui.saveAs": "Speichern unter",
     "ui.saveImageAs": "Bild speichern unter",
+    "ui.saveSelectionAs": "Auswahl speichern unter",
+    "ui.canvasContextMenu": "Aktionen der Zeichenfläche",
     "ui.formatPng": "PNG-Bild",
     "ui.formatJpeg": "JPEG-Bild",
     "ui.formatWebp": "WebP-Bild",

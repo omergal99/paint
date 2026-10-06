@@ -530,6 +530,11 @@ export class Toolbar {
     this._listen(document.getElementById('btn-paste'), 'click', () => this.handlers.paste());
     this._listen(document.getElementById('btn-cut'), 'click', () => this.handlers.cut());
     this._listen(document.getElementById('btn-copy'), 'click', () => this.handlers.copy());
+    // File > More mirrors the (hidden-by-default) Clipboard group: same
+    // handlers, same commands - the menu is just another face of the action.
+    this._listen(document.getElementById('btn-file-paste'), 'click', () => this.handlers.paste());
+    this._listen(document.getElementById('btn-file-cut'), 'click', () => this.handlers.cut());
+    this._listen(document.getElementById('btn-file-copy'), 'click', () => this.handlers.copy());
     this._listen(document.getElementById('btn-crop'), 'click', () => this.handlers.crop());
     this._listen(document.getElementById('btn-canvas-size'), 'click', () => this.handlers.openResizeDialog());
   }

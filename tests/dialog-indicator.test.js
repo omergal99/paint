@@ -1,46 +1,60 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { appendDialogIndicator } from '../js/ui/DialogIndicator.js';
+import { appendDialogIndicator, initializeDialogIndicators } from '../js/ui/DialogIndicator.js';
+import { getIconHtml, ICONS } from '../js/ui/icons/index.js';
 
-const makeDocument = () => ({
-  createTextNode(textContent) {
-    return { textContent };
-  },
-  createElementNS(namespaceURI, localName) {
-    return {
-      namespaceURI,
-      localName,
-      attributes: new Map(),
-      children: [],
-      setAttribute(name, value) { this.attributes.set(name, value); },
-      append(...children) { this.children.push(...children); },
-      querySelector(selector) {
-        if (selector !== ':scope > .dialog-arrow-icon') return null;
-        return this.children.find((child) => child.attributes?.get('class') === 'dialog-arrow-icon') || null;
-      },
-    };
-  },
+// Minimal element stand-in: it records inserted markup and exposes the one
+// selector appendDialogIndicator uses for its "append exactly once" guard.
+const makeAction = () => {
+  const action = {
+    inserted: [],
+    children: [],
+    insertAdjacentHTML(position, html) {
+      assert.equal(position, 'beforeend');
+      action.inserted.push(html);
+      action.children.push({ attributes: new Map([['class', 'dialog-arrow-icon']]) });
+    },
+    querySelector(selector) {
+      if (selector !== ':scope > .dialog-arrow-icon') return null;
+      return action.children.find((child) => child.attributes.get('class') === 'dialog-arrow-icon') || null;
+    },
+  };
+  return action;
+};
+
+test('the dialog arrow glyph is owned by the shared icon registry and sized for menus', () => {
+  assert.match(ICONS.dialogArrow, /viewBox="0 0 24 24"/);
+  assert.match(ICONS.dialogArrow, /width="14" height="14"/);
+  assert.match(ICONS.dialogArrow, /class="dialog-arrow-icon"/);
+  assert.equal(getIconHtml('doesNotExist'), '');
+  assert.match(getIconHtml('dialogArrow', 'extra'), /class="extra dialog-arrow-icon"/);
 });
 
-test('dialog indicator uses the shared inline SVG and can be appended only once', () => {
-  const documentRef = makeDocument();
-  const action = {
-    children: [],
-    querySelector: (selector) => selector === ':scope > .dialog-arrow-icon'
-      ? action.children.find((child) => child.attributes?.get('class') === 'dialog-arrow-icon') || null
-      : null,
-    append(...children) { this.children.push(...children); },
-  };
+test('appendDialogIndicator inserts the shared glyph exactly once', () => {
+  const action = makeAction();
+  const icon = appendDialogIndicator(action);
+  assert.ok(icon, 'the appended icon is returned');
+  assert.equal(action.inserted.length, 1);
+  assert.ok(action.inserted[0].startsWith(' '), 'a space separates the label from the icon');
+  assert.match(action.inserted[0], /class="dialog-arrow-icon"/);
+  assert.equal(appendDialogIndicator(action), null, 'a second append is a no-op');
+  assert.equal(action.inserted.length, 1);
+  assert.equal(appendDialogIndicator(null), null);
+});
 
-  const icon = appendDialogIndicator(action, { documentRef });
-  assert.equal(icon.namespaceURI, 'http://www.w3.org/2000/svg');
-  assert.equal(icon.attributes.get('viewBox'), '0 0 24 24');
-  assert.equal(icon.attributes.get('width'), '16');
-  assert.equal(icon.attributes.get('height'), '16');
-  assert.equal(icon.attributes.get('aria-hidden'), 'true');
-  assert.deepEqual(icon.children.map((child) => child.localName), ['path', 'line', 'polyline']);
-  assert.equal(appendDialogIndicator(action, { documentRef }), null);
-  assert.equal(action.children.length, 2);
-  assert.equal(action.children[0].textContent, ' ');
+test('initializeDialogIndicators marks every dialog-opening action', () => {
+  const found = [];
+  const root = {
+    querySelector: (selector) => {
+      const match = /\[data-tag="(.+)"\]/.exec(selector);
+      if (!match) return null;
+      const action = makeAction();
+      found.push(action);
+      return action;
+    },
+  };
+  const count = initializeDialogIndicators({ root });
+  assert.equal(count, 12);
+  assert.ok(found.every((action) => action.inserted.length === 1));
 });

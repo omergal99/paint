@@ -327,6 +327,8 @@ export const UI_TEXT_KEYS = Object.freeze({
 	Preferences: 'ui.historyPreferences',
 	'Only manually': 'ui.onlyManualShort',
 	'Save as': 'ui.saveAs',
+	'Save selection as': 'ui.saveSelectionAs',
+	'Canvas actions': 'ui.canvasContextMenu',
 	'Save image as': 'ui.saveImageAs',
 	'PNG image': 'ui.formatPng',
 	'JPEG image': 'ui.formatJpeg',

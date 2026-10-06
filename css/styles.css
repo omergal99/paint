@@ -2577,6 +2577,10 @@ html[dir="rtl"] .adjustment-mask-finish {
 	display: inline-block;
 	vertical-align: middle;
 	flex-shrink: 0;
+	/* Menu-icon standard: the dialog cue reads as a small inline hint, not a
+	   second label icon. The svg also carries width/height 14. */
+	width: 14px;
+	height: 14px;
 }
 [dir="rtl"] .dialog-arrow-icon,
 html[dir="rtl"] .dialog-arrow-icon,
@@ -4735,6 +4739,24 @@ dialog h3 {
 .action-menu-items button:hover {
 	background: var(--w10-hover);
 	border-color: var(--w10-hover-border);
+}
+/* Selection-gated items (Cut/Copy, Save selection as) render disabled until a
+   selection exists; the shared sync flips [data-requires-selection]. */
+.action-menu-items button:disabled {
+	opacity: 0.45;
+	cursor: default;
+}
+.action-menu-items button:disabled:hover {
+	background: transparent;
+	border-color: transparent;
+}
+.canvas-context-menu {
+	z-index: 120;
+}
+.canvas-context-menu-items {
+	grid-template-columns: minmax(180px, 1fr);
+	min-width: 180px;
+	z-index: 120;
 }
 .action-menu-items button .menu-shortcut {
 	margin-inline-start: 14px;

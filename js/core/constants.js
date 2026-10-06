@@ -163,6 +163,12 @@ export const RIBBON_POSITIONS = Object.freeze({
 	float: 'float',
 });
 
+// Split right-click gesture: a right press becomes a tool stroke only after
+// the pointer moves this many pixels, so a clean right-click can open the
+// canvas context menu while right-drag painting keeps working. Shared by
+// ToolManager (tool routing) and the canvas context menu (menu open rule).
+export const RIGHT_DRAG_THRESHOLD_PX = 4;
+
 export const LIMITS = Object.freeze({
 	maxHistoryEntries: 20,
 	maxTextHistoryEntries: 20,
@@ -192,7 +198,11 @@ export const DEFAULT_SETTINGS = Object.freeze({
 	historyLimit: 50,
 	restoreLastImage: false,
 	ribbonLayout: null,
-	ribbonVisibility: {},
+	// The Clipboard group lives in File > More by default; "Show Entire Group"
+	// in the Clipboard ribbon settings re-enables it. The version lets the
+	// one-time migration in main.js collapse it for existing installs too.
+	ribbonVisibility: { clipboard: false },
+	ribbonGroupVisibilityVersion: 0,
 	buttonVisibility: {},
 	favoriteShapes: [],
 	showRotateInSelection: true,

@@ -311,6 +311,8 @@ export const initializeAr = (english) => {
     "ui.collapseColorInspector": "طي مستكشف الألوان",
     "ui.saveAs": "حفظ باسم",
     "ui.saveImageAs": "حفظ الصورة باسم",
+    "ui.saveSelectionAs": "حفظ التحديد باسم",
+    "ui.canvasContextMenu": "إجراءات اللوحة",
     "ui.formatPng": "صورة PNG",
     "ui.formatJpeg": "صورة JPEG",
     "ui.formatWebp": "صورة WebP",

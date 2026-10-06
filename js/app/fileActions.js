@@ -405,19 +405,24 @@ const SAVE_FORMATS = Object.freeze({
 	webp: Object.freeze({ mime: 'image/webp', extension: 'webp' }),
 });
 
-const saveImageAs = async (format) => {
-	if (format === 'png') return save();
+const saveImageAs = async (format, { region = null } = {}) => {
+	// Whole-image PNG keeps using the regular Save flow; a selection-scoped
+	// export (canvas context menu) always goes through the explicit export
+	// path below so it never swaps the document image for the region.
+	if (format === 'png' && !region) return save();
 	const selectedFormat = SAVE_FORMATS[format];
 	if (!selectedFormat) return false;
 	commitFloatingSelection();
 	if (shouldAutoSaveHistory()) sidebar.saveCurrentToHistory();
 
 	try {
-		let source = canvasManager.canvas;
+		// `region` re-uses the same extraction the clipboard uses, so lasso
+		// bounds and floating pixels behave identically everywhere.
+		let source = region ? canvasManager.extractRegion(region) : canvasManager.canvas;
 		if (format === 'jpeg') {
 			const flattened = document.createElement('canvas');
-			flattened.width = canvasManager.width;
-			flattened.height = canvasManager.height;
+			flattened.width = source.width;
+			flattened.height = source.height;
 			const context = flattened.getContext('2d');
 			if (!context) throw new Error('Export canvas is unavailable');
 			context.fillStyle = '#fff';
@@ -434,7 +439,7 @@ const saveImageAs = async (format) => {
 		try {
 			const link = document.createElement('a');
 			link.href = url;
-			link.download = `untitled.${selectedFormat.extension}`;
+			link.download = `untitled${region ? '-selection' : ''}.${selectedFormat.extension}`;
 			link.click();
 			persistSession();
 			const message = t('ui.exportedImage', { format: selectedFormat.extension.toUpperCase() });

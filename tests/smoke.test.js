@@ -60,7 +60,9 @@ test('Tool menu keeps SVG icons after localization and file icons use the shared
 	assert.match(toolbar, /data-i18n=\"\$\{i18nKey\}\"/);
 	assert.match(toolbar, /removeAttribute\('data-i18n-runtime'\)/);
 	assert.match(html, /id="btn-new"[\s\S]*stroke="currentColor"[\s\S]*data-i18n="common\.actions\.new"/);
-	assert.match(html, /id="btn-paste"[\s\S]*stroke="currentColor"[\s\S]*data-i18n="common\.actions\.paste"/);
+	// Paste uses the shared sprite (SSOT) instead of an inlined copy of the path.
+	assert.match(html, /<symbol[^>]*id="icon-paste"[\s\S]*?stroke="currentColor"/);
+	assert.match(html, /id="btn-paste"[\s\S]*?href="#icon-paste"[\s\S]*?data-i18n="common\.actions\.paste"/);
 	assert.match(html, /id="btn-open"[\s\S]*data-i18n="ribbon\.file\.openImage"/);
 });
 test('Clipboard, resize, and fill controls use clear line icons', () => {
@@ -106,7 +108,10 @@ test('dialog-opening actions use semantic data-tags and the shared indicator', (
   });
   assert.doesNotMatch(html, /data-dialog-action/);
   assert.doesNotMatch(indicator, /btn-new|btn-settings/);
-  assert.match(indicator, /viewBox', '0 0 24 24'/);
+  // The glyph itself lives in the shared icon registry, sized for menus.
+  assert.match(read('js/ui/icons/dialogArrow.js'), /viewBox="0 0 24 24"/);
+  assert.match(read('js/ui/icons/dialogArrow.js'), /width="14" height="14"/);
+  assert.match(indicator, /getIconHtml\('dialogArrow'\)/);
   assert.match(styles, /\.dialog-arrow-icon\s*\{[\s\S]*flex-shrink: 0/);
   assert.doesNotMatch(styles.match(/\.dialog-arrow-icon\s*\{[^}]*\}/)?.[0] || '', /margin/);
   assert.match(styles, /html\[dir="rtl"\] \.dialog-arrow-icon[\s\S]*transform: scaleX\(-1\)/);
@@ -1341,7 +1346,7 @@ test('boot phases are measurable instead of guessed', () => {
   assert.match(bootTiming, /export const bootTiming = \(\) => marks\.slice\(\);/);
   // The timeline must bracket the parts that decide when the app feels ready.
   assert.match(main, /markBoot\('boot:start'\);/);
-  assert.match(main, /markBoot\('boot:before-hydrate'\);\s*\napplySavedSettings\(\);\s*\nmarkBoot\('boot:after-hydrate'\);/);
+  assert.match(main, /markBoot\('boot:before-hydrate'\);[\s\S]{0,800}?applySavedSettings\(\);[\s\S]{0,200}?markBoot\('boot:after-hydrate'\);/);
   assert.match(read('js/app.js'), /markBoot\('boot:main-module-evaluated'\);/);
   assert.match(read('js/app.js'), /markBoot\('boot:interactive'\);/);
 });

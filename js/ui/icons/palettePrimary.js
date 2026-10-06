@@ -1,0 +1,3 @@
+// js/ui/icons/palettePrimary.js
+// Palette context-menu "Set as foreground" glyph (half-filled circle).
+export const palettePrimaryIcon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" width="16" height="16" class="icon" aria-hidden="true" focusable="false"><path d="M2.5 10s2.7-5 7.5-5 7.5 5 7.5 5-2.7 5-7.5 5-7.5-5-7.5-5Zm7.5-2a2 2 0 1 0 0 4 2 2 0 0 0 0-4Z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" /></svg>';

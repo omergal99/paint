@@ -15,6 +15,7 @@ import {
 } from '../utils/color.js';
 import { colorStateToCss } from '../utils/colorContract.js';
 import { t } from '../i18n/messages.js';
+import { getIconHtml } from './icons/index.js';
 
 const COLOR_RE = /^#[0-9a-f]{6}$/i;
 // v3 refreshes the default palette; the loader keeps customised colours and
@@ -231,31 +232,22 @@ export const createColorPalette = ({
       ['secondary', 'Set as background'],
       ['reset', 'Reset slot'],
     ];
-    const iconPaths = {
-      edit: 'm4 14 9-9 3 3-9 9-4 1zM12 6l3 3',
-      primary: 'M2.5 10s2.7-5 7.5-5 7.5 5 7.5 5-2.7 5-7.5 5-7.5-5-7.5-5Zm7.5-2a2 2 0 1 0 0 4 2 2 0 0 0 0-4Z',
-      secondary: 'M3 3h9v9H3zM8 8h9v9H8z',
-      reset: 'M4 8V4h4M4 4a7 7 0 1 1-1 8',
+    // Glyphs come from the shared js/ui/icons registry - one file per SVG.
+    const iconNames = {
+      edit: 'paletteEdit',
+      primary: 'palettePrimary',
+      secondary: 'paletteSecondary',
+      reset: 'paletteReset',
     };
     actions.forEach(([action, label]) => {
       const button = document.createElement('button');
       button.type = 'button';
       button.dataset.action = action;
       button.setAttribute('role', 'menuitem');
-      const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      button.insertAdjacentHTML('beforeend', getIconHtml(iconNames[action]));
       const text = document.createElement('span');
-      icon.setAttribute('viewBox', '0 0 20 20');
-      icon.setAttribute('class', 'icon');
-      icon.setAttribute('aria-hidden', 'true');
-      path.setAttribute('d', iconPaths[action]);
-      path.setAttribute('fill', 'none');
-      path.setAttribute('stroke', 'currentColor');
-      path.setAttribute('stroke-linecap', 'round');
-      path.setAttribute('stroke-linejoin', 'round');
-      icon.append(path);
       text.textContent = label;
-      button.append(icon, text);
+      button.append(text);
       button.addEventListener('click', () => {
         const index = Number(paletteMenu.dataset.index);
         const hex = palette[index];

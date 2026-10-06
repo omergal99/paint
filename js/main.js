@@ -19,6 +19,7 @@ import { appState } from './app/appState.js';
 import { router } from './app/router.js';
 import { initResizeDialog } from './app/resizeDialog.js';
 import { initFileActions } from './app/fileActions.js';
+import { initCanvasContextMenu } from './app/canvasContextMenu.js';
 import { initCanvasTransforms, pruneRotationState, resetRotationState } from './app/canvasTransforms.js';
 import { initHistoryControls } from './app/historyControls.js';
 import { createPaintSettingsRegistry } from './app/settingsRegistry.js';
@@ -598,15 +599,28 @@ const getSelection = () => {
 	return canvasManager.selection;
 }
 
-const updateCropActionState = () => {
-	const button = document.getElementById('btn-crop');
-	if (!button) return;
+// Selection-gated actions flip together: Crop, Cut, Copy, and every control
+// marked [data-requires-selection] (ribbon, File > More, canvas context menu)
+// read one enabled state, and sidebar mirrors of those controls follow their
+// ribbon source through data-source-tag so the two surfaces cannot disagree.
+const syncSelectionActions = () => {
 	const enabled = Boolean(canvasManager.selection?.w && canvasManager.selection?.h);
-	button.disabled = !enabled;
-	button.setAttribute('aria-disabled', String(!enabled));
-	const label = enabled ? 'Crop to selection' : 'No Selection Area to Crop';
-	button.title = label;
-	button.setAttribute('aria-label', label);
+	document.querySelectorAll('[data-requires-selection]').forEach((control) => {
+		control.disabled = !enabled;
+		control.setAttribute('aria-disabled', String(!enabled));
+		if (!control.id) return;
+		document.querySelectorAll(`[data-source-tag="${control.id}"]`).forEach((mirror) => {
+			mirror.disabled = !enabled;
+			mirror.setAttribute('aria-disabled', String(!enabled));
+		});
+	});
+	// Crop also swaps its label so the disabled tooltip explains itself.
+	const crop = document.getElementById('btn-crop');
+	if (crop) {
+		const label = enabled ? 'Crop to selection' : 'No Selection Area to Crop';
+		crop.title = label;
+		crop.setAttribute('aria-label', label);
+	}
 };
 
 const setSelection = (region, opts = {}) => {
@@ -635,7 +649,7 @@ const setSelection = (region, opts = {}) => {
 		drawSelectionOutline(region);
 	}
 	selectionOverlayController.updateSelectionHandles(region);
-	updateCropActionState();
+	syncSelectionActions();
 }
 
 selectionOverlayController = createSelectionOverlayController({
@@ -646,7 +660,7 @@ selectionOverlayController = createSelectionOverlayController({
 	isPreviewActive: () => selectionPreviewActive,
 });
 
-updateCropActionState();
+syncSelectionActions();
 
 const nudgeSelection = (dx, dy) => {
 	const selection = canvasManager.selection;
@@ -1533,6 +1547,19 @@ solidBackgroundColorInput?.addEventListener('input', (event) => {
 });
 
 markBoot('boot:before-hydrate');
+// One-time: the Clipboard group lives in File > More now, so collapse it for
+// installs that still carry the old implicit "visible" default; "Show Entire
+// Group" in the Clipboard ribbon settings brings it back. Runs immediately
+// before hydration so no DOM-derived saveSettings() can revive the old value.
+const migrateRibbonGroupVisibility = () => {
+	const settings = readSettings();
+	if (Number(settings.ribbonGroupVisibilityVersion) >= 1) return;
+	settingsStore.set({
+		ribbonVisibility: { ...settings.ribbonVisibility, clipboard: false },
+		ribbonGroupVisibilityVersion: 1,
+	});
+};
+migrateRibbonGroupVisibility();
 applySavedSettings();
 markBoot('boot:after-hydrate');
 
@@ -1747,6 +1774,19 @@ if (viewportEl) {
 	});
 }
 
+// ---------- Canvas context menu ----------
+// Right-click on the paint area opens the menu; the split gesture (clean
+// right click vs. right drag) is decided inside the module with the same
+// shared threshold ToolManager uses, and every item routes through the
+// existing commandRegistry / saveImageAs flows.
+const canvasContextMenu = initCanvasContextMenu({
+	viewport: viewportEl,
+	menu: document.getElementById('canvas-context-menu'),
+	execute: (action) => commandRegistry.execute({ action }),
+	saveAs: saveImageAs,
+	getSelection,
+});
+
 // ---------- Clipboard ----------
 // One service owns copy/cut/paste for every trigger: the ribbon buttons, the
 // custom bindings below, and the browser's native clipboard events.
@@ -1792,6 +1832,7 @@ const destroyEditor = () => {
 	window.removeEventListener(EVENTS.openAdjustments, openAdjustments);
 	ribbonLayoutManager.destroy();
 	actionMenuController.destroy();
+	canvasContextMenu.destroy();
 	backgroundRemovalController.destroy();
 	pwaInstallManager.destroy();
 	toolbar.destroy();

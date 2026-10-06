@@ -1,0 +1,3 @@
+// js/ui/icons/paletteSecondary.js
+// Palette context-menu "Set as background" glyph (overlapping squares).
+export const paletteSecondaryIcon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" width="16" height="16" class="icon" aria-hidden="true" focusable="false"><path d="M3 3h9v9H3zM8 8h9v9H8z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" /></svg>';

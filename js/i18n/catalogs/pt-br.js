@@ -317,6 +317,8 @@ export const initializePtBr = (english) => {
     "ui.collapseColorInspector": "Recolher inspetor de cores",
     "ui.saveAs": "Salvar como",
     "ui.saveImageAs": "Salvar imagem como",
+    "ui.saveSelectionAs": "Salvar seleção como",
+    "ui.canvasContextMenu": "Ações do canvas",
     "ui.formatPng": "Imagem PNG",
     "ui.formatJpeg": "Imagem JPEG",
     "ui.formatWebp": "Imagem WebP",

@@ -1,4 +1,9 @@
-const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
+// js/ui/DialogIndicator.js
+// Appends the shared "opens a dialog" arrow to a control. The glyph itself is
+// owned by js/ui/icons/dialogArrow.js; this module only owns placement and the
+// "append exactly once" guard.
+import { getIconHtml } from './icons/index.js';
+
 const DIALOG_INDICATOR_TAGS = Object.freeze([
   'btn-canvas-size',
   'btn-manage-workspace',
@@ -14,45 +19,21 @@ const DIALOG_INDICATOR_TAGS = Object.freeze([
   'settings-clear-data',
 ]);
 
-export const createDialogArrowIcon = ({ documentRef = globalThis.document } = {}) => {
-  const icon = documentRef.createElementNS(SVG_NAMESPACE, 'svg');
-  icon.setAttribute('viewBox', '0 0 24 24');
-  icon.setAttribute('width', '16');
-  icon.setAttribute('height', '16');
-  icon.setAttribute('fill', 'none');
-  icon.setAttribute('stroke', 'currentColor');
-  icon.setAttribute('stroke-width', '2.5');
-  icon.setAttribute('stroke-linecap', 'round');
-  icon.setAttribute('stroke-linejoin', 'round');
-  icon.setAttribute('class', 'dialog-arrow-icon');
-  icon.setAttribute('aria-hidden', 'true');
-  icon.setAttribute('focusable', 'false');
+const DIRECT_INDICATOR = ':scope > .dialog-arrow-icon';
 
-  const path = documentRef.createElementNS(SVG_NAMESPACE, 'path');
-  path.setAttribute('d', 'M9 3h8a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3H9a3 3 0 0 1-3-3v-0.5 M6 8V6a3 3 0 0 1 3-3 M6 16v2a3 3 0 0 0 3 3');
-  path.setAttribute('opacity', '0.6');
-  const line = documentRef.createElementNS(SVG_NAMESPACE, 'line');
-  line.setAttribute('x1', '2');
-  line.setAttribute('y1', '12');
-  line.setAttribute('x2', '15');
-  line.setAttribute('y2', '12');
-  const polyline = documentRef.createElementNS(SVG_NAMESPACE, 'polyline');
-  polyline.setAttribute('points', '11 8 15 12 11 16');
-  icon.append(path, line, polyline);
-  return icon;
-};
-
-export const appendDialogIndicator = (element, { documentRef = globalThis.document } = {}) => {
-  if (!element || element.querySelector(':scope > .dialog-arrow-icon')) return null;
-  const icon = createDialogArrowIcon({ documentRef });
-  element.append(documentRef.createTextNode(' '), icon);
-  return icon;
+export const appendDialogIndicator = (element) => {
+  if (!element || typeof element.insertAdjacentHTML !== 'function') return null;
+  if (element.querySelector(DIRECT_INDICATOR)) return null;
+  // insertAdjacentHTML appends the markup without re-parsing (and therefore
+  // without re-binding) the element's existing children and listeners.
+  element.insertAdjacentHTML('beforeend', ` ${getIconHtml('dialogArrow')}`);
+  return element.querySelector(DIRECT_INDICATOR) || null;
 };
 
 export const initializeDialogIndicators = ({ root = globalThis.document } = {}) => {
   const actions = DIALOG_INDICATOR_TAGS
     .map((tag) => root?.querySelector?.(`[data-tag="${tag}"]`))
     .filter(Boolean);
-  actions.forEach((action) => appendDialogIndicator(action, { documentRef: root.ownerDocument || root }));
+  actions.forEach((action) => appendDialogIndicator(action));
   return actions.length;
 };
