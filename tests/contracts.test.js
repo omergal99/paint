@@ -670,6 +670,31 @@ test('HistoryManager captures Blob snapshots before mutation, revokes owned URLs
 	assert.match(rejections[0].message, /protect memory/);
 });
 
+test('HistoryManager snapshots restored pixels before the next mutation', async () => {
+	let pixels = 'original';
+	const history = new HistoryManager({
+		width: 8,
+		height: 8,
+		_pixelsSignature: () => pixels,
+		canvas: { toDataURL: () => `data:image/png;base64,${pixels}` },
+		loadImageDataUrl: async (source) => {
+			pixels = source.slice('data:image/png;base64,'.length);
+			return true;
+		},
+		persistToStorage: () => {},
+	}, { sessionStorage: memoryStorage() });
+
+	assert.equal(history.snapshot(), true);
+	pixels = 'resized';
+	assert.equal(await history.undo(), true);
+	assert.equal(pixels, 'original');
+
+	assert.equal(history.snapshot(), true, 'the restored state must be captured before a new edit');
+	pixels = 'painted';
+	assert.equal(await history.undo(), true);
+	assert.equal(pixels, 'original', 'Undo removes the new edit and restores the pre-edit pixels');
+});
+
 test('selection lift, drag, and drop undo as one pre-lift state', async () => {
 	let pixels = 'before';
 	const canvasManager = {

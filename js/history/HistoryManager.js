@@ -541,7 +541,7 @@ export class HistoryManager {
       const restored = await this.canvasManager.loadImageDataUrl(source, sourceEntry.width, sourceEntry.height);
       if (restored === false) return false;
       if (sourceEntry.state !== undefined) this.restoreState?.(sourceEntry.state);
-      this._lastSnapshotSig = this.canvasManager._pixelsSignature?.() || null;
+      this._lastSnapshotSig = null;
       this.canvasManager.persistToStorage?.();
       this._showCurrent = true;
       return true;

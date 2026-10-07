@@ -299,10 +299,19 @@ const adjustmentMask = createBrushAreaMask({
 const historyManager = new HistoryManager(canvasManager, {
 	captureState: () => ({
 		selection: canvasManager.selection ? { ...canvasManager.selection } : null,
+		canvasStagePosition: {
+			left: viewportManager.stage.style.left,
+			top: viewportManager.stage.style.top,
+		},
 	}),
-	restoreState: ({ selection } = {}) => {
+	restoreState: ({ selection, canvasStagePosition } = {}) => {
 		canvasManager.floatingCanvas = null;
 		setSelection(selection ? { ...selection } : null);
+		if (canvasStagePosition) {
+			viewportManager.stage.style.left = canvasStagePosition.left;
+			viewportManager.stage.style.top = canvasStagePosition.top;
+			viewportManager.invalidateGeometry();
+		}
 	},
 });
 const backgroundRemovalService = createBackgroundRemovalService({

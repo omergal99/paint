@@ -75,6 +75,10 @@ export const createSelectionOverlayController = ({
 				const wholeCanvas = !canvasManager.floatingCanvas
 					&& original.x === 0 && original.y === 0
 					&& original.w === canvasManager.width && original.h === canvasManager.height;
+				const originalCanvasRect = wholeCanvas
+					? canvasManager.canvas?.getBoundingClientRect?.()
+					: null;
+				const zoomScale = viewportManager.zoom / 100;
 				const originalSource = wholeCanvas ? documentRef.createElement('canvas') : null;
 				if (originalSource) {
 					originalSource.width = canvasManager.width;
@@ -101,8 +105,31 @@ export const createSelectionOverlayController = ({
 					x: direction.includes('w') ? original.x + original.w : original.x,
 					y: direction.includes('n') ? original.y + original.h : original.y,
 				};
+				const originalStagePosition = wholeCanvas && viewportManager.stage?.style
+					? { left: viewportManager.stage.style.left, top: viewportManager.stage.style.top }
+					: null;
+				const positionStageAtAnchor = (width, height) => {
+					if (!originalCanvasRect || !viewportManager.stage?.style) return;
+					const canvasRect = canvasManager.canvas.getBoundingClientRect();
+					const targetLeft = direction.includes('w')
+						? originalCanvasRect.right - width * zoomScale
+						: originalCanvasRect.left;
+					const targetTop = direction.includes('n')
+						? originalCanvasRect.bottom - height * zoomScale
+						: originalCanvasRect.top;
+					const currentLeft = Number.parseFloat(viewportManager.stage.style.left) || 0;
+					const currentTop = Number.parseFloat(viewportManager.stage.style.top) || 0;
+					viewportManager.stage.style.left = `${currentLeft + targetLeft - canvasRect.left}px`;
+					viewportManager.stage.style.top = `${currentTop + targetTop - canvasRect.top}px`;
+					viewportManager.invalidateGeometry();
+				};
 				const onMove = (moveEvent) => {
-					const point = viewportManager.clientToImage(moveEvent.clientX, moveEvent.clientY);
+					const point = wholeCanvas && originalCanvasRect
+						? {
+							x: (moveEvent.clientX - originalCanvasRect.left) / zoomScale,
+							y: (moveEvent.clientY - originalCanvasRect.top) / zoomScale,
+						}
+						: viewportManager.clientToImage(moveEvent.clientX, moveEvent.clientY);
 					let x = original.x;
 					let y = original.y;
 					let w = original.w;
@@ -124,8 +151,9 @@ export const createSelectionOverlayController = ({
 					if (wholeCanvas) {
 						if (w === canvasManager.width && h === canvasManager.height) return;
 						if (!canvasManager.resample({ source: originalSource, width: w, height: h })) return;
-						canvasResized = true;
+						canvasResized = w !== original.w || h !== original.h;
 						historyManager?.setTransactionChanged?.(true);
+						positionStageAtAnchor(w, h);
 						x = 0;
 						y = 0;
 						w = canvasManager.width;
@@ -168,6 +196,11 @@ export const createSelectionOverlayController = ({
 							});
 							if (restored) {
 								setSelection(original);
+								if (originalStagePosition && viewportManager.stage?.style) {
+									viewportManager.stage.style.left = originalStagePosition.left;
+									viewportManager.stage.style.top = originalStagePosition.top;
+									viewportManager.invalidateGeometry();
+								}
 								if (wasClean) canvasManager.resetCleanBaseline?.();
 							} else {
 								historyManager?.setTransactionChanged?.(true);

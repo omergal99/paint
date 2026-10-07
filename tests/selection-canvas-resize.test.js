@@ -33,7 +33,7 @@ const createEventTarget = () => {
 	};
 };
 
-const createResizeFixture = ({ selection, floatingCanvas = null } = {}) => {
+const createResizeFixture = ({ selection, floatingCanvas = null, rtl = false } = {}) => {
 	const handleListeners = new Map();
 	const handle = {
 		dataset: { selectionHandle: 'se' },
@@ -52,9 +52,25 @@ const createResizeFixture = ({ selection, floatingCanvas = null } = {}) => {
 	const windowRef = createEventTarget();
 	const resamples = [];
 	const history = [];
+	const stage = { style: { left: '', top: '' } };
 	const canvasManager = {
 		width: 100,
 		height: 80,
+		canvas: {
+			getBoundingClientRect() {
+				const left = (rtl ? 400 - canvasManager.width : 0)
+					+ (Number.parseFloat(stage.style.left) || 0);
+				const top = Number.parseFloat(stage.style.top) || 0;
+				return {
+					left,
+					top,
+					right: left + canvasManager.width,
+					bottom: top + canvasManager.height,
+					width: canvasManager.width,
+					height: canvasManager.height,
+				};
+			},
+		},
 		selection,
 		floatingCanvas,
 		createCompositeCanvas: () => createCanvas(canvasManager.width, canvasManager.height),
@@ -70,7 +86,15 @@ const createResizeFixture = ({ selection, floatingCanvas = null } = {}) => {
 	};
 	const controller = createSelectionOverlayController({
 		canvasManager,
-		viewportManager: { clientToImage: (x, y) => ({ x, y }) },
+		viewportManager: {
+			stage,
+			zoom: 100,
+			invalidateGeometry() {},
+			clientToImage: (x, y) => {
+				const rect = canvasManager.canvas.getBoundingClientRect();
+				return { x: x - rect.left, y: y - rect.top };
+			},
+		},
 		historyManager: {
 			beginTransaction: () => history.push('begin'),
 			setTransactionChanged: (changed) => history.push(`changed:${changed}`),
@@ -88,6 +112,7 @@ const createResizeFixture = ({ selection, floatingCanvas = null } = {}) => {
 		handleListeners,
 		windowRef,
 		canvasManager,
+		stage,
 		resamples,
 		history,
 		bind: controller.bindSelectionHandles(),
@@ -163,6 +188,31 @@ test('shrinking a whole-canvas selection also shrinks the real document canvas',
 	fixture.bind();
 });
 
+test('incremental RTL whole-canvas resizing keeps the image origin and dragged handle aligned', () => {
+	const fixture = createResizeFixture({
+		selection: { x: 0, y: 0, w: 100, h: 80 },
+		rtl: true,
+	});
+	fixture.handleListeners.get('pointerdown')({
+		preventDefault() {},
+		stopPropagation() {},
+	});
+
+	fixture.windowRef.dispatch('pointermove', { clientX: 360, clientY: 50 });
+	assert.deepEqual([fixture.canvasManager.width, fixture.canvasManager.height], [60, 50]);
+	assert.equal(fixture.canvasManager.canvas.getBoundingClientRect().left, 300);
+
+	fixture.windowRef.dispatch('pointermove', { clientX: 340, clientY: 40 });
+	assert.deepEqual([fixture.canvasManager.width, fixture.canvasManager.height], [40, 40]);
+	assert.equal(fixture.canvasManager.canvas.getBoundingClientRect().left, 300);
+	assert.equal(fixture.canvasManager.canvas.getBoundingClientRect().right, 340);
+	assert.equal(fixture.stage.style.left, '-60px');
+
+	fixture.windowRef.dispatch('pointerup', {});
+	assert.deepEqual(fixture.history.slice(-3), ['changed:true', 'commit', 'persist']);
+	fixture.bind();
+});
+
 test('cancelling a whole-canvas resize restores its original bounds and aborts history', () => {
 	const fixture = createResizeFixture({ selection: { x: 0, y: 0, w: 100, h: 80 } });
 	fixture.handleListeners.get('pointerdown')({
@@ -179,6 +229,8 @@ test('cancelling a whole-canvas resize restores its original bounds and aborts h
 			fixture.canvasManager.selection.w, fixture.canvasManager.selection.h],
 		[0, 0, 100, 80],
 	);
+	assert.equal(fixture.stage.style.left, '');
+	assert.equal(fixture.stage.style.top, '');
 	assert.ok(fixture.history.includes('abort'));
 	assert.ok(fixture.history.includes('reset-clean-baseline'));
 	fixture.bind();

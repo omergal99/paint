@@ -51,6 +51,8 @@ test('selection handle offsets follow the configured size and distinguish bounds
   assert.match(overlay, /\? size : 9\) \/ 2/);
   const resize = overlay.slice(overlay.indexOf('const bindSelectionHandles ='));
   assert.match(resize, /if \(wholeCanvas\)[\s\S]*?canvasManager\.resample\(\{ source: originalSource, width: w, height: h \}\)/);
+  assert.match(resize, /const originalCanvasRect = wholeCanvas[\s\S]*?canvasManager\.canvas\?\.getBoundingClientRect\?\.\(\)/);
+  assert.match(resize, /positionStageAtAnchor\(w, h\)/);
   assert.match(resize, /else if \(originalFloating\) \{\s*canvasManager\.floatingCanvas = scaleCanvas\(originalFloating, w, h\)/);
   assert.match(resize, /historyManager\?\.beginTransaction\?\.\(\)/);
   assert.match(resize, /historyManager\?\.commitTransaction\?\.\(\)/);
