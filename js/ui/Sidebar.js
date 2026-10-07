@@ -88,6 +88,7 @@ export class Sidebar {
 		this.aiInput = document.getElementById('ai-chat-input');
 		this.aiSend = document.getElementById('ai-chat-send');
 		this.aiActions = document.getElementById('ai-chat-actions');
+		this.aiActions?.addEventListener('click', (event) => this._handleAiActionClick(event));
 		this.aiCommandService = aiCommandService;
 		this.aiConnectionStore = aiConnectionStore;
 		this.aiProviderSelect = document.getElementById('ai-provider-select');
@@ -321,9 +322,14 @@ export class Sidebar {
 			button.dataset.aiCommandId = id;
 			button.textContent = label;
 			button.title = `Run ${command}`;
-			button.addEventListener('click', () => this.handleAiSubmit(command));
 			this.aiActions.appendChild(button);
 		});
+	}
+
+	_handleAiActionClick(event) {
+		const button = event.target.closest?.('button[data-ai-command]');
+		if (!button || !this.aiActions.contains(button)) return;
+		this.handleAiSubmit(button.dataset.aiCommand);
 	}
 
 	// Action buttons follow the active view: Clear/Save/Export say exactly
@@ -766,6 +772,15 @@ export class Sidebar {
 		const grid = document.createElement('div');
 		grid.className = 'palette-settings-grid';
 		grid.dataset.tag = 'sidebar-palette-settings-grid';
+		grid.addEventListener('input', (event) => {
+			const input = event.target.closest?.('input[data-palette-index]');
+			if (!input || !grid.contains(input)) return;
+			const index = Number(input.dataset.paletteIndex);
+			const next = this.palette.getPalette();
+			if (!Number.isInteger(index) || index < 0 || index >= next.length) return;
+			next[index] = input.value;
+			this.palette.setPalette(next);
+		});
 		const renderSettingsGrid = () => {
 			const colors = this.palette.getPalette();
 			const existing = [...grid.querySelectorAll('input[type="color"]')];
@@ -782,12 +797,8 @@ export class Sidebar {
 				const input = document.createElement('input');
 				input.type = 'color';
 				input.value = color;
+				input.dataset.paletteIndex = String(index);
 				input.title = `Palette color ${index + 1}`;
-				input.addEventListener('input', () => {
-					const next = this.palette.getPalette();
-					next[index] = input.value;
-					this.palette.setPalette(next);
-				});
 				grid.appendChild(input);
 			});
 		};

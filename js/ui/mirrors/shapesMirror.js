@@ -93,8 +93,7 @@ const shapeLabel = (kind, tile) => {
   return key ? t(key) : (tile?.title || kind);
 };
 // Mirror + ribbon-favorites tile: cloned icon, translated label, star toggle.
-// It never carries .shape-btn, so only its own listener (which clicks the
-// ribbon tile) reacts - no second selection path.
+// Selection stays routed through the ribbon tile to preserve its state owner.
 const buildShapeTile = (kind, tagPrefix) => {
   const tile = ribbonTile(kind);
   const key = SHAPE_I18N_KEYS[kind];
@@ -104,6 +103,7 @@ const buildShapeTile = (kind, tagPrefix) => {
   button.type = 'button';
   button.className = 'rbtn cell mirror-shape-tile';
   button.dataset.tag = `${tagPrefix}-${kind}`;
+  button.dataset.shapeKind = kind;
   const icon = tile?.querySelector('svg');
   if (icon) button.append(icon.cloneNode(true));
   const label = document.createElement('span');
@@ -111,11 +111,11 @@ const buildShapeTile = (kind, tagPrefix) => {
   if (key) label.setAttribute('data-i18n-runtime', key);
   button.append(label);
   button.title = label.textContent;
-  button.addEventListener('click', () => tile?.click());
   const star = document.createElement('button');
   star.type = 'button';
   star.className = 'mirror-fav-toggle';
   star.dataset.tag = `${tagPrefix}-fav-${kind}`;
+  star.dataset.shapeKind = kind;
   const starLabel = t('ui.toggleFavorite');
   star.setAttribute('aria-label', starLabel);
   star.setAttribute('data-i18n-runtime-aria-label', 'ui.toggleFavorite');
@@ -126,14 +126,27 @@ const buildShapeTile = (kind, tagPrefix) => {
     star.classList.toggle('is-fav', active);
     star.textContent = active ? '★' : '☆';
   };
-  star.addEventListener('click', (event) => {
-    event.stopPropagation();
-    setFavorites(toggleFavoriteShape(getFavorites(), kind));
-    syncStar();
-  });
   syncStar();
   cell.append(button, star);
   return cell;
+};
+
+const handleShapeTileClick = (root, event) => {
+  const action = event.target.closest?.('.mirror-fav-toggle, .mirror-shape-tile');
+  if (!action || !root.contains(action)) return;
+  const favorite = action.matches('.mirror-fav-toggle') ? action : null;
+  if (favorite) {
+    event.stopPropagation();
+    const kind = favorite.dataset.shapeKind;
+    const nextFavorites = toggleFavoriteShape(getFavorites(), kind);
+    setFavorites(nextFavorites);
+    const active = nextFavorites.includes(kind);
+    favorite.setAttribute('aria-pressed', String(active));
+    favorite.classList.toggle('is-fav', active);
+    favorite.textContent = active ? '★' : '☆';
+    return;
+  }
+  ribbonTile(action.dataset.shapeKind)?.click();
 };
 
 const mountShapeBrowser = (host) => {
@@ -155,6 +168,7 @@ const mountShapeBrowser = (host) => {
   empty.hidden = true;
   const grid = document.createElement('div');
   grid.className = 'mirror-shape-grid';
+  grid.addEventListener('click', (event) => handleShapeTileClick(grid, event));
   const candidates = () => allShapeKinds().map((kind) => {
     const tile = ribbonTile(kind);
     return { kind, label: shapeLabel(kind, tile), title: tile?.title || '' };
@@ -182,6 +196,7 @@ const mountShapeFavorites = (host) => {
   note.setAttribute('data-i18n-runtime', 'ui.mirrorNoFavorites');
   const list = document.createElement('div');
   list.className = 'mirror-shape-grid';
+  list.addEventListener('click', (event) => handleShapeTileClick(list, event));
   const render = () => {
     const favorites = getFavorites().filter((kind) => allShapeKinds().includes(kind));
     note.hidden = favorites.length > 0;

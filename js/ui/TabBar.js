@@ -58,6 +58,50 @@ export const createTabBar = ({ root = null, sessionService, onSelect, onClose, o
 		onClose?.(id, result?.state || sessionService?.getState?.());
 	};
 
+	const handleRootClick = (event) => {
+		const action = event.target?.closest?.('[data-tab-action]');
+		if (!action || !root.contains(action)) return;
+		const id = action.dataset.documentId;
+		switch (action.dataset.tabAction) {
+			case 'select':
+				select(id);
+				break;
+			case 'close':
+				event.stopPropagation();
+				close(id);
+				break;
+			case 'new':
+				onNew?.();
+				break;
+			case 'manage':
+				onManage?.();
+				break;
+			default:
+				break;
+		}
+	};
+
+	const handleRootKeydown = (event) => {
+		const button = event.target?.closest?.('[data-tab-action="select"]');
+		if (!button || !root.contains(button)) return;
+		const models = createTabBarModel(lastState);
+		const current = models.findIndex((item) => item.id === button.dataset.documentId);
+		if (current < 0) return;
+		if (event.key === TABBAR_KEYS.close) {
+			event.preventDefault();
+			close(models[current].id);
+			return;
+		}
+		const next = event.key === TABBAR_KEYS.previous ? current - 1
+			: event.key === TABBAR_KEYS.next ? current + 1
+			: event.key === TABBAR_KEYS.first ? 0
+			: event.key === TABBAR_KEYS.last ? models.length - 1 : -1;
+		if (next < 0 || next >= models.length) return;
+		event.preventDefault();
+		select(models[next].id);
+		focusTab(root, next);
+	};
+
 	const render = (state = lastState) => {
 		if (destroyed) return;
 		lastState = state;
@@ -83,59 +127,43 @@ export const createTabBar = ({ root = null, sessionService, onSelect, onClose, o
 			button.textContent = `${model.label}${model.dirty ? ' •' : ''}`;
 			button.title = model.dirty ? `${model.label} (unsaved)` : model.label;
 			button.setAttribute('aria-label', button.title);
-			button.addEventListener('click', () => select(model.id));
+			button.dataset.tabAction = 'select';
+			button.dataset.documentId = model.id;
 			const closeButton = root.ownerDocument.createElement('button');
 			closeButton.type = 'button';
 			closeButton.className = 'workspace-tab-close';
 			closeButton.dataset.tag = 'workspace-tab-close';
+			closeButton.dataset.tabAction = 'close';
+			closeButton.dataset.documentId = model.id;
 			closeButton.setAttribute('aria-label', `Close ${model.label}`);
 			closeButton.textContent = '×';
-			closeButton.addEventListener('click', (event) => {
-				event.stopPropagation();
-				close(model.id);
-			});
 			tab.append(button, closeButton);
-			button.addEventListener('keydown', (event) => {
-				const models = createTabBarModel(lastState);
-				const current = models.findIndex((item) => item.id === model.id);
-				if (event.key === TABBAR_KEYS.close) {
-					event.preventDefault();
-					close(model.id);
-					return;
-				}
-				const next = event.key === TABBAR_KEYS.previous ? current - 1
-					: event.key === TABBAR_KEYS.next ? current + 1
-					: event.key === TABBAR_KEYS.first ? 0
-					: event.key === TABBAR_KEYS.last ? models.length - 1 : -1;
-				if (next < 0 || next >= models.length) return;
-				event.preventDefault();
-				select(models[next].id);
-				focusTab(root, next);
-			});
 			root.append(tab);
 		});
 		const add = root.ownerDocument.createElement('button');
 		add.type = 'button';
 		add.className = 'workspace-tab-new';
 		add.dataset.tag = 'workspace-tab-new';
+		add.dataset.tabAction = 'new';
 		add.setAttribute('aria-label', 'New image');
 		add.title = 'New image';
 		add.textContent = '+';
-		add.addEventListener('click', () => onNew?.());
 		root.append(add);
 		if (onManage) {
 			const manage = root.ownerDocument.createElement('button');
 			manage.type = 'button';
 			manage.className = 'workspace-tab-manage';
 			manage.dataset.tag = 'workspace-tab-manage';
+			manage.dataset.tabAction = 'manage';
 			manage.setAttribute('aria-label', 'Manage open images');
 			manage.title = 'Manage open images';
 			manage.textContent = '⋯';
-			manage.addEventListener('click', () => onManage?.());
 			root.append(manage);
 		}
 	};
 
+	root?.addEventListener?.('click', handleRootClick);
+	root?.addEventListener?.('keydown', handleRootKeydown);
 	if (typeof sessionService?.subscribe === 'function') unsubscribe = sessionService.subscribe((event) => render(event.state));
 	render(lastState);
 	return Object.freeze({
@@ -145,6 +173,8 @@ export const createTabBar = ({ root = null, sessionService, onSelect, onClose, o
 			if (destroyed) return;
 			destroyed = true;
 			unsubscribe();
+			root?.removeEventListener?.('click', handleRootClick);
+			root?.removeEventListener?.('keydown', handleRootKeydown);
 			if (root?.replaceChildren) root.replaceChildren();
 		},
 	});

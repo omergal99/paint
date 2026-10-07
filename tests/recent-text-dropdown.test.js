@@ -21,6 +21,14 @@ class FakeElement {
 
 	append(...nodes) { nodes.forEach((node) => { this.children.push(node); node.parentNode = this; }); }
 	contains(node) { return node === this || this.children.some((child) => child.contains?.(node) || child === node); }
+	closest(selector) {
+		let node = this;
+		while (node) {
+			if (selector === '.persistent-dropdown-option' && node.className === 'persistent-dropdown-option') return node;
+			node = node.parentNode;
+		}
+		return null;
+	}
 	appendChild(node) { this.append(node); return node; }
 	replaceChildren(...nodes) { this.children.forEach((node) => { node.parentNode = null; }); this.children = []; this.append(...nodes); }
 	setAttribute(name, value) { this.attributes.set(name, value); }
@@ -84,6 +92,8 @@ test('recent-text dropdown retains names and titles for full text in custom opti
 	assert.equal(control.title, 'Recent text…');
 	assert.equal(control.listbox.children[1].title, entry.text);
 	assert.match(control.listbox.children[1].textContent, /…$/);
+	assert.equal(control.listbox.listeners.size, 1, 'the listbox owns one delegated option listener');
+	assert.equal(control.listbox.children[1].listeners.size, 0, 'rendered options own no click listeners');
 
 	control.setValue(entry.id);
 	assert.equal(control.title, entry.text);
@@ -94,6 +104,13 @@ test('recent-text dropdown retains names and titles for full text in custom opti
 	assert.equal(control.title, entry.text);
 	control.trigger.dispatch('click');
 	assert.equal(control.listbox.hidden, false);
+	const anotherEntry = { id: 'entry-2', text: 'Another entry' };
+	dropdown.setEntries([entry, anotherEntry]);
+	control.listbox.dispatch('click', { target: control.listbox.children[2] });
+	assert.deepEqual(selected.at(-1), anotherEntry, 'delegated clicks select the current rendered option');
+	assert.equal(control.listbox.hidden, true);
+	assert.equal(control.trigger.focused, true);
+	control.trigger.dispatch('click');
 	control.trigger.dispatch('blur');
 	assert.equal(control.listbox.hidden, false, 'focus loss does not collapse the options');
 	control.trigger.dispatch('keydown', { key: 'Escape' });
@@ -102,6 +119,7 @@ test('recent-text dropdown retains names and titles for full text in custom opti
 	documentRef.dispatch('pointerdown', { target: new FakeElement('button') });
 	assert.equal(control.listbox.hidden, true, 'an outside pointer press closes the dropdown');
 	dropdown.destroy();
+	assert.equal(control.listbox.listeners.size, 0, 'destroy removes the delegated option listener');
 	assert.equal(root.removed, true);
 });
 

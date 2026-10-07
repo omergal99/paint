@@ -3,6 +3,7 @@ import test from 'node:test';
 import { createActionMenuController } from '../js/ui/ActionMenuController.js';
 import { createBrowserInfoPanel, readBrowserInfo } from '../js/ui/BrowserInfoPanel.js';
 import { createCheckboxRowController } from '../js/ui/CheckboxRowController.js';
+import { createHistoryPanel } from '../js/ui/HistoryPanel.js';
 import { EMOJI_CATALOG, renderEmojiGrid, syncEmojiSelection } from '../js/tools/EmojiStore.js';
 import { createDialogService } from '../js/ui/DialogService.js';
 
@@ -215,6 +216,62 @@ test('checkbox rows toggle their whitespace through one delegated listener', () 
   controller.destroy();
   controller.destroy();
   assert.equal(root.listenerCount(), 0);
+});
+
+test('history tabs delegate clicks and keyboard navigation through the panel root', () => {
+  const historyTab = {
+    dataset: { historyView: 'history' },
+    listeners: new Map(),
+    attributes: new Map(),
+    classList: { toggle() {} },
+    setAttribute(name, value) { this.attributes.set(name, value); },
+    addEventListener(name, listener) { this.listeners.set(name, listener); },
+    closest(selector) { return selector === '[data-history-view]' ? this : null; },
+    focus() { this.focused = true; },
+  };
+  const sessionTab = {
+    ...historyTab,
+    dataset: { historyView: 'session' },
+    listeners: new Map(),
+    attributes: new Map(),
+    closest: historyTab.closest,
+    focus() { this.focused = true; },
+  };
+  const tabs = [historyTab, sessionTab];
+  const root = {
+    ...eventTarget(),
+    querySelectorAll: () => tabs,
+    querySelector: () => null,
+    contains: (target) => tabs.includes(target),
+  };
+  const changes = [];
+  const panel = createHistoryPanel({ root, onViewChange: (view) => changes.push(view) });
+
+  panel.bind();
+  panel.bind();
+  assert.equal(root.listenerCount(), 2, 'the panel root receives one click and one keydown listener');
+  assert.equal(historyTab.listeners.size, 0, 'rendered tabs own no event listeners');
+
+  root.dispatch('click', { target: sessionTab });
+  assert.equal(panel.getView(), 'session');
+  assert.deepEqual(changes, ['session']);
+
+  let defaultPrevented = false;
+  root.dispatch('keydown', {
+    target: sessionTab,
+    key: 'ArrowRight',
+    preventDefault() { defaultPrevented = true; },
+  });
+  assert.equal(defaultPrevented, true);
+  assert.equal(historyTab.focused, true, 'arrow navigation wraps and focuses the next tab');
+  assert.equal(panel.getView(), 'history');
+  assert.deepEqual(changes, ['session', 'history']);
+
+  panel.focusActiveView();
+  assert.equal(historyTab.focused, true);
+  panel.destroy();
+  panel.destroy();
+  assert.equal(root.listenerCount(), 0, 'destroy removes delegated listeners');
 });
 
 test('clicking a menu checkbox keeps its action menu open', () => {

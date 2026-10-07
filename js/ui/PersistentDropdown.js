@@ -98,6 +98,12 @@ export const createPersistentDropdown = ({
 		close({ restoreFocus: true });
 	};
 
+	const onOptionClick = (event) => {
+		const option = event.target?.closest?.('.persistent-dropdown-option');
+		if (!option || !listbox.contains(option) || option.disabled) return;
+		selectValue(option.dataset.value);
+	};
+
 	const open = () => {
 		if (trigger.disabled) return;
 		closePersistentDropdowns();
@@ -137,7 +143,6 @@ export const createPersistentDropdown = ({
 			item.disabled = option.disabled;
 			item.textContent = option.textContent;
 			item.title = option.title || option.textContent;
-			item.addEventListener('click', () => selectValue(option.value));
 			listbox.append(item);
 		});
 		if (isOpen) {
@@ -187,6 +192,7 @@ export const createPersistentDropdown = ({
 	};
 	trigger.addEventListener('click', onTriggerClick);
 	trigger.addEventListener('keydown', onKeyDown);
+	listbox.addEventListener('click', onOptionClick);
 	select.addEventListener('change', onSourceChange);
 	documentRef.addEventListener?.('pointerdown', onDocumentPointerDown, true);
 	documentRef.documentElement?.addEventListener('paint:locale-change', onLocaleChange);
@@ -216,6 +222,7 @@ export const createPersistentDropdown = ({
 			close();
 			trigger.removeEventListener('click', onTriggerClick);
 			trigger.removeEventListener('keydown', onKeyDown);
+			listbox.removeEventListener('click', onOptionClick);
 			select.removeEventListener('change', onSourceChange);
 			documentRef.removeEventListener?.('pointerdown', onDocumentPointerDown, true);
 			documentRef.documentElement?.removeEventListener('paint:locale-change', onLocaleChange);

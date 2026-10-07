@@ -157,3 +157,16 @@ test('palette grids delegate swatch and pager events from stable roots', () => {
 	assert.match(paletteSource, /const unbindGrid =[\s\S]*?grid\.removeEventListener\('click'/);
 	assert.match(paletteSource, /const unmountGrid = \(grid\) => \{[\s\S]*?unbindGrid\(grid\)/);
 });
+
+test('Sidebar custom palette color inputs delegate updates through the settings grid', () => {
+	const sidebarSource = readFileSync(new URL('../js/ui/Sidebar.js', import.meta.url), 'utf8');
+	const renderSettingsGrid = sidebarSource.match(/const renderSettingsGrid = \(\) => \{[\s\S]*?\n\t\t\};/)?.[0] || '';
+	const inputHandler = sidebarSource.match(/grid\.addEventListener\('input', \(event\) => \{[\s\S]*?\n\t\t\}\);/)?.[0] || '';
+
+	assert.match(renderSettingsGrid, /input\.dataset\.paletteIndex = String\(index\)/);
+	assert.doesNotMatch(renderSettingsGrid, /addEventListener/);
+	assert.match(inputHandler, /input\[data-palette-index\]/);
+	assert.match(inputHandler, /grid\.contains\(input\)/);
+	assert.match(inputHandler, /next\[index\] = input\.value/);
+	assert.match(inputHandler, /this\.palette\.setPalette\(next\)/);
+});

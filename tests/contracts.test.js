@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
 import { createEventBus } from '../js/core/EventBus.js';
@@ -1265,4 +1266,21 @@ test('shape favorites round trip through SettingsStore and search matches locali
 	assert.deepEqual(matchShapeQuery('rect', candidates).map((c) => c.kind), ['rectangle'], 'english source title matches');
 	assert.equal(matchShapeQuery('zzz', candidates).length, 0);
 	assert.equal(matchShapeQuery('', candidates).length, 3, 'empty query keeps every shape');
+});
+
+test('shape browser and favorites delegate regenerated tile actions through stable grids', () => {
+	const source = readFileSync(new URL('../js/ui/mirrors/shapesMirror.js', import.meta.url), 'utf8');
+	const tileFactory = source.match(/const buildShapeTile =[\s\S]*?\n\};/)?.[0] || '';
+	const clickHandler = source.match(/const handleShapeTileClick =[\s\S]*?\n\};/)?.[0] || '';
+
+	assert.doesNotMatch(tileFactory, /addEventListener/);
+	assert.match(tileFactory, /button\.dataset\.shapeKind = kind/);
+	assert.match(tileFactory, /star\.dataset\.shapeKind = kind/);
+	assert.equal((source.match(/\.addEventListener\('click', \(event\) => handleShapeTileClick/g) || []).length, 2);
+	assert.match(clickHandler, /event\.target\.closest\?\.\('\.mirror-fav-toggle, \.mirror-shape-tile'\)/);
+	assert.match(clickHandler, /event\.stopPropagation\(\)/);
+	assert.match(clickHandler, /toggleFavoriteShape\(getFavorites\(\), kind\)/);
+	assert.match(clickHandler, /ribbonTile\(action\.dataset\.shapeKind\)\?\.click\(\)/);
+	assert.match(source, /grid\.addEventListener\('click', \(event\) => handleShapeTileClick\(grid, event\)\)/);
+	assert.match(source, /list\.addEventListener\('click', \(event\) => handleShapeTileClick\(list, event\)\)/);
 });

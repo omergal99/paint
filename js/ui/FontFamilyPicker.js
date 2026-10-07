@@ -49,12 +49,6 @@ export const createFontFamilyPicker = ({
 		label.className = 'font-family-picker-label';
 		label.textContent = renderOptionLabel(family);
 		option.append(preview, label);
-		option.addEventListener('pointerdown', (event) => event.preventDefault());
-		option.addEventListener('click', (event) => {
-			event.stopPropagation();
-			selectFamily(family.value);
-			close({ returnFocus: true });
-		});
 		listbox.appendChild(option);
 		return { element: option, preview, label, family };
 	});
@@ -119,6 +113,23 @@ export const createFontFamilyPicker = ({
 		onChange?.(nextValue);
 	};
 
+	const getOptionFromEvent = (event) => {
+		const option = event.target?.closest?.('.font-family-picker-option');
+		return option && listbox.contains(option) ? option : null;
+	};
+
+	const handleOptionPointerdown = (event) => {
+		if (getOptionFromEvent(event)) event.preventDefault();
+	};
+
+	const handleOptionClick = (event) => {
+		const option = getOptionFromEvent(event);
+		if (!option) return;
+		event.stopPropagation();
+		selectFamily(option.dataset.fontValue);
+		close({ returnFocus: true });
+	};
+
 	const handleTriggerClick = (event) => {
 		event.stopPropagation();
 		if (isOpen) close();
@@ -159,6 +170,8 @@ export const createFontFamilyPicker = ({
 
 	trigger.addEventListener('click', handleTriggerClick);
 	trigger.addEventListener('keydown', handleTriggerKeydown);
+	listbox.addEventListener('pointerdown', handleOptionPointerdown);
+	listbox.addEventListener('click', handleOptionClick);
 	document.addEventListener('pointerdown', handleOutsidePointer, true);
 	eventTarget?.addEventListener?.('paint:locale-change', handleLocaleChange);
 	root.classList.add('font-family-picker');
@@ -177,6 +190,8 @@ export const createFontFamilyPicker = ({
 			eventTarget?.removeEventListener?.('paint:locale-change', handleLocaleChange);
 			trigger.removeEventListener('click', handleTriggerClick);
 			trigger.removeEventListener('keydown', handleTriggerKeydown);
+			listbox.removeEventListener('pointerdown', handleOptionPointerdown);
+			listbox.removeEventListener('click', handleOptionClick);
 			root.replaceChildren();
 		},
 	});

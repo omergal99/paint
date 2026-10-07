@@ -11,6 +11,7 @@ export const createHistoryPanel = ({ root = document, onViewChange = () => {} } 
   const exportButton = root.querySelector('#history-export-all-btn');
   const clearButton = root.querySelector('#history-clear-btn');
   let activeView = HISTORY_VIEWS.history;
+  let bound = false;
 
   const sync = () => {
     const session = activeView === HISTORY_VIEWS.session;
@@ -52,21 +53,36 @@ export const createHistoryPanel = ({ root = document, onViewChange = () => {} } 
     active?.focus?.();
   };
 
+  const getTabFromEvent = (event) => {
+    const tab = event.target?.closest?.('[data-history-view]');
+    return tab && root.contains(tab) ? tab : null;
+  };
+
+  const handleTabClick = (event) => {
+    const tab = getTabFromEvent(event);
+    if (tab) setView(tab.dataset.historyView);
+  };
+
+  const handleTabKeydown = (event) => {
+    const tab = getTabFromEvent(event);
+    if (!tab || !KEYBOARD_KEYS.horizontalArrows.includes(event.key)) return;
+    event.preventDefault();
+    const index = tabs.indexOf(tab);
+    const nextIndex = event.key === KEYBOARD_KEYS.arrowLeft
+      ? (index - 1 + tabs.length) % tabs.length
+      : (index + 1) % tabs.length;
+    tabs[nextIndex]?.focus();
+    setView(tabs[nextIndex]?.dataset.historyView);
+  };
+
   const bind = () => {
+    if (bound) return;
+    bound = true;
     tabs.forEach((tab) => {
       tab.setAttribute('role', 'tab');
-      tab.addEventListener('click', () => setView(tab.dataset.historyView));
-      tab.addEventListener('keydown', (event) => {
-        if (!KEYBOARD_KEYS.horizontalArrows.includes(event.key)) return;
-        event.preventDefault();
-        const index = tabs.indexOf(tab);
-        const nextIndex = event.key === KEYBOARD_KEYS.arrowLeft
-          ? (index - 1 + tabs.length) % tabs.length
-          : (index + 1) % tabs.length;
-        tabs[nextIndex]?.focus();
-        setView(tabs[nextIndex]?.dataset.historyView);
-      });
     });
+    root.addEventListener('click', handleTabClick);
+    root.addEventListener('keydown', handleTabKeydown);
     sync();
   };
 
@@ -76,5 +92,11 @@ export const createHistoryPanel = ({ root = document, onViewChange = () => {} } 
     setView,
     focusActiveView,
     getView: () => activeView,
+    destroy() {
+      if (!bound) return;
+      bound = false;
+      root.removeEventListener('click', handleTabClick);
+      root.removeEventListener('keydown', handleTabKeydown);
+    },
   });
 };
