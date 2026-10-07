@@ -96,6 +96,7 @@ import { createBackgroundRemovalService } from './background/BackgroundRemovalPr
 import { createLocalColorKeyProvider } from './background/LocalColorKeyProvider.js';
 import { createPaintDocument } from './core/DocumentContract.js';
 import { createSessionService } from './session/SessionService.js';
+import { createActionDispatcher } from './ui/ActionDispatcher.js';
 
 markBoot('boot:start');
 standardizeDialogFrames({ root: document });
@@ -1161,6 +1162,8 @@ const commandRegistry = createCommandRegistry({
 		[SHORTCUT_ACTIONS.nudgeRight]: ({ event } = {}) => nudgeSelection(event?.shiftKey ? 10 : 1, 0),
 	},
 });
+const actionDispatcher = createActionDispatcher({ commandRegistry, root: document.body });
+actionDispatcher.bind();
 const globalShortcutController = createGlobalShortcutController({
 	commandRegistry,
 	shortcutManager,
@@ -1606,8 +1609,6 @@ const toolbar = new Toolbar({
 		copy: () => commandRegistry.execute({ action: SHORTCUT_ACTIONS.copy }),
 		crop,
 		openResizeDialog,
-		undo: () => commandRegistry.execute({ action: SHORTCUT_ACTIONS.undo }),
-		redo: () => commandRegistry.execute({ action: SHORTCUT_ACTIONS.redo }),
 		setPrimaryColor: (hex, alpha) => colorPalette.setPrimary(hex, alpha),
 		openBrushStudio: () => {
 			sidebar.openGroupSettings(document.querySelector('[data-ribbon-key="tools"]'));
@@ -1666,14 +1667,11 @@ renderTextStyleControls();
 document.getElementById('btn-history-panel').addEventListener('click', () => sidebar.toggleHistory());
 // Phase 2 step-04: the History tab's undo/redo buttons use the same path as
 // data-tag="btn-undo" / "btn-redo" and Ctrl+Z / Ctrl+Shift+Z.
-document.getElementById('history-undo-btn')?.addEventListener('click', () => commandRegistry.execute({ action: SHORTCUT_ACTIONS.undo }));
-document.getElementById('history-redo-btn')?.addEventListener('click', () => commandRegistry.execute({ action: SHORTCUT_ACTIONS.redo }));
 sidebar.setHistoryDeepLinks({ openPreferences: () => openSettingsDialog('history') });
 document.getElementById('btn-ai-chat').addEventListener('click', () => sidebar.toggleAi());
 document.getElementById('history-settings-link')?.addEventListener('click', () => openSettingsDialog('history'));
 // Select All lives in the Image ▸ More menu and in the Image sidebar mirror;
 // both reach the same implementation as the Ctrl+A binding.
-document.getElementById('btn-select-all')?.addEventListener('click', () => commandRegistry.execute({ action: SHORTCUT_ACTIONS.selectAll }));
 
 document.querySelectorAll('.ribbon-group-title').forEach(titleEl => {
 	titleEl.addEventListener('click', () => {

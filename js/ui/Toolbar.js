@@ -13,7 +13,7 @@ export class Toolbar {
   constructor({ root, toolManager, setLineWidth, setFontSize, handlers, brushState = null }) {
     this.root = root;
     this.toolManager = toolManager;
-    this.handlers = handlers; // {newFile, openFile, importFile, save, saveAs, copy, cut, paste, crop, openResizeDialog, undo, redo}
+    this.handlers = handlers; // {newFile, openFile, importFile, save, saveAs, copy, cut, paste, crop, openResizeDialog}
     this._eventController = new AbortController();
 
     this.toolButtons = [...root.querySelectorAll('.tool-btn')];
@@ -35,7 +35,6 @@ export class Toolbar {
     this._bindSelectAfterDraw();
     this._bindTextOptions();
     this._bindFileButtons();
-    this._bindUndoRedo();
 
     this._onToolChange = (name) => this._highlightTool(name);
     toolManager.onToolChange = this._onToolChange;
@@ -537,11 +536,6 @@ export class Toolbar {
     this._listen(document.getElementById('btn-file-copy'), 'click', () => this.handlers.copy());
     this._listen(document.getElementById('btn-crop'), 'click', () => this.handlers.crop());
     this._listen(document.getElementById('btn-canvas-size'), 'click', () => this.handlers.openResizeDialog());
-  }
-
-  _bindUndoRedo() {
-    this._listen(document.getElementById('btn-undo'), 'click', () => this.handlers.undo());
-    this._listen(document.getElementById('btn-redo'), 'click', () => this.handlers.redo());
   }
 
   destroy() {

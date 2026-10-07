@@ -325,8 +325,9 @@ test('History tab exposes undo/redo, one concise preferences row, and event-driv
   assert.match(main, /const runUndo = \(\) => \{\s*return historyManager\.undo\(\);/);
   assert.match(main, /const runRedo = \(\) => \{\s*return historyManager\.redo\(\);/);
   assert.match(main, /\[SHORTCUT_ACTIONS\.undo\]: runUndo/);
-  assert.match(main, /history-undo-btn'\)\?\.addEventListener\('click', \(\) => commandRegistry\.execute\(\{ action: SHORTCUT_ACTIONS\.undo \}\)\)/);
-  assert.match(main, /history-redo-btn'\)\?\.addEventListener\('click', \(\) => commandRegistry\.execute\(\{ action: SHORTCUT_ACTIONS\.redo \}\)\)/);
+  assert.match(html, /id="history-undo-btn"[^>]*data-action="undo"/);
+  assert.match(html, /id="history-redo-btn"[^>]*data-action="redo"/);
+  assert.match(main, /createActionDispatcher\(\{ commandRegistry, root: document\.body \}\)/);
   // State flows through one event, so no surface polls.
   assert.match(historyManager, /EVENTS\.historyChanged/);
   assert.match(main, /window\.addEventListener\(EVENTS\.historyChanged/);
@@ -549,7 +550,8 @@ test('canvas undo/redo is not swallowed by focused ribbon or status controls', (
   assert.match(keyboard, /event\.preventDefault\(\);\s*event\.stopPropagation\(\);\s*commandRegistry\.execute/);
   assert.match(main, /const runUndo = \(\) => \{\s*return historyManager\.undo\(\);/);
   assert.match(main, /\[SHORTCUT_ACTIONS\.undo\]: runUndo/);
-  assert.match(main, /undo: \(\) => commandRegistry\.execute\(\{ action: SHORTCUT_ACTIONS\.undo \}\)/);
+  assert.match(html, /id="btn-undo"[^>]*data-action="undo"/);
+  assert.match(html, /id="btn-redo"[^>]*data-action="redo"/);
 });
 
 test('the first paint matches the default visual settings', () => {
@@ -1396,7 +1398,8 @@ test('global Ctrl+A capture prevents native selection before shortcut dispatch',
   assert.match(shortcuts, /shortcutKeyFromCode\(event\.code\)/);
   assert.doesNotMatch(shortcuts.match(/export const shortcutFromEvent =[\s\S]*?;\n};/)?.[0] || '', /event\.key/);
   assert.match(main, /\[SHORTCUT_ACTIONS\.selectAll\]: selectAll/);
-  assert.match(main, /btn-select-all'\)\?\.addEventListener\('click', \(\) => commandRegistry\.execute\(\{ action: SHORTCUT_ACTIONS\.selectAll \}\)\)/);
+  assert.match(html, /id="btn-select-all"[^>]*data-action="selectAll"/);
+  assert.match(main, /createActionDispatcher\(\{ commandRegistry, root: document\.body \}\)/);
 });
 
 test('pending session previews resolve the settled snapshot source', () => {
@@ -1422,9 +1425,16 @@ test('text editor Delete remains native while Escape cancels the editor', () => 
 test('Sidebar Select All reaches the shared selection command', () => {
 	const selectionPanel = read('js/services/selection/selectionPropertiesPanel.js');
 	assert.match(selectionPanel, /sidebar-mirror-btn-select-all[\s\S]*?document\.getElementById\('btn-select-all'\)\?\.click\(\)/);
-	assert.match(main, /btn-select-all'\)\?\.addEventListener\('click', \(\) => commandRegistry\.execute\(\{ action: SHORTCUT_ACTIONS\.selectAll \}\)\)/);
+	assert.match(html, /id="btn-select-all"[^>]*data-action="selectAll"/);
 	assert.match(main, /\[SHORTCUT_ACTIONS\.selectAll\]: selectAll/);
 	assert.match(main, /const selectAll = \(\) => \{[\s\S]*?selectAllCanvas\(\);/);
+});
+
+test('history cards delegate actions from their persistent grid root', () => {
+	assert.match(sidebar, /this\.historyGrid\?\.addEventListener\('click'/);
+	assert.match(sidebar, /event\.target\?\.closest\?\.\('\[data-history-action\]'\)/);
+	assert.match(sidebar, /this\._historyItemsByKey\.clear\(\)/);
+	assert.doesNotMatch(sidebar, /(?:img|deleteButton|saveButton)\.addEventListener\('click'/);
 });
 
 test('Brush option surfaces share BrushState and expose accessible controls', () => {

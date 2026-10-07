@@ -71,6 +71,10 @@ export class Sidebar {
 
 		this.historyContent = document.getElementById('sidebar-history-content');
 		this.historyGrid = document.getElementById('history-grid');
+		this._historyItemsByKey = new Map();
+		this.historyGrid?.addEventListener('click', (event) => {
+			void this._handleHistoryItemClick(event);
+		});
 		this.saveLimitSelect = document.getElementById('history-save-limit');
 		this.historyUndoBtn = document.getElementById('history-undo-btn');
 		this.historyRedoBtn = document.getElementById('history-redo-btn');
@@ -1016,6 +1020,7 @@ export class Sidebar {
 		this._historyRefreshGeneration = generation;
 		const scrollTop = this.historyGrid.scrollTop;
 		this.historyGrid.innerHTML = '';
+		this._historyItemsByKey.clear();
 		if (this.historyView === HISTORY_VIEWS.session) {
 			const count = await this._renderSessionView();
 			if (generation === this._historyRefreshGeneration) this.historyGrid.scrollTop = scrollTop;
@@ -1033,23 +1038,16 @@ export class Sidebar {
 		sessions.forEach((session, index) => {
 			const item = document.createElement('div');
 			item.className = 'history-item';
-			item.dataset.historyId = String(session.id);
+			const historyKey = `global:${session.id}`;
+			item.dataset.historyKey = historyKey;
+			this._historyItemsByKey.set(historyKey, { type: 'global', entry: session, index });
 
 			const img = document.createElement('img');
 			img.loading = 'lazy';
 			img.src = getHistoryPreviewUrl(session);
 			img.alt = `Import history image ${index + 1} of ${sessions.length}`;
 			img.title = 'Click to import this image';
-			img.addEventListener('click', async () => {
-				const confirmed = await this.dialogService.confirm(getRestoreConfirmOptions({
-					src: getHistoryPreviewSource(session),
-					alt: `Preview of saved image ${index + 1}`,
-				}));
-				if (confirmed) {
-					await this.canvasManager.loadImageDataUrl(session.dataUrl, session.width, session.height);
-					this.statusBar.flash('Loaded from history');
-				}
-			});
+			img.dataset.historyAction = 'restore';
 			item.appendChild(img);
 
 			const info = document.createElement('div');
@@ -1064,12 +1062,7 @@ export class Sidebar {
 			deleteButton.innerHTML = '<span style="position: relative; inset-inline-end: 2px;" aria-hidden="true">🗑</span>';
 			deleteButton.setAttribute('aria-label', `Delete history image ${index + 1} of ${sessions.length}`);
 			deleteButton.title = 'Delete this saved image';
-			deleteButton.addEventListener('click', async (event) => {
-				event.stopPropagation();
-				await this.globalHistory.deleteSession(session.id);
-				await this.refreshHistory();
-				this.statusBar.flash('History item deleted');
-			});
+			deleteButton.dataset.historyAction = 'delete';
 			item.appendChild(deleteButton);
 
 			const saveButton = document.createElement('button');
@@ -1078,12 +1071,7 @@ export class Sidebar {
 			saveButton.innerHTML = '<span aria-hidden="true">⬇</span>';
 			saveButton.setAttribute('aria-label', `Save history image ${index + 1} of ${sessions.length} to computer`);
 			saveButton.title = 'Save this image to your computer';
-			saveButton.addEventListener('click', (event) => {
-				event.stopPropagation();
-				window.dispatchEvent(new CustomEvent('paint:history-export-item', {
-					detail: { session, index },
-				}));
-			});
+			saveButton.dataset.historyAction = 'save';
 			item.append(saveButton);
 
 			this.historyGrid.appendChild(item);
@@ -1104,7 +1092,9 @@ export class Sidebar {
 		entries.forEach((entry, index) => {
 			const item = document.createElement('div');
 			item.className = 'history-item';
-			item.dataset.historyId = String(entry.id);
+			const historyKey = `session:${entry.id}`;
+			item.dataset.historyKey = historyKey;
+			this._historyItemsByKey.set(historyKey, { type: 'session', entry, index });
 			const img = document.createElement('img');
 			img.loading = 'lazy';
 			const previewSrc = getHistoryPreviewUrl(entry);
@@ -1117,18 +1107,7 @@ export class Sidebar {
 			}
 			img.alt = `Session step ${index + 1} of ${entries.length}`;
 			img.title = 'Click to restore this session step';
-			img.addEventListener('click', async () => {
-				if (entry.pending) await entry.ready;
-				const confirmed = await this.dialogService.confirm(getRestoreConfirmOptions({
-					src: getHistoryPreviewSource(entry),
-					alt: `Preview of ${entry.label || `session step ${index + 1}`}`,
-				}));
-				if (confirmed) {
-					await this.historyManager.restore(entry);
-					this.statusBar.flash('Restored session step');
-					this.refreshHistory();
-				}
-			});
+			img.dataset.historyAction = 'restore';
 			item.appendChild(img);
 			const info = document.createElement('div');
 			info.className = 'history-info';
@@ -1142,13 +1121,7 @@ export class Sidebar {
 				? 'Hide current session image'
 				: `Delete session step ${index + 1} of ${entries.length}`);
 			deleteButton.title = entry.kind === 'current' ? 'Hide current session card' : 'Delete this session step';
-			deleteButton.addEventListener('click', (event) => {
-				event.stopPropagation();
-				if (this.historyManager.removeSessionEntry(entry.id)) {
-					this.refreshHistory();
-					this.statusBar?.flash?.(entry.kind === 'current' ? 'Current session card hidden' : 'Session step deleted');
-				}
-			});
+			deleteButton.dataset.historyAction = 'delete';
 			item.appendChild(deleteButton);
 			const saveButton = document.createElement('button');
 			saveButton.type = 'button';
@@ -1156,16 +1129,58 @@ export class Sidebar {
 			saveButton.innerHTML = '<span aria-hidden="true">⬇</span>';
 			saveButton.setAttribute('aria-label', `Save session step ${index + 1} of ${entries.length} to computer`);
 			saveButton.title = 'Save this step to your computer';
-			saveButton.addEventListener('click', (event) => {
-				event.stopPropagation();
-				window.dispatchEvent(new CustomEvent('paint:history-export-item', {
-					detail: { session: entry, index },
-				}));
-			});
+			saveButton.dataset.historyAction = 'save';
 			item.append(saveButton);
 			this.historyGrid.appendChild(item);
 		});
 		return entries.length;
+	}
+
+	async _handleHistoryItemClick(event) {
+		const actionElement = event.target?.closest?.('[data-history-action]');
+		if (!actionElement || !this.historyGrid.contains(actionElement)) return;
+		const item = actionElement.closest('.history-item');
+		const record = item && this._historyItemsByKey.get(item.dataset.historyKey);
+		if (!record) return;
+
+		const { type, entry, index } = record;
+		if (actionElement.dataset.historyAction === 'restore') {
+			if (type === 'session' && entry.pending) await entry.ready;
+			const confirmed = await this.dialogService.confirm(getRestoreConfirmOptions({
+				src: getHistoryPreviewSource(entry),
+				alt: type === 'global'
+					? `Preview of saved image ${index + 1}`
+					: `Preview of ${entry.label || `session step ${index + 1}`}`,
+			}));
+			if (!confirmed) return;
+			if (type === 'global') {
+				await this.canvasManager.loadImageDataUrl(entry.dataUrl, entry.width, entry.height);
+				this.statusBar.flash('Loaded from history');
+			} else {
+				await this.historyManager.restore(entry);
+				this.statusBar.flash('Restored session step');
+				void this.refreshHistory();
+			}
+			return;
+		}
+
+		event.stopPropagation();
+		if (actionElement.dataset.historyAction === 'delete') {
+			if (type === 'global') {
+				await this.globalHistory.deleteSession(entry.id);
+				await this.refreshHistory();
+				this.statusBar.flash('History item deleted');
+			} else if (this.historyManager.removeSessionEntry(entry.id)) {
+				void this.refreshHistory();
+				this.statusBar?.flash?.(entry.kind === 'current' ? 'Current session card hidden' : 'Session step deleted');
+			}
+			return;
+		}
+		if (actionElement.dataset.historyAction === 'save') {
+			window.dispatchEvent(new CustomEvent('paint:history-export-item', {
+				detail: { session: entry, index },
+			}));
+		}
 	}
 
 	async handleAiSubmit(commandInput = null) {

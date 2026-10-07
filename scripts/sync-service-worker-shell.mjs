@@ -52,6 +52,12 @@ const appModuleSet = new Set(appModules);
 const missing = appModules.filter((asset) => !existingShell.includes(asset));
 const stale = existingShell.filter((asset) => asset.startsWith('./js/') && !fs.existsSync(path.join(root, asset.slice(2))));
 
+// Hash the shell in its final order so a single sync remains stable when a
+// newly discovered module is inserted among the existing JavaScript assets.
+const nextShell = existingShell.filter((asset) => !stale.includes(asset));
+const lastJsIndex = nextShell.reduce((last, asset, index) => (asset.startsWith('./js/') ? index : last), -1);
+nextShell.splice(lastJsIndex + 1, 0, ...missing.sort());
+
 // The cache name carries a content hash of the precached shell, not just the app
 // version. Static hosts (GitHub Pages) have no version bump between deploys, so a
 // version-only name left every same-version deploy serving the previous shell
@@ -59,7 +65,7 @@ const stale = existingShell.filter((asset) => asset.startsWith('./js/') && !fs.e
 // contents makes any code change produce a new cache name, which is what makes
 // the worker's `activate` handler drop the stale one.
 const shellHash = createHash('sha256');
-for (const asset of [...existingShell, ...missing]) {
+for (const asset of nextShell) {
   shellHash.update(asset);
   const file = path.join(root, asset.replace(/^\.\//, ''));
   // `missing` entries are being added to the shell in this same run, so their
@@ -96,11 +102,6 @@ if (checkOnly) {
   process.exit(1);
 }
 
-// Keep the existing order (a readable diff), append new modules alphabetically,
-// and drop entries whose file no longer exists.
-const nextShell = existingShell.filter((asset) => !stale.includes(asset));
-const lastJsIndex = nextShell.reduce((last, asset, index) => (asset.startsWith('./js/') ? index : last), -1);
-nextShell.splice(lastJsIndex + 1, 0, ...missing.sort());
 const indented = nextShell.map((asset) => `  '${asset}',`).join('\n');
 
 let updated = worker.replace(shellMatch[0], `${shellMatch[1]}\n${indented}\n${shellMatch[3]}`);

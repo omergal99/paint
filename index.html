@@ -303,7 +303,7 @@
 												<path d="M4 10c0-4 3-7 7-7s6 2 6 6-3 8-7 8c-3 0-5-2-5-4 0-1 1-2 2-2"
 													fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" />
 											</svg><span data-i18n="ui.selectLasso">Free-form Selection</span></button>
-										<button type="button" id="btn-select-all" role="menuitem" title="Select All"
+										<button type="button" id="btn-select-all" role="menuitem" title="Select All" data-action="selectAll"
 											data-i18n-attr="title:ui.selectAll">
 											<svg class="icon size4" viewBox="0 0 20 20" aria-hidden="true"><use href="#icon-select-all" /></svg><span data-i18n="ui.selectAll">Select All</span></button>
 									</div>
@@ -972,13 +972,13 @@
 			<section class="ribbon-group ribbon-group-history" data-ribbon-key="history">
 				<div class="rbtn-stack">
 					<div style="display:flex;">
-						<button class="rbtn" id="btn-undo" data-tag="btn-undo" title="Undo (Ctrl+Z)" disabled>
+						<button class="rbtn" id="btn-undo" data-tag="btn-undo" data-action="undo" title="Undo (Ctrl+Z)" disabled>
 							<svg class="icon size4" viewBox="0 0 20 20">
 								<path d="M5 9H14a4 4 0 0 1 0 8H8" fill="none" stroke-linecap="round" />
 								<path d="M8 5L4 9l4 4" fill="none" stroke-linecap="round" stroke-linejoin="round" />
 							</svg>
 							<span>Undo</span></button>
-						<button class="rbtn" id="btn-redo" data-tag="btn-redo" title="Redo (Ctrl+Y)" disabled>
+						<button class="rbtn" id="btn-redo" data-tag="btn-redo" data-action="redo" title="Redo (Ctrl+Y)" disabled>
 							<svg class="icon size4" viewBox="0 0 20 20">
 								<path d="M15 9H6a4 4 0 0 0 0 8h6" fill="none" stroke-linecap="round" />
 								<path d="M12 5l4 4-4 4" fill="none" stroke-linecap="round" stroke-linejoin="round" />
@@ -1129,9 +1129,9 @@
 							<!-- Phase 2 step-04: undo/redo inside the History tab, wired to the
 							     same path as data-tag="btn-undo" / "btn-redo" and Ctrl+Z. -->
 							<div class="history-undo-row">
-								<button type="button" id="history-undo-btn" data-tag="history-undo" data-i18n="common.actions.undo"
+								<button type="button" id="history-undo-btn" data-tag="history-undo" data-action="undo" data-i18n="common.actions.undo"
 									disabled>Undo</button>
-								<button type="button" id="history-redo-btn" data-tag="history-redo" data-i18n="common.actions.redo"
+								<button type="button" id="history-redo-btn" data-tag="history-redo" data-action="redo" data-i18n="common.actions.redo"
 									disabled>Redo</button>
 							</div>
 							<div class="history-preferences" aria-live="polite">

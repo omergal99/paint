@@ -454,9 +454,13 @@ test('every undo trigger routes through one runUndo/runRedo pair', () => {
   assert.match(main, /const runRedo = \(\) => \{\s*return historyManager\.redo\(\);\s*\}/);
   assert.match(main, /\[SHORTCUT_ACTIONS\.undo\]: runUndo/);
   assert.match(main, /\[SHORTCUT_ACTIONS\.redo\]: runRedo/);
-  assert.match(read('js/ui/Toolbar.js'), /getElementById\('btn-undo'\), 'click', \(\) => this\.handlers\.undo\(\)/);
-  assert.match(main, /getElementById\('history-undo-btn'\)\?\.addEventListener\('click', \(\) => commandRegistry\.execute\(\{ action: SHORTCUT_ACTIONS\.undo \}\)\)/);
-  assert.match(main, /getElementById\('history-redo-btn'\)\?\.addEventListener\('click', \(\) => commandRegistry\.execute\(\{ action: SHORTCUT_ACTIONS\.redo \}\)\)/);
+  const html = read('index.html');
+  assert.match(html, /id="btn-undo"[^>]*data-action="undo"/);
+  assert.match(html, /id="btn-redo"[^>]*data-action="redo"/);
+  assert.match(html, /id="history-undo-btn"[^>]*data-action="undo"/);
+  assert.match(html, /id="history-redo-btn"[^>]*data-action="redo"/);
+  assert.match(main, /createActionDispatcher\(\{ commandRegistry, root: document\.body \}\)/);
+  assert.match(read('js/ui/ActionDispatcher.js'), /commandRegistry\.execute\(\{ action, event \}\)/);
 });
 
 test('selection handles centre on their point at any configured size', () => {
