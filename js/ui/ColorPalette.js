@@ -103,6 +103,7 @@ export const createColorPalette = ({
   const grids = new Map();
   const RIBBON_MODE = 'ribbon';
   const EXTENDED_MODE = 'extended';
+  const gridListeners = new Map();
   // The ribbon grid is the controller's primary surface; later surfaces (the
   // sidebar picker) register themselves through mountGrid.
   if (gridEl) grids.set(gridEl, RIBBON_MODE);
@@ -114,14 +115,10 @@ export const createColorPalette = ({
     button.dataset.tag = 'palette-swatch';
     button.dataset.color = hex;
     button.setAttribute('aria-label', t('ui.paletteSwatch', { hex }));
-    button.addEventListener('click', () => setPrimary(hex));
     // Slot editing only makes sense for the ribbon grid, where the index maps to
     // a cell the user can actually overwrite. The extended picker just selects.
     if (Number.isInteger(index)) {
-      button.addEventListener('contextmenu', (event) => {
-        event.preventDefault();
-        openPaletteMenu(index, event);
-      });
+      button.dataset.slotIndex = String(index);
     }
     return button;
   };
@@ -148,7 +145,6 @@ export const createColorPalette = ({
     path.setAttribute('stroke-width', '2');
     icon.append(path);
     button.append(icon);
-    button.addEventListener('click', () => cyclePalettePage(direction));
     return button;
   };
   const renderGridInto = (grid, mode) => {
@@ -163,6 +159,7 @@ export const createColorPalette = ({
   const renderGrid = () => {
     [...grids].forEach(([grid, mode]) => {
       if (grid.isConnected === false) {
+        unbindGrid(grid);
         grids.delete(grid);
         return;
       }
@@ -172,10 +169,13 @@ export const createColorPalette = ({
   const mountGrid = (grid, { mode = RIBBON_MODE } = {}) => {
     if (!grid) return;
     grids.set(grid, mode);
+    bindGrid(grid);
     renderGridInto(grid, mode);
   }
   const unmountGrid = (grid) => {
-    if (grid) grids.delete(grid);
+    if (!grid) return;
+    grids.delete(grid);
+    unbindGrid(grid);
   }
   // Keeps every mounted grid (ribbon + sidebar picker) listening to the same
   // write path instead of mirroring palette logic in the Sidebar.
@@ -348,6 +348,44 @@ export const createColorPalette = ({
     return setPalettePage(next);
   };
 
+  const handleGridClick = (grid, event) => {
+    const button = event.target?.closest?.('button');
+    if (!button || !grid.contains(button)) return;
+    if (button.classList.contains('palette-pager')) {
+      const direction = Number(button.dataset.direction);
+      if (Number.isFinite(direction) && direction !== 0) cyclePalettePage(direction);
+      return;
+    }
+    const { color } = button.dataset;
+    if (COLOR_RE.test(color || '')) setPrimary(color);
+  };
+
+  const handleGridContextMenu = (grid, event) => {
+    const button = event.target?.closest?.('button[data-slot-index]');
+    if (!button || !grid.contains(button)) return;
+    const index = Number(button.dataset.slotIndex);
+    if (!Number.isInteger(index) || index < 0 || index >= palette.length) return;
+    event.preventDefault();
+    openPaletteMenu(index, event);
+  };
+
+  const bindGrid = (grid) => {
+    if (gridListeners.has(grid)) return;
+    const onClick = (event) => handleGridClick(grid, event);
+    const onContextMenu = (event) => handleGridContextMenu(grid, event);
+    grid.addEventListener('click', onClick);
+    grid.addEventListener('contextmenu', onContextMenu);
+    gridListeners.set(grid, { onClick, onContextMenu });
+  };
+
+  const unbindGrid = (grid) => {
+    const listeners = gridListeners.get(grid);
+    if (!listeners) return;
+    grid.removeEventListener('click', listeners.onClick);
+    grid.removeEventListener('contextmenu', listeners.onContextMenu);
+    gridListeners.delete(grid);
+  };
+
   // Settings-side preset switcher: pages are plain palette writes so every
   // grid follows; p3/p4 mirror the sidebar picker views.
   const applyPalette = (preset) => {
@@ -404,6 +442,7 @@ export const createColorPalette = ({
   }
 
   createPaletteMenu();
+  if (gridEl) bindGrid(gridEl);
   renderGrid();
   bindSwatches();
   setPrimary(primary, primaryAlpha);

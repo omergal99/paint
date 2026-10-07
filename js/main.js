@@ -1815,6 +1815,8 @@ const destroyEditor = () => {
 	destroyRotateSelectionHandleBinding();
 	toolManager.destroy();
 	brushCursorOverlay.destroy();
+	actionDispatcher.destroy();
+	globalShortcutController.destroy();
 	adjustmentDialog.destroy();
 	adjustmentDropdown.destroy();
 	adjustmentTargetDropdown.destroy();

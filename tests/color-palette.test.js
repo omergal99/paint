@@ -142,3 +142,18 @@ test('palette presets are recognised so the settings switcher can mark the activ
 	assert.equal(colorPalettePreset([...COLOR_PALETTE_2]), 'p2');
 	assert.equal(colorPalettePreset(['#123456', '#abcdef']), null, 'edited palettes match no preset');
 });
+
+test('palette grids delegate swatch and pager events from stable roots', () => {
+	const paletteSource = readFileSync(new URL('../js/ui/ColorPalette.js', import.meta.url), 'utf8');
+	const swatchFactory = paletteSource.match(/const createSwatchButton =[\s\S]*?\n  };/)?.[0] || '';
+	const pagerFactory = paletteSource.match(/const createPagerArrow =[\s\S]*?\n  };/)?.[0] || '';
+	const gridBinding = paletteSource.match(/const bindGrid =[\s\S]*?\n  };/)?.[0] || '';
+
+	assert.match(swatchFactory, /button\.dataset\.slotIndex = String\(index\)/);
+	assert.doesNotMatch(swatchFactory, /addEventListener/);
+	assert.doesNotMatch(pagerFactory, /addEventListener/);
+	assert.match(gridBinding, /grid\.addEventListener\('click', onClick\)/);
+	assert.match(gridBinding, /grid\.addEventListener\('contextmenu', onContextMenu\)/);
+	assert.match(paletteSource, /const unbindGrid =[\s\S]*?grid\.removeEventListener\('click'/);
+	assert.match(paletteSource, /const unmountGrid = \(grid\) => \{[\s\S]*?unbindGrid\(grid\)/);
+});

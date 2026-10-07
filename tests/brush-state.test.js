@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
 import { createBrushState, BRUSH_STATE_SCHEMA_VERSION } from '../js/tools/BrushState.js';
@@ -83,6 +84,20 @@ test('brush state rejects invalid fields and ignores unsupported persisted schem
 	);
 	assert.equal(brushState.set({ randomShape: true }).randomShape, true);
 	assert.throws(() => brushState.set({ randomShape: 'yes' }), /Invalid brush setting/);
+});
+
+test('custom preset rename controls delegate events through the Brush Studio root', () => {
+	const source = readFileSync(new URL('../js/ui/BrushStudioPanel.js', import.meta.url), 'utf8');
+	const renderPreset = source.match(/const updatePresetAndHistory =[\s\S]*?\n\t\t};/)?.[0] || '';
+	const eventHandlers = source.match(/host\.addEventListener\('keydown'[\s\S]*?host\.addEventListener\('click'/)?.[0] || '';
+
+	assert.doesNotMatch(renderPreset, /addEventListener/);
+	assert.match(eventHandlers, /host\.addEventListener\('keydown'/);
+	assert.match(eventHandlers, /event\.key === 'Enter'[\s\S]*?finishPresetRename\(input, true\)/);
+	assert.match(eventHandlers, /event\.key === 'Escape'[\s\S]*?finishPresetRename\(input, false\)/);
+	assert.match(eventHandlers, /host\.addEventListener\('focusout'/);
+	assert.match(eventHandlers, /host\.addEventListener\('dblclick'/);
+	assert.match(source, /beginPresetRename\(button\.closest\('\.brush-studio-custom-preset'\)\)/);
 });
 
 test('brush opacity and flow affect strokes without changing pencil or eraser behavior', () => {

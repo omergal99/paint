@@ -352,7 +352,6 @@ export const createBrushStudioPanel = ({ brushState, getPrimaryColor, setPrimary
 				rename.setAttribute('aria-label', t('common.actions.rename'));
 				rename.title = t('common.actions.rename');
 				rename.append(makeRenameIcon());
-				rename.addEventListener('click', () => beginPresetRename(group));
 				const nameInput = document.createElement('input');
 				nameInput.type = 'text';
 				nameInput.className = 'brush-studio-preset-name-input';
@@ -361,22 +360,6 @@ export const createBrushStudioPanel = ({ brushState, getPrimaryColor, setPrimary
 				nameInput.hidden = true;
 				nameInput.dataset.tag = 'brush-preset-name-input';
 				nameInput.setAttribute('aria-label', t('common.actions.rename'));
-				nameInput.addEventListener('keydown', (event) => {
-					if (event.key === 'Enter') {
-						event.preventDefault();
-						finishPresetRename(nameInput, true);
-					} else if (event.key === 'Escape') {
-						event.preventDefault();
-						finishPresetRename(nameInput, false);
-					}
-				});
-				nameInput.addEventListener('blur', () => {
-					if (!nameInput.hidden) finishPresetRename(nameInput, true);
-				});
-				label.addEventListener('dblclick', (event) => {
-					event.preventDefault();
-					beginPresetRename(group);
-				});
 				const remove = document.createElement('button');
 				remove.type = 'button';
 				remove.className = 'brush-studio-delete-preset';
@@ -575,9 +558,36 @@ export const createBrushStudioPanel = ({ brushState, getPrimaryColor, setPrimary
 			}
 			brushState.set({ [grid.field]: grid.field === 'size' ? raw : raw / 100 });
 		});
+		host.addEventListener('keydown', (event) => {
+			const input = event.target;
+			if (!input.matches?.('.brush-studio-preset-name-input')) return;
+			if (event.key === 'Enter') {
+				event.preventDefault();
+				finishPresetRename(input, true);
+			} else if (event.key === 'Escape') {
+				event.preventDefault();
+				finishPresetRename(input, false);
+			}
+		});
+		host.addEventListener('focusout', (event) => {
+			const input = event.target;
+			if (input.matches?.('.brush-studio-preset-name-input') && !input.hidden) {
+				finishPresetRename(input, true);
+			}
+		});
+		host.addEventListener('dblclick', (event) => {
+			const label = event.target.closest?.('[data-tag="brush-preset-name"]');
+			if (!label || !host.contains(label)) return;
+			event.preventDefault();
+			beginPresetRename(label.closest('.brush-studio-custom-preset'));
+		});
 		host.addEventListener('click', (event) => {
 			const button = event.target.closest?.('button');
 			if (!button || !host.contains(button)) return;
+			if (button.classList.contains('brush-studio-rename-preset')) {
+				beginPresetRename(button.closest('.brush-studio-custom-preset'));
+				return;
+			}
 			if (button.dataset.brushColor) {
 				const hex = button.dataset.brushColor;
 				const colors = brushState.get().colors;

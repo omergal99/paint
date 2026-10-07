@@ -1233,6 +1233,12 @@ test('selection-handle drags are explicitly released with the editor', () => {
 	assert.match(destroyEditorBlock, /destroyRotateSelectionHandleBinding\(\);/);
 });
 
+test('global action and shortcut listeners are released with the editor', () => {
+	const destroyEditorBlock = main.match(/const destroyEditor = \(\) => \{[\s\S]*?\n\};/)?.[0] || '';
+	assert.match(destroyEditorBlock, /actionDispatcher\.destroy\(\);/);
+	assert.match(destroyEditorBlock, /globalShortcutController\.destroy\(\);/);
+});
+
 test('text focus owns a separate layer instead of the pixel-selection path', () => {
   const textTool = read('js/tools/TextTool.js');
   const layerService = read('js/document/TextLayerService.js');
