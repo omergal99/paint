@@ -183,6 +183,8 @@ export const ES_MESSAGES = Object.freeze({
       "Usa acciones rápidas o escribe un comando compatible. Mostraré exactamente lo que aplico.",
     send: "Enviar",
     resizeCanvas: "Cambiar tamaño del lienzo",
+    zoom100: "100%",
+    zoomTo100: "Zoom al 100%",
     resizeSummary: "Tamaño actual: {currentWidth} × {currentHeight} px. Nuevo tamaño: {newWidth} × {newHeight} px.",
     resizeNoChange: "La resolución se mantendrá igual: {width} × {height} px.",
     brushSize: "Tamaño del pincel",

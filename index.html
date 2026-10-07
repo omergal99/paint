@@ -107,8 +107,9 @@
 
 		<!-- ===================== RIBBON ===================== -->
 		<header class="ribbon ribbon-loading" id="ribbon" data-tag="ribbon">
-			<div class="ribbon-loading-mask" data-tag="ribbon-loading-mask" aria-hidden="true">
-				<span data-i18n="ui.loading">Loading…</span>
+			<div class="ribbon-loading-mask" data-tag="ribbon-loading-mask" role="status" aria-live="polite">
+				<span class="ribbon-loading-spinner" aria-hidden="true"></span>
+				<span class="ribbon-loading-label" data-i18n="ui.loading">Loading…</span>
 			</div>
 			<button type="button" class="ribbon-drag-handle" id="ribbon-drag-handle" title="Drag floating ribbon">⠿</button>
 
@@ -321,7 +322,8 @@
 									<div class="action-menu-items action-submenu-items" role="menu" aria-label="Crop"
 										data-i18n-attr="aria-label:ui.crop">
 										<button type="button" id="btn-crop" role="menuitem" disabled aria-disabled="true"
-											title="No Selection Area to Crop" data-i18n-attr="title:ui.noSelectionCrop">
+											data-requires-selection title="No Selection Area to Crop"
+											data-i18n-attr="title:ui.noSelectionCrop">
 											<svg class="icon size4" viewBox="0 0 20 20" aria-hidden="true">
 												<path d="M4 4h5M4 4v5M16 16h-5M16 16v-5" fill="none" stroke="currentColor"
 													stroke-linecap="round" />
@@ -412,13 +414,13 @@
 								<!-- Canvas size moved out of the ribbon row into this menu; the id,
 								     dialog indicator and sidebar mirror all keep working. -->
 								<button type="button" id="btn-canvas-size" data-tag="btn-canvas-size" role="menuitem"
-									title="Resize canvas">
+									title="Resize canvas" data-i18n-attr="title:ui.resizeCanvas">
 									<svg class="icon size4" viewBox="0 0 20 20" aria-hidden="true">
 										<rect x="3" y="4" width="10" height="12" rx="1" fill="none" stroke="currentColor" />
 										<path d="M14 6V3h3M17 3l-4 4M14 14v3h3M17 17l-4-4" fill="none" stroke="currentColor"
 											stroke-linecap="round" stroke-linejoin="round" />
 									</svg>
-									<span>Resize</span>
+									<span data-i18n="ribbon.image.resize">Resize</span>
 								</button>
 								<button class="action-menu-item" type="button" id="btn-adjustments" data-tag="btn-adjustments"
 									role="menuitem" data-i18n-attr="title:ui.adjustments" title="Adjustments">
@@ -601,30 +603,12 @@
 								<rect x="3" y="3" width="14" height="14" rx="1" stroke-dasharray="2.5 2" />
 							</svg>
 						</button>
-						<button class="rbtn small action-menu-trigger tools-menu-arrow" id="btn-tools-menu" title="More"
-							data-i18n-attr="title:ribbon.annotations.more"><span data-i18n="ribbon.annotations.more">More</span>
+						<button class="rbtn small action-menu-trigger tools-menu-arrow" id="btn-tools-menu" title="More tools"
+							aria-haspopup="menu" aria-expanded="false" aria-label="More tools"
+							data-i18n-attr="title:ribbon.annotations.moreTools,aria-label:ribbon.annotations.moreTools"><span data-i18n="ribbon.annotations.more">More</span>
 							<span class="menu-arrow">▾</span></button>
 						<div class="action-menu-items" role="menu" aria-label="More tools"
 							data-i18n-attr="aria-label:ribbon.annotations.moreTools">
-							<button type="button" class="rbtn small tool-menu-item tool-btn" data-tool="pencil"
-								role="menuitem">Pencil</button>
-							<button type="button" class="rbtn small tool-menu-item tool-btn" data-tool="fill"
-								role="menuitem">Fill</button>
-							<button type="button" class="rbtn small tool-menu-item tool-btn" data-tool="eraser"
-								role="menuitem">Eraser</button>
-							<button type="button" class="rbtn small tool-menu-item tool-btn" data-tool="eyedropper"
-								role="menuitem">Color picker</button>
-							<button type="button" class="rbtn small tool-menu-item tool-btn" data-tool="zoom"
-								role="menuitem">Magnifier</button>
-							<button type="button" class="rbtn small tool-menu-item tool-btn" data-tool="pan" role="menuitem"
-								title="Hand / Pan (H)">
-								<svg class="icon" viewBox="0 0 20 20" aria-hidden="true">
-									<path
-										d="M6.5 9V4.5a1 1 0 0 1 2 0V9V3.5a1 1 0 0 1 2 0V9V4.5a1 1 0 0 1 2 0V9V6a1 1 0 0 1 2 0v5.2c0 3.2-2.1 5.3-5.1 5.3H8.6c-1.6 0-2.8-.8-3.6-2.1L3.6 12a1.2 1.2 0 0 1 2.1-1.1L6.5 12V9Z"
-										fill="none" stroke="currentColor" stroke-linejoin="round" />
-								</svg>
-								<span>Hand / Pan</span>
-							</button>
 							<div class="style-history-block">
 								<span class="style-history-title">Recent styles</span>
 								<div id="style-history-list" class="style-history-list"></div>
@@ -1207,7 +1191,8 @@
 			<div>
 				<span class="status-item location" id="status-pointer" data-tag="status-pointer">Pointer: -</span>
 				<span class="status-item" id="status-selection" data-tag="status-selection"></span>
-				<span class="status-item" id="status-flash" data-tag="status-flash"></span>
+				<span class="status-item" id="status-flash" data-tag="status-flash" role="status"
+					aria-live="polite" aria-atomic="true"></span>
 				<span class="status-spacer"></span>
 			</div>
 
@@ -1232,6 +1217,10 @@
 					</button>
 					<input type="range" id="zoom-slider" data-tag="zoom-slider" min="10" max="800" step="10" value="100"
 						aria-label="Zoom percentage slider" />
+					<button type="button" id="zoom-reset" data-tag="zoom-reset" title="Zoom to 100%"
+						aria-label="Zoom to 100%" data-i18n-attr="title:ui.zoomTo100,aria-label:ui.zoomTo100">
+						<span data-i18n="ui.zoom100">100%</span>
+					</button>
 					<input type="number" id="zoom-input" data-tag="zoom-input" min="10" max="800" value="100"
 						aria-label="Zoom percentage" />
 					<span>%</span>
@@ -1265,34 +1254,43 @@
 	<dialog id="resize-dialog" data-tag="resize-dialog">
 		<form method="dialog" id="resize-form">
 			<h3>Resize canvas</h3>
-			<div class="resize-presets" id="resize-presets">
-				<span class="resize-presets-title">Quick sizes</span>
-				<button type="button" data-resize-preset="800x600"><span class="resize-preset-name">800 × 600</span><span
+			<div class="resize-scale-presets" role="group" aria-labelledby="resize-scale-presets-title">
+				<span class="resize-presets-title" id="resize-scale-presets-title" data-i18n="ui.scalePercent">Scale (%)</span>
+				<button type="button" data-resize-scale="50" aria-pressed="false">50%</button>
+				<button type="button" data-resize-scale="75" aria-pressed="false">75%</button>
+				<button type="button" data-resize-scale="100" aria-pressed="false">100%</button>
+				<button type="button" data-resize-scale="125" aria-pressed="false">125%</button>
+				<button type="button" data-resize-scale="150" aria-pressed="false">150%</button>
+				<button type="button" data-resize-scale="200" aria-pressed="false">200%</button>
+			</div>
+			<div class="resize-presets" id="resize-presets" role="group" aria-labelledby="resize-presets-title">
+				<span class="resize-presets-title" id="resize-presets-title" data-i18n="ui.quickSizes">Quick sizes</span>
+				<button type="button" data-resize-preset="800x600" aria-pressed="false"><span class="resize-preset-name">800 × 600</span><span
 						class="resize-preset-size">800 × 600 px</span></button>
-				<button type="button" data-resize-preset="1024x768"><span class="resize-preset-name">1024 × 768</span><span
+				<button type="button" data-resize-preset="1024x768" aria-pressed="false"><span class="resize-preset-name">1024 × 768</span><span
 						class="resize-preset-size">1024 × 768 px</span></button>
-				<button type="button" data-resize-preset="1000x1000"><span class="resize-preset-name">Square</span><span
+				<button type="button" data-resize-preset="1000x1000" aria-pressed="false"><span class="resize-preset-name">Square</span><span
 						class="resize-preset-size">1000 × 1000 px</span></button>
-				<button type="button" data-resize-preset="1123x794"><span class="resize-preset-name">A4 landscape</span><span
+				<button type="button" data-resize-preset="1123x794" aria-pressed="false"><span class="resize-preset-name">A4 landscape</span><span
 						class="resize-preset-size">1123 × 794 px</span></button>
-				<button type="button" data-resize-preset="794x1123"><span class="resize-preset-name">A4 portrait</span><span
+				<button type="button" data-resize-preset="794x1123" aria-pressed="false"><span class="resize-preset-name">A4 portrait</span><span
 						class="resize-preset-size">794 × 1123 px</span></button>
-				<button type="button" data-resize-preset="1600x1200"><span class="resize-preset-name">1600 × 1200</span><span
+				<button type="button" data-resize-preset="1600x1200" aria-pressed="false"><span class="resize-preset-name">1600 × 1200</span><span
 						class="resize-preset-size">1600 × 1200 px</span></button>
-				<button type="button" data-resize-preset="1920x1080"><span class="resize-preset-name">Full HD</span><span
+				<button type="button" data-resize-preset="1920x1080" aria-pressed="false"><span class="resize-preset-name">Full HD</span><span
 						class="resize-preset-size">1920 × 1080 px</span></button>
-				<button type="button" data-resize-preset="2560x1440"><span class="resize-preset-name">2K</span><span
+				<button type="button" data-resize-preset="2560x1440" aria-pressed="false"><span class="resize-preset-name">2K</span><span
 						class="resize-preset-size">2560 × 1440 px</span></button>
-				<button type="button" data-resize-preset="3840x2160"><span class="resize-preset-name">4K</span><span
+				<button type="button" data-resize-preset="3840x2160" aria-pressed="false"><span class="resize-preset-name">4K</span><span
 						class="resize-preset-size">3840 × 2160 px</span></button>
 			</div>
 			<label class="resize-dimension-row" for="resize-width"><span>Width (px)</span><input type="number"
-					id="resize-width" data-tag="resize-width" min="1" max="10000" /></label>
+					id="resize-width" data-tag="resize-width" min="1" max="10000" step="any" required /></label>
 			<label class="resize-dimension-row" for="resize-height"><span>Height (px)</span><input type="number"
-					id="resize-height" data-tag="resize-height" min="1" max="10000" /></label>
+					id="resize-height" data-tag="resize-height" min="1" max="10000" step="any" required /></label>
 			<div class="resize-scale-row">
 				<label for="resize-percent">Scale (%)</label>
-				<input type="number" id="resize-percent" data-tag="resize-percent" min="1" max="1000" step="1" value="100" />
+				<input type="number" id="resize-percent" data-tag="resize-percent" min="1" max="1000" step="any" value="100" />
 				<span id="resize-target-status" role="status">Whole canvas</span>
 			</div>
 			<div class="checkbox-row" data-tag="resize-keep-aspect-row"><input type="checkbox" id="resize-keep-aspect"

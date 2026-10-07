@@ -482,10 +482,15 @@ test('status and menu UI avoid redundant startup work and release their listener
 	assert.equal(canvasWrites, 1, 'a genuine resize still updates the label');
 
 	const trigger = eventTarget();
+	const triggerAttributes = new Map();
+	trigger.hasAttribute = (name) => triggerAttributes.has(name);
+	trigger.setAttribute = (name, value) => triggerAttributes.set(name, value);
 	const root = eventTarget();
 	root.querySelectorAll = (selector) => selector === '.action-menu-trigger' ? [trigger] : [];
 	const menus = createActionMenuController({ root });
 	menus.bind();
+	assert.equal(triggerAttributes.get('aria-haspopup'), 'menu');
+	assert.equal(triggerAttributes.get('aria-expanded'), 'false');
 	assert.equal(root.listenerCount(), 4, 'the menu owner registers click, pointerover, keydown, and open-at handlers');
 	assert.equal(trigger.listenerCount(), 1, 'the trigger is bound once');
 	menus.destroy();

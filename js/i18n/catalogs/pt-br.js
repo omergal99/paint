@@ -104,6 +104,8 @@ export const initializePtBr = (english) => {
     "ui.aiProvider": "Provedor de IA",
     "ui.send": "Enviar",
     "ui.resizeCanvas": "Redimensionar tela",
+    "ui.zoom100": "100%",
+    "ui.zoomTo100": "Zoom para 100%",
     "ui.resizeSummary": "Tamanho atual: {currentWidth} × {currentHeight} px. Novo tamanho: {newWidth} × {newHeight} px.",
     "ui.resizeNoChange": "A resolução permanecerá igual: {width} × {height} px.",
     "ui.brushSize": "Tamanho do pincel",

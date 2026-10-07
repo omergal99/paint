@@ -100,6 +100,8 @@ export const initializeJa = (english) => {
     "ui.aiProvider": "AIプロバイダー",
     "ui.send": "送信",
     "ui.resizeCanvas": "キャンバスサイズ変更",
+    "ui.zoom100": "100%",
+    "ui.zoomTo100": "100% にズーム",
     "ui.resizeSummary": "現在のサイズ: {currentWidth} × {currentHeight}px。新しいサイズ: {newWidth} × {newHeight}px。",
     "ui.resizeNoChange": "解像度は変更されません: {width} × {height}px。",
     "ui.brushSize": "ブラシサイズ",

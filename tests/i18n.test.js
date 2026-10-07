@@ -144,6 +144,22 @@ test('every supported locale has complete catalog coverage', () => {
 	});
 });
 
+test('loading status has reviewed text in every supported locale', () => {
+	const translations = {
+		en: 'Loading…',
+		es: 'Cargando…',
+		'pt-br': 'Carregando…',
+		fr: 'Chargement…',
+		de: 'Wird geladen…',
+		ar: 'جارٍ التحميل…',
+		ja: '読み込み中…',
+		he: 'טוען…',
+	};
+	SUPPORTED_LOCALES.forEach((locale) => {
+		assert.equal(MESSAGE_CATALOGS[locale].ui.loading, translations[locale], locale);
+	});
+});
+
 test('shared UI text mapping has one stable key per reusable source label', () => {
 	const labels = Object.keys(UI_TEXT_KEYS);
 	assert.equal(labels.length, new Set(labels).size);

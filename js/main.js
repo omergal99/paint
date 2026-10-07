@@ -408,6 +408,7 @@ const viewportManager = new ViewportManager({
 	canvasManager,
 	zoomInBtn: document.getElementById('zoom-in'),
 	zoomOutBtn: document.getElementById('zoom-out'),
+	zoomResetBtn: document.getElementById('zoom-reset'),
 	zoomInput: document.getElementById('zoom-input'),
 	zoomSlider: document.getElementById('zoom-slider'),
 });
@@ -618,11 +619,13 @@ const syncSelectionActions = () => {
 	// Crop also swaps its label so the disabled tooltip explains itself.
 	const crop = document.getElementById('btn-crop');
 	if (crop) {
-		const label = enabled ? 'Crop to selection' : 'No Selection Area to Crop';
+		const label = enabled ? t('ribbon.image.cropToSelection') : t('ui.noSelectionCrop');
 		crop.title = label;
 		crop.setAttribute('aria-label', label);
 	}
 };
+const syncSelectionActionsOnLocaleChange = () => syncSelectionActions();
+document.documentElement?.addEventListener('paint:locale-change', syncSelectionActionsOnLocaleChange);
 
 const setSelection = (region, opts = {}) => {
 	// Quarter-turn rotations legitimately swap the selection dimensions. Keep
@@ -656,6 +659,7 @@ const setSelection = (region, opts = {}) => {
 selectionOverlayController = createSelectionOverlayController({
 	canvasManager,
 	viewportManager,
+	historyManager,
 	setSelection,
 	isToolActive: () => activeToolName === 'select',
 	isPreviewActive: () => selectionPreviewActive,
@@ -1823,7 +1827,9 @@ const destroyEditor = () => {
 	adjustmentMask.destroy();
 	canvasResizer.destroy();
 	viewportManager.destroy();
+	statusBar.destroy();
 	directionEventTarget.removeEventListener('paint:locale-change', refreshCanvasDirectionGeometry);
+	document.documentElement?.removeEventListener('paint:locale-change', syncSelectionActionsOnLocaleChange);
 	hydration.destroy();
 	document.documentElement?.removeEventListener('paint:locale-change', browserInfoPanel.refresh);
 	document.documentElement?.removeEventListener('paint:locale-change', refreshAboutOnLocaleChange);

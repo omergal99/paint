@@ -90,3 +90,39 @@ test('global shortcuts leave editable fields to their native editing commands', 
 	assert.equal(event.preventCount, 0);
 	assert.equal(event.stopCount, 0);
 });
+
+test('global arrow shortcuts defer to focused controls but still nudge from the page', () => {
+	const calls = [];
+	const eventTarget = createEventTarget();
+	const button = {
+		tagName: 'BUTTON',
+		closest(selector) {
+			return selector.includes('button') ? this : null;
+		},
+	};
+	const body = { tagName: 'BODY', closest: () => null };
+	const documentRef = { activeElement: button };
+	const controller = createGlobalShortcutController({
+		commandRegistry: createCommandRegistry({
+			commands: { [SHORTCUT_ACTIONS.nudgeDown]: () => calls.push('nudgeDown') },
+		}),
+		shortcutManager: createShortcutManager(),
+		eventTarget,
+		documentRef,
+	});
+	controller.bind();
+
+	const menuNavigation = createKeyEvent({ code: 'ArrowDown', key: 'ArrowDown' });
+	eventTarget.dispatch('keydown', menuNavigation);
+	assert.deepEqual(calls, []);
+	assert.equal(menuNavigation.preventCount, 0);
+	assert.equal(menuNavigation.stopCount, 0);
+
+	documentRef.activeElement = body;
+	const canvasNudge = createKeyEvent({ code: 'ArrowDown', key: 'ArrowDown' });
+	eventTarget.dispatch('keydown', canvasNudge);
+	assert.deepEqual(calls, ['nudgeDown']);
+	assert.equal(canvasNudge.preventCount, 1);
+	assert.equal(canvasNudge.stopCount, 1);
+	controller.destroy();
+});

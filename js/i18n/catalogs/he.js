@@ -153,6 +153,8 @@ export const initializeHe = (english) => {
     "ui.aiHelp": "השתמשו בפעולות מהירות או כתבו פקודה נתמכת. אציג בדיוק מה שהוחל.",
     "ui.send": "שליחה",
     "ui.resizeCanvas": "שינוי גודל הבד",
+    "ui.zoom100": "100%",
+    "ui.zoomTo100": "תצוגה ב־100%",
     "ui.resizeSummary": "הגודל הנוכחי: {currentWidth} × {currentHeight} פיקסלים. הגודל החדש: {newWidth} × {newHeight} פיקסלים.",
     "ui.resizeNoChange": "הרזולוציה תישאר ללא שינוי: {width} × {height} פיקסלים.",
     "ui.brushSize": "גודל המברשת",

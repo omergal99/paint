@@ -347,6 +347,32 @@ export class CanvasManager {
     return true;
   }
 
+  resample({ width, height, source = this.createCompositeCanvas() } = {}) {
+    const nextWidth = Math.round(Number(width));
+    const nextHeight = Math.round(Number(height));
+    if (!Number.isFinite(nextWidth) || !Number.isFinite(nextHeight)
+      || nextWidth < 1 || nextHeight < 1
+      || !Number.isFinite(source?.width) || !Number.isFinite(source?.height)
+      || source.width < 1 || source.height < 1) return false;
+
+    const admission = this._admitImage({ width: nextWidth, height: nextHeight });
+    if (!admission.ok) return false;
+    if (nextWidth === this.width && nextHeight === this.height
+      && source === this.canvas) return true;
+
+    const scaled = document.createElement('canvas');
+    scaled.width = nextWidth;
+    scaled.height = nextHeight;
+    const context = scaled.getContext('2d');
+    if (!context) return false;
+    context.imageSmoothingEnabled = true;
+    context.imageSmoothingQuality = 'high';
+    context.drawImage(source, 0, 0, source.width, source.height, 0, 0, nextWidth, nextHeight);
+    if (!this.loadFromSource(scaled)) return false;
+    this.markDocumentDirty();
+    return true;
+  }
+
   resetCleanBaseline() { this._cleanSignature = this._pixelsSignature(); }
 
   getPixelColor(x, y) {

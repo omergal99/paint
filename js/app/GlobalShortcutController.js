@@ -1,10 +1,14 @@
 import { shortcutFromEvent } from '../settings/ShortcutManager.js';
-import { SHORTCUT_ACTIONS } from '../core/constants.js';
+import { KEYBOARD_KEYS, SHORTCUT_ACTIONS } from '../core/constants.js';
 
 const isEditableTarget = (target) => {
 	const tagName = target?.tagName;
 	return ['INPUT', 'TEXTAREA', 'SELECT'].includes(tagName) || Boolean(target?.isContentEditable);
 };
+
+const isArrowNavigationTarget = (target) => Boolean(target?.closest?.(
+	'button, a[href], [role="menuitem"], [role="menuitemcheckbox"], [role="menuitemradio"], [role="tab"], [role="slider"], [role="separator"], [tabindex]:not([tabindex="-1"])',
+));
 
 export const createGlobalShortcutController = ({
 	commandRegistry,
@@ -13,8 +17,9 @@ export const createGlobalShortcutController = ({
 	documentRef = globalThis.document,
 } = {}) => {
 	const handleKeydown = (event) => {
-		if (event.defaultPrevented || event.isComposing
-			|| isEditableTarget(documentRef?.activeElement)) return;
+		const activeElement = documentRef?.activeElement;
+		if (event.defaultPrevented || event.isComposing || isEditableTarget(activeElement)) return;
+		if (KEYBOARD_KEYS.arrows.includes(event.key) && isArrowNavigationTarget(activeElement)) return;
 
 		const shortcut = shortcutFromEvent(event);
 		const action = shortcutManager.resolve(shortcut);

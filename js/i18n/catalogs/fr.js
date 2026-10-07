@@ -100,6 +100,8 @@ export const initializeFr = (english) => {
     "ui.aiProvider": "Fournisseur IA",
     "ui.send": "Envoyer",
     "ui.resizeCanvas": "Redimensionner la zone",
+    "ui.zoom100": "100%",
+    "ui.zoomTo100": "Zoomer à 100 %",
     "ui.resizeSummary": "Taille actuelle : {currentWidth} × {currentHeight} px. Nouvelle taille : {newWidth} × {newHeight} px.",
     "ui.resizeNoChange": "La résolution restera identique : {width} × {height} px.",
     "ui.brushSize": "Taille du pinceau",

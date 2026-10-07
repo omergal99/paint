@@ -473,16 +473,17 @@ const crop = () => {
 		statusBar.flash('Select an area first');
 		return;
 	}
-	if (canvasManager.floatingCanvas) {
-		commitFloatingPixels(sel);
-		canvasManager.floatingCanvas = null;
-	}
+	if (canvasManager.floatingCanvas) commitFloatingSelection();
 	canvasManager.flattenLayers();
 	historyManager.snapshot();
 	const region = canvasManager.extractRegion(sel);
-	canvasManager.loadFromSource(region);
+	if (!canvasManager.loadFromSource(region)) {
+		setSelection(sel);
+		return false;
+	}
 	setSelection(null);
 	persistSession();
+	return true;
 }
 
   return Object.freeze({

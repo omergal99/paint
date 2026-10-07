@@ -16,6 +16,22 @@ const closeMenu = (menu) => {
   delete menu.dataset.submenuDirection;
 };
 
+const groupMenuItemIconLabels = (root) => {
+  root.querySelectorAll('.action-menu-items:not(.menu-stay-open) button').forEach((button) => {
+    if (button.classList.contains('action-submenu-trigger')) return;
+    const icon = [...button.children].find((child) => child.matches?.('svg.icon'));
+    const label = [...button.children].find((child) => child.matches?.('span')
+      && !child.classList.contains('menu-shortcut')
+      && !child.classList.contains('submenu-arrow'));
+    if (!icon || !label) return;
+
+    const group = button.ownerDocument.createElement('span');
+    group.className = 'menu-item-label';
+    button.insertBefore(group, icon);
+    group.append(icon, label);
+  });
+};
+
 export const createActionMenuController = ({ root = document } = {}) => {
   let bound = false;
   // Submenu visibility has two inputs: a click-pinned submenu persists while
@@ -350,7 +366,10 @@ export const createActionMenuController = ({ root = document } = {}) => {
   const bind = () => {
     if (bound) return;
     bound = true;
+    groupMenuItemIconLabels(root);
     root.querySelectorAll('.action-menu-trigger').forEach((trigger) => {
+      if (!trigger.hasAttribute('aria-haspopup')) trigger.setAttribute('aria-haspopup', 'menu');
+      if (!trigger.hasAttribute('aria-expanded')) trigger.setAttribute('aria-expanded', 'false');
       trigger.addEventListener('click', toggle);
     });
     root.addEventListener('click', handleRootClick);

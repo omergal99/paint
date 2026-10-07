@@ -23,12 +23,21 @@ test('Crop menu owns Remove Background', () => {
   const cropMenu = html.slice(cropMenuStart, cropMenuEnd);
 
   assert.ok(cropMenu.includes('id="btn-crop"'));
+  assert.match(cropMenu, /id="btn-crop"[^>]*data-requires-selection/);
 	assert.ok(cropMenu.includes('id="btn-remove-bg"'));
 	assert.match(cropMenu, /Remove Background/);
 	assert.match(cropMenu, /aria-haspopup="dialog"/);
 	assert.match(cropMenu, /id="btn-crop"[^>]*disabled/);
   assert.equal((html.match(/id="btn-remove-bg"/g) || []).length, 1);
   assert.ok(!/<button[^>]*class="[^"]*rbtn[^\"]*"[^>]*id="btn-remove-bg"/.test(html));
+});
+test('crop commits floating selections through the shared history transition', () => {
+	const fileActions = read('js/app/fileActions.js');
+	const crop = fileActions.slice(fileActions.indexOf('const crop = () =>'));
+	assert.match(crop, /if \(canvasManager\.floatingCanvas\) commitFloatingSelection\(\);/);
+	assert.doesNotMatch(crop, /commitFloatingPixels\(sel\)/);
+	assert.match(crop, /historyManager\.snapshot\(\);[\s\S]*canvasManager\.extractRegion\(sel\)/);
+	assert.match(crop, /if \(!canvasManager\.loadFromSource\(region\)\) \{[\s\S]*setSelection\(sel\);[\s\S]*return false;/);
 });
 test('Workspace strip has explicit management and split controls', () => {
 	assert.doesNotMatch(html, /id="workspace-strip"|class="workspace-strip"/);
@@ -55,10 +64,30 @@ test('About stats use one shared loading status and resolve their values', () =>
 	assert.match(app, /RIBBON_STARTUP_MASK_DELAY_MS/);
 	assert.match(app, /Math\.min\(10000, Math\.max\(0/);
 });
-test('Tool menu keeps SVG icons after localization and file icons use the shared line style', () => {
+test('More tools are rendered from one localized menu definition and retain source icons', () => {
 	const toolbar = read('js/ui/Toolbar.js');
-	assert.match(toolbar, /data-i18n=\"\$\{i18nKey\}\"/);
-	assert.match(toolbar, /removeAttribute\('data-i18n-runtime'\)/);
+	assert.match(toolbar, /const TOOL_MENU_ITEMS = Object\.freeze/);
+	assert.match(toolbar, /_renderToolMenu\(\)/);
+	assert.match(toolbar, /source\?\.querySelector\('svg'\)\?\.cloneNode\(true\)/);
+	assert.match(toolbar, /labelElement\.dataset\.i18n = labelKey/);
+	assert.match(toolbar, /tool: 'pan', labelKey: 'ui\.handPan'/);
+	assert.doesNotMatch(html, /class="rbtn small tool-menu-item tool-btn"/);
+	assert.match(html, /id="btn-tools-menu"[^>]*aria-haspopup="menu" aria-expanded="false"/);
+	const loadingMask = html.match(/<div class="ribbon-loading-mask"[^>]*>([\s\S]*?)<\/div>/)?.[1] || '';
+	assert.match(html, /class="ribbon-loading-mask"[^>]*role="status" aria-live="polite"/);
+	assert.match(loadingMask, /class="ribbon-loading-spinner" aria-hidden="true"/);
+	assert.match(loadingMask, /class="ribbon-loading-label" data-i18n="ui\.loading">Loading…<\/span>/);
+	assert.ok(
+		loadingMask.indexOf('ribbon-loading-spinner') < loadingMask.indexOf('ribbon-loading-label'),
+		'the spinner precedes the localized loading label in DOM order',
+	);
+	assert.match(read('css/styles.css'), /@media \(prefers-reduced-motion: reduce\)[\s\S]*\.ribbon-loading-spinner/);
+	// Menu actions keep icons and their text together; shortcuts share the
+	// remaining inline space instead of using a physical-side offset.
+	const menuController = read('js/ui/ActionMenuController.js');
+	assert.match(menuController, /groupMenuItemIconLabels/);
+	assert.match(menuController, /group\.append\(icon, label\)/);
+	assert.match(read('css/styles.css'), /\.menu-shortcut\s*\{[\s\S]*margin-inline-start:\s*auto/);
 	assert.match(html, /id="btn-new"[\s\S]*stroke="currentColor"[\s\S]*data-i18n="common\.actions\.new"/);
 	// Paste uses the shared sprite (SSOT) instead of an inlined copy of the path.
 	assert.match(html, /<symbol[^>]*id="icon-paste"[\s\S]*?stroke="currentColor"/);
@@ -88,9 +117,29 @@ test('Image action submenus expose consistent icons and translated labels', () =
 	assert.match(imageMenu, /id="btn-flip"[\s\S]*<svg class="icon size4"/);
 	assert.match(imageMenu, /id="btn-flip-horizontal"[\s\S]*data-i18n="ui\.flipHorizontal"/);
 	assert.match(imageMenu, /id="btn-flip-vertical"[\s\S]*data-i18n="ui\.flipVertical"/);
+	assert.match(imageMenu, /id="btn-canvas-size"[\s\S]*data-i18n="ribbon\.image\.resize"/);
+	assert.match(imageMenu, /id="btn-canvas-size"[^>]*data-i18n-attr="title:ui\.resizeCanvas"/);
 	assert.match(read('css/styles.css'), /\.submenu-label\s*\{[\s\S]*gap:\s*5px/);
 	assert.match(read('css/styles.css'), /\.submenu-arrow\s*\{[\s\S]*margin-inline-start:\s*auto/);
 	assert.match(html, /data-tag="tool-select"[\s\S]*<path\s+d="M3\.5 7V4\.5/);
+});
+
+test('zoom controls provide a localized direct return to actual size', () => {
+	const zoomReset = html.match(/<button[^>]*id="zoom-reset"[\s\S]*?<\/button>/)?.[0] || '';
+	assert.match(zoomReset, /data-i18n-attr="title:ui\.zoomTo100,aria-label:ui\.zoomTo100"/);
+	assert.match(zoomReset, /data-i18n="ui\.zoom100">100%/);
+	assert.match(read('js/canvas/ViewportManager.js'), /_onZoomReset = \(\) => this\.setZoom\(100\)/);
+	assert.match(read('js/canvas/ViewportManager.js'), /zoomResetBtn\?\.addEventListener\('click', this\._onZoomReset\)/);
+});
+
+test('status feedback is announced accessibly and its controller is disposable', () => {
+	assert.match(html, /id="status-flash"[^>]*role="status"[\s\S]*aria-live="polite"[\s\S]*aria-atomic="true"/);
+	const statusBar = read('js/ui/StatusBar.js');
+	assert.match(statusBar, /eventTarget\?\.addEventListener\?\.\('paint:locale-change', refresh\)/);
+	assert.match(statusBar, /eventTarget\?\.removeEventListener\?\.\('paint:locale-change', refresh\)/);
+	assert.match(statusBar, /const clearFlash = \(\) =>/);
+	assert.match(statusBar, /const destroy = \(\) =>/);
+	assert.match(main, /statusBar\.destroy\(\)/);
 });
 
 test('dialog-opening actions use semantic data-tags and the shared indicator', () => {
@@ -785,7 +834,7 @@ test('PWA settings expose install/update controls and versioned update flow', ()
 
 test('Hand/Pan is available as a shared tool and shortcut', () => {
 	const pan = read('js/tools/PanTool.js');
-	assert.match(html, /data-tool="pan"/);
+	assert.match(read('js/ui/Toolbar.js'), /tool: 'pan', labelKey: 'ui\.handPan'/);
 	assert.match(main, /createPanTool/);
 	assert.match(main, /\[SHORTCUT_ACTIONS\.panTool\]: \(\) => toolManager\.setActive\('pan'\)/);
 	assert.match(pan, /scrollLeft/);

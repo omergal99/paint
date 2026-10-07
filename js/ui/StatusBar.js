@@ -1,17 +1,28 @@
 import { t } from '../i18n/messages.js';
 
 // js/ui/StatusBar.js
-export const createStatusBar = ({ pointerEl, selectionEl, canvasSizeEl, flashEl, eventTarget = globalThis }) => {
+export const createStatusBar = ({
+  pointerEl,
+  selectionEl,
+  canvasSizeEl,
+  flashEl,
+  eventTarget = globalThis.document?.documentElement,
+  schedule = globalThis.setTimeout,
+  cancel = globalThis.clearTimeout,
+}) => {
   let currentPointer = null;
   let flashTimer = null;
   let lastSelection = null;
+  let destroyed = false;
   selectionEl?.setAttribute?.('data-i18n-ignore', '');
   selectionEl?.removeAttribute?.('data-i18n-runtime');
   selectionEl?.removeAttribute?.('data-i18n-runtime-source');
 
   const setPointer = (pt) => {
     currentPointer = pt;
-    pointerEl.textContent = pt ? `Pointer: ${Math.round(pt.x)}, ${Math.round(pt.y)}px` : 'Pointer: -';
+    pointerEl.textContent = t('status.pointer', {
+      position: pt ? `${Math.round(pt.x)}, ${Math.round(pt.y)}px` : '-',
+    });
   }
 
   // The label mixes a translated word with a live measurement ("Selection: 120 ×
@@ -23,18 +34,22 @@ export const createStatusBar = ({ pointerEl, selectionEl, canvasSizeEl, flashEl,
     lastSelection = region && region.w && region.h ? region : null;
     selectionEl?.removeAttribute?.('data-i18n-runtime');
     selectionEl?.removeAttribute?.('data-i18n-runtime-source');
-    selectionEl.textContent = lastSelection
+    if (selectionEl) selectionEl.textContent = lastSelection
       ? `${t('ui.selectionLabel')} ${lastSelection.w} × ${lastSelection.h}px`
       : '';
   }
 
-  const refresh = () => setSelection(lastSelection);
-  eventTarget?.documentElement?.addEventListener?.('paint:locale-change', refresh);
+  const refresh = () => {
+    setPointer(currentPointer);
+    setSelection(lastSelection);
+  };
+  eventTarget?.addEventListener?.('paint:locale-change', refresh);
 
   // Mid-drag the marquee is only an area, not a movable selection. Saying so
   // stops the thin frame reading as "the click did nothing". Releasing hands the
   // slot back to the caller, which restores the real selection label.
   const setMarqueeSelecting = (active) => {
+    if (!selectionEl) return;
     if (!active) {
       selectionEl.textContent = '';
       selectionEl?.removeAttribute?.('data-i18n-runtime');
@@ -54,13 +69,28 @@ export const createStatusBar = ({ pointerEl, selectionEl, canvasSizeEl, flashEl,
     if (canvasSizeEl.textContent !== label) canvasSizeEl.textContent = label;
   }
 
+  const clearFlash = () => {
+    if (flashTimer !== null) cancel(flashTimer);
+    flashTimer = null;
+    if (flashEl) flashEl.textContent = '';
+  };
+
   const flash = (message, ms = 2200) => {
+    if (destroyed || !flashEl) return;
+    clearFlash();
     flashEl.textContent = message;
-    if (flashTimer) clearTimeout(flashTimer);
-    flashTimer = setTimeout(() => {
-      flashEl.textContent = '';
+    flashTimer = schedule(() => {
+      flashTimer = null;
+      if (!destroyed) flashEl.textContent = '';
     }, ms);
   }
+
+  const destroy = () => {
+    if (destroyed) return;
+    destroyed = true;
+    eventTarget?.removeEventListener?.('paint:locale-change', refresh);
+    clearFlash();
+  };
 
   return Object.freeze({
     setPointer,
@@ -69,6 +99,8 @@ export const createStatusBar = ({ pointerEl, selectionEl, canvasSizeEl, flashEl,
     refresh,
     setCanvasSize,
     flash,
+    clearFlash,
+    destroy,
     get currentPointer() { return currentPointer; },
   });
 }

@@ -385,26 +385,39 @@ body {
 	inset: 0;
 	z-index: 20;
 	display: flex;
+	flex-direction: row;
 	align-items: center;
 	justify-content: center;
+	gap: 10px;
+	direction: inherit;
 	background: var(--w10-ribbon-bg);
 	color: var(--w10-text-dim);
-	font-size: 20px;
-	letter-spacing: 0.02em;
 	pointer-events: auto;
 	cursor: progress;
-	animation: ribbon-loading-pulse 2s ease-in-out infinite;
 }
 .ribbon:not(.ribbon-loading) .ribbon-loading-mask {
 	display: none;
 }
-@keyframes ribbon-loading-pulse {
-	0%,
-	100% {
-		opacity: 0.8;
-	}
-	50% {
-		opacity: 1;
+.ribbon-loading-spinner {
+	flex: 0 0 auto;
+	width: 28px;
+	height: 28px;
+	border: 3px solid var(--w10-border-strong);
+	border-block-start-color: var(--w10-accent);
+	border-radius: 50%;
+	animation: ribbon-loading-spin 0.8s linear infinite;
+}
+.ribbon-loading-label {
+	font-size: 14px;
+	font-weight: 500;
+	unicode-bidi: isolate;
+}
+@keyframes ribbon-loading-spin {
+	to { transform: rotate(1turn); }
+}
+@media (prefers-reduced-motion: reduce) {
+	.ribbon-loading-spinner {
+		animation: none;
 	}
 }
 .ribbon::-webkit-scrollbar {
@@ -3183,6 +3196,14 @@ html[dir="rtl"] .resize-ghost {
 .zoom-controls button:hover {
 	background: var(--w10-hover);
 }
+.zoom-controls #zoom-reset {
+	width: auto;
+	min-width: 34px;
+	padding-inline: 4px;
+	font-family: var(--font-ui);
+	font-size: 11px;
+	font-weight: 600;
+}
 .zoom-controls input[type="number"] {
 	width: 46px;
 	font-family: var(--font-ui);
@@ -4516,6 +4537,12 @@ dialog h3 {
 	inset-inline-start: -10000px;
 	overflow: hidden;
 }
+.resize-scale-presets {
+	display: grid;
+	grid-template-columns: repeat(6, minmax(0, 1fr));
+	gap: 6px;
+	margin: 0 0 10px;
+}
 .resize-presets {
 	display: grid;
 	grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -4527,6 +4554,7 @@ dialog h3 {
 	font-size: 12px;
 	color: var(--w10-text-dim);
 }
+.resize-scale-presets button,
 .resize-presets button {
 	display: flex;
 	flex-direction: column;
@@ -4539,6 +4567,10 @@ dialog h3 {
 	color: var(--w10-text);
 	cursor: pointer;
 }
+.resize-scale-presets button {
+	min-height: 30px;
+	padding: 4px;
+}
 .resize-preset-name,
 .resize-preset-size {
 	display: block;
@@ -4548,6 +4580,8 @@ dialog h3 {
 	color: var(--w10-text-dim);
 	font-size: 10px;
 }
+.resize-scale-presets button:hover,
+.resize-scale-presets button.selected,
 .resize-presets button:hover,
 .resize-presets button.selected {
 	background: var(--w10-active);
@@ -4759,9 +4793,16 @@ dialog h3 {
 	z-index: 120;
 }
 .action-menu-items button .menu-shortcut {
-	margin-inline-start: 14px;
+	margin-inline-start: auto;
 	color: var(--w10-text-dim);
 	font-size: 11px;
+}
+.action-menu-items button > .menu-item-label {
+	display: flex;
+	align-items: center;
+	flex: 1 1 auto;
+	min-width: 0;
+	gap: 8px;
 }
 .image-more-menu-items {
 	grid-template-columns: minmax(130px, 1fr);
@@ -4788,6 +4829,7 @@ dialog h3 {
 .submenu-label {
 	display: inline-flex;
 	align-items: center;
+	flex: 1 1 auto;
 	gap: 5px;
 	min-width: 0;
 }

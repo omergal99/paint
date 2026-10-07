@@ -8,6 +8,30 @@ const TEXT_AFTER_DRAW_KEY = STORAGE_KEYS.textSelectAfterDraw;
 const TEXT_HISTORY_TOOLBAR_KEY = STORAGE_KEYS.textHistoryToolbar;
 const STYLE_STORAGE_KEY = 'paint:tool-styles';
 const STYLE_HISTORY_KEY = 'paint:style-history';
+const TOOL_MENU_ITEMS = Object.freeze([
+  Object.freeze({ tool: 'pencil', labelKey: 'ribbon.tools.pencil', label: 'Pencil' }),
+  Object.freeze({ tool: 'fill', labelKey: 'ribbon.tools.fill', label: 'Fill' }),
+  Object.freeze({ tool: 'eraser', labelKey: 'ribbon.tools.eraser', label: 'Eraser' }),
+  Object.freeze({ tool: 'eyedropper', labelKey: 'ribbon.tools.colorPicker', label: 'Color picker' }),
+  Object.freeze({ tool: 'zoom', labelKey: 'ribbon.tools.magnifier', label: 'Magnifier' }),
+  Object.freeze({ tool: 'pan', labelKey: 'ui.handPan', label: 'Hand / Pan' }),
+]);
+const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
+const PAN_ICON_PATH = 'M6.5 9V4.5a1 1 0 0 1 2 0V9V3.5a1 1 0 0 1 2 0V9V4.5a1 1 0 0 1 2 0V9V6a1 1 0 0 1 2 0v5.2c0 3.2-2.1 5.3-5.1 5.3H8.6c-1.6 0-2.8-.8-3.6-2.1L3.6 12a1.2 1.2 0 0 1 2.1-1.1L6.5 12V9Z';
+
+const createPanIcon = (document) => {
+  const svg = document.createElementNS(SVG_NAMESPACE, 'svg');
+  svg.setAttribute('class', 'icon');
+  svg.setAttribute('viewBox', '0 0 20 20');
+  svg.setAttribute('aria-hidden', 'true');
+  const path = document.createElementNS(SVG_NAMESPACE, 'path');
+  path.setAttribute('d', PAN_ICON_PATH);
+  path.setAttribute('fill', 'none');
+  path.setAttribute('stroke', 'currentColor');
+  path.setAttribute('stroke-linejoin', 'round');
+  svg.append(path);
+  return svg;
+};
 
 export class Toolbar {
   constructor({ root, toolManager, setLineWidth, setFontSize, handlers, brushState = null }) {
@@ -16,6 +40,7 @@ export class Toolbar {
     this.handlers = handlers; // {newFile, openFile, importFile, save, saveAs, copy, cut, paste, crop, openResizeDialog}
     this._eventController = new AbortController();
 
+    this._renderToolMenu();
     this.toolButtons = [...root.querySelectorAll('.tool-btn')];
     this.shapeButtons = [...root.querySelectorAll('.shape-btn')];
     this.fillModeButtons = [...root.querySelectorAll('.fillmode-btn')];
@@ -71,25 +96,6 @@ export class Toolbar {
   }
 
   _bindTools() {
-    this.root.querySelectorAll('.tool-menu-item').forEach((menuButton) => {
-      const source = this.root.querySelector(`.tool-grid .tool-btn[data-tool="${menuButton.dataset.tool}"]`);
-      if (!source) return;
-      const label = source.title.replace(/ \(.+\)$/, '');
-      const i18nKey = {
-        pencil: 'ribbon.tools.pencil',
-        fill: 'ribbon.tools.fill',
-        eraser: 'ribbon.tools.eraser',
-        eyedropper: 'ribbon.tools.colorPicker',
-        zoom: 'ribbon.tools.magnifier',
-      }[menuButton.dataset.tool];
-      menuButton.innerHTML = `${source.querySelector('svg')?.outerHTML || ''}<span${i18nKey ? ` data-i18n="${i18nKey}"` : ''}>${label}</span>`;
-      // LocaleController may have tagged the original text-only button with a
-      // runtime translation key. The icon-bearing button now owns a translated
-      // child span, so keeping that parent key would make the observer replace
-      // the SVG with plain text on the next mutation.
-      menuButton.removeAttribute('data-i18n-runtime');
-      menuButton.removeAttribute('data-i18n-runtime-source');
-    });
     this._listen(this.root, 'click', (event) => {
       const btn = event.target.closest?.('.tool-btn');
       if (!btn || !this.root.contains(btn)) return;
@@ -99,6 +105,34 @@ export class Toolbar {
         }
         this.toolManager.setActive(btn.dataset.tool);
     });
+  }
+
+  _renderToolMenu() {
+    const menu = this.root.querySelector('.tools-menu > .action-menu-items');
+    if (!menu) return;
+    const document = menu.ownerDocument;
+    const styleHistory = menu.querySelector('.style-history-block');
+    const items = TOOL_MENU_ITEMS.map(({ tool, labelKey, label }) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'rbtn small tool-menu-item tool-btn';
+      button.dataset.tool = tool;
+      button.setAttribute('role', 'menuitem');
+
+      const source = this.root.querySelector(`.tool-grid .tool-btn[data-tool="${tool}"]`);
+      const icon = source?.querySelector('svg')?.cloneNode(true)
+        || (tool === 'pan' ? createPanIcon(document) : null);
+      const labelGroup = document.createElement('span');
+      labelGroup.className = 'menu-item-label';
+      if (icon) labelGroup.append(icon);
+      const labelElement = document.createElement('span');
+      labelElement.dataset.i18n = labelKey;
+      labelElement.textContent = label;
+      labelGroup.append(labelElement);
+      button.append(labelGroup);
+      return button;
+    });
+    menu.replaceChildren(...items, ...(styleHistory ? [styleHistory] : []));
   }
 
   _highlightTool(name) {

@@ -111,6 +111,8 @@ export const UI_TEXT_KEYS = Object.freeze({
 	'Use Quick actions or type a supported command. I will show exactly what I apply.': 'ui.aiHelp',
 	Send: 'ui.send',
 	'Resize canvas': 'ui.resizeCanvas',
+	'100%': 'ui.zoom100',
+	'Zoom to 100%': 'ui.zoomTo100',
 	'Current size: {currentWidth} × {currentHeight}px. New size: {newWidth} × {newHeight}px.': 'ui.resizeSummary',
 	'Resolution will stay the same: {width} × {height}px.': 'ui.resizeNoChange',
 	'Brush size': 'ui.brushSize',

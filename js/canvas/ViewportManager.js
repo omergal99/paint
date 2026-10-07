@@ -20,13 +20,14 @@ const ZOOM_STORAGE_KEY = 'paint:zoom';
 const INITIAL_ZOOM_STORAGE_KEY = 'paint:initial-zoom';
 
 export class ViewportManager {
-  constructor({ stage, scaleEl, canvasManager, zoomInBtn, zoomOutBtn, zoomInput, zoomSlider }) {
+  constructor({ stage, scaleEl, canvasManager, zoomInBtn, zoomOutBtn, zoomResetBtn = null, zoomInput, zoomSlider }) {
     this.stage = stage; // outer box - sized to the scaled canvas (scroll extent)
     this.scaleEl = scaleEl; // inner box - image-pixel size + zoom transform
     this.viewportEl = stage.parentElement; // the scrollable viewport wrapper
     this.canvasManager = canvasManager;
     this.zoomInBtn = zoomInBtn;
     this.zoomOutBtn = zoomOutBtn;
+    this.zoomResetBtn = zoomResetBtn;
     this.zoomInput = zoomInput;
     this.zoomSlider = zoomSlider;
     this.zoom = this._restoreZoom(); // percent
@@ -37,6 +38,7 @@ export class ViewportManager {
 
     this._onZoomIn = () => this.setZoom(this.zoom + STEP);
     this._onZoomOut = () => this.setZoom(this.zoom - STEP);
+    this._onZoomReset = () => this.setZoom(100);
     this._onZoomInputChange = () => {
       const val = parseInt(this.zoomInput.value, 10);
       if (!Number.isNaN(val)) this.setZoom(val);
@@ -56,6 +58,7 @@ export class ViewportManager {
 
     this.zoomInBtn.addEventListener('click', this._onZoomIn);
     this.zoomOutBtn.addEventListener('click', this._onZoomOut);
+    this.zoomResetBtn?.addEventListener('click', this._onZoomReset);
 
     this.zoomInput.addEventListener('change', this._onZoomInputChange);
     this.zoomInput.addEventListener('keydown', this._onZoomInputKeydown);
@@ -80,6 +83,8 @@ export class ViewportManager {
   }
 
   setZoom(percent) {
+    percent = Number(percent);
+    if (!Number.isFinite(percent)) return;
     percent = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, Math.round(percent)));
     this.zoom = percent;
     this._applyZoom();
@@ -179,6 +184,7 @@ export class ViewportManager {
   destroy() {
     this.zoomInBtn.removeEventListener('click', this._onZoomIn);
     this.zoomOutBtn.removeEventListener('click', this._onZoomOut);
+    this.zoomResetBtn?.removeEventListener('click', this._onZoomReset);
     this.zoomInput.removeEventListener('change', this._onZoomInputChange);
     this.zoomInput.removeEventListener('keydown', this._onZoomInputKeydown);
     this.zoomSlider.removeEventListener('input', this._onZoomSliderInput);

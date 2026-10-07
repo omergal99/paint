@@ -100,6 +100,8 @@ export const initializeDe = (english) => {
     "ui.aiProvider": "KI-Anbieter",
     "ui.send": "Senden",
     "ui.resizeCanvas": "Leinwandgröße ändern",
+    "ui.zoom100": "100%",
+    "ui.zoomTo100": "Auf 100 % zoomen",
     "ui.resizeSummary": "Aktuelle Größe: {currentWidth} × {currentHeight} px. Neue Größe: {newWidth} × {newHeight} px.",
     "ui.resizeNoChange": "Die Auflösung bleibt unverändert: {width} × {height} px.",
     "ui.brushSize": "Pinselgröße",
