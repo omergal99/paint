@@ -10,6 +10,7 @@ export const createSelectionOverlayController = ({
 	isToolActive,
 	isPreviewActive,
 	getKeepAspectRatio = () => true,
+	commitFloatingSelection = null,
 	documentRef = globalThis.document,
 	windowRef = globalThis.window,
 	getComputedStyleRef = globalThis.getComputedStyle,
@@ -73,20 +74,30 @@ export const createSelectionOverlayController = ({
 				event.preventDefault();
 				event.stopPropagation();
 				const original = { ...canvasManager.selection };
-				const wholeCanvas = !canvasManager.floatingCanvas
-					&& original.x === 0 && original.y === 0
-					&& original.w === canvasManager.width && original.h === canvasManager.height;
+				const wholeCanvas = canvasManager.isFullCanvasSelection?.(original)
+					?? (original.x === 0 && original.y === 0
+						&& original.w === canvasManager.width && original.h === canvasManager.height);
 				const originalCanvasRect = wholeCanvas
 					? canvasManager.canvas?.getBoundingClientRect?.()
 					: null;
 				const zoomScale = viewportManager.zoom / 100;
+				if (wholeCanvas && canvasManager.floatingCanvas && commitFloatingSelection) {
+					commitFloatingSelection();
+					setSelection(original);
+				}
 				const originalSource = wholeCanvas ? documentRef.createElement('canvas') : null;
+				const originalRasterSource = wholeCanvas ? documentRef.createElement('canvas') : null;
 				if (originalSource) {
 					originalSource.width = canvasManager.width;
 					originalSource.height = canvasManager.height;
 					const sourceContext = originalSource.getContext('2d');
 					if (!sourceContext) return;
-					sourceContext.drawImage(canvasManager.createCompositeCanvas(), 0, 0);
+					sourceContext.drawImage(canvasManager.createCompositeCanvas({ includeFloating: true }), 0, 0);
+					originalRasterSource.width = canvasManager.width;
+					originalRasterSource.height = canvasManager.height;
+					const rasterContext = originalRasterSource.getContext('2d');
+					if (!rasterContext) return;
+					rasterContext.drawImage(canvasManager.createCompositeCanvas(), 0, 0);
 					historyManager?.beginTransaction?.();
 				}
 				const originalFloating = canvasManager.floatingCanvas
@@ -192,11 +203,12 @@ export const createSelectionOverlayController = ({
 					if (wholeCanvas) {
 						if (canvasResized) {
 							const restored = canvasManager.resample({
-								source: originalSource,
+								source: originalRasterSource,
 								width: original.w,
 								height: original.h,
 							});
 							if (restored) {
+								canvasManager.floatingCanvas = originalFloating;
 								setSelection(original);
 								if (originalStagePosition && viewportManager.stage?.style) {
 									viewportManager.stage.style.left = originalStagePosition.left;

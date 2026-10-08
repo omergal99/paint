@@ -168,6 +168,8 @@ export const UI_TEXT_KEYS = Object.freeze({
 	'Height (px)': 'ui.heightPx',
 	'Scale (%)': 'ui.scalePercent',
 	'Whole canvas': 'ui.wholeCanvas',
+	'Target: Whole Canvas': 'ui.resizeTargetWholeCanvas',
+	'Target: Active Selection': 'ui.resizeTargetSelection',
 	'Maintain aspect ratio': 'ui.keepAspect',
 	Cancel: 'common.actions.cancel',
 	OK: 'common.actions.ok',

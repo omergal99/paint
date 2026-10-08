@@ -198,6 +198,8 @@ export const initializeHe = (english) => {
     "ui.heightPx": "גובה (פיקסלים)",
     "ui.scalePercent": "קנה מידה (%)",
     "ui.wholeCanvas": "הבד כולו",
+    "ui.resizeTargetWholeCanvas": "יעד: הבד כולו",
+    "ui.resizeTargetSelection": "יעד: הבחירה הפעילה",
     "ui.keepAspect": "שמירה על יחס ממדים",
     "ui.tabGeneral": "כללי",
     "ui.tabShortcuts": "קיצורים",

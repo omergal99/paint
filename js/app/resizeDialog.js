@@ -74,7 +74,11 @@ export const initResizeDialog = ({
 
   const activeResizeTarget = () => {
     const selection = canvasManager.selection;
-    if (selection?.w > 0 && selection?.h > 0) {
+    const isFullCanvas = !selection
+      || (canvasManager.isFullCanvasSelection?.(selection)
+        ?? (selection.x === 0 && selection.y === 0
+          && selection.w === canvasManager.width && selection.h === canvasManager.height));
+    if (!isFullCanvas && selection?.w > 0 && selection?.h > 0) {
       return {
         kind: 'selection',
         x: selection.x,
@@ -121,8 +125,8 @@ export const initResizeDialog = ({
     resizePercentInput.value = '100';
     if (resizeTargetStatus) {
       resizeTargetStatus.textContent = resizeTarget.kind === 'selection'
-        ? `${t('ui.selectionLabel')} ${resizeTarget.width} × ${resizeTarget.height}px`
-        : t('ui.wholeCanvas');
+        ? t('ui.resizeTargetSelection')
+        : t('ui.resizeTargetWholeCanvas');
     }
     updateResizeSummary();
     updatePresetSelection();
@@ -227,8 +231,8 @@ export const initResizeDialog = ({
       statusBar.flash(admission.message);
       return;
     }
-    historyManager.snapshot();
     if (resizeTarget.kind === 'selection') {
+      historyManager.snapshot({ force: true });
       const source = canvasManager.floatingCanvas || canvasManager.extractRegion({
         x: resizeTarget.x,
         y: resizeTarget.y,
@@ -251,7 +255,9 @@ export const initResizeDialog = ({
       setSelection({ x: resizeTarget.x, y: resizeTarget.y, w, h });
     } else {
       commitFloatingSelection();
-      if (!canvasManager.resize(w, h)) return;
+      historyManager.snapshot({ force: true });
+      const source = canvasManager.createCompositeCanvas({ includeFloating: true });
+      if (!canvasManager.resample({ width: w, height: h, source })) return;
     }
     persistSession();
     resizeDialog.close();

@@ -41,7 +41,7 @@ const createElement = ({ value = '', dataset = {}, min = '', max = '' } = {}) =>
 	return element;
 };
 
-const createResizeDialogFixture = () => {
+const createResizeDialogFixture = ({ selection = null, floatingCanvas = null } = {}) => {
 	const elements = {
 		'resize-dialog': createElement(),
 		'resize-width': createElement({ value: '800', min: '1', max: '10000' }),
@@ -70,18 +70,34 @@ const createResizeDialogFixture = () => {
 	globalThis.document = documentRef;
 
 	const resized = [];
+	const resampled = [];
 	const history = [];
 	const status = [];
 	const dialogUrls = [];
 	const canvasManager = {
 		width: 800,
 		height: 600,
-		selection: null,
-		floatingCanvas: null,
+		selection,
+		floatingCanvas,
+		isFullCanvasSelection(region = this.selection) {
+			return Boolean(region && region.x === 0 && region.y === 0
+				&& region.w === this.width && region.h === this.height);
+		},
+		createCompositeCanvas({ includeFloating = false } = {}) {
+			return { width: this.width, height: this.height, includeFloating };
+		},
 		resize(width, height) {
 			resized.push([width, height]);
 			this.width = width;
 			this.height = height;
+			return true;
+		},
+		resample(options) {
+			resampled.push(options);
+			this.width = options.width;
+			this.height = options.height;
+			this.selection = null;
+			this.floatingCanvas = null;
 			return true;
 		},
 	};
@@ -89,8 +105,13 @@ const createResizeDialogFixture = () => {
 		canvasManager,
 		historyManager: { snapshot: () => history.push('snapshot') },
 		statusBar: { flash: (message) => status.push(message) },
-		setSelection: () => {},
-		commitFloatingSelection: () => {},
+		setSelection: (region) => { canvasManager.selection = region; },
+		commitFloatingSelection: () => {
+			if (!canvasManager.floatingCanvas) return;
+			history.push('commit-floating');
+			canvasManager.floatingCanvas = null;
+			canvasManager.selection = null;
+		},
 		persistSession: () => history.push('persist'),
 		setDialogUrl: (value) => dialogUrls.push(value),
 	});
@@ -102,6 +123,7 @@ const createResizeDialogFixture = () => {
 		scalePresets,
 		canvasManager,
 		resized,
+		resampled,
 		history,
 		status,
 		dialogUrls,
@@ -151,6 +173,52 @@ test('scale presets apply to the active target and expose their pressed state', 
 	}
 });
 
+test('Resize dialog targets the physical canvas for no selection and full-canvas selection', () => {
+	for (const selection of [
+		null,
+		{ x: 0, y: 0, w: 800, h: 600 },
+	]) {
+		const floatingCanvas = selection ? { width: 800, height: 600 } : null;
+		const fixture = createResizeDialogFixture({ selection, floatingCanvas });
+		try {
+			fixture.controller.openResizeDialog();
+			assert.equal(fixture.elements['resize-target-status'].textContent, 'Target: Whole Canvas');
+			assert.equal(fixture.elements['resize-width'].value, '800');
+			assert.equal(fixture.elements['resize-height'].value, '600');
+
+			fixture.scalePresets.find((button) => button.dataset.resizeScale === '75').dispatch('click');
+			fixture.elements['resize-form'].dispatch('submit', { preventDefault() {} });
+
+			assert.deepEqual(
+				fixture.resampled.map(({ width, height }) => [width, height]),
+				[[600, 450]],
+			);
+			assert.deepEqual(fixture.resized, [], 'whole-canvas scale resamples pixels instead of cropping via bounds-only resize');
+			assert.deepEqual(fixture.history, floatingCanvas
+				? ['commit-floating', 'snapshot', 'persist']
+				: ['snapshot', 'persist']);
+			assert.deepEqual([fixture.canvasManager.width, fixture.canvasManager.height], [600, 450]);
+		} finally {
+			fixture.restoreDocument();
+		}
+	}
+});
+
+test('Resize dialog identifies a partial selection as the active selection target', () => {
+	const fixture = createResizeDialogFixture({
+		selection: { x: 10, y: 15, w: 40, h: 30 },
+		floatingCanvas: { width: 40, height: 30 },
+	});
+	try {
+		fixture.controller.openResizeDialog();
+		assert.equal(fixture.elements['resize-target-status'].textContent, 'Target: Active Selection');
+		assert.equal(fixture.elements['resize-width'].value, '40');
+		assert.equal(fixture.elements['resize-height'].value, '30');
+	} finally {
+		fixture.restoreDocument();
+	}
+});
+
 test('empty scale drafts retain dimensions and normalize on blur', () => {
 	const fixture = createResizeDialogFixture();
 	try {
@@ -183,7 +251,8 @@ test('submit rounds valid numeric drafts and closes only after resizing succeeds
 		});
 
 		assert.equal(prevented, true);
-		assert.deepEqual(fixture.resized, [[802, 602]]);
+		assert.deepEqual(fixture.resampled.map(({ width, height }) => [width, height]), [[802, 602]]);
+		assert.deepEqual(fixture.resized, []);
 		assert.deepEqual(fixture.history, ['snapshot', 'persist']);
 		assert.equal(fixture.elements['resize-dialog'].open, false);
 	} finally {

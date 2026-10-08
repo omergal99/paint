@@ -141,6 +141,8 @@ export const initializeDe = (english) => {
     "ui.heightPx": "Höhe (px)",
     "ui.scalePercent": "Skalierung (%)",
     "ui.wholeCanvas": "Gesamte Leinwand",
+    "ui.resizeTargetWholeCanvas": "Ziel: Gesamte Leinwand",
+    "ui.resizeTargetSelection": "Ziel: Aktive Auswahl",
     "ui.keepAspect": "Seitenverhältnis beibehalten",
     "ui.tabGeneral": "ALLGEMEIN",
     "ui.tabShortcuts": "TASTENKÜRZEL",

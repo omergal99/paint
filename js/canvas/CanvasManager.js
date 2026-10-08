@@ -102,20 +102,31 @@ export class CanvasManager {
     return this._pixelsSignature() === this._cleanSignature;
   }
 
+  isFullCanvasSelection(selection = this.selection) {
+    return Boolean(selection
+      && selection.x === 0
+      && selection.y === 0
+      && selection.w === this.width
+      && selection.h === this.height);
+  }
+
   markDocumentDirty() { this._cleanSignature = null; }
 
   setLayerComposer(layerComposer = null) {
     this.layerComposer = layerComposer;
   }
 
-  createCompositeCanvas() {
-    if (typeof document === 'undefined' || !this.layerComposer?.hasContent?.()) return this.canvas;
+  createCompositeCanvas({ includeFloating = false } = {}) {
+    const hasLayers = this.layerComposer?.hasContent?.() === true;
+    const hasFloating = includeFloating && this.floatingCanvas && this.selection;
+    if (typeof document === 'undefined' || (!hasLayers && !hasFloating)) return this.canvas;
     const composite = document.createElement('canvas');
     composite.width = this.width;
     composite.height = this.height;
     const context = composite.getContext('2d');
     context.drawImage(this.canvas, 0, 0);
-    this.layerComposer.composite?.(context);
+    this.layerComposer?.composite?.(context);
+    if (hasFloating) context.drawImage(this.floatingCanvas, this.selection.x, this.selection.y);
     return composite;
   }
 
@@ -340,6 +351,7 @@ export class CanvasManager {
     this.ctx.drawImage(source, 0, 0);
     this.clearOverlay();
     this.selection = null;
+    this.floatingCanvas = null;
     this.onRasterLoad?.({ reason: 'load-source' });
     // A New blank source resets the clean baseline; real images mark dirty.
     this._cleanSignature = this._pixelsSignature();

@@ -268,6 +268,59 @@ test('pasting clears a static marquee before creating the pasted floating select
 	}
 });
 
+test('first paste on a blank canvas fits document bounds to the pasted image', async () => {
+	const previousDocument = globalThis.document;
+	const events = [];
+	const canvasManager = {
+		width: 100,
+		height: 80,
+		floatingCanvas: null,
+		isCleanDocument: () => true,
+		resize(width, height) {
+			events.push(['resize', width, height]);
+			this.width = width;
+			this.height = height;
+			return true;
+		},
+		resetCleanBaseline: () => events.push('reset-clean-baseline'),
+		persistToStorage: () => {},
+	};
+	globalThis.document = {
+		createElement: () => ({
+			width: 0,
+			height: 0,
+			getContext: () => ({ drawImage: () => events.push('draw-pasted-image') }),
+		}),
+	};
+	const manager = new ClipboardManager({
+		canvasManager,
+		historyManager: { snapshot: () => events.push('snapshot') },
+		getSelection: () => null,
+		setSelection: (selection) => { canvasManager.selection = selection; },
+		statusBar: { currentPointer: { x: 45, y: 30 }, flash: () => {} },
+		setActiveTool: () => {},
+		commitFloatingSelection: () => events.push('commit-existing-float'),
+	});
+	try {
+		const result = await manager.insertBitmapAsFloatingSelection({
+			width: 20,
+			height: 15,
+			close: () => {},
+		});
+		assert.deepEqual(result, { x: 0, y: 0, w: 20, h: 15 });
+		assert.deepEqual([canvasManager.width, canvasManager.height], [20, 15]);
+		assert.deepEqual(canvasManager.selection, { x: 0, y: 0, w: 20, h: 15 });
+		assert.deepEqual(events.slice(0, 3), [
+			'commit-existing-float',
+			'snapshot',
+			['resize', 20, 15],
+		]);
+		assert.ok(events.includes('reset-clean-baseline'));
+	} finally {
+		globalThis.document = previousDocument;
+	}
+});
+
 class RecordingContext {
 	constructor() { this.calls = []; }
 	save() { this.calls.push(['save']); }

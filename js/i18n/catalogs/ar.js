@@ -140,6 +140,8 @@ export const initializeAr = (english) => {
     "ui.heightPx": "الارتفاع (بكسل)",
     "ui.scalePercent": "المقياس (%)",
     "ui.wholeCanvas": "اللوحة كاملة",
+    "ui.resizeTargetWholeCanvas": "الهدف: اللوحة كاملة",
+    "ui.resizeTargetSelection": "الهدف: التحديد النشط",
     "ui.keepAspect": "الحفاظ على التناسب",
     "ui.tabGeneral": "عام",
     "ui.tabShortcuts": "الاختصارات",

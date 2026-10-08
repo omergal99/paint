@@ -141,6 +141,8 @@ export const initializeJa = (english) => {
     "ui.heightPx": "高さ (px)",
     "ui.scalePercent": "倍率 (%)",
     "ui.wholeCanvas": "キャンバス全体",
+    "ui.resizeTargetWholeCanvas": "対象: キャンバス全体",
+    "ui.resizeTargetSelection": "対象: アクティブな選択範囲",
     "ui.keepAspect": "縦横比を維持",
     "ui.tabGeneral": "全般",
     "ui.tabShortcuts": "ショートカット",

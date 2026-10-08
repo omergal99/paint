@@ -141,6 +141,8 @@ export const initializeFr = (english) => {
     "ui.heightPx": "Hauteur (px)",
     "ui.scalePercent": "Échelle (%)",
     "ui.wholeCanvas": "Zone entière",
+    "ui.resizeTargetWholeCanvas": "Cible : zone entière",
+    "ui.resizeTargetSelection": "Cible : sélection active",
     "ui.keepAspect": "Conserver les proportions",
     "ui.tabGeneral": "GÉNÉRAL",
     "ui.tabShortcuts": "RACCOURCIS",

@@ -682,6 +682,7 @@ selectionOverlayController = createSelectionOverlayController({
 	isToolActive: () => activeToolName === 'select',
 	isPreviewActive: () => selectionPreviewActive,
 	getKeepAspectRatio: () => settingsStore.get().selectionResizeKeepAspect !== false,
+	commitFloatingSelection: () => commitFloatingSelection(),
 });
 
 syncSelectionActions();

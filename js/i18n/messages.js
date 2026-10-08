@@ -184,7 +184,7 @@ export const EN_MESSAGES = deepFreeze({
 		actionsHistory: 'Actions: History', aiProvider: 'AI provider', connectionDetails: 'Connection details',
 		aiHelp: 'Use Quick actions or type a supported command. I will show exactly what I apply.', send: 'Send',
 		resizeCanvas: 'Resize canvas', quickSizes: 'Quick sizes', square: 'Square', a4Landscape: 'A4 landscape', a4Portrait: 'A4 portrait',
-		fullHd: 'Full HD', squareCanvasSize: '1000 × 1000 (square)', a4LandscapeCanvasSize: 'A4 landscape (1123 × 794)', a4PortraitCanvasSize: 'A4 portrait (794 × 1123)', widthPx: 'Width (px)', heightPx: 'Height (px)', scalePercent: 'Scale (%)', wholeCanvas: 'Whole canvas', keepAspect: 'Maintain aspect ratio',
+		fullHd: 'Full HD', squareCanvasSize: '1000 × 1000 (square)', a4LandscapeCanvasSize: 'A4 landscape (1123 × 794)', a4PortraitCanvasSize: 'A4 portrait (794 × 1123)', widthPx: 'Width (px)', heightPx: 'Height (px)', scalePercent: 'Scale (%)', wholeCanvas: 'Whole canvas', resizeTargetWholeCanvas: 'Target: Whole Canvas', resizeTargetSelection: 'Target: Active Selection', keepAspect: 'Maintain aspect ratio',
 		zoom100: '100%', zoomTo100: 'Zoom to 100%',
 		tabGeneral: 'GENERAL', tabShortcuts: 'SHORTCUTS', tabHistory: 'HISTORY', tabRibbon: 'RIBBON', tabReleaseNotes: 'RELEASE NOTES',
 		tabAbout: 'ABOUT', tabBrowser: 'BROWSER DATA', tabApp: 'APP', tabFeedback: 'FEEDBACK', darkMode: 'Dark Mode', showStatusBar: 'Show Status Bar', showColorInspector: 'Show Color Inspector',

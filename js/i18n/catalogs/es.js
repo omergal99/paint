@@ -254,6 +254,8 @@ export const ES_MESSAGES = Object.freeze({
     heightPx: "Alto (px)",
     scalePercent: "Escala (%)",
     wholeCanvas: "Lienzo completo",
+    resizeTargetWholeCanvas: "Destino: lienzo completo",
+    resizeTargetSelection: "Destino: selección activa",
     keepAspect: "Mantener proporción",
     tabGeneral: "GENERAL",
     tabShortcuts: "ATAJOS",

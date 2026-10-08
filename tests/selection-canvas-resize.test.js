@@ -39,6 +39,7 @@ const createResizeFixture = ({
 	rtl = false,
 	direction = 'se',
 	keepAspectRatio = true,
+	commitFloatingSelection = null,
 } = {}) => {
 	const handleListeners = new Map();
 	const handle = {
@@ -80,6 +81,10 @@ const createResizeFixture = ({
 		selection,
 		floatingCanvas,
 		createCompositeCanvas: () => createCanvas(canvasManager.width, canvasManager.height),
+		isFullCanvasSelection(region = canvasManager.selection) {
+			return Boolean(region && region.x === 0 && region.y === 0
+				&& region.w === this.width && region.h === this.height);
+		},
 		resample(options) {
 			resamples.push(options);
 			this.width = options.width;
@@ -111,6 +116,12 @@ const createResizeFixture = ({
 		isToolActive: () => true,
 		isPreviewActive: () => false,
 		getKeepAspectRatio: () => keepAspectRatio,
+		commitFloatingSelection: commitFloatingSelection || (() => {
+			if (canvasManager.floatingCanvas) {
+				history.push('commit-floating');
+				canvasManager.floatingCanvas = null;
+			}
+		}),
 		documentRef,
 		windowRef,
 	});
@@ -218,6 +229,29 @@ test('CanvasManager resamples pixels into the actual canvas and overlay dimensio
 	}
 });
 
+test('CanvasManager recognizes full-canvas selection bounds and composites floating pixels on request', () => {
+	const previousDocument = globalThis.document;
+	const drawCalls = [];
+	globalThis.document = { createElement: () => createCanvas(0, 0, drawCalls) };
+	try {
+		const canvas = createCanvas(100, 80);
+		const overlay = createCanvas(100, 80);
+		const manager = new CanvasManager({ canvas, overlay, width: 100, height: 80 });
+		const floating = createCanvas(100, 80);
+		manager.floatingCanvas = floating;
+		manager.selection = { x: 0, y: 0, w: 100, h: 80 };
+
+		assert.equal(manager.isFullCanvasSelection(), true);
+		assert.equal(manager.isFullCanvasSelection({ x: 1, y: 0, w: 99, h: 80 }), false);
+		manager.createCompositeCanvas({ includeFloating: true });
+		assert.ok(drawCalls.some(([image, ...args]) => image === floating && args.join(',') === '0,0'));
+		assert.equal(manager.floatingCanvas, floating, 'compositing a resize source does not mutate the active selection');
+	} finally {
+		if (previousDocument === undefined) delete globalThis.document;
+		else globalThis.document = previousDocument;
+	}
+});
+
 test('resizing a whole-canvas selection rescales the real document in one undo transaction', () => {
 	const fixture = createResizeFixture({
 		selection: { x: 0, y: 0, w: 100, h: 80 },
@@ -244,6 +278,26 @@ test('resizing a whole-canvas selection rescales the real document in one undo t
 
 	fixture.windowRef.dispatch('pointerup', {});
 	assert.deepEqual(fixture.history, ['begin', 'changed:true', 'changed:true', 'commit', 'persist']);
+	fixture.bind();
+});
+
+test('a floating selection that covers the full canvas follows the whole-canvas resize path', () => {
+	const fixture = createResizeFixture({
+		selection: { x: 0, y: 0, w: 100, h: 80 },
+		floatingCanvas: createCanvas(100, 80),
+		keepAspectRatio: false,
+	});
+	fixture.handleListeners.get('pointerdown')({
+		preventDefault() {},
+		stopPropagation() {},
+	});
+	assert.equal(fixture.canvasManager.floatingCanvas, null, 'the full-document layer is committed before capturing the resize transaction');
+	fixture.windowRef.dispatch('pointermove', { clientX: 135, clientY: 95 });
+
+	assert.deepEqual([fixture.canvasManager.width, fixture.canvasManager.height], [135, 95]);
+	assert.deepEqual(fixture.resamples.map(({ width, height }) => [width, height]), [[135, 95]]);
+	fixture.windowRef.dispatch('pointerup', {});
+	assert.deepEqual(fixture.history.slice(0, 2), ['commit-floating', 'begin']);
 	fixture.bind();
 });
 

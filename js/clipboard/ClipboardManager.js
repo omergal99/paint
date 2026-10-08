@@ -49,8 +49,8 @@ export class ClipboardManager {
     const w = bitmap.width;
     const h = bitmap.height;
 
-    const neededWidth = Math.max(this.canvasManager.width, x + w);
-    const neededHeight = Math.max(this.canvasManager.height, y + h);
+    const neededWidth = isClean ? w : Math.max(this.canvasManager.width, x + w);
+    const neededHeight = isClean ? h : Math.max(this.canvasManager.height, y + h);
     const admission = assessImageAdmission({
       width: w,
       height: h,
@@ -73,6 +73,7 @@ export class ClipboardManager {
       this.historyManager.snapshot();
       if (neededWidth !== this.canvasManager.width || neededHeight !== this.canvasManager.height) {
         if (!this.canvasManager.resize(neededWidth, neededHeight)) return null;
+        if (isClean) this.canvasManager.resetCleanBaseline?.();
       }
 
       const fCanvas = document.createElement('canvas');

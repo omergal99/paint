@@ -145,6 +145,8 @@ export const initializePtBr = (english) => {
     "ui.heightPx": "Altura (px)",
     "ui.scalePercent": "Escala (%)",
     "ui.wholeCanvas": "Tela inteira",
+    "ui.resizeTargetWholeCanvas": "Alvo: Tela inteira",
+    "ui.resizeTargetSelection": "Alvo: seleção ativa",
     "ui.keepAspect": "Manter proporção",
     "ui.tabGeneral": "GERAL",
     "ui.tabShortcuts": "ATALHOS",
