@@ -272,8 +272,17 @@
 						</svg>
 						<span data-i18n="ribbon.tools.select">Select</span></button>
 					<div class="rbtn-stack">
-						<div class="action-menu image-more-menu">
-							<button class="rbtn small action-menu-trigger" id="btn-image-more" data-tag="btn-image-more"
+							<button type="button" class="rbtn small" id="btn-resize-quick" data-tag="btn-resize-quick"
+								title="Resize canvas" data-i18n-attr="title:ui.resizeCanvas">
+								<svg class="icon size4" viewBox="0 0 20 20" aria-hidden="true">
+									<rect x="3" y="4" width="10" height="12" rx="1" fill="none" stroke="currentColor" />
+									<path d="M14 6V3h3M17 3l-4 4M14 14v3h3M17 17l-4-4" fill="none" stroke="currentColor"
+										stroke-linecap="round" stroke-linejoin="round" />
+								</svg>
+								<span data-i18n="ribbon.image.resize">Resize</span>
+							</button>
+							<div class="action-menu image-more-menu">
+								<button class="rbtn small action-menu-trigger" id="btn-image-more" data-tag="btn-image-more"
 								title="More image actions" aria-haspopup="menu" aria-label="More image actions">
 								<svg class="icon size4" viewBox="0 0 20 20" aria-hidden="true">
 									<circle cx="4" cy="10" r="1.5" fill="currentColor" />
@@ -1223,7 +1232,7 @@
 								stroke-linecap="round" />
 						</svg>
 					</button>
-					<input type="range" id="zoom-slider" data-tag="zoom-slider" min="10" max="800" step="10" value="100"
+					<input type="range" id="zoom-slider" data-tag="zoom-slider" min="0" max="1000" step="1" value="500"
 						aria-label="Zoom percentage slider" />
 					<button type="button" id="zoom-reset" data-tag="zoom-reset" title="Zoom to 100%" hidden
 						aria-label="Zoom to 100%" data-i18n-attr="title:ui.zoomTo100,aria-label:ui.zoomTo100">
@@ -1262,15 +1271,6 @@
 	<dialog id="resize-dialog" data-tag="resize-dialog">
 		<form method="dialog" id="resize-form">
 			<h3>Resize canvas</h3>
-			<div class="resize-scale-presets" role="group" aria-labelledby="resize-scale-presets-title">
-				<span class="resize-presets-title" id="resize-scale-presets-title" data-i18n="ui.scalePercent">Scale (%)</span>
-				<button type="button" data-resize-scale="50" aria-pressed="false">50%</button>
-				<button type="button" data-resize-scale="75" aria-pressed="false">75%</button>
-				<button type="button" data-resize-scale="100" aria-pressed="false">100%</button>
-				<button type="button" data-resize-scale="125" aria-pressed="false">125%</button>
-				<button type="button" data-resize-scale="150" aria-pressed="false">150%</button>
-				<button type="button" data-resize-scale="200" aria-pressed="false">200%</button>
-			</div>
 			<div class="resize-presets" id="resize-presets" role="group" aria-labelledby="resize-presets-title">
 				<span class="resize-presets-title" id="resize-presets-title" data-i18n="ui.quickSizes">Quick sizes</span>
 				<button type="button" data-resize-preset="800x600" aria-pressed="false"><span class="resize-preset-name">800 × 600</span><span
@@ -1296,10 +1296,20 @@
 					id="resize-width" data-tag="resize-width" min="1" max="10000" step="any" required /></label>
 			<label class="resize-dimension-row" for="resize-height"><span>Height (px)</span><input type="number"
 					id="resize-height" data-tag="resize-height" min="1" max="10000" step="any" required /></label>
-			<div class="resize-scale-row">
-				<label for="resize-percent">Scale (%)</label>
+			<div class="resize-scale-controls">
+				<div class="resize-scale-row">
+				<label for="resize-percent" id="resize-percent-label" data-i18n="ui.scalePercent">Scale (%)</label>
 				<input type="number" id="resize-percent" data-tag="resize-percent" min="1" max="1000" step="any" value="100" />
 				<span id="resize-target-status" role="status">Whole canvas</span>
+				<div class="resize-scale-presets" role="group" aria-labelledby="resize-percent-label">
+					<button type="button" data-resize-scale="50" aria-pressed="false">50%</button>
+					<button type="button" data-resize-scale="75" aria-pressed="false">75%</button>
+					<button type="button" data-resize-scale="100" aria-pressed="false">100%</button>
+					<button type="button" data-resize-scale="125" aria-pressed="false">125%</button>
+					<button type="button" data-resize-scale="150" aria-pressed="false">150%</button>
+					<button type="button" data-resize-scale="200" aria-pressed="false">200%</button>
+				</div>
+				</div>
 			</div>
 			<div class="checkbox-row" data-tag="resize-keep-aspect-row"><input type="checkbox" id="resize-keep-aspect"
 					data-tag="resize-keep-aspect" checked />

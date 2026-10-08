@@ -569,6 +569,7 @@ export class Toolbar {
     this._listen(document.getElementById('btn-file-cut'), 'click', () => this.handlers.cut());
     this._listen(document.getElementById('btn-file-copy'), 'click', () => this.handlers.copy());
     this._listen(document.getElementById('btn-crop'), 'click', () => this.handlers.crop());
+    this._listen(document.getElementById('btn-resize-quick'), 'click', () => this.handlers.openResizeDialog());
     this._listen(document.getElementById('btn-canvas-size'), 'click', () => this.handlers.openResizeDialog());
   }
 

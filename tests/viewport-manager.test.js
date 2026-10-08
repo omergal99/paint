@@ -73,7 +73,13 @@ const withViewport = (run) => {
 	const zoomOutBtn = createButton();
 	const zoomResetBtn = createButton();
 	const zoomInput = { value: '' , ...makeEventTarget(), blur() {} };
-	const zoomSlider = { value: '', ...makeEventTarget() };
+	const sliderAttributes = new Map();
+	const zoomSlider = {
+		value: '',
+		...makeEventTarget(),
+		setAttribute(name, value) { sliderAttributes.set(name, value); },
+		getAttribute(name) { return sliderAttributes.get(name) ?? null; },
+	};
 	const manager = new ViewportManager({
 		stage,
 		scaleEl,
@@ -83,6 +89,7 @@ const withViewport = (run) => {
 		zoomResetBtn,
 		zoomInput,
 		zoomSlider,
+		sliderAttributes,
 	});
 
 	try {
@@ -118,12 +125,38 @@ test('zoom reset returns to actual-size 100% and updates every zoom surface', ()
 		zoomResetBtn.click();
 		assert.equal(manager.zoom, 100);
 		assert.equal(zoomInput.value, 100);
-		assert.equal(zoomSlider.value, 100);
+		assert.equal(zoomSlider.value, '500');
 		assert.equal(scaleEl.style.transform, 'scale(1)');
 		assert.equal(styleProperties.get('--zoom-inverse'), '1');
 		assert.equal(stage.style.width, '800px');
 		assert.equal(stage.style.height, '600px');
 		assert.equal(storage.get('paint:zoom'), '100');
+	});
+});
+
+test('zoom slider centers 100% and maps its endpoints to the supported range', () => {
+	withViewport(({ manager, zoomSlider }) => {
+		manager.setZoom(10);
+		assert.equal(zoomSlider.value, '0');
+		assert.equal(zoomSlider.getAttribute('aria-valuetext'), '10%');
+
+		manager.setZoom(100);
+		assert.equal(zoomSlider.value, '500');
+		assert.equal(zoomSlider.getAttribute('aria-valuetext'), '100%');
+
+		manager.setZoom(800);
+		assert.equal(zoomSlider.value, '1000');
+		assert.equal(zoomSlider.getAttribute('aria-valuetext'), '800%');
+
+		zoomSlider.value = '500';
+		zoomSlider.dispatch('input');
+		assert.equal(manager.zoom, 100);
+		zoomSlider.value = '0';
+		zoomSlider.dispatch('input');
+		assert.equal(manager.zoom, 10);
+		zoomSlider.value = '1000';
+		zoomSlider.dispatch('input');
+		assert.equal(manager.zoom, 800);
 	});
 });
 

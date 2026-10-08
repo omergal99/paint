@@ -16,8 +16,26 @@
 const MIN_ZOOM = 10;
 const MAX_ZOOM = 800;
 const STEP = 10;
+const SLIDER_MIN = 0;
+const SLIDER_MID = 500;
+const SLIDER_MAX = 1000;
 const ZOOM_STORAGE_KEY = 'paint:zoom';
 const INITIAL_ZOOM_STORAGE_KEY = 'paint:initial-zoom';
+
+const zoomFromSliderPosition = (position) => {
+  const clamped = Math.min(SLIDER_MAX, Math.max(SLIDER_MIN, Number(position)));
+  const percent = clamped <= SLIDER_MID
+    ? MIN_ZOOM + (clamped / SLIDER_MID) * (100 - MIN_ZOOM)
+    : 100 + ((clamped - SLIDER_MID) / (SLIDER_MAX - SLIDER_MID)) * (MAX_ZOOM - 100);
+  return Math.round(percent);
+};
+
+const sliderPositionFromZoom = (zoom) => {
+  const position = zoom <= 100
+    ? ((zoom - MIN_ZOOM) / (100 - MIN_ZOOM)) * SLIDER_MID
+    : SLIDER_MID + ((zoom - 100) / (MAX_ZOOM - 100)) * (SLIDER_MAX - SLIDER_MID);
+  return String(Math.round(position));
+};
 
 export class ViewportManager {
   constructor({ stage, scaleEl, canvasManager, zoomInBtn, zoomOutBtn, zoomResetBtn = null, zoomInput, zoomSlider }) {
@@ -47,7 +65,7 @@ export class ViewportManager {
     this._onZoomInputKeydown = (event) => {
       if (event.key === 'Enter') this.zoomInput.blur();
     };
-    this._onZoomSliderInput = () => this.setZoom(parseInt(this.zoomSlider.value, 10));
+    this._onZoomSliderInput = () => this.setZoom(zoomFromSliderPosition(this.zoomSlider.value));
     this._onWheel = (event) => {
       if (document.body.dataset.resizing === 'true') return;
       if (!event.ctrlKey && !event.metaKey) return; // let native scroll happen
@@ -151,7 +169,8 @@ export class ViewportManager {
     this.scaleEl.style.transform = `scale(${scale})`;
     this.scaleEl.style.setProperty('--zoom-inverse', String(1 / scale));
     this.zoomInput.value = this.zoom;
-    this.zoomSlider.value = this.zoom;
+    this.zoomSlider.value = sliderPositionFromZoom(this.zoom);
+    this.zoomSlider.setAttribute('aria-valuetext', `${this.zoom}%`);
     this.syncStageSize();
   }
 

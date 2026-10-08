@@ -287,6 +287,7 @@ test('ViewportManager caches canvas geometry until an invalidation', () => {
 	input.blur = () => {};
 	const slider = eventTarget();
 	slider.value = 100;
+	slider.setAttribute = () => {};
 	let rectReads = 0;
 	const manager = new ViewportManager({
 		stage,

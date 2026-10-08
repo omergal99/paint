@@ -109,6 +109,13 @@ test('Image action submenus expose consistent icons and translated labels', () =
 	const imageMenuStart = html.indexOf('class="action-menu-items image-more-menu-items"');
 	const imageMenuEnd = html.indexOf('<div class="ribbon-group-title">Image</div>');
 	const imageMenu = html.slice(imageMenuStart, imageMenuEnd);
+	const quickResize = html.match(/<button[^>]*id="btn-resize-quick"[\s\S]*?<\/button>/)?.[0] || '';
+	assert.match(quickResize, /data-tag="btn-resize-quick"/);
+	assert.match(quickResize, /data-i18n="ribbon\.image\.resize"/);
+	assert.match(quickResize, /data-i18n-attr="title:ui\.resizeCanvas"/);
+	assert.ok(html.indexOf('id="btn-resize-quick"') < html.indexOf('id="btn-image-more"'));
+	assert.match(read('js/ui/Toolbar.js'), /getElementById\('btn-resize-quick'\)[\s\S]*handlers\.openResizeDialog\(\)/);
+	assert.match(read('js/ui/DialogIndicator.js'), /'btn-resize-quick'/);
 	assert.match(imageMenu, /id="btn-crop-menu"[\s\S]*<svg class="icon size4"/);
 	assert.match(imageMenu, /id="btn-crop"[\s\S]*data-i18n="ribbon\.image\.cropToSelection"/);
 	assert.match(imageMenu, /id="btn-rotate"[\s\S]*<svg class="icon size4"/);
@@ -122,6 +129,16 @@ test('Image action submenus expose consistent icons and translated labels', () =
 	assert.match(read('css/styles.css'), /\.submenu-label\s*\{[\s\S]*gap:\s*5px/);
 	assert.match(read('css/styles.css'), /\.submenu-arrow\s*\{[\s\S]*margin-inline-start:\s*auto/);
 	assert.match(html, /data-tag="tool-select"[\s\S]*<path\s+d="M3\.5 7V4\.5/);
+});
+
+test('resize scale presets are grouped with the scale field and zoom has a 100% midpoint', () => {
+	const resizeDialog = html.slice(html.indexOf('id="resize-dialog"'), html.indexOf('id="settings-dialog"'));
+	assert.ok(resizeDialog.indexOf('id="resize-percent"') < resizeDialog.indexOf('data-resize-scale="50"'));
+	assert.match(resizeDialog, /class="resize-scale-row"[\s\S]*id="resize-percent"[\s\S]*class="resize-scale-presets"/);
+	assert.doesNotMatch(resizeDialog.slice(0, resizeDialog.indexOf('class="resize-presets"')), /resize-scale-presets/);
+	assert.match(html, /id="zoom-slider"[^>]*min="0" max="1000" step="1" value="500"/);
+	assert.match(read('js/canvas/ViewportManager.js'), /aria-valuetext', `\$\{this\.zoom\}%`/);
+	assert.match(read('css/styles.css'), /\.zoom-controls input\[type="range"\]\s*\{[\s\S]*width:\s*170px/);
 });
 
 test('zoom controls provide a localized direct return to actual size', () => {
@@ -151,7 +168,7 @@ test('dialog-opening actions use semantic data-tags and the shared indicator', (
   const styles = read('css/styles.css');
   const actionMenus = read('js/ui/ActionMenuController.js');
   [
-    'btn-canvas-size', 'btn-manage-workspace', 'btn-remove-bg',
+    'btn-resize-quick', 'btn-canvas-size', 'btn-manage-workspace', 'btn-remove-bg',
     'btn-adjustments', 'btn-rotate-free', 'brush-open-studio',
     'history-clear-btn', 'settings-history-clear', 'settings-reset',
     'settings-clear-data', 'history-settings-link', 'ai-connect-button',

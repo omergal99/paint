@@ -3214,7 +3214,17 @@ html[dir="rtl"] .resize-ghost {
 	padding: 1px 3px;
 }
 .zoom-controls input[type="range"] {
-	width: 100px;
+	width: 170px;
+}
+@media (max-width: 768px) {
+	.zoom-controls input[type="range"] {
+		width: 150px;
+	}
+}
+@media (max-width: 420px) {
+	.zoom-controls input[type="range"] {
+		width: 125px;
+	}
 }
 
 /* ===================== DIALOG ===================== */
@@ -4543,8 +4553,9 @@ dialog h3 {
 .resize-scale-presets {
 	display: grid;
 	grid-template-columns: repeat(6, minmax(0, 1fr));
-	gap: 6px;
-	margin: 0 0 10px;
+	grid-column: 2 / -1;
+	gap: 4px;
+	margin: 0;
 }
 .resize-presets {
 	display: grid;
@@ -4571,8 +4582,10 @@ dialog h3 {
 	cursor: pointer;
 }
 .resize-scale-presets button {
-	min-height: 30px;
-	padding: 4px;
+	min-width: 0;
+	min-height: 28px;
+	padding: 3px 2px;
+	font-size: 11px;
 }
 .resize-preset-name,
 .resize-preset-size {
@@ -4590,12 +4603,14 @@ dialog h3 {
 	background: var(--w10-active);
 	border-color: var(--w10-accent);
 }
+.resize-scale-controls {
+	margin: 10px 0;
+}
 .resize-scale-row {
 	display: grid;
 	grid-template-columns: auto 92px minmax(0, 1fr);
 	align-items: center;
 	gap: 8px;
-	margin: 10px 0;
 }
 .resize-scale-row > label {
 	display: flex;

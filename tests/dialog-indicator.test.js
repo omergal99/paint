@@ -55,6 +55,6 @@ test('initializeDialogIndicators marks every dialog-opening action', () => {
     },
   };
   const count = initializeDialogIndicators({ root });
-  assert.equal(count, 12);
+  assert.equal(count, 13);
   assert.ok(found.every((action) => action.inserted.length === 1));
 });
