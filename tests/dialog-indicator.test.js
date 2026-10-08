@@ -45,16 +45,20 @@ test('appendDialogIndicator inserts the shared glyph exactly once', () => {
 
 test('initializeDialogIndicators marks every dialog-opening action', () => {
   const found = [];
+  const queriedTags = [];
   const root = {
     querySelector: (selector) => {
       const match = /\[data-tag="(.+)"\]/.exec(selector);
       if (!match) return null;
+      queriedTags.push(match[1]);
       const action = makeAction();
       found.push(action);
       return action;
     },
   };
   const count = initializeDialogIndicators({ root });
-  assert.equal(count, 13);
+  assert.equal(count, 12);
   assert.ok(found.every((action) => action.inserted.length === 1));
+  assert.ok(!queriedTags.includes('btn-resize-quick'), 'the quick Resize ribbon button has no dialog arrow');
+  assert.ok(queriedTags.includes('btn-canvas-size'), 'the Image menu Resize action keeps its dialog arrow');
 });

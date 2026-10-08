@@ -183,6 +183,7 @@ test('Resize dialog targets the physical canvas for no selection and full-canvas
 		try {
 			fixture.controller.openResizeDialog();
 			assert.equal(fixture.elements['resize-target-status'].textContent, 'Target: Whole Canvas');
+			assert.equal(fixture.elements['resize-target-status'].getAttribute('data-i18n-runtime'), 'ui.resizeTargetWholeCanvas');
 			assert.equal(fixture.elements['resize-width'].value, '800');
 			assert.equal(fixture.elements['resize-height'].value, '600');
 
@@ -212,8 +213,13 @@ test('Resize dialog identifies a partial selection as the active selection targe
 	try {
 		fixture.controller.openResizeDialog();
 		assert.equal(fixture.elements['resize-target-status'].textContent, 'Target: Active Selection');
+		assert.equal(fixture.elements['resize-target-status'].getAttribute('data-i18n-runtime'), 'ui.resizeTargetSelection');
 		assert.equal(fixture.elements['resize-width'].value, '40');
 		assert.equal(fixture.elements['resize-height'].value, '30');
+		fixture.canvasManager.selection = null;
+		fixture.controller.openResizeDialog();
+		assert.equal(fixture.elements['resize-target-status'].textContent, 'Target: Whole Canvas');
+		assert.equal(fixture.elements['resize-target-status'].getAttribute('data-i18n-runtime'), 'ui.resizeTargetWholeCanvas');
 	} finally {
 		fixture.restoreDocument();
 	}

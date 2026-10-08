@@ -124,9 +124,11 @@ export const initResizeDialog = ({
     keepAspectInput.checked = true;
     resizePercentInput.value = '100';
     if (resizeTargetStatus) {
-      resizeTargetStatus.textContent = resizeTarget.kind === 'selection'
-        ? t('ui.resizeTargetSelection')
-        : t('ui.resizeTargetWholeCanvas');
+      const targetKey = resizeTarget.kind === 'selection'
+        ? 'ui.resizeTargetSelection'
+        : 'ui.resizeTargetWholeCanvas';
+      resizeTargetStatus.setAttribute('data-i18n-runtime', targetKey);
+      resizeTargetStatus.textContent = t(targetKey);
     }
     updateResizeSummary();
     updatePresetSelection();

@@ -115,7 +115,7 @@ test('Image action submenus expose consistent icons and translated labels', () =
 	assert.match(quickResize, /data-i18n-attr="title:ui\.resizeCanvas"/);
 	assert.ok(html.indexOf('id="btn-resize-quick"') < html.indexOf('id="btn-image-more"'));
 	assert.match(read('js/ui/Toolbar.js'), /getElementById\('btn-resize-quick'\)[\s\S]*handlers\.openResizeDialog\(\)/);
-	assert.match(read('js/ui/DialogIndicator.js'), /'btn-resize-quick'/);
+	assert.doesNotMatch(read('js/ui/DialogIndicator.js'), /'btn-resize-quick'/);
 	assert.match(imageMenu, /id="btn-crop-menu"[\s\S]*<svg class="icon size4"/);
 	assert.match(imageMenu, /id="btn-crop"[\s\S]*data-i18n="ribbon\.image\.cropToSelection"/);
 	assert.match(imageMenu, /id="btn-rotate"[\s\S]*<svg class="icon size4"/);
@@ -126,6 +126,7 @@ test('Image action submenus expose consistent icons and translated labels', () =
 	assert.match(imageMenu, /id="btn-flip-vertical"[\s\S]*data-i18n="ui\.flipVertical"/);
 	assert.match(imageMenu, /id="btn-canvas-size"[\s\S]*data-i18n="ribbon\.image\.resize"/);
 	assert.match(imageMenu, /id="btn-canvas-size"[^>]*data-i18n-attr="title:ui\.resizeCanvas"/);
+	assert.match(read('js/ui/DialogIndicator.js'), /'btn-canvas-size'/);
 	assert.match(read('css/styles.css'), /\.submenu-label\s*\{[\s\S]*gap:\s*5px/);
 	assert.match(read('css/styles.css'), /\.submenu-arrow\s*\{[\s\S]*margin-inline-start:\s*auto/);
 	assert.match(html, /data-tag="tool-select"[\s\S]*<path\s+d="M3\.5 7V4\.5/);
@@ -168,7 +169,7 @@ test('dialog-opening actions use semantic data-tags and the shared indicator', (
   const styles = read('css/styles.css');
   const actionMenus = read('js/ui/ActionMenuController.js');
   [
-    'btn-resize-quick', 'btn-canvas-size', 'btn-manage-workspace', 'btn-remove-bg',
+    'btn-canvas-size', 'btn-manage-workspace', 'btn-remove-bg',
     'btn-adjustments', 'btn-rotate-free', 'brush-open-studio',
     'history-clear-btn', 'settings-history-clear', 'settings-reset',
     'settings-clear-data', 'history-settings-link', 'ai-connect-button',
@@ -176,6 +177,8 @@ test('dialog-opening actions use semantic data-tags and the shared indicator', (
     assert.match(indicator, new RegExp(`'${tag}'`));
     assert.match(html, new RegExp(`data-tag="${tag}"`));
   });
+  assert.match(html, /id="btn-resize-quick"[^>]*data-tag="btn-resize-quick"/);
+  assert.doesNotMatch(indicator, /'btn-resize-quick'/);
   assert.doesNotMatch(html, /data-dialog-action/);
   assert.doesNotMatch(indicator, /btn-new|btn-settings/);
   // The glyph itself lives in the shared icon registry, sized for menus.

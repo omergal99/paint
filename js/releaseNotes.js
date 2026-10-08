@@ -12,6 +12,15 @@ import { APP_VERSION } from './version.js';
 export const RELEASE_NOTES = Object.freeze([
 	{
 		version: APP_VERSION,
+		date: '2026-10-08',
+		highlightKeys: [
+			'releaseNotes.v1_9_0.h1',
+			'releaseNotes.v1_9_0.h2',
+			'releaseNotes.v1_9_0.h3',
+		],
+	},
+	{
+		version: '1.8.0',
 		date: '2026-10-02',
 		highlightKeys: [
 			'releaseNotes.v1_8_0.h1',
@@ -66,4 +75,3 @@ export const RELEASE_NOTES = Object.freeze([
 
 export const getReleaseNotes = () => { return RELEASE_NOTES; }
 export const getAppVersion = () => { return APP_VERSION; }
-

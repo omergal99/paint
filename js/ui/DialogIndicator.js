@@ -5,7 +5,6 @@
 import { getIconHtml } from './icons/index.js';
 
 const DIALOG_INDICATOR_TAGS = Object.freeze([
-  'btn-resize-quick',
   'btn-canvas-size',
   'btn-manage-workspace',
   'btn-remove-bg',

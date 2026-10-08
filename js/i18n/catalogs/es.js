@@ -540,6 +540,11 @@ export const ES_MESSAGES = Object.freeze({
     historyCleared: "Historial borrado",
   },
   releaseNotes: {
+    v1_9_0: {
+      h1: "Al cambiar el tamaño de todo el lienzo, también se escala la imagen; Deshacer restaura los límites originales",
+      h2: "Cambiar tamaño distingue entre el lienzo completo y una selección parcial, con ajustes rápidos de tamaño y escala",
+      h3: "Acceso más rápido desde la cinta, zoom centrado en 100 % y mejoras en menús, carga y estado",
+    },
     v1_8_0: {
       h1: "Los movimientos de selección son ahora un único paso de deshacer, sin pulsar dos veces",
       h2: "Las jaladeras de selección mantienen el mismo tamaño en pantalla en cualquier nivel de zoom",

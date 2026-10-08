@@ -317,6 +317,11 @@ export const EN_MESSAGES = deepFreeze({
 		historyCleared: 'History cleared',
 	},
 	releaseNotes: {
+		v1_9_0: {
+			h1: 'Whole-canvas resizing now scales the canvas and image together, and Undo restores the original bounds',
+			h2: 'Resize distinguishes the whole canvas from a partial selection, with quick size and scale presets',
+			h3: 'Faster ribbon access, a 100% centered zoom slider, and improved menu, loading, and status behavior',
+		},
 		v1_8_0: {
 			h1: 'Selection moves are now a single undo step, with no double-press',
 			h2: 'Selection handles stay the same on-screen size at every zoom level',
