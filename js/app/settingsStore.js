@@ -23,6 +23,8 @@ const isAdjustmentParams = (value) => {
 
 /** Validators gate what may be persisted; anything else falls back to the default. */
 const SETTINGS_VALIDATORS = Object.freeze({
+  showZoomReset: (value) => typeof value === 'boolean',
+  selectionResizeKeepAspect: (value) => typeof value === 'boolean',
   canvasBackground: (value) => ['none', 'solid', 'transparent', 'checkerboard', 'grid'].includes(value),
   solidBackgroundColor: (value) => typeof value === 'string' && /^#[0-9a-f]{6}$/i.test(value),
   defaultZoom: (value) => Number.isFinite(Number(value)) && Number(value) > 0,

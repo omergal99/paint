@@ -276,6 +276,7 @@ export const ES_MESSAGES = Object.freeze({
     defaultNewImage: "Imagen nueva predeterminada",
     custom: "Personalizado",
     initialZoom: "Zoom inicial",
+    showZoomReset: "Mostrar el botón para restablecer el zoom al 100 %",
     keyboardShortcuts: "Atajos de teclado",
     shortcutHelp:
       "Enfoca un campo de atajo, pulsa las teclas y sal del campo. Los cambios se guardan en este navegador.",

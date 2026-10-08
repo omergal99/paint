@@ -9,6 +9,7 @@ export const createSelectionOverlayController = ({
 	setSelection,
 	isToolActive,
 	isPreviewActive,
+	getKeepAspectRatio = () => true,
 	documentRef = globalThis.document,
 	windowRef = globalThis.window,
 	getComputedStyleRef = globalThis.getComputedStyle,
@@ -101,6 +102,7 @@ export const createSelectionOverlayController = ({
 				const wasClean = wholeCanvas && canvasManager.isCleanDocument?.();
 				let canvasResized = false;
 				const direction = handle.dataset.selectionHandle;
+				const keepAspectRatio = getKeepAspectRatio() === true;
 				const fixed = {
 					x: direction.includes('w') ? original.x + original.w : original.x,
 					y: direction.includes('n') ? original.y + original.h : original.y,
@@ -138,7 +140,7 @@ export const createSelectionOverlayController = ({
 					if (direction.includes('w')) { w = Math.max(1, Math.round(fixed.x - point.x)); x = fixed.x - w; }
 					if (direction.includes('s')) h = Math.max(1, Math.round(point.y - original.y));
 					if (direction.includes('n')) { h = Math.max(1, Math.round(fixed.y - point.y)); y = fixed.y - h; }
-					if (moveEvent.shiftKey && w > 0 && h > 0) {
+					if ((moveEvent.shiftKey || (keepAspectRatio && direction.length === 2)) && w > 0 && h > 0) {
 						const ratio = original.w / Math.max(1, original.h);
 						if (direction.length === 1) {
 							if (direction === 'e' || direction === 'w') h = Math.max(1, Math.round(w / ratio));

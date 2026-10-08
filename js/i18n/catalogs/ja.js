@@ -162,6 +162,7 @@ export const initializeJa = (english) => {
     "ui.defaultNewImage": "新規画像の既定値",
     "ui.custom": "カスタム",
     "ui.initialZoom": "初期ズーム",
+    "ui.showZoomReset": "ズームを100%に戻すボタンを表示",
     "ui.keyboardShortcuts": "キーボードショートカット",
     "ui.autoSaveHistory": "履歴に自動保存",
     "ui.restoreLastImage": "起動時に前回の画像を読み込む",

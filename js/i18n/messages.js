@@ -190,6 +190,7 @@ export const EN_MESSAGES = deepFreeze({
 		tabAbout: 'ABOUT', tabBrowser: 'BROWSER DATA', tabApp: 'APP', tabFeedback: 'FEEDBACK', darkMode: 'Dark Mode', showStatusBar: 'Show Status Bar', showColorInspector: 'Show Color Inspector',
 		canvasBackground: 'Canvas Background', solidColor: 'Solid Color', transparent: 'Transparent', transparentCheckerboard: 'Transparent Checkerboard',
 		gridlines: 'Gridlines', selected: 'Selected:', defaultNewImage: 'Default new image', custom: 'Custom', initialZoom: 'Initial zoom',
+		showZoomReset: 'Show the 100% zoom reset button',
 		keyboardShortcuts: 'Keyboard shortcuts', shortcutHelp: 'Focus a shortcut field, press the keys you want, then leave the field. Changes are saved in this browser.',
 		defaultsActive: 'Defaults are active.', autoSaveHistory: 'Auto-save to history', restoreLastImage: 'Load last image on startup',
 		restoreHelp: 'Off starts with a blank canvas. Turn it on when you want Paint to restore the last working image automatically.',

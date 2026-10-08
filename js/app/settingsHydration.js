@@ -79,6 +79,10 @@ const applySavedSettings = () => {
     setChecked('setting-show-status-bar', saved.showStatusBar !== false);
     setChecked('setting-show-color-inspector', saved.showColorInspector !== false);
     setChecked('setting-show-ai-chat', saved.showAiChat === true);
+    setChecked('setting-show-zoom-reset', saved.showZoomReset === true);
+    setChecked('selection-keep-aspect-toggle', saved.selectionResizeKeepAspect !== false);
+    const zoomReset = byId('zoom-reset');
+    if (zoomReset) zoomReset.hidden = saved.showZoomReset !== true;
     const directionSelect = byId('setting-direction');
     if (directionSelect) directionSelect.value = ['auto', 'ltr', 'rtl'].includes(saved.interfaceDirection)
       ? saved.interfaceDirection : 'auto';

@@ -33,10 +33,16 @@ const createEventTarget = () => {
 	};
 };
 
-const createResizeFixture = ({ selection, floatingCanvas = null, rtl = false } = {}) => {
+const createResizeFixture = ({
+	selection,
+	floatingCanvas = null,
+	rtl = false,
+	direction = 'se',
+	keepAspectRatio = true,
+} = {}) => {
 	const handleListeners = new Map();
 	const handle = {
-		dataset: { selectionHandle: 'se' },
+		dataset: { selectionHandle: direction },
 		addEventListener(type, listener) { handleListeners.set(type, listener); },
 		removeEventListener(type, listener) {
 			if (handleListeners.get(type) === listener) handleListeners.delete(type);
@@ -104,6 +110,7 @@ const createResizeFixture = ({ selection, floatingCanvas = null, rtl = false } =
 		setSelection: (next) => { canvasManager.selection = next; },
 		isToolActive: () => true,
 		isPreviewActive: () => false,
+		getKeepAspectRatio: () => keepAspectRatio,
 		documentRef,
 		windowRef,
 	});
@@ -118,6 +125,76 @@ const createResizeFixture = ({ selection, floatingCanvas = null, rtl = false } =
 		bind: controller.bindSelectionHandles(),
 	};
 };
+
+test('corner selection handles preserve the original ratio by default', () => {
+	const fixture = createResizeFixture({ selection: { x: 0, y: 0, w: 100, h: 80 } });
+	fixture.handleListeners.get('pointerdown')({
+		preventDefault() {},
+		stopPropagation() {},
+	});
+	fixture.windowRef.dispatch('pointermove', { clientX: 135, clientY: 95 });
+
+	assert.deepEqual(
+		[fixture.canvasManager.selection.w, fixture.canvasManager.selection.h],
+		[119, 95],
+	);
+	fixture.windowRef.dispatch('pointerup', {});
+	fixture.bind();
+});
+
+test('turning off default proportions restores freeform corner resize while Shift still locks', () => {
+	const freeformFixture = createResizeFixture({
+		selection: { x: 0, y: 0, w: 100, h: 80 },
+		keepAspectRatio: false,
+	});
+	freeformFixture.handleListeners.get('pointerdown')({
+		preventDefault() {},
+		stopPropagation() {},
+	});
+	freeformFixture.windowRef.dispatch('pointermove', { clientX: 135, clientY: 95 });
+	assert.deepEqual(
+		[freeformFixture.canvasManager.selection.w, freeformFixture.canvasManager.selection.h],
+		[135, 95],
+	);
+	freeformFixture.windowRef.dispatch('pointerup', {});
+	freeformFixture.bind();
+
+	const shiftFixture = createResizeFixture({
+		selection: { x: 0, y: 0, w: 100, h: 80 },
+		keepAspectRatio: false,
+	});
+	shiftFixture.handleListeners.get('pointerdown')({
+		preventDefault() {},
+		stopPropagation() {},
+	});
+	shiftFixture.windowRef.dispatch('pointermove', { clientX: 135, clientY: 95, shiftKey: true });
+	assert.deepEqual(
+		[shiftFixture.canvasManager.selection.w, shiftFixture.canvasManager.selection.h],
+		[119, 95],
+		'holding Shift continues to constrain proportions when the preference is off',
+	);
+	shiftFixture.windowRef.dispatch('pointerup', {});
+	shiftFixture.bind();
+});
+
+test('automatic proportions apply to corner handles only', () => {
+	const fixture = createResizeFixture({
+		selection: { x: 0, y: 0, w: 100, h: 80 },
+		direction: 'e',
+	});
+	fixture.handleListeners.get('pointerdown')({
+		preventDefault() {},
+		stopPropagation() {},
+	});
+	fixture.windowRef.dispatch('pointermove', { clientX: 135, clientY: 40 });
+
+	assert.deepEqual(
+		[fixture.canvasManager.selection.w, fixture.canvasManager.selection.h],
+		[135, 80],
+	);
+	fixture.windowRef.dispatch('pointerup', {});
+	fixture.bind();
+});
 
 test('CanvasManager resamples pixels into the actual canvas and overlay dimensions', () => {
 	const previousDocument = globalThis.document;
@@ -142,7 +219,10 @@ test('CanvasManager resamples pixels into the actual canvas and overlay dimensio
 });
 
 test('resizing a whole-canvas selection rescales the real document in one undo transaction', () => {
-	const fixture = createResizeFixture({ selection: { x: 0, y: 0, w: 100, h: 80 } });
+	const fixture = createResizeFixture({
+		selection: { x: 0, y: 0, w: 100, h: 80 },
+		keepAspectRatio: false,
+	});
 	fixture.handleListeners.get('pointerdown')({
 		preventDefault() {},
 		stopPropagation() {},
@@ -192,6 +272,7 @@ test('incremental RTL whole-canvas resizing keeps the image origin and dragged h
 	const fixture = createResizeFixture({
 		selection: { x: 0, y: 0, w: 100, h: 80 },
 		rtl: true,
+		keepAspectRatio: false,
 	});
 	fixture.handleListeners.get('pointerdown')({
 		preventDefault() {},
@@ -214,7 +295,10 @@ test('incremental RTL whole-canvas resizing keeps the image origin and dragged h
 });
 
 test('cancelling a whole-canvas resize restores its original bounds and aborts history', () => {
-	const fixture = createResizeFixture({ selection: { x: 0, y: 0, w: 100, h: 80 } });
+	const fixture = createResizeFixture({
+		selection: { x: 0, y: 0, w: 100, h: 80 },
+		keepAspectRatio: false,
+	});
 	fixture.handleListeners.get('pointerdown')({
 		preventDefault() {},
 		stopPropagation() {},
@@ -244,6 +328,7 @@ test('resizing a partial floating selection changes only its floating layer', ()
 		const fixture = createResizeFixture({
 			selection: { x: 10, y: 15, w: 20, h: 15 },
 			floatingCanvas,
+			keepAspectRatio: false,
 		});
 		fixture.handleListeners.get('pointerdown')({
 			preventDefault() {},

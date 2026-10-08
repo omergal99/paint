@@ -193,6 +193,8 @@ export const DEFAULT_SETTINGS = Object.freeze({
 	solidBackgroundColor: '#ffffff',
 	defaultCanvasSize: '800x600',
 	defaultZoom: 100,
+	showZoomReset: false,
+	selectionResizeKeepAspect: true,
 	historyAutoSave: true,
 	historyAutoSaveMode: 'all',
 	historyLimit: 50,

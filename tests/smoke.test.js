@@ -126,8 +126,12 @@ test('Image action submenus expose consistent icons and translated labels', () =
 
 test('zoom controls provide a localized direct return to actual size', () => {
 	const zoomReset = html.match(/<button[^>]*id="zoom-reset"[\s\S]*?<\/button>/)?.[0] || '';
+	assert.match(zoomReset, /\shidden(?:\s|>)/, 'the 100% reset button is opt-in');
 	assert.match(zoomReset, /data-i18n-attr="title:ui\.zoomTo100,aria-label:ui\.zoomTo100"/);
 	assert.match(zoomReset, /data-i18n="ui\.zoom100">100%/);
+	assert.match(html, /id="setting-show-zoom-reset"/);
+	assert.match(read('js/app/settingsHydration.js'), /zoomReset\.hidden = saved\.showZoomReset !== true/);
+	assert.match(main, /showZoomReset: showZoomResetCheckbox\?\.checked === true/);
 	assert.match(read('js/canvas/ViewportManager.js'), /_onZoomReset = \(\) => this\.setZoom\(100\)/);
 	assert.match(read('js/canvas/ViewportManager.js'), /zoomResetBtn\?\.addEventListener\('click', this\._onZoomReset\)/);
 });
@@ -948,6 +952,9 @@ test('New defaults are safe and configurable', () => {
   assert.match(main, /mode: s\.historyAutoSaveMode.*lifecycle/);
   assert.match(html, /id="setting-default-canvas-size"/);
   assert.match(html, /id="setting-default-zoom"/);
+  assert.match(html, /id="setting-show-zoom-reset"/);
+  assert.match(html, /id="selection-keep-aspect-toggle" checked/);
+  assert.match(read('js/core/constants.js'), /showZoomReset: false,[\s\S]*selectionResizeKeepAspect: true/);
 });
 
 test('Ribbon layout and reusable segmented choices are wired', () => {
@@ -1122,7 +1129,7 @@ test('Round-2 fixes: V glyph, session persistence, view-aware actions, storage m
   assert.match(read('js/tools/EmojiStore.js'), /EMOJI_CATALOG/);
   assert.match(read('js/tools/ShapeTool.js'), /case 'emoji'/);
   assert.match(read('js/ui/Toolbar.js'), /getSelectedEmoji/);
-  assert.match(read('js/app/selectionOverlayController.js'), /moveEvent\.shiftKey && w > 0 && h > 0/);
+  assert.match(read('js/app/selectionOverlayController.js'), /moveEvent\.shiftKey \|\| \(keepAspectRatio && direction\.length === 2\)/);
   assert.match(read('css/styles.css'), /\.shape-emoji-grid/);
   // Emoji tiles live inside `.action-menu-items`, so their rules must be scoped
   // under `.shape-gallery` (0,2,0 > 0,1,1) to out-specify `.action-menu-items

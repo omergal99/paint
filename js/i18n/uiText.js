@@ -193,6 +193,7 @@ export const UI_TEXT_KEYS = Object.freeze({
 	'Default new image': 'ui.defaultNewImage',
 	'Custom': 'ui.custom',
 	'Initial zoom': 'ui.initialZoom',
+	'Show the 100% zoom reset button': 'ui.showZoomReset',
 	'Keyboard shortcuts': 'ui.keyboardShortcuts',
 	'Focus a shortcut field, press the keys you want, then leave the field. Changes are saved in this browser.': 'ui.shortcutHelp',
 	'Defaults are active.': 'ui.defaultsActive',

@@ -166,6 +166,7 @@ export const initializePtBr = (english) => {
     "ui.defaultNewImage": "Nova imagem padrão",
     "ui.custom": "Personalizado",
     "ui.initialZoom": "Zoom inicial",
+    "ui.showZoomReset": "Mostrar o botão para redefinir o zoom para 100%",
     "ui.keyboardShortcuts": "Atalhos de teclado",
     "ui.autoSaveHistory": "Salvar automaticamente no histórico",
     "ui.restoreLastImage": "Carregar última imagem ao iniciar",

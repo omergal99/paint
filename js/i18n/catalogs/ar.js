@@ -161,6 +161,7 @@ export const initializeAr = (english) => {
     "ui.defaultNewImage": "الصورة الجديدة الافتراضية",
     "ui.custom": "مخصص",
     "ui.initialZoom": "التكبير الأولي",
+    "ui.showZoomReset": "إظهار زر إعادة ضبط التكبير إلى ١٠٠٪",
     "ui.keyboardShortcuts": "اختصارات لوحة المفاتيح",
     "ui.autoSaveHistory": "الحفظ التلقائي في السجل",
     "ui.restoreLastImage": "تحميل آخر صورة عند البدء",

@@ -304,6 +304,14 @@
 												<path d="M4 10c0-4 3-7 7-7s6 2 6 6-3 8-7 8c-3 0-5-2-5-4 0-1 1-2 2-2"
 													fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" />
 											</svg><span data-i18n="ui.selectLasso">Free-form Selection</span></button>
+										<div class="menu-checkbox">
+											<input type="checkbox" id="selection-keep-aspect-toggle" checked>
+											<svg class="icon size4" viewBox="0 0 20 20" aria-hidden="true" focusable="false">
+												<rect x="4" y="4" width="12" height="12" fill="none" stroke="currentColor" />
+												<path d="m6 14 8-8" fill="none" stroke="currentColor" stroke-linecap="round" />
+											</svg>
+											<label for="selection-keep-aspect-toggle" data-i18n="ui.keepAspect">Maintain aspect ratio</label>
+										</div>
 										<button type="button" id="btn-select-all" role="menuitem" title="Select All" data-action="selectAll"
 											data-i18n-attr="title:ui.selectAll">
 											<svg class="icon size4" viewBox="0 0 20 20" aria-hidden="true"><use href="#icon-select-all" /></svg><span data-i18n="ui.selectAll">Select All</span></button>
@@ -1217,7 +1225,7 @@
 					</button>
 					<input type="range" id="zoom-slider" data-tag="zoom-slider" min="10" max="800" step="10" value="100"
 						aria-label="Zoom percentage slider" />
-					<button type="button" id="zoom-reset" data-tag="zoom-reset" title="Zoom to 100%"
+					<button type="button" id="zoom-reset" data-tag="zoom-reset" title="Zoom to 100%" hidden
 						aria-label="Zoom to 100%" data-i18n-attr="title:ui.zoomTo100,aria-label:ui.zoomTo100">
 						<span data-i18n="ui.zoom100">100%</span>
 					</button>
@@ -1421,6 +1429,10 @@
 									aria-label="Custom initial zoom percentage" />%
 							</span>
 						</span>
+					</div>
+					<div class="checkbox-row" data-tag="setting-show-zoom-reset-row">
+						<input type="checkbox" id="setting-show-zoom-reset">
+						<label for="setting-show-zoom-reset" data-i18n="ui.showZoomReset">Show the 100% zoom reset button</label>
 					</div>
 				</div>
 			</form>

@@ -162,6 +162,7 @@ export const initializeDe = (english) => {
     "ui.defaultNewImage": "Standard für neues Bild",
     "ui.custom": "Benutzerdefiniert",
     "ui.initialZoom": "Startzoom",
+    "ui.showZoomReset": "Schaltfläche zum Zurücksetzen des Zooms auf 100 % anzeigen",
     "ui.keyboardShortcuts": "Tastenkürzel",
     "ui.autoSaveHistory": "Automatisch im Verlauf speichern",
     "ui.restoreLastImage": "Letztes Bild beim Start laden",

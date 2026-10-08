@@ -219,6 +219,7 @@ export const initializeHe = (english) => {
     "ui.defaultNewImage": "תמונה חדשה כברירת מחדל",
     "ui.custom": "מותאם",
     "ui.initialZoom": "מיקוד ראשוני",
+    "ui.showZoomReset": "הצגת כפתור איפוס הזום ל־100%",
     "ui.keyboardShortcuts": "קיצורי מקלדת",
     "ui.shortcutHelp": "התמקדו בשדה קיצור, לחצו על המקשים הרצויים וצאו מהשדה. השינויים נשמרים בדפדפן זה.",
     "ui.defaultsActive": "ערכי ברירת המחדל פעילים.",

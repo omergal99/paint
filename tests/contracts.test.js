@@ -10,6 +10,7 @@ import { ClipboardManager } from '../js/clipboard/ClipboardManager.js';
 import { createPaintDocument, isPaintDocument } from '../js/core/DocumentContract.js';
 import { HistoryManager, MAX_HISTORY_SNAPSHOT_PIXELS } from '../js/history/HistoryManager.js';
 import { createSettingsStore } from '../js/settings/SettingsStore.js';
+import { createPaintSettingsStore } from '../js/app/settingsStore.js';
 import { matchShapeQuery, toggleFavoriteShape } from '../js/ui/mirrors/shapesMirror.js';
 import { createTextDocumentStore } from '../js/document/TextDocumentStore.js';
 import { createTextHistoryStore } from '../js/document/TextHistoryStore.js';
@@ -1229,6 +1230,21 @@ test('historyLimit is a validated setting with one shared option list', () => {
   assert.equal(reloaded.get().historyLimit, 20, 'the save limit survives a reload');
   store.set({ historyLimit: 37 });
   assert.equal(store.get().historyLimit, DEFAULT_SETTINGS.historyLimit, 'an unsupported value falls back to the default');
+});
+
+test('zoom reset visibility and selection resize proportions persist with defaults', () => {
+	const storage = memoryStorage();
+	const settings = createPaintSettingsStore({ storage });
+	assert.equal(settings.get().showZoomReset, false);
+	assert.equal(settings.get().selectionResizeKeepAspect, true);
+
+	settings.set({ showZoomReset: true, selectionResizeKeepAspect: false });
+	const restored = createPaintSettingsStore({ storage });
+	assert.equal(restored.get().showZoomReset, true);
+	assert.equal(restored.get().selectionResizeKeepAspect, false);
+
+	restored.set({ selectionResizeKeepAspect: 'sometimes' });
+	assert.equal(restored.get().selectionResizeKeepAspect, true, 'invalid stored values fall back to the safe default');
 });
 
 test('history state is published as one event instead of per-surface polling', async () => {

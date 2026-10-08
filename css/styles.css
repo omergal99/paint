@@ -3204,6 +3204,9 @@ html[dir="rtl"] .resize-ghost {
 	font-size: 11px;
 	font-weight: 600;
 }
+.zoom-controls #zoom-reset[hidden] {
+	display: none;
+}
 .zoom-controls input[type="number"] {
 	width: 46px;
 	font-family: var(--font-ui);

@@ -202,6 +202,8 @@ const defaultCanvasWidthInput = document.getElementById('setting-default-canvas-
 const defaultCanvasHeightInput = document.getElementById('setting-default-canvas-height');
 const defaultZoomSelect = document.getElementById('setting-default-zoom');
 const defaultZoomCustomInput = document.getElementById('setting-default-zoom-custom');
+const showZoomResetCheckbox = document.getElementById('setting-show-zoom-reset');
+const keepSelectionAspectCheckbox = document.getElementById('selection-keep-aspect-toggle');
 const { shortcutManager, renderShortcutSettings } = initShortcutSettings({ settingsStore });
 
 // `PanelLayoutManager` cannot be built here: its constructor calls `apply()`,
@@ -241,6 +243,8 @@ const saveSettings = () => {
 			defaultCanvasWidth: Number(defaultCanvasWidthInput?.value) || 800,
 			defaultCanvasHeight: Number(defaultCanvasHeightInput?.value) || 600,
 			defaultZoom: getDefaultZoom(),
+			showZoomReset: showZoomResetCheckbox?.checked === true,
+			selectionResizeKeepAspect: keepSelectionAspectCheckbox?.checked !== false,
 			historyAutoSave,
 			historyAutoSaveMode,
 			// Phase 3 / step-01: the limit is owned by the store, never by a select.
@@ -296,21 +300,25 @@ const adjustmentMask = createBrushAreaMask({
 	height: canvasManager.height,
 	previewCanvas: document.getElementById('adjustment-mask-canvas'),
 });
+const viewportManagerRef = { current: null };
 const historyManager = new HistoryManager(canvasManager, {
 	captureState: () => ({
 		selection: canvasManager.selection ? { ...canvasManager.selection } : null,
-		canvasStagePosition: {
-			left: viewportManager.stage.style.left,
-			top: viewportManager.stage.style.top,
-		},
+		canvasStagePosition: viewportManagerRef.current
+			? {
+				left: viewportManagerRef.current.stage.style.left,
+				top: viewportManagerRef.current.stage.style.top,
+			}
+			: null,
 	}),
 	restoreState: ({ selection, canvasStagePosition } = {}) => {
 		canvasManager.floatingCanvas = null;
 		setSelection(selection ? { ...selection } : null);
-		if (canvasStagePosition) {
-			viewportManager.stage.style.left = canvasStagePosition.left;
-			viewportManager.stage.style.top = canvasStagePosition.top;
-			viewportManager.invalidateGeometry();
+		const viewport = viewportManagerRef.current;
+		if (canvasStagePosition && viewport) {
+			viewport.stage.style.left = canvasStagePosition.left;
+			viewport.stage.style.top = canvasStagePosition.top;
+			viewport.invalidateGeometry();
 		}
 	},
 });
@@ -421,6 +429,7 @@ const viewportManager = new ViewportManager({
 	zoomInput: document.getElementById('zoom-input'),
 	zoomSlider: document.getElementById('zoom-slider'),
 });
+viewportManagerRef.current = viewportManager;
 
 const canvasResizer = new CanvasResizer({
 	stage,
@@ -672,6 +681,7 @@ selectionOverlayController = createSelectionOverlayController({
 	setSelection,
 	isToolActive: () => activeToolName === 'select',
 	isPreviewActive: () => selectionPreviewActive,
+	getKeepAspectRatio: () => settingsStore.get().selectionResizeKeepAspect !== false,
 });
 
 syncSelectionActions();
@@ -1499,6 +1509,12 @@ defaultZoomCustomInput?.addEventListener('input', () => {
 	renderSegmentedChoices();
 	saveSettings();
 });
+showZoomResetCheckbox?.addEventListener('change', () => {
+	const zoomReset = document.getElementById('zoom-reset');
+	if (zoomReset) zoomReset.hidden = !showZoomResetCheckbox.checked;
+	saveSettings();
+});
+keepSelectionAspectCheckbox?.addEventListener('change', saveSettings);
 defaultCanvasSizeSelect?.addEventListener('change', () => {
 	if (defaultCanvasSizeSelect.value !== 'custom') syncDefaultCanvasInputsFromSelect();
 	saveSettings();
