@@ -29,9 +29,9 @@ their main command; do not edit `CACHE_NAME` by hand. The convention is:
 
 | Source | Value |
 |---|---|
-| `package.json` | `1.7.0` |
-| `js/version.js` | `APP_VERSION = '1.7.0'` |
-| `sw.js` | `CACHE_NAME = 'paint-shell-v1-7-0-<shell-hash>'` |
+| `package.json` | `1.9.0` |
+| `js/version.js` | `APP_VERSION = '1.9.0'` |
+| `sw.js` | `CACHE_NAME = 'paint-shell-v1-9-0-<shell-hash>'` |
 
 The hash changes whenever a precached source changes. A hand-written cache name
 is unsupported; use the lifecycle hooks or `npm run sw:sync` for a standalone
