@@ -555,6 +555,18 @@
 										<input type="checkbox" id="text-history-toolbar-toggle" /> <label
 											for="text-history-toolbar-toggle">Show Recent text toolbar</label>
 									</div>
+									<div class="menu-checkbox" title="Enter places the text on the canvas">
+										<input type="checkbox" id="text-enter-saves" /> <label for="text-enter-saves" data-i18n="ui.textEnterSaves">Enter
+											places the text</label>
+									</div>
+									<span class="menu-option-note" id="text-enter-saves-note" data-i18n="ui.textEnterSavesHint">Enter places the
+										text; Shift+Enter adds a new line. Tab reaches OK.</span>
+									<div class="menu-checkbox" title="Show the text-layer boxes on hover">
+										<input type="checkbox" id="text-layer-visible" /> <label for="text-layer-visible"
+											data-i18n="ui.textLayerVisible">Show text layer</label>
+									</div>
+									<span class="menu-option-note" id="text-layer-visible-note" data-i18n="ui.textLayerVisibleHint">Show the
+										text-layer boxes when the pointer is over them. Off keeps the canvas clear until you place text.</span>
 									<div class="menu-checkbox" title="Focus the committed text object after drawing">
 										<input type="checkbox" id="text-select-after-draw" /> <label for="text-select-after-draw">Select
 											text after draw</label>
@@ -652,6 +664,10 @@
 							data-tag="btn-shapes-menu" title="Choose another shape"><span class="menu-arrow"
 								aria-hidden="true">▾</span></button>
 						<div class="action-menu-items shape-gallery menu-stay-open" role="menu" aria-label="Shapes gallery">
+							<div class="menu-checkbox shape-after-draw-row"
+								title="Keep shape selected after drawing so it can be moved"><input type="checkbox"
+									id="shape-select-after-draw" /> <label for="shape-select-after-draw">Select after draw</label></div>
+
 							<div class="shape-gallery-grid">
 								<button type="button" class="rbtn cell shape-btn" data-shape="line" data-tag="shape-line" title="Line">
 									<svg class="icon" viewBox="0 0 20 20">
@@ -781,9 +797,6 @@
 							<div class="shape-emoji-row" data-tag="shape-emoji-picker" aria-label="Emoji picker">
 								<div class="shape-emoji-grid" id="shape-emoji-grid" role="listbox" aria-label="Choose emoji"></div>
 							</div>
-							<div class="menu-checkbox shape-after-draw-row"
-								title="Keep shape selected after drawing so it can be moved"><input type="checkbox"
-									id="shape-select-after-draw" /> <label for="shape-select-after-draw">Select after draw</label></div>
 							<div class="shape-menu-settings" aria-label="Fill mode settings">
 								<span class="shape-menu-setting-label">Fill</span>
 								<div class="fillmode-col">

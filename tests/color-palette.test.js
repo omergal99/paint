@@ -22,6 +22,7 @@ import {
 	withLightness,
 	withSaturation,
 } from '../js/utils/color.js';
+import { createColorPalette } from '../js/ui/ColorPalette.js';
 
 test('HSL conversion round-trips pure colours and reports hue/saturation/lightness', () => {
 	assert.deepEqual(hexToHsl('#ff0000'), { h: 0, s: 100, l: 50 });
@@ -158,6 +159,33 @@ test('palette grids delegate swatch and pager events from stable roots', () => {
 	assert.match(paletteSource, /const unmountGrid = \(grid\) => \{[\s\S]*?unbindGrid\(grid\)/);
 });
 
+test('the active foreground swatch is mirrored onto every grid and survives reload', () => {
+	// W4-14: the ribbon grid had no selected-swatch highlight, so the chosen
+	// colour looked unselected after a reload. The controller now mirrors the
+	// primary onto the matching swatch (one write path, one highlight rule).
+	const paletteSource = readFileSync(new URL('../js/ui/ColorPalette.js', import.meta.url), 'utf8');
+	assert.match(paletteSource, /const syncSwatchSelection = \(grid\) => \{/);
+	assert.match(paletteSource, /button\.classList\.toggle\('active', active\)/);
+	assert.match(paletteSource, /button\.setAttribute\('aria-pressed', String\(active\)\)/);
+	// The sync runs on mount, on grid render, and on every foreground write.
+	assert.match(paletteSource, /renderGridInto\(grid, mode\);\s*\n\s*syncSwatchSelection\(grid\);/);
+	assert.match(paletteSource, /syncAllSwatchSelection\(\);[\s\S]*onPrimaryChange\?\./);
+	assert.match(readFileSync(new URL('../css/styles.css', import.meta.url), 'utf8'), /\.palette-grid button\[aria-pressed="true"\]/);
+});
+
+test('a canvas background colour change repaints the clean blank surface (W4-17)', () => {
+	// W4-17: on reload the canvas kept the white it was constructed with until
+	// something resized it, because setBackgroundColor only stored the value.
+	const manager = readFileSync(new URL('../js/canvas/CanvasManager.js', import.meta.url), 'utf8');
+	const setter = manager.match(/setBackgroundColor\(color\) \{[\s\S]*?\n  \}/)?.[0] || '';
+	assert.match(setter, /this\.clear\(this\.backgroundColor\)/);
+	assert.match(setter, /this\.backgroundMode !== 'transparent'/);
+	assert.match(setter, /this\.isCleanDocument\?\.\(\) === true/);
+	// Hydration re-applies the colour after the mode is known so reload paints it.
+	const hydration = readFileSync(new URL('../js/app/settingsHydration.js', import.meta.url), 'utf8');
+	assert.match(hydration, /applyCanvasBackgroundMode\(bgSelect\.value\);[\s\S]*?isCleanDocument\?\.\(\) === true[\s\S]*?setBackgroundColor\(solidColor\)/);
+});
+
 test('Sidebar custom palette color inputs delegate updates through the settings grid', () => {
 	const sidebarSource = readFileSync(new URL('../js/ui/Sidebar.js', import.meta.url), 'utf8');
 	const renderSettingsGrid = sidebarSource.match(/const renderSettingsGrid = \(\) => \{[\s\S]*?\n\t\t\};/)?.[0] || '';
@@ -169,4 +197,141 @@ test('Sidebar custom palette color inputs delegate updates through the settings 
 	assert.match(inputHandler, /grid\.contains\(input\)/);
 	assert.match(inputHandler, /next\[index\] = input\.value/);
 	assert.match(inputHandler, /this\.palette\.setPalette\(next\)/);
+});
+
+// --- W4-14: the persisted palette page must survive a reload -----------
+// The stubs below are just enough for createColorPalette to construct, render
+// its ribbon grid and persist. `restore()` reinstalls them so a second
+// construct behaves like a page reload against the same localStorage.
+const makeClassList = () => {
+	const set = new Set();
+	return {
+		add: (...names) => names.forEach((name) => set.add(name)),
+		remove: (...names) => names.forEach((name) => set.delete(name)),
+		toggle: (name, force) => {
+			if (force === undefined) {
+				if (set.has(name)) set.delete(name); else set.add(name);
+				return;
+			}
+			if (force) set.add(name); else set.delete(name);
+		},
+		contains: (name) => set.has(name),
+	};
+};
+
+// Minimal element factory shared by the localStorage/document stubs below and
+// the ribbon grid used in buildPalette.
+const makeElement = () => ({
+	children: [],
+	style: {},
+	dataset: {},
+	attrs: {},
+	classList: makeClassList(),
+	innerHTML: '',
+	textContent: '',
+	title: '',
+	type: '',
+	value: '',
+	isConnected: true,
+	setAttribute(name, value) { this.attrs[name] = String(value); },
+	getAttribute(name) { return name in this.attrs ? this.attrs[name] : null; },
+	removeAttribute(name) { delete this.attrs[name]; },
+	append(...nodes) { this.children.push(...nodes); },
+	appendChild(node) { this.children.push(node); return node; },
+	insertAdjacentHTML() {},
+	addEventListener() {},
+	removeEventListener() {},
+	focus() {},
+	closest() { return null; },
+	matches() { return false; },
+	remove() {},
+	contains() { return false; },
+	querySelector() { return null; },
+	querySelectorAll(selector) {
+		return selector.includes('data-color')
+			? this.children.filter((child) => child.dataset?.color)
+			: [];
+	},
+});
+
+const makeDomStubs = () => {
+	const store = new Map();
+	return {
+		store,
+		restore() {
+			globalThis.localStorage = {
+				getItem: (key) => (store.has(key) ? store.get(key) : null),
+				setItem: (key, value) => store.set(key, String(value)),
+				removeItem: (key) => store.delete(key),
+			};
+			globalThis.document = {
+				createElement: makeElement,
+				createElementNS: makeElement,
+				body: makeElement(),
+				addEventListener() {},
+				querySelector() { return null; },
+				querySelectorAll() { return []; },
+			};
+			globalThis.CustomEvent = class CustomEvent {
+				constructor(type, init) { this.type = type; this.detail = init?.detail; }
+			};
+			globalThis.window = { addEventListener() {}, removeEventListener() {}, dispatchEvent() {} };
+		},
+	};
+};
+
+// One factory call == one app load against the shared localStorage stub.
+const buildPalette = () => {
+	const grid = makeElement();
+	const palette = createColorPalette({
+		gridEl: grid,
+		primarySwatchEl: { addEventListener() {}, style: {}, dataset: {} },
+		secondarySwatchEl: { addEventListener() {}, style: {}, dataset: {} },
+		colorPickerInput: { addEventListener() {}, value: '' },
+		primaryAlphaInput: { addEventListener() {}, value: '' },
+		secondaryAlphaInput: { addEventListener() {}, value: '' },
+		primaryAlphaOutput: { value: '' },
+		secondaryAlphaOutput: { value: '' },
+		primaryTransparentButton: { addEventListener() {} },
+		secondaryTransparentButton: { addEventListener() {} },
+	});
+	return { palette, grid };
+};
+
+const activeSwatches = (grid) => grid.children
+	.filter((child) => child.classList.contains('active'))
+	.map((child) => child.dataset.color);
+
+test('W4-14: the swatch picked on a non-default page is still marked after a reload', () => {
+	const { restore } = makeDomStubs();
+	restore();
+
+	// Load 1: arrow to page 2 and pick a swatch from it.
+	const first = buildPalette();
+	assert.equal(first.palette.setPalettePage('p2'), true);
+	const picked = first.palette.getPalette()[5];
+	assert.equal(first.palette.setPrimary(picked), true);
+	assert.deepEqual(activeSwatches(first.grid), [picked], 'the pick is marked in the live session');
+
+	// Load 2 (reload): same localStorage, a brand new palette instance.
+	restore();
+	const second = buildPalette();
+	assert.equal(second.palette.palettePage, 'p2', 'the page id survives the reload');
+	assert.equal(second.palette.primary, picked, 'the chosen colour survives the reload');
+	assert.ok(second.grid.children.some((child) => child.dataset.color === picked),
+		'the page-2 swatch is on screen, not a stale page-1 grid');
+	assert.deepEqual(activeSwatches(second.grid), [picked], 'and it is marked active');
+});
+
+test('W4-14: a customised palette is never overwritten by the page restore', () => {
+	const { restore } = makeDomStubs();
+	restore();
+
+	const first = buildPalette();
+	assert.equal(first.palette.setPalette(['#123456', '#654321']), true);
+
+	restore();
+	const second = buildPalette();
+	assert.deepEqual(second.palette.getPalette().slice(0, 2), ['#123456', '#654321'],
+		'edited swatches survive the reload untouched');
 });

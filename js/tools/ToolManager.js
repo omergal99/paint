@@ -67,6 +67,12 @@ export class ToolManager {
 
   setActive(name) {
     if (this._destroyed) return;
+    // A tool switch must never inherit the previous tool's in-flight gesture.
+    // Otherwise a lost pointerup (e.g. Safari/macOS dropping the final packet)
+    // leaves `_activePointerId` stale and the NEXT press is silently dropped by
+    // the pointerId guard in _startPointer - the first click "does nothing"
+    // until a second click arrives (W4-06, brush→shape on Mac).
+    this._cancelStaleGesture();
     if (this.active?.onDeactivate) this.active.onDeactivate(this.toolContext);
     this.active = this.tools.get(name) || null;
     if (this.active) {
@@ -74,6 +80,22 @@ export class ToolManager {
       if (this.active.onActivate) this.active.onActivate(this.toolContext);
     }
     if (this.onToolChange) this.onToolChange(name);
+  }
+
+  // Ends whatever gesture the previous tool left behind: a real drag gets its
+  // onCancel hook (so stroke state and marquee status reset), and an orphaned
+  // pointer id left by a lost pointerup is dropped without touching the tool.
+  _cancelStaleGesture() {
+    if (this._dragging) {
+      this.cancelActiveGesture();
+      return;
+    }
+    if (this._activePointerId === null) return;
+    this._cancelQueuedMove(this._activePointerId);
+    this._releasePointer(this._activePointerId);
+    this._activePointerId = null;
+    this._detachWindowPointerFallback();
+    this._pendingRightDown = null;
   }
 
   cancelActiveGesture() {

@@ -1,6 +1,7 @@
 // Keyboard and pointer affordances for committed text-layer objects.
 // This layer never creates a pixel selection; it only delegates movement to
 // TextLayerService.
+import { STORAGE_KEYS } from '../core/constants.js';
 
 const TEXT_TARGET_PADDING = 4;
 const MIN_TEXT_TARGET_WIDTH = 24;
@@ -28,6 +29,19 @@ export const createTextSelectionOverlay = ({
 	let selectedId = null;
 	let dragState = null;
 
+	// The focus boxes are an opt-in affordance (W4-11): hidden by default so the
+	// committed text never blocks drawing, shown only when the pointer needs to
+	// grab or move a box. Visibility is one persisted flag read here (SSOT), so
+	// the overlay never depends on the Toolbar being constructed yet.
+	const readVisible = () => {
+		try { return localStorage.getItem(STORAGE_KEYS.textLayerVisible) === 'true'; } catch { return false; }
+	};
+	const applyVisibility = () => {
+		const visible = readVisible();
+		layer.classList.toggle('is-hidden', !visible);
+		layer.setAttribute('aria-hidden', String(!visible));
+	};
+
 	const deleteSelected = () => {
 		if (!selectedId) return false;
 		const id = selectedId;
@@ -48,6 +62,7 @@ export const createTextSelectionOverlay = ({
 
 	const render = (objects = []) => {
 		if (dragState) return;
+		applyVisibility();
 		layer.replaceChildren();
 		objects.forEach((object) => {
 			const target = document.createElement('button');
@@ -144,6 +159,11 @@ export const createTextSelectionOverlay = ({
 
 	const unsubscribe = store?.subscribe(render) || (() => {});
 	render(store?.getAll?.() || []);
+	// A settings toggle can flip visibility between renders, so listen too.
+	const onVisibilityChange = () => applyVisibility();
+	if (typeof window !== 'undefined') {
+		window.addEventListener('paint:text-layer-visibility-change', onVisibilityChange);
+	}
 
 	return Object.freeze({
 		element: layer,
@@ -157,6 +177,9 @@ export const createTextSelectionOverlay = ({
 		getSelectedId: () => selectedId,
 		destroy() {
 			unsubscribe();
+			if (typeof window !== 'undefined') {
+				window.removeEventListener('paint:text-layer-visibility-change', onVisibilityChange);
+			}
 			layer.remove();
 		},
 	});

@@ -237,6 +237,52 @@ test('ToolManager cancels the owning gesture before a history restore', () => {
 	manager.destroy();
 });
 
+// W4-06: on Safari/macOS a brush stroke can end without its final pointerup
+// reaching the surface, leaving `_activePointerId` stale. Without the reset in
+// setActive, the next press has a different pointerId, _startPointer drops it,
+// and the first click "does nothing" until a second click arrives.
+test('ToolManager drops a stale gesture when the tool changes so the next press works', () => {
+	const surface = eventTarget();
+	surface.setPointerCapture = () => {};
+	surface.releasePointerCapture = () => {};
+	const calls = [];
+	const manager = new ToolManager({
+		surface,
+		viewportManager: { clientToImage: (x, y) => ({ x, y }) },
+		toolContext: { canvasManager: { persistToStorage: () => {} } },
+		statusBar: { setPointer: () => {} },
+		requestFrame: (callback) => { callback(); return 1; },
+		cancelFrame: () => {},
+	});
+	manager.register({
+		name: 'first',
+		onDown: () => calls.push('first:down'),
+		onCancel: () => calls.push('first:cancel'),
+	});
+	manager.register({
+		name: 'second',
+		onDown: () => calls.push('second:down'),
+		onCancel: () => calls.push('second:cancel'),
+	});
+
+	// Start a drag with pointer 11 - then simulate the lost pointerup.
+	manager.setActive('first');
+	surface.dispatch('pointerdown', { pointerId: 11, button: 0, clientX: 0, clientY: 0, preventDefault: () => {} });
+	assert.equal(manager._activePointerId, 11);
+
+	// Switching tools must clean the inherited gesture state.
+	manager.setActive('second');
+	assert.deepEqual(calls, ['first:down', 'first:cancel'], 'the in-flight drag reaches the old tool cancel hook');
+	assert.equal(manager._activePointerId, null, 'no stale pointer id survives the switch');
+	assert.equal(manager._dragging, false);
+
+	// The FIRST press after the switch must reach the new tool (it would be
+	// dropped by the pointerId guard if the id were still 11).
+	surface.dispatch('pointerdown', { pointerId: 12, button: 0, clientX: 4, clientY: 4, preventDefault: () => {} });
+	assert.deepEqual(calls, ['first:down', 'first:cancel', 'second:down'], 'the first press after a tool switch draws');
+	manager.destroy();
+});
+
 test('ToolManager keeps a drag rAF queue owned by its active pointer', () => {
 	const surface = eventTarget();
 	const frames = [];

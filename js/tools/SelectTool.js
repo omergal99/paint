@@ -80,6 +80,30 @@ export const createSelectTool = ({
 			return;
 		}
 
+		// A press that starts OUTSIDE the current selection is the "draw another
+		// shape" gesture when a select-after-draw shape lift is still pending its
+		// tool restore. Place the lifted shape and hand the very same gesture to
+		// the shape tool, so one press draws a new shape instead of first opening
+		// a throwaway marquee (W4-01b: no second click needed).
+		if (ctx.canvasManager.floatingCanvas && ctx._deferShapeToolReactivate === true) {
+			ctx.commitFloatingSelection();
+			const target = (() => {
+				const prev = ctx.getPreviousTool?.();
+				return (prev === 'select' || prev === 'shape' || !prev) ? 'shape' : prev;
+			})();
+			state.start = null;
+			state.moving = false;
+			state.originalSelection = null;
+			state.path = [];
+			ctx.setMarqueeStatus?.(false);
+			ctx.setActiveTool?.(target);
+			// Re-dispatch this press to the freshly active shape tool so the drag
+			// that is already in flight becomes the new shape's start point.
+			const shapeTool = ctx.toolManager?.tools?.get?.(target);
+			shapeTool?.onDown?.(point, ctx);
+			return;
+		}
+
 		ctx.commitFloatingSelection();
 		state.moving = false;
 		state.originalSelection = null;

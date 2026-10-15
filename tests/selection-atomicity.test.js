@@ -12,6 +12,29 @@ const read = (file) => fs.readFileSync(path.join(root, file), 'utf8');
 
 // Phase 8: selection and clipboard correctness.
 
+test('an outside press while a shape lift is pending draws a new shape (W4-01b)', () => {
+  // Regression: after select-after-draw lifted a shape, a press that started
+  // outside the selection opened a throwaway marquee and needed a second press
+  // to actually draw. The select tool now hands that in-flight gesture to the
+  // shape tool so one press draws the next shape.
+  const select = read('js/tools/SelectTool.js');
+  assert.match(select, /ctx\.canvasManager\.floatingCanvas && ctx\._deferShapeToolReactivate === true/);
+  assert.match(select, /ctx\.commitFloatingSelection\(\);/);
+  assert.match(select, /ctx\.setActiveTool\?\.\(target\);/);
+  assert.match(select, /shapeTool\?\.onDown\?\.\(point, ctx\);/);
+  // The tool manager must be reachable so the freshly active tool can be found.
+  // It is exposed as a lazy getter: `toolContext` is built *before* the
+  // ToolManager exists, so an eager shorthand there would hit the temporal dead
+  // zone and crash boot with "used before initialization".
+  const mainSource = read('js/main.js');
+  assert.match(mainSource, /get toolManager\(\) \{ return toolManager; \},/);
+  // Everything written before `const toolManager = ...` must not read it
+  // eagerly (arrow bodies are fine; they resolve at call time).
+  const contextZone = mainSource.slice(0, mainSource.indexOf('const toolManager ='));
+  assert.doesNotMatch(contextZone, /^\ttoolManager,$/m,
+    'an eager shorthand inside toolContext would run before ToolManager exists');
+});
+
 test('selection handles stay a fixed size on screen at every zoom level', () => {
   // The handles live inside #canvas-scale, which carries the zoom transform, so
   // they used to grow and shrink with the canvas. ViewportManager already

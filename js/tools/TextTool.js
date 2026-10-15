@@ -217,8 +217,17 @@ export const createTextTool = () => {
     clearHistoryButton.className = 'text-history-clear';
     clearHistoryButton.textContent = t('common.actions.clear');
     clearHistoryButton.setAttribute('aria-label', t('ui.clearRecentTextHistory'));
+    // OK places the text explicitly (same commit as blur). It is a real button
+    // so Tab reaches it directly from the textarea.
+    const okButton = document.createElement('button');
+    okButton.type = 'button';
+    okButton.className = 'text-editor-ok';
+    okButton.textContent = t('common.actions.ok');
+    okButton.title = t('ui.textEditorOk');
+    okButton.dataset.tag = 'text-editor-ok';
+    okButton.setAttribute('aria-label', t('ui.textEditorOk'));
     historyControls.append(historyLabel, historyDropdown.element);
-    toolbar.append(historyControls, clearHistoryButton);
+    toolbar.append(historyControls, clearHistoryButton, okButton);
     setHistoryToolbarVisibility(ctx.getTextHistoryToolbarVisible?.() !== false);
 
     const nextEditor = document.createElement('textarea');
@@ -246,6 +255,9 @@ export const createTextTool = () => {
     clearHistoryButton.addEventListener('click', () => {
       ctx.textHistoryStore?.clear();
       nextEditor.focus();
+    });
+    okButton.addEventListener('click', () => {
+      commit();
     });
     historyUnsubscribe = ctx.textHistoryStore?.subscribe(renderHistoryOptions) || null;
     historyToolbarListener = (event) => setHistoryToolbarVisibility(event.detail?.visible !== false);
@@ -303,6 +315,12 @@ export const createTextTool = () => {
       if (event.key === 'Escape') {
         event.preventDefault();
         cancel();
+        return;
+      }
+      // Enter places the text by default (Shift+Enter always adds a new line).
+      if (event.key === 'Enter' && !event.shiftKey && ctx.getTextEnterSaves?.() !== false) {
+        event.preventDefault();
+        commit();
       }
     });
     nextEditor.addEventListener('blur', () => {

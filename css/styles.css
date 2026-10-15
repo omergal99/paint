@@ -1154,6 +1154,11 @@ body {
 .palette-grid button:hover {
 	outline: 1px solid var(--w10-accent);
 }
+/* The active foreground swatch stays outlined in the ribbon grid too, so the
+   chosen colour is visible without opening the sidebar picker (W4-14). */
+.palette-grid button[aria-pressed="true"] {
+	box-shadow: inset 0 0 0 2px var(--w10-accent);
+}
 .palette-grid button[data-bootstrap-palette] {
 	pointer-events: none;
 }
@@ -2607,6 +2612,15 @@ body.rtl .dialog-arrow-icon {
 	z-index: 7;
 	pointer-events: none;
 }
+/* Hidden text layer (W4-11): drop pointer events so committed text never
+   blocks drawing until the user opts the focus boxes back in. */
+.text-object-focus-layer.is-hidden {
+	pointer-events: none;
+	visibility: hidden;
+}
+.text-object-focus-layer.is-hidden .text-object-focus-target {
+	pointer-events: none;
+}
 .text-object-focus-target {
 	position: absolute;
 	display: block;
@@ -2940,6 +2954,18 @@ html[dir="rtl"] .resize-ghost {
 }
 .text-history-clear:hover,
 .text-history-clear:focus-visible {
+	background: var(--w10-hover);
+}
+.text-editor-ok {
+	padding: 2px 8px;
+	border: 1px solid var(--w10-border);
+	background: var(--w10-ribbon-bg);
+	color: var(--w10-text);
+	font-weight: 600;
+	cursor: pointer;
+}
+.text-editor-ok:hover,
+.text-editor-ok:focus-visible {
 	background: var(--w10-hover);
 }
 .op-text-box {
@@ -3481,7 +3507,7 @@ dialog h3 {
 }
 .brush-studio-preview {
 	width: 100%;
-	height: 54px;
+	height: 88px;
 	border: 1px solid var(--w10-border);
 	border-radius: 3px;
 	background-color: var(--w10-bg);
@@ -3665,6 +3691,27 @@ dialog h3 {
 	gap: 3px;
 	min-width: 0;
 }
+.brush-studio-advanced-toggle {
+	justify-self: start;
+	padding: 2px 6px;
+	border: 1px solid var(--w10-border);
+	border-radius: 3px;
+	background: var(--w10-bg);
+	color: var(--w10-text-dim);
+	font-size: 10px;
+	font-weight: 600;
+	cursor: pointer;
+}
+.brush-studio-advanced-toggle:hover {
+	color: var(--w10-text);
+}
+.brush-studio-advanced-rows {
+	display: grid;
+	gap: 5px;
+}
+.brush-studio-advanced-rows[hidden] {
+	display: none;
+}
 .brush-studio-example-label {
 	font-size: 10px;
 	color: var(--w10-text-dim);
@@ -3728,6 +3775,9 @@ dialog h3 {
 .brush-studio-stamp-colors {
 	display: grid;
 	gap: 5px;
+}
+.brush-studio-stamp-colors[hidden] {
+	display: none;
 }
 .brush-studio-stamp-colors h4 {
 	margin: 0;

@@ -107,6 +107,12 @@ const applySavedSettings = () => {
       : 'custom';
     byId('setting-default-zoom-custom').value = Math.min(800, Math.max(10, Math.round(savedZoom)));
     applyCanvasBackgroundMode(bgSelect.value);
+    // Repaint the blank surface with the saved background now that both the
+    // colour and the mode are known. Without this a reload keeps the white the
+    // canvas was constructed with until something else resizes it (W4-17).
+    if (canvasManager.isCleanDocument?.() === true) {
+      canvasManager.setBackgroundColor(solidColor);
+    }
     viewportManager.setInitialZoom(getDefaultZoom());
     if (!localStorage.getItem('paint:zoom')) viewportManager.setZoom(getDefaultZoom());
     // Startup begins from the configured blank size. app.js restores the

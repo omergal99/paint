@@ -628,6 +628,30 @@ const syncSelectionActions = () => {
 	document.querySelectorAll('[data-requires-selection]').forEach((control) => {
 		control.disabled = !enabled;
 		control.setAttribute('aria-disabled', String(!enabled));
+		// A disabled submenu trigger must not leave its inner items live: the
+		// panel can still be opened on hover, so disable every action inside it
+		// and explain the gate on the trigger itself.
+		if (!enabled) {
+			const submenu = control.closest('.action-submenu');
+			const panel = submenu?.querySelector('.action-submenu-items');
+			panel?.querySelectorAll('button').forEach((item) => {
+				item.disabled = true;
+				item.setAttribute('aria-disabled', 'true');
+			});
+			if (control.classList.contains('action-submenu-trigger')) {
+				control.title = t('ui.noSelectionSaveAs');
+			}
+		} else {
+			const submenu = control.closest('.action-submenu');
+			const panel = submenu?.querySelector('.action-submenu-items');
+			panel?.querySelectorAll('button').forEach((item) => {
+				item.disabled = false;
+				item.removeAttribute('aria-disabled');
+			});
+			if (control.classList.contains('action-submenu-trigger')) {
+				control.title = t('ui.saveSelectionAs');
+			}
+		}
 		if (!control.id) return;
 		document.querySelectorAll(`[data-source-tag="${control.id}"]`).forEach((mirror) => {
 			mirror.disabled = !enabled;
@@ -944,7 +968,13 @@ const toolContext = {
 	getShapeKind: () => toolbar.getShapeKind(),
 	getShapeFillMode: () => toolbar.getFillMode(),
 	getSelectAfterDraw: () => toolbar.getSelectAfterDraw(),
+	// Exposed lazily: ToolManager is constructed *after* this context object, so
+	// reading it eagerly here would hit the temporal dead zone and crash boot.
+	// Consumers read it as `ctx.toolManager?.…` at event time, by which point it
+	// is assigned. (W4-01b)
+	get toolManager() { return toolManager; },
 	getTextSelectAfterDraw: () => toolbar.getTextSelectAfterDraw?.() === true,
+	getTextEnterSaves: () => toolbar.getTextEnterSaves?.() !== false,
 	selectTextObject: (id) => textSelectionOverlay?.select(id),
 	flattenLayers: () => canvasManager.flattenLayers(),
 	getEmoji: () => toolbar.getSelectedEmoji(),

@@ -6,6 +6,8 @@ const SHAPE_STORAGE_KEY = 'paint:selected-shape';
 const SHAPE_AFTER_DRAW_KEY = 'paint:shape-select-after-draw';
 const TEXT_AFTER_DRAW_KEY = STORAGE_KEYS.textSelectAfterDraw;
 const TEXT_HISTORY_TOOLBAR_KEY = STORAGE_KEYS.textHistoryToolbar;
+const TEXT_ENTER_SAVES_KEY = STORAGE_KEYS.textEnterSaves;
+const TEXT_LAYER_VISIBLE_KEY = STORAGE_KEYS.textLayerVisible;
 const STYLE_STORAGE_KEY = 'paint:tool-styles';
 const STYLE_HISTORY_KEY = 'paint:style-history';
 const TOOL_MENU_ITEMS = Object.freeze([
@@ -264,6 +266,10 @@ export class Toolbar {
 
   getTextSelectAfterDraw() { return this._textSelectAfterDraw === true; }
 
+  getTextEnterSaves() { return this._textEnterSaves !== false; }
+
+  getTextLayerVisible() { return this._textLayerVisible === true; }
+
   getTextHistoryToolbarVisible() { return this._showTextHistoryToolbar !== false; }
 
   _bindTextOptions() {
@@ -309,6 +315,36 @@ export class Toolbar {
       this._listen(textBox, 'change', () => {
         this._textSelectAfterDraw = textBox.checked === true;
         try { localStorage.setItem(TEXT_AFTER_DRAW_KEY, String(this._textSelectAfterDraw)); } catch {}
+      });
+    }
+
+    // Enter places the text by default; Shift+Enter always adds a new line.
+    let enterSaves = true;
+    try { enterSaves = localStorage.getItem(TEXT_ENTER_SAVES_KEY) !== 'false'; } catch {}
+    this._textEnterSaves = enterSaves;
+    const enterBox = this.root.querySelector('#text-enter-saves');
+    if (enterBox) {
+      enterBox.checked = enterSaves;
+      this._listen(enterBox, 'change', () => {
+        this._textEnterSaves = enterBox.checked === true;
+        try { localStorage.setItem(TEXT_ENTER_SAVES_KEY, String(this._textEnterSaves)); } catch {}
+      });
+    }
+
+    // Text-layer focus boxes stay hidden until asked for, so the committed text
+    // never interferes with drawing (W4-11). Default OFF.
+    let layerVisible = false;
+    try { layerVisible = localStorage.getItem(TEXT_LAYER_VISIBLE_KEY) === 'true'; } catch {}
+    this._textLayerVisible = layerVisible;
+    const layerBox = this.root.querySelector('#text-layer-visible');
+    if (layerBox) {
+      layerBox.checked = layerVisible;
+      this._listen(layerBox, 'change', () => {
+        this._textLayerVisible = layerBox.checked === true;
+        try { localStorage.setItem(TEXT_LAYER_VISIBLE_KEY, String(this._textLayerVisible)); } catch {}
+        window.dispatchEvent(new CustomEvent('paint:text-layer-visibility-change', {
+          detail: { visible: this._textLayerVisible },
+        }));
       });
     }
   }

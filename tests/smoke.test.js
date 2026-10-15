@@ -1605,7 +1605,9 @@ test('install prompt is captured and offered through Settings ▸ App', () => {
   const manager = read('js/pwa/PwaInstallManager.js');
   // The browser mini-infobar is suppressed on purpose, so the app must own the
   // install surface: capture -> hold -> prompt() from a real user action.
-  assert.match(manager, /const onBeforeInstallPrompt = \(event\) => \{\s*event\.preventDefault\(\);\s*deferredPrompt = event;\s*syncInstallUi\(\);/);
+  // W4-09: preventDefault() only when an Install control exists to call
+  // prompt() later; otherwise the native banner is left alone.
+  assert.match(manager, /const onBeforeInstallPrompt = \(event\) => \{[\s\S]*?if \(installButton\) \{\s*event\.preventDefault\(\);\s*deferredPrompt = event;\s*\}[\s\S]*?syncInstallUi\(\);/);
   assert.match(manager, /window\.addEventListener\('beforeinstallprompt', onBeforeInstallPrompt\);/);
   assert.match(manager, /window\.addEventListener\('appinstalled', onAppInstalled\);/);
   assert.match(manager, /installButton\?\.addEventListener\('click', install\);/);
@@ -1618,4 +1620,31 @@ test('install prompt is captured and offered through Settings ▸ App', () => {
   assert.match(html, /id="pwa-install-action-status"[\s\S]*?aria-live="polite"/);
   assert.match(manager, /ui\.installStatusManual/);
   assert.match(manager, /ui\.installStatusReady/);
+});
+
+test('W4 text/studio/selection contracts (phase 1)', () => {
+  // W4-01a: the shape "select after draw" checkbox sits at the top of the
+  // "choose another shape" gallery, before the shape grid.
+  const shapeGallery = html.match(/<div class="action-menu-items shape-gallery[\s\S]*?<div class="menu-checkbox shape-after-draw-row"[\s\S]*?<div class="shape-gallery-grid"/);
+  assert.ok(shapeGallery, 'shape after-draw checkbox must precede the shape grid');
+  // W4-12: Enter places text by default with Shift+Enter newline + OK button.
+  assert.match(html, /id="text-enter-saves"/);
+  assert.match(html, /data-i18n="ui\.textEnterSaves"/);
+  assert.match(html, /id="text-enter-saves-note" data-i18n="ui\.textEnterSavesHint"/);
+  const toolbar = read('js/ui/Toolbar.js');
+  assert.match(toolbar, /getTextEnterSaves\(\) \{ return this\._textEnterSaves !== false; \}/);
+  assert.match(read('js/core/constants.js'), /textEnterSaves: 'paint:text-enter-saves'/);
+  const textTool = read('js/tools/TextTool.js');
+  assert.match(textTool, /ctx\.getTextEnterSaves\?\.\(\) !== false/);
+  assert.match(textTool, /!event\.shiftKey/);
+  assert.match(textTool, /t\('ui\.textEditorOk'\)/);
+  // W4-03: taller brush studio preview so large brushes are not clipped.
+  assert.match(read('js/ui/BrushStudioPanel.js'), /preview\.height = 88;/);
+  // W4-05: slider-duplicated example rows collapse under an Advanced toggle.
+  assert.match(read('js/ui/BrushStudioPanel.js'), /SLIDER_OWNED_IDS/);
+  assert.match(read('css/styles.css'), /\.brush-studio-advanced-toggle/);
+  // W4-07: the save-selection submenu is selection-gated and inner actions
+  // disable together with the trigger.
+  assert.match(html, /action-submenu-trigger[\s\S]*?data-requires-selection[\s\S]*?action-submenu-items/);
+  assert.match(read('js/main.js'), /ui\.noSelectionSaveAs/);
 });

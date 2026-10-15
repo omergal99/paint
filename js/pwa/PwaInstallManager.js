@@ -190,8 +190,16 @@ export const createPwaInstallManager = ({
   };
 
   const onBeforeInstallPrompt = (event) => {
-    event.preventDefault();
-    deferredPrompt = event;
+    // Only suppress the native install banner when this app actually owns an
+    // Install control that can call prompt() later. Calling preventDefault()
+    // without a follow-up prompt() is what triggers the browser warning
+    // ("beforeinstallpromptevent.preventDefault() called. The page must call
+    // beforeinstallpromptevent.prompt()..."), so when no install button exists
+    // we leave the event alone and let the browser show its own banner (W4-09).
+    if (installButton) {
+      event.preventDefault();
+      deferredPrompt = event;
+    }
     syncInstallUi();
   };
   const onAppInstalled = () => {

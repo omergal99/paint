@@ -9,6 +9,7 @@ import {
 import { installTelemetry } from './telemetry.js';
 import { APP_VERSION } from './version.js';
 import { markBoot } from './app/bootTiming.js';
+import { EVENTS } from './core/constants.js';
 
 const canvas = document.getElementById('paint-canvas');
 const presentedStorageFailures = new Set();
@@ -218,6 +219,13 @@ const startEditorRuntime = async () => {
       return showStorageFailure({ kind: STORAGE_FAILURE_KINDS.database, message: 'Autosave could not open. Your image is still open.' }, { onDiscard: clearCanvasState });
     })
     .finally(() => {
+      // The settings hydration repaints the background during main.js module
+      // evaluation - BEFORE this autosave controller existed - so its
+      // document-changed signal had no listener. Re-announce the final startup
+      // state (hydrated blank background or restored image) now that the
+      // autosave listens, otherwise the next reload restores stale pixels and
+      // the chosen background colour never persists (W4-15).
+      eventBus?.emit?.(EVENTS.documentChanged, { width: canvasManager?.width, height: canvasManager?.height });
       markBoot('boot:interactive');
       window.dispatchEvent(new CustomEvent('paint:ready'));
     });

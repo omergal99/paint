@@ -50,6 +50,14 @@ export const createColorPalette = ({
   onPrimaryChange,
   onSecondaryChange,
 }) => {
+  // Hoisted above the constructor: the persisted-page restore below reads it.
+  const getPageColors = (page) => {
+    if (page === 'p1') return [...COLOR_PALETTE_1];
+    if (page === 'p2') return [...COLOR_PALETTE_2];
+    if (page === 'p3') return [...COLOR_PALETTE_3];
+    if (page === 'p4') return [...COLOR_PALETTE_4];
+    return [...COLOR_PALETTE_1];
+  };
   const savedColors = loadSavedColors();
   let palette = normalizePalette(migrateLegacyPalette(savedColors.palette) || COLOR_PALETTE_1);
   // Optional snapshot so the settings can offer "Custom (saved)" next to the
@@ -59,6 +67,16 @@ export const createColorPalette = ({
   // Persisted so the chosen palette survives reloads and stays in sync with
   // whatever page the user arrowed to before editing a swatch.
   let palettePage = normalizePalettePage(savedColors.palettePage, palette);
+  // Re-apply the persisted page so the ribbon shows the swatches the user was
+  // actually on. The stored `palette` array is derived from whichever page was
+  // last rendered, so on its own it can disagree with `palettePage` (a stale
+  // copy) and leave the restored primary with no matching swatch to mark active
+  // (W4-14). An edited palette is never overwritten: `colorPalettePreset` is
+  // null for those, so only a pristine copy is replaced by its page.
+  const presetOfRestored = colorPalettePreset(palette);
+  if (presetOfRestored && presetOfRestored !== palettePage) {
+    palette = normalizePalette(getPageColors(palettePage));
+  }
   let defaultPrimary = COLOR_RE.test(savedColors.defaultPrimary || '') ? savedColors.defaultPrimary.toLowerCase() : '#a349a4';
   let primary = COLOR_RE.test(savedColors.primary || '') ? savedColors.primary.toLowerCase() : defaultPrimary;
   let secondary = COLOR_RE.test(savedColors.secondary || '') ? savedColors.secondary.toLowerCase() : '#ffffff';
@@ -151,11 +169,25 @@ export const createColorPalette = ({
     grid.innerHTML = '';
     if (mode === EXTENDED_MODE) {
       extendedPickerColors().forEach((hex) => grid.appendChild(createSwatchButton(hex)));
+      syncSwatchSelection(grid);
       return;
     }
     palette.forEach((hex, index) => grid.appendChild(createSwatchButton(hex, index)));
     grid.append(createPagerArrow(-1), createPagerArrow(1));
+    syncSwatchSelection(grid);
   }
+  // Mirror the current foreground onto the matching swatch(s) so the chosen
+  // colour stays visible across every grid and after a reload. The sidebar
+  // picker keeps its own copy of this for its extended view; doing it here too
+  // keeps one write path and one highlight rule for the ribbon grid.
+  const syncSwatchSelection = (grid) => {
+    grid?.querySelectorAll?.('button[data-color]').forEach((button) => {
+      const active = button.dataset.color === primary;
+      button.classList.toggle('active', active);
+      button.setAttribute('aria-pressed', String(active));
+    });
+  };
+  const syncAllSwatchSelection = () => [...grids.keys()].forEach(syncSwatchSelection);
   const renderGrid = () => {
     [...grids].forEach(([grid, mode]) => {
       if (grid.isConnected === false) {
@@ -171,6 +203,7 @@ export const createColorPalette = ({
     grids.set(grid, mode);
     bindGrid(grid);
     renderGridInto(grid, mode);
+    syncSwatchSelection(grid);
   }
   const unmountGrid = (grid) => {
     if (!grid) return;
@@ -297,6 +330,7 @@ export const createColorPalette = ({
     primaryAlpha = normalizeAlpha(alpha);
     renderPrimary();
     saveColors();
+    syncAllSwatchSelection();
     onPrimaryChange?.(primary, primaryAlpha);
     return true;
   }
@@ -323,13 +357,6 @@ export const createColorPalette = ({
     return true;
   }
 
-  const getPageColors = (page) => {
-    if (page === 'p1') return [...COLOR_PALETTE_1];
-    if (page === 'p2') return [...COLOR_PALETTE_2];
-    if (page === 'p3') return [...COLOR_PALETTE_3];
-    if (page === 'p4') return [...COLOR_PALETTE_4];
-    return [...COLOR_PALETTE_1];
-  };
   // Ribbon pager arrows cycle the built-in palettes in order (1 -> 2 -> 3 -> 4).
   // Persisted, so the chosen page survives reloads next to the edited palette.
   const setPalettePage = (page, { persist = true } = {}) => {

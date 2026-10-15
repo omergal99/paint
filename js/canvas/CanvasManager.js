@@ -222,6 +222,15 @@ export class CanvasManager {
   setBackgroundColor(color) {
     if (typeof color !== 'string' || !/^#[0-9a-f]{6}$/i.test(color)) return this.backgroundColor;
     this.backgroundColor = color.toLowerCase();
+    // A colour change must be visible, not just stored. When the document is
+    // still the untouched blank it was created with, repaint the surface so the
+    // chosen background appears immediately (reload and live edit). A restored
+    // or drawn image is never touched - isCleanDocument() is false there.
+    if (this.backgroundMode !== 'transparent' && this.isCleanDocument?.() === true) {
+      this.clear(this.backgroundColor);
+      this._cleanSignature = this._pixelsSignature();
+      this.persistToStorage();
+    }
     return this.backgroundColor;
   }
 

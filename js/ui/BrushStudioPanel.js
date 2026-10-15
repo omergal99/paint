@@ -71,7 +71,7 @@ export const createBrushStudioPanel = ({ brushState, getPrimaryColor, setPrimary
 
 		const preview = document.createElement('canvas');
 		preview.width = 260;
-		preview.height = 54;
+		preview.height = 88;
 		preview.className = 'brush-studio-preview';
 		preview.setAttribute('role', 'img');
 		preview.setAttribute('aria-label', t('ui.brushStrokePreview'));
@@ -179,6 +179,30 @@ export const createBrushStudioPanel = ({ brushState, getPrimaryColor, setPrimary
 		examplesHeading.dataset.brushI18n = 'ui.brushExamples';
 		examplesHeading.textContent = t('ui.brushExamples');
 		examplesSection.append(examplesHeading);
+		// Rows the Studio already owns as a range slider (RANGE_FIELDS) are
+		// duplicate controls; collapse them under one "Advanced" disclosure so the
+		// blend/colour-mode rows stay visible without scrolling. One source of
+		// truth per property is preserved - these write the same BrushState field.
+		const SLIDER_OWNED_IDS = new Set(['size', 'alpha', 'flow', 'hardness', 'spacing', 'texture']);
+		const advancedRows = document.createElement('div');
+		advancedRows.className = 'brush-studio-advanced-rows';
+		advancedRows.dataset.tag = 'brush-studio-advanced-rows';
+		advancedRows.hidden = true;
+		advancedRows.id = 'brush-studio-advanced-rows';
+		const advancedToggle = document.createElement('button');
+		advancedToggle.type = 'button';
+		advancedToggle.className = 'brush-studio-advanced-toggle';
+		advancedToggle.dataset.tag = 'brush-studio-advanced-toggle';
+		advancedToggle.dataset.brushI18n = 'ui.mirrorAdvanced';
+		advancedToggle.textContent = t('ui.mirrorAdvanced');
+		advancedToggle.setAttribute('aria-expanded', 'false');
+		advancedToggle.setAttribute('aria-controls', advancedRows.id);
+		advancedToggle.addEventListener('click', () => {
+			const expanded = advancedRows.hidden;
+			advancedRows.hidden = !expanded;
+			advancedToggle.setAttribute('aria-expanded', String(expanded));
+		});
+		examplesSection.append(advancedToggle, advancedRows);
 		const exampleRows = new Map();
 		BRUSH_EXAMPLE_GRIDS.forEach((grid) => {
 			const row = document.createElement('div');
@@ -227,7 +251,7 @@ export const createBrushStudioPanel = ({ brushState, getPrimaryColor, setPrimary
 				values.append(button);
 			});
 			row.append(head, values);
-			examplesSection.append(row);
+			(SLIDER_OWNED_IDS.has(grid.id) ? advancedRows : examplesSection).append(row);
 			exampleRows.set(grid.id, { grid, values, input: numberInput });
 		});
 		host.append(examplesSection);
@@ -268,6 +292,12 @@ export const createBrushStudioPanel = ({ brushState, getPrimaryColor, setPrimary
 			});
 		};
 		renderColorChips();
+		// The stamp-colour picker only matters once a multi-colour mode is on;
+		// keep it hidden for the default single colour so the studio stays lean.
+		const syncStampColorsVisibility = (state) => {
+			stampColorsSection.hidden = !(state.colorMode === 'random' || state.colorMode === 'series');
+		};
+		syncStampColorsVisibility(brushState.get());
 		host.append(stampColorsSection);
 
 		const refreshExampleColors = () => {
@@ -452,6 +482,7 @@ export const createBrushStudioPanel = ({ brushState, getPrimaryColor, setPrimary
 				});
 			});
 			syncColorChips(state);
+			syncStampColorsVisibility(state);
 			refreshExampleColors();
 			updatePresetAndHistory(state);
 			renderPreview(state);
@@ -464,11 +495,11 @@ export const createBrushStudioPanel = ({ brushState, getPrimaryColor, setPrimary
 			const color = getPrimaryColor?.() || '#2563eb';
 			const renderer = createBrushStrokeRenderer(context, {
 				...state,
-				size: Math.min(state.size, 20),
+				size: Math.min(state.size, Math.floor(preview.height * 0.35)),
 				spacing: Math.max(state.spacing, 0.1),
 			}, { color, alpha: state.alpha });
 			for (let x = 12; x <= 248; x += 4) {
-				const y = 27 + Math.sin((x - 12) / 236 * Math.PI * 2) * 13;
+				const y = 44 + Math.sin((x - 12) / 236 * Math.PI * 2) * 22;
 				renderer.drawTo({ x, y });
 			}
 		};

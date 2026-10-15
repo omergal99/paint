@@ -103,6 +103,47 @@ test('install remains actionable when the browser requires its own install menu'
   manager.destroy();
 });
 
+// W4-09: preventDefault() without a later prompt() triggers the browser
+// warning "beforeinstallpromptevent.preventDefault() called. The page must
+// call beforeinstallpromptevent.prompt()...". The app only suppresses the
+// native banner when it owns an Install button that can consume the prompt.
+test('beforeinstallprompt is only consumed when an install button exists', async (t) => {
+  const windowTarget = eventTarget();
+  const restoreWindow = replaceGlobal('window', windowTarget);
+  const restoreDocument = replaceGlobal('document', { hidden: false, addEventListener() {}, removeEventListener() {} });
+  const restoreNavigator = replaceGlobal('navigator', {});
+  t.after(() => {
+    restoreNavigator();
+    restoreDocument();
+    restoreWindow();
+  });
+
+  const makeEvent = () => ({ prevented: false, preventDefault() { this.prevented = true; } });
+
+  // With an install button: the event is deferred (prevented) so OUR button
+  // decides when to call prompt() - no orphaned preventDefault.
+  const withButton = createPwaInstallManager({
+    installButton: eventTarget(),
+    statusEl: { textContent: '', dataset: {}, hidden: true },
+  });
+  withButton.start();
+  const deferred = makeEvent();
+  windowTarget.dispatch('beforeinstallprompt', deferred);
+  assert.equal(deferred.prevented, true, 'a real install button owns the prompt');
+  withButton.destroy();
+
+  // Without an install button nothing will ever call prompt(), so the event
+  // must pass through and the browser's native banner can show.
+  const withoutButton = createPwaInstallManager({
+    statusEl: { textContent: '', dataset: {}, hidden: true },
+  });
+  withoutButton.start();
+  const native = makeEvent();
+  windowTarget.dispatch('beforeinstallprompt', native);
+  assert.equal(native.prevented, false, 'no button means no orphaned preventDefault');
+  withoutButton.destroy();
+});
+
 test('applying a waiting update keeps the applying status visible', async (t) => {
   const restoreNavigator = replaceGlobal('navigator', { serviceWorker: { controller: {} } });
   t.after(restoreNavigator);
