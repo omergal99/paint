@@ -35,6 +35,7 @@ test('brush state persists validated settings and notifies subscribers', () => {
 		angle: 0,
 		angleJitter: 0,
 		scatter: 0,
+		smear: 0,
 		texture: 0,
 		blendMode: 'normal',
 		colorMode: 'single',

@@ -40,6 +40,7 @@ export const createBrushStrokeRenderer = (context, brush, {
 	const angleJitter = clamp01(brush?.angleJitter);
 	const scatter = clamp01(brush?.scatter);
 	const texture = clamp01(brush?.texture);
+	const smear = clamp01(brush?.smear);
 	const blendMode = BRUSH_BLEND_COMPOSITE[brush?.blendMode] || 'source-over';
 	// Stamp colour sets (random/series) and per-stamp tip shapes only engage
 	// when configured, so a plain brush keeps its deterministic PRNG sequence
@@ -158,6 +159,21 @@ export const createBrushStrokeRenderer = (context, brush, {
 		const dy = point.y - previous.y;
 		const length = Math.hypot(dx, dy);
 		if (!length) return;
+		// W4-04: smeared brush stroke - draw a continuous line between stamps
+		if (smear > 0) {
+			context.save();
+			context.beginPath();
+			context.moveTo(previous.x, previous.y);
+			context.lineTo(point.x, point.y);
+			context.lineWidth = Math.max(1, size * smear * sizeMultiplier);
+			context.lineCap = 'round';
+			context.lineJoin = 'round';
+			context.strokeStyle = resolveColor();
+			context.globalAlpha = clamp01(stampAlpha * flow);
+			if (blendMode !== 'source-over') context.globalCompositeOperation = blendMode;
+			context.stroke();
+			context.restore();
+		}
 		let travelled = spacing - distanceRemainder;
 		while (travelled <= length) {
 			const ratio = travelled / length;

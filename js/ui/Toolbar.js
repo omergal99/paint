@@ -8,6 +8,7 @@ const TEXT_AFTER_DRAW_KEY = STORAGE_KEYS.textSelectAfterDraw;
 const TEXT_HISTORY_TOOLBAR_KEY = STORAGE_KEYS.textHistoryToolbar;
 const TEXT_ENTER_SAVES_KEY = STORAGE_KEYS.textEnterSaves;
 const TEXT_LAYER_VISIBLE_KEY = STORAGE_KEYS.textLayerVisible;
+const AUTO_SCROLL_KEY = 'paint:auto-scroll';
 const STYLE_STORAGE_KEY = 'paint:tool-styles';
 const STYLE_HISTORY_KEY = 'paint:style-history';
 const TOOL_MENU_ITEMS = Object.freeze([
@@ -345,6 +346,19 @@ export class Toolbar {
         window.dispatchEvent(new CustomEvent('paint:text-layer-visibility-change', {
           detail: { visible: this._textLayerVisible },
         }));
+      });
+    }
+
+    // Auto-scroll at viewport edges during selection drag (W4-18)
+    let autoScroll = false;
+    try { autoScroll = localStorage.getItem(AUTO_SCROLL_KEY) === 'true'; } catch {}
+    this._autoScroll = autoScroll;
+    const autoScrollBox = this.root.querySelector('#text-auto-scroll');
+    if (autoScrollBox) {
+      autoScrollBox.checked = autoScroll;
+      this._listen(autoScrollBox, 'change', () => {
+        this._autoScroll = autoScrollBox.checked === true;
+        try { localStorage.setItem(AUTO_SCROLL_KEY, String(this._autoScroll)); } catch {}
       });
     }
   }

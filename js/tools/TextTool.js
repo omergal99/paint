@@ -354,6 +354,8 @@ export const createTextTool = () => {
     // placement anchor, or append when an editor is already open.
     insertTextAt(text, point, ctx) {
       if (typeof text !== 'string' || !text.trim()) return;
+      // Drop trailing line breaks so pasted text does not leave an empty caret line
+      text = text.replace(/\n+$/, '');
       if (editor) {
         editor.value += text;
         editor.focus();

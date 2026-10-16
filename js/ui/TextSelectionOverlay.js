@@ -2,6 +2,7 @@
 // This layer never creates a pixel selection; it only delegates movement to
 // TextLayerService.
 import { STORAGE_KEYS } from '../core/constants.js';
+import { t } from '../i18n/messages.js';
 
 const TEXT_TARGET_PADDING = 4;
 const MIN_TEXT_TARGET_WIDTH = 24;
@@ -36,8 +37,8 @@ export const createTextSelectionOverlay = ({
 	const readVisible = () => {
 		try { return localStorage.getItem(STORAGE_KEYS.textLayerVisible) === 'true'; } catch { return false; }
 	};
-	const applyVisibility = () => {
-		const visible = readVisible();
+		const applyVisibility = (forceVisible = false) => {
+		const visible = forceVisible ? true : readVisible();
 		layer.classList.toggle('is-hidden', !visible);
 		layer.setAttribute('aria-hidden', String(!visible));
 	};
@@ -51,18 +52,18 @@ export const createTextSelectionOverlay = ({
 		return true;
 	};
 
-	const select = (id) => {
+	const select = (id, forceVisible = false) => {
 		const object = store?.getAll().find((item) => item.id === id);
 		if (!object) return null;
 		selectedId = id;
-		render(store.getAll());
+		render(store.getAll(), forceVisible);
 		layer.dispatchEvent(new CustomEvent('paint:text-object-focus', { detail: object }));
 		return object;
 	};
 
-	const render = (objects = []) => {
+	const render = (objects = [], forceVisible = false) => {
 		if (dragState) return;
-		applyVisibility();
+		applyVisibility(forceVisible);
 		layer.replaceChildren();
 		objects.forEach((object) => {
 			const target = document.createElement('button');
@@ -79,6 +80,32 @@ export const createTextSelectionOverlay = ({
 			target.style.top = `${Math.max(0, object.y - TEXT_TARGET_PADDING)}px`;
 			target.style.width = `${Math.max(MIN_TEXT_TARGET_WIDTH, object.width + TEXT_TARGET_PADDING * 2)}px`;
 			target.style.height = `${Math.max(24, object.height + TEXT_TARGET_PADDING * 2)}px`;
+
+			// W4-13: Copy text box content to clipboard
+			const copyBtn = document.createElement('button');
+			copyBtn.type = 'button';
+			copyBtn.className = 'text-object-copy-btn';
+			copyBtn.setAttribute('aria-label', t('ui.textCopy'));
+			copyBtn.title = t('ui.textCopy');
+			copyBtn.innerHTML = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="7" width="9" height="9" rx="1"/><rect x="4" y="4" width="9" height="9" rx="1"/></svg>';
+			copyBtn.addEventListener('click', (event) => {
+				event.preventDefault();
+				event.stopPropagation();
+				const text = String(object.text || '');
+				if (!text) return;
+				navigator.clipboard?.writeText(text).catch(() => {
+					const ta = document.createElement('textarea');
+					ta.value = text;
+					ta.style.position = 'fixed';
+					ta.style.left = '-9999px';
+					document.body.appendChild(ta);
+					ta.focus();
+					ta.select();
+					try { document.execCommand('copy'); } catch {}
+					document.body.removeChild(ta);
+				});
+			});
+			target.appendChild(copyBtn);
 
 			target.addEventListener('pointerdown', (event) => {
 				if (event.button !== 0) return;
@@ -107,7 +134,7 @@ export const createTextSelectionOverlay = ({
 				if (dx || dy) dragState.moved = true;
 				dragState.clientX = event.clientX;
 				dragState.clientY = event.clientY;
-				onMove?.({ id: dragState.id, dx, dy });
+				onMove?.({ id: dragState.id, dx, dy, _clientX: event.clientX, _clientY: event.clientY });
 			});
 
 			const finishMove = (event) => {
@@ -116,7 +143,7 @@ export const createTextSelectionOverlay = ({
 				const finished = dragState;
 				dragState = null;
 				onMoveEnd?.({ id: finished.id, moved: finished.moved });
-				render(store?.getAll?.() || []);
+				render(store?.getAll?.() || [], selectedId !== null);
 			};
 			target.addEventListener('pointerup', finishMove);
 			target.addEventListener('pointercancel', finishMove);
@@ -160,7 +187,7 @@ export const createTextSelectionOverlay = ({
 	const unsubscribe = store?.subscribe(render) || (() => {});
 	render(store?.getAll?.() || []);
 	// A settings toggle can flip visibility between renders, so listen too.
-	const onVisibilityChange = () => applyVisibility();
+	const onVisibilityChange = () => applyVisibility(false);
 	if (typeof window !== 'undefined') {
 		window.addEventListener('paint:text-layer-visibility-change', onVisibilityChange);
 	}

@@ -2659,11 +2659,56 @@ body.rtl .dialog-arrow-icon {
 	height: 20px;
 	border: 1px solid var(--w10-accent);
 	border-radius: 50%;
-	background: var(--w10-ribbon-bg);
+	background: color-mix(in srgb, var(--w10-ribbon-bg) 88%, transparent);
 	color: var(--w10-accent);
-	font-size: 13px;
+	font-size: 14px;
 	line-height: 1;
 	pointer-events: none;
+}
+
+.text-object-copy-btn {
+	position: absolute;
+	left: 50%;
+	bottom: 100%;
+	transform: translateX(-50%);
+	margin-bottom: 6px;
+	width: 24px;
+	height: 24px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: var(--w10-ribbon-bg);
+	border: 1px solid var(--w10-border);
+	border-radius: 4px;
+	color: var(--w10-text);
+	box-shadow: 0 1px 3px color-mix(in srgb, black 24%, transparent);
+	cursor: pointer;
+	font-size: 12px;
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity 0.15s, transform 0.15s;
+	z-index: 10;
+}
+
+.text-object-focus-target.selected .text-object-copy-btn {
+	opacity: 1;
+	pointer-events: auto;
+}
+
+.text-object-copy-btn:focus-visible,
+.text-object-copy-btn:hover {
+	border-color: var(--w10-accent);
+	transform: translateX(-50%) scale(1.05);
+}
+
+.text-object-copy-btn svg {
+	width: 14px;
+	height: 14px;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 1.4;
+	stroke-linecap: round;
+	stroke-linejoin: round;
 }
 
 #overlay-canvas {

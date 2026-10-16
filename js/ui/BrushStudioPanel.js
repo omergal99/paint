@@ -18,6 +18,8 @@ const RANGE_FIELDS = Object.freeze([
 	{ field: 'texture', min: 0, max: 100, scale: 100, unit: '%', label: 'ui.brushTexture' },
 ]);
 
+export const SLIDER_OWNED_IDS = Object.freeze(RANGE_FIELDS.map((entry) => entry.field));
+
 const makeBrushIcon = (shape) => {
 	const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
 	icon.setAttribute('viewBox', '0 0 20 20');

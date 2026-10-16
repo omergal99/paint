@@ -472,17 +472,87 @@ const textSelectionOverlay = createTextSelectionOverlay({
 	store: textDocumentStore,
 	getZoom: () => Number(viewportManager.zoom || 100) / 100,
 	onMoveStart: (options) => textLayerService.beginMove(options),
-	onMove: (options) => textLayerService.move(options),
-	onMoveEnd: (options) => textLayerService.endMove(options),
+	onMove: (options) => {
+		textLayerService.move(options);
+		// W4-18: track pointer for auto-scroll
+		autoScrollPointerX = options._clientX ?? 0;
+		autoScrollPointerY = options._clientY ?? 0;
+		if (isAutoScrollEnabled()) startAutoScroll();
+	},
+	onMoveEnd: (options) => {
+		textLayerService.endMove(options);
+		stopAutoScroll();
+	},
 	onDelete: ({ id }) => {
 		historyManager.snapshot({ force: true });
 		if (textDocumentStore.remove(id)) canvasManager.persistToStorage();
 	},
 });
 
+// ---- W4-18: Auto-scroll viewport edges during selection (RTL-aware) ----
+const AUTO_SCROLL_THRESHOLD = 40;
+const AUTO_SCROLL_SPEED = 8;
+
+let autoScrollFrame = null;
+let autoScrollActive = false;
+let autoScrollPointerX = 0;
+let autoScrollPointerY = 0;
+
+const isAutoScrollEnabled = () => {
+    try { return localStorage.getItem('paint:auto-scroll') === 'true'; } catch { return false; }
+};
+
+const startAutoScroll = () => {
+    if (autoScrollActive) return;
+    autoScrollActive = true;
+    autoScrollLoop();
+};
+
+const stopAutoScroll = () => {
+    autoScrollActive = false;
+    if (autoScrollFrame) {
+        cancelAnimationFrame(autoScrollFrame);
+        autoScrollFrame = null;
+    }
+};
+
+const autoScrollLoop = () => {
+    if (!autoScrollActive || !isAutoScrollEnabled()) { stopAutoScroll(); return; }
+    const viewport = viewportManager?.viewportEl;
+    if (!viewport) { stopAutoScroll(); return; }
+    const rect = viewport.getBoundingClientRect();
+    const dir = document.documentElement?.dir === 'rtl' ? -1 : 1;
+    let newLeft = viewport.scrollLeft;
+    let newTop = viewport.scrollTop;
+    let dirty = false;
+    if (autoScrollPointerX < rect.left + AUTO_SCROLL_THRESHOLD) {
+        newLeft = Math.max(0, viewport.scrollLeft - AUTO_SCROLL_SPEED * dir);
+        dirty = true;
+    } else if (autoScrollPointerX > rect.right - AUTO_SCROLL_THRESHOLD) {
+        const maxScroll = Math.max(0, viewport.scrollWidth - viewport.clientWidth);
+        newLeft = Math.min(maxScroll, viewport.scrollLeft + AUTO_SCROLL_SPEED * dir);
+        dirty = true;
+    }
+    if (autoScrollPointerY < rect.top + AUTO_SCROLL_THRESHOLD) {
+        newTop = Math.max(0, viewport.scrollTop - AUTO_SCROLL_SPEED);
+        dirty = true;
+    } else if (autoScrollPointerY > rect.bottom - AUTO_SCROLL_THRESHOLD) {
+        const maxScroll = Math.max(0, viewport.scrollHeight - viewport.clientHeight);
+        newTop = Math.min(maxScroll, viewport.scrollTop + AUTO_SCROLL_SPEED);
+        dirty = true;
+    }
+    if (dirty) {
+        viewport.scrollLeft = newLeft;
+        viewport.scrollTop = newTop;
+        viewportManager.invalidateGeometry();
+    }
+    autoScrollFrame = requestAnimationFrame(autoScrollLoop);
+};
+
 canvasManager.onRasterLoad = () => {
 	textLayerService.clear();
 	textSelectionOverlay.clear();
+	stopAutoScroll();
 };
 
 canvasManager.onSizeChange = (w, h) => {
@@ -975,7 +1045,7 @@ const toolContext = {
 	get toolManager() { return toolManager; },
 	getTextSelectAfterDraw: () => toolbar.getTextSelectAfterDraw?.() === true,
 	getTextEnterSaves: () => toolbar.getTextEnterSaves?.() !== false,
-	selectTextObject: (id) => textSelectionOverlay?.select(id),
+	selectTextObject: (id) => textSelectionOverlay?.select(id, true),
 	flattenLayers: () => canvasManager.flattenLayers(),
 	getEmoji: () => toolbar.getSelectedEmoji(),
 	getFontSize: () => currentFontSize,

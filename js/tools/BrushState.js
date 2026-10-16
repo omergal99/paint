@@ -57,6 +57,7 @@ const DEFAULT_BRUSH_STATE = Object.freeze({
 	angleJitter: 0,
 	scatter: 0,
 	texture: 0,
+	smear: 0,
 	blendMode: 'normal',
 	colorMode: 'single',
 	colors: Object.freeze([]),
@@ -100,7 +101,7 @@ const normalizeValue = (key, value) => {
 		const number = Number(value);
 		return Number.isFinite(number) ? Math.max(0, Math.min(360, number)) : null;
 	}
-	if (key === 'angleJitter' || key === 'scatter' || key === 'texture') {
+	if (key === 'angleJitter' || key === 'scatter' || key === 'texture' || key === 'smear') {
 		const number = Number(value);
 		return Number.isFinite(number) ? Math.max(0, Math.min(1, number)) : null;
 	}
