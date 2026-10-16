@@ -77,8 +77,11 @@ export const createTextTool = () => {
       strokeWidth: ctx.getTextStrokeWidth?.(),
       styles,
     });
-    editor.style.webkitTextStroke = strokeWidth > 0
-      ? `${strokeWidth}px ${styles.has('black-outline')
+    // Half the stroke width in the live textarea preview so it matches
+    // the committed canvas rendering at full stroke.
+    const previewStroke = strokeWidth > 0 ? strokeWidth / 2 : 0;
+    editor.style.webkitTextStroke = previewStroke > 0
+      ? `${previewStroke}px ${styles.has('black-outline')
         ? (ctx.getTextStrokeColor?.() || '#000000')
         : ctx.canvasManager.primaryColor}`
       : 'unset';

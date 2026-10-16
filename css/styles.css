@@ -70,6 +70,28 @@ body.dark-mode {
 	--w10-text: #ffffff;
 	--w10-text-dim: #b0b0b0;
 	--w10-canvas-bg: #292929;
+	--w10-field-bg: #3a3a3a;
+	--w10-field-border: #555;
+	--w10-input-bg: #333;
+	--w10-input-border: #555;
+	--w10-scrollbar-track: #2a2a2a;
+	--w10-scrollbar-thumb: #555;
+	--w10-scrollbar-thumb-hover: #666;
+}
+
+body.dark-mode ::-webkit-scrollbar {
+	width: 10px;
+	height: 10px;
+}
+body.dark-mode ::-webkit-scrollbar-track {
+	background: var(--w10-scrollbar-track);
+}
+body.dark-mode ::-webkit-scrollbar-thumb {
+	background: var(--w10-scrollbar-thumb);
+	border-radius: 5px;
+}
+body.dark-mode ::-webkit-scrollbar-thumb:hover {
+	background: var(--w10-scrollbar-thumb-hover);
 }
 
 * {
@@ -1656,6 +1678,11 @@ html[dir="rtl"] .ci-toggle[aria-expanded="false"] .menu-arrow {
 	cursor: pointer;
 	line-height: 1;
 	padding: 0 4px;
+	color: var(--w10-text);
+}
+body.dark-mode .sidebar-close {
+	color: var(--w10-text);
+	filter: invert(0);
 }
 .sidebar-close:hover {
 	background: var(--w10-hover);
@@ -1918,6 +1945,10 @@ html[dir="rtl"] .disclosure-section[open] > .disclosure-title .menu-arrow {
 	color: var(--w10-text);
 	cursor: pointer;
 }
+body.dark-mode .mirror-shape-tile {
+	background: var(--w10-field-bg);
+	border-color: var(--w10-field-border);
+}
 .mirror-shape-tile:hover {
 	background: var(--w10-hover);
 }
@@ -1925,6 +1956,12 @@ html[dir="rtl"] .disclosure-section[open] > .disclosure-title .menu-arrow {
 	width: 18px;
 	height: 18px;
 }
+.mirror-slider-value {
+	display: inline-block;
+	min-width: 40px;
+	text-align: right;
+}
+
 .mirror-shape-tile span {
 	overflow: hidden;
 	max-width: 100%;
@@ -2031,6 +2068,10 @@ html[dir="rtl"] .disclosure-section[open] > .disclosure-title .menu-arrow {
 .history-undo-row button {
 	flex: 1 1 auto;
 	min-height: 26px;
+}
+body.dark-mode .history-undo-row button:hover:not(:disabled) {
+	background: var(--w10-hover);
+	color: var(--w10-text);
 }
 .history-undo-row button:disabled {
 	opacity: 0.5;
@@ -2672,8 +2713,9 @@ body.rtl .dialog-arrow-icon {
 	bottom: 100%;
 	transform: translateX(-50%);
 	margin-bottom: 6px;
-	width: 24px;
-	height: 24px;
+	width: 20px;
+	height: 20px;
+	padding: 0;
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -2683,7 +2725,6 @@ body.rtl .dialog-arrow-icon {
 	color: var(--w10-text);
 	box-shadow: 0 1px 3px color-mix(in srgb, black 24%, transparent);
 	cursor: pointer;
-	font-size: 12px;
 	opacity: 0;
 	pointer-events: none;
 	transition: opacity 0.15s, transform 0.15s;
@@ -2702,8 +2743,8 @@ body.rtl .dialog-arrow-icon {
 }
 
 .text-object-copy-btn svg {
-	width: 14px;
-	height: 14px;
+	width: 16px;
+	height: 16px;
 	fill: none;
 	stroke: currentColor;
 	stroke-width: 1.4;
@@ -4727,6 +4768,10 @@ dialog h3 {
 #settings-dialog {
 	max-width: calc(100vw - 24px);
 	overflow: hidden;
+	user-select: auto;
+}
+#settings-dialog * {
+	user-select: auto;
 }
 .settings-shell {
 	min-width: 0;
@@ -5362,6 +5407,10 @@ dialog input[type="number"] {
 }
 .dialog-actions button.dialog-button-secondary {
 	background: var(--w10-ribbon-bg);
+	color: var(--w10-text);
+}
+body.dark-mode .dialog-actions button.dialog-button-secondary:hover {
+	background: var(--w10-hover);
 	color: var(--w10-text);
 }
 #new-file-dialog {

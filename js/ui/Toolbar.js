@@ -353,14 +353,16 @@ export class Toolbar {
     let autoScroll = false;
     try { autoScroll = localStorage.getItem(AUTO_SCROLL_KEY) === 'true'; } catch {}
     this._autoScroll = autoScroll;
-    const autoScrollBox = this.root.querySelector('#text-auto-scroll');
-    if (autoScrollBox) {
-      autoScrollBox.checked = autoScroll;
-      this._listen(autoScrollBox, 'change', () => {
-        this._autoScroll = autoScrollBox.checked === true;
+    const syncAutoScrollBox = (box) => {
+      if (!box) return;
+      box.checked = autoScroll;
+      this._listen(box, 'change', () => {
+        this._autoScroll = box.checked === true;
         try { localStorage.setItem(AUTO_SCROLL_KEY, String(this._autoScroll)); } catch {}
       });
-    }
+    };
+    syncAutoScrollBox(this.root.querySelector('#text-auto-scroll'));
+    syncAutoScrollBox(this.root.querySelector('#selection-auto-scroll'));
   }
 
   _bindEmojiPicker() {

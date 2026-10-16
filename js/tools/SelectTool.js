@@ -67,6 +67,8 @@ export const createSelectTool = ({
 			state.moving = true;
 			state.start = point;
 			state.liftedOrigin = { x: selection.x, y: selection.y };
+			const vp = ctx.viewportManager?.viewportEl;
+			state.scrollStart = vp ? { left: vp.scrollLeft, top: vp.scrollTop } : { left: 0, top: 0 };
 			state.originalSelection = {
 				...selection,
 				path: Array.isArray(selection.path) ? [...selection.path] : undefined,
@@ -108,6 +110,10 @@ export const createSelectTool = ({
 		state.moving = false;
 		state.originalSelection = null;
 		state.start = point;
+		// Capture viewport scroll at drag start so auto-scroll during the drag
+		// doesn't shift the selection away from the pointer (W4-18).
+		const vp = ctx.viewportManager?.viewportEl;
+		state.scrollStart = vp ? { left: vp.scrollLeft, top: vp.scrollTop } : { left: 0, top: 0 };
 		ctx.setMarqueeStatus?.(true);
 		if (state.mode === SELECTION_MODES.lasso) {
 			state.path = [clampPoint(point, ctx.canvasManager)];
@@ -121,8 +127,15 @@ export const createSelectTool = ({
 	const onMove = (point, ctx) => {
 		if (!state.start) return;
 		if (state.moving) {
-			const dx = Math.round(point.x - state.start.x);
-			const dy = Math.round(point.y - state.start.y);
+			// Compensate for viewport scroll during drag so the selection
+			// stays under the pointer when auto-scroll is active (W4-18).
+			const vp = ctx.viewportManager?.viewportEl;
+			const scrollStart = state.scrollStart || { left: 0, top: 0 };
+			const scrollDeltaX = vp ? vp.scrollLeft - scrollStart.left : 0;
+			const scrollDeltaY = vp ? vp.scrollTop - scrollStart.top : 0;
+			const scale = Math.max(0.01, (ctx.viewportManager?.zoom ?? 100) / 100);
+			const dx = Math.round(point.x - state.start.x - scrollDeltaX / scale);
+			const dy = Math.round(point.y - state.start.y - scrollDeltaY / scale);
 			const x = state.liftedOrigin.x + dx;
 			const y = state.liftedOrigin.y + dy;
 			ctx.historyManager.setTransactionChanged?.(Boolean(dx || dy));

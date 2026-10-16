@@ -16,6 +16,7 @@ export const createTextSelectionOverlay = ({
 	root,
 	store,
 	getZoom = () => 1,
+	getViewportScroll,
 	onMoveStart,
 	onMove,
 	onMoveEnd,
@@ -66,7 +67,7 @@ export const createTextSelectionOverlay = ({
 		applyVisibility(forceVisible);
 		layer.replaceChildren();
 		objects.forEach((object) => {
-			const target = document.createElement('button');
+			const target = document.createElement('div');
 			target.type = 'button';
 			target.className = 'text-object-focus-target';
 			target.dataset.textObjectId = object.id;
@@ -82,9 +83,10 @@ export const createTextSelectionOverlay = ({
 			target.style.height = `${Math.max(24, object.height + TEXT_TARGET_PADDING * 2)}px`;
 
 			// W4-13: Copy text box content to clipboard
-			const copyBtn = document.createElement('button');
-			copyBtn.type = 'button';
+			const copyBtn = document.createElement('div');
+			copyBtn.role = 'button';
 			copyBtn.className = 'text-object-copy-btn';
+			copyBtn.tabIndex = 0;
 			copyBtn.setAttribute('aria-label', t('ui.textCopy'));
 			copyBtn.title = t('ui.textCopy');
 			copyBtn.innerHTML = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="7" width="9" height="9" rx="1"/><rect x="4" y="4" width="9" height="9" rx="1"/></svg>';
@@ -111,11 +113,14 @@ export const createTextSelectionOverlay = ({
 				if (event.button !== 0) return;
 				event.preventDefault();
 				event.stopPropagation();
+				const vp = getViewportScroll ? getViewportScroll() : null;
 				dragState = {
 					id: object.id,
 					pointerId: event.pointerId,
 					clientX: event.clientX,
 					clientY: event.clientY,
+					lastScrollLeft: vp ? vp.left : 0,
+					lastScrollTop: vp ? vp.top : 0,
 					moved: false,
 				};
 				select(object.id);
@@ -129,11 +134,16 @@ export const createTextSelectionOverlay = ({
 			target.addEventListener('pointermove', (event) => {
 				if (!dragState || dragState.pointerId !== event.pointerId) return;
 				const zoom = Math.max(0.01, Number(getZoom()) || 1);
-				const dx = (event.clientX - dragState.clientX) / zoom;
-				const dy = (event.clientY - dragState.clientY) / zoom;
+				const vp = getViewportScroll ? getViewportScroll() : null;
+				const scrollDeltaX = vp ? vp.left - dragState.lastScrollLeft : 0;
+				const scrollDeltaY = vp ? vp.top - dragState.lastScrollTop : 0;
+				const dx = (event.clientX - dragState.clientX + scrollDeltaX) / zoom;
+				const dy = (event.clientY - dragState.clientY + scrollDeltaY) / zoom;
 				if (dx || dy) dragState.moved = true;
 				dragState.clientX = event.clientX;
 				dragState.clientY = event.clientY;
+				dragState.lastScrollLeft = vp ? vp.left : 0;
+				dragState.lastScrollTop = vp ? vp.top : 0;
 				onMove?.({ id: dragState.id, dx, dy, _clientX: event.clientX, _clientY: event.clientY });
 			});
 

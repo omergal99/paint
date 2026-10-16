@@ -471,6 +471,10 @@ const textSelectionOverlay = createTextSelectionOverlay({
 	root: scaleEl,
 	store: textDocumentStore,
 	getZoom: () => Number(viewportManager.zoom || 100) / 100,
+	getViewportScroll: () => {
+		const vp = viewportManager?.viewportEl;
+		return vp ? { left: vp.scrollLeft, top: vp.scrollTop } : { left: 0, top: 0 };
+	},
 	onMoveStart: (options) => textLayerService.beginMove(options),
 	onMove: (options) => {
 		textLayerService.move(options);
