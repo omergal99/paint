@@ -187,6 +187,7 @@ export const UI_TEXT_KEYS = Object.freeze({
 	'Show Status Bar': 'ui.showStatusBar',
 	'Show Color Inspector': 'ui.showColorInspector',
 	'Canvas Background': 'ui.canvasBackground',
+	'Canvas Viewport Padding': 'ui.canvasViewportPadding',
 	'Solid Color': 'ui.solidColor',
 	Transparent: 'ui.transparent',
 	'Transparent Checkerboard': 'ui.transparentCheckerboard',

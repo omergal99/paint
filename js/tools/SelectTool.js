@@ -21,6 +21,7 @@ export const createSelectTool = ({
 		originalSelection: null,
 		path: [],
 		pendingFrame: null,
+		autoScroll: null, // { raf, axis: 'x'|'y', dir: -1|1, speed }
 	};
 
 	const cancelPreview = () => {
@@ -42,6 +43,46 @@ export const createSelectTool = ({
 		x: Math.max(0, Math.min(canvasManager.width, point.x)),
 		y: Math.max(0, Math.min(canvasManager.height, point.y)),
 	});
+
+	const isAutoScrollEnabled = () => {
+		try { return localStorage.getItem('paint:auto-scroll') === 'true'; } catch { return false; }
+	};
+
+	// ---------- Viewport auto-scroll during selection drag ----------
+	const AUTO_SCROLL_EDGE = 24;
+	const AUTO_SCROLL_SPEED = 12;
+
+	const stopAutoScroll = () => {
+		if (state.autoScroll?.raf != null) {
+			cancelFrame(state.autoScroll.raf);
+		}
+		state.autoScroll = null;
+	};
+
+	const startAutoScroll = (vp, clientX, clientY) => {
+		if (!vp) return;
+		const rect = vp.getBoundingClientRect();
+		let dirX = 0;
+		let dirY = 0;
+
+		if (clientX - rect.left < AUTO_SCROLL_EDGE) dirX = -1;
+		else if (rect.right - clientX < AUTO_SCROLL_EDGE) dirX = 1;
+		if (clientY - rect.top < AUTO_SCROLL_EDGE) dirY = -1;
+		else if (rect.bottom - clientY < AUTO_SCROLL_EDGE) dirY = 1;
+
+		if (dirX === 0 && dirY === 0) {
+			stopAutoScroll();
+			return;
+		}
+
+		const scroll = () => {
+			if (dirX !== 0) vp.scrollLeft += dirX * AUTO_SCROLL_SPEED;
+			if (dirY !== 0) vp.scrollTop += dirY * AUTO_SCROLL_SPEED;
+			state.autoScroll.raf = requestFrame(scroll);
+		};
+		state.autoScroll = { raf: null };
+		state.autoScroll.raf = requestFrame(scroll);
+	};
 
 	const onActivate = (ctx) => {
 		state.start = null;
@@ -124,7 +165,7 @@ export const createSelectTool = ({
 		ctx.setSelection({ x: Math.round(point.x), y: Math.round(point.y), w: 0, h: 0 });
 	};
 
-	const onMove = (point, ctx) => {
+	const onMove = (point, ctx, event) => {
 		if (!state.start) return;
 		if (state.moving) {
 			// Compensate for viewport scroll during drag so the selection
@@ -146,6 +187,9 @@ export const createSelectTool = ({
 				h: ctx.canvasManager.floatingCanvas.height,
 				path: translatePath(state.originalSelection.path, dx, dy),
 			});
+
+			// Auto-scroll when dragging near viewport edge (moving selection)
+			if (event && isAutoScrollEnabled()) startAutoScroll(ctx.viewportManager?.viewportEl, event.clientX, event.clientY);
 			return;
 		}
 		if (state.mode === SELECTION_MODES.lasso) {
@@ -161,9 +205,13 @@ export const createSelectTool = ({
 		const w = Math.min(Math.abs(point.x - state.start.x), ctx.canvasManager.width - rx);
 		const h = Math.min(Math.abs(point.y - state.start.y), ctx.canvasManager.height - ry);
 		ctx.setSelection({ x: Math.round(rx), y: Math.round(ry), w: Math.round(w), h: Math.round(h) });
+
+		// Auto-scroll when dragging near viewport edge (marquee selection)
+		if (event && isAutoScrollEnabled()) startAutoScroll(ctx.viewportManager?.viewportEl, event.clientX, event.clientY);
 	};
 
-	const onUp = (point, ctx) => {
+	const onUp = (point, ctx, event) => {
+		stopAutoScroll();
 		ctx.setMarqueeStatus?.(false);
 		ctx.repaintSelectionFrame?.();
 		if (!state.start) return;
@@ -185,7 +233,8 @@ export const createSelectTool = ({
 		state.liftedOrigin = null;
 	};
 
-	const onCancel = (_point, ctx) => {
+	const onCancel = (_point, ctx, event) => {
+		stopAutoScroll();
 		cancelPreview();
 		if (!state.moving) ctx.setSelection(null);
 		ctx.setMarqueeStatus?.(false);

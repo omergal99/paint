@@ -1,4 +1,4 @@
-const CACHE_NAME = 'paint-shell-v1-9-0-d3f867e7';
+const CACHE_NAME = 'paint-shell-v1-9-1-e30211c8';
 const CACHE_PREFIX = 'paint-shell-';
 const SHELL = [
   './index.html',
@@ -141,6 +141,7 @@ const SHELL = [
   './js/ui/icons/paletteReset.js',
   './js/ui/icons/paletteSecondary.js',
   './js/ui/ActionDispatcher.js',
+  './js/app/canvasViewportSettings.js',
   './css/assets/icon.svg',
   './css/assets/icon-192.png',
   './css/assets/icon-512.png',

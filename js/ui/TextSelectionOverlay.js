@@ -90,9 +90,7 @@ export const createTextSelectionOverlay = ({
 			copyBtn.setAttribute('aria-label', t('ui.textCopy'));
 			copyBtn.title = t('ui.textCopy');
 			copyBtn.innerHTML = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="7" width="9" height="9" rx="1"/><rect x="4" y="4" width="9" height="9" rx="1"/></svg>';
-			copyBtn.addEventListener('click', (event) => {
-				event.preventDefault();
-				event.stopPropagation();
+			const copyText = () => {
 				const text = String(object.text || '');
 				if (!text) return;
 				navigator.clipboard?.writeText(text).catch(() => {
@@ -106,6 +104,18 @@ export const createTextSelectionOverlay = ({
 					try { document.execCommand('copy'); } catch {}
 					document.body.removeChild(ta);
 				});
+			};
+			copyBtn.addEventListener('click', (event) => {
+				event.preventDefault();
+				event.stopPropagation();
+				copyText();
+			});
+			copyBtn.addEventListener('keydown', (event) => {
+				if (event.key === 'Enter' || event.key === ' ') {
+					event.preventDefault();
+					event.stopPropagation();
+					copyText();
+				}
 			});
 			target.appendChild(copyBtn);
 

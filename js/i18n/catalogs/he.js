@@ -220,6 +220,7 @@ export const initializeHe = (english) => {
     "ui.showStatusBar": "הצגת שורת המצב",
     "ui.showColorInspector": "הצגת בוחן הצבעים",
     "ui.canvasBackground": "רקע הבד",
+    "ui.canvasViewportPadding": "ריפוד שולי אזור העבודה",
     "ui.solidColor": "צבע אחיד",
     "ui.transparent": "שקוף",
     "ui.transparentCheckerboard": "לוח משבצות שקוף",

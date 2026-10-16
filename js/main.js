@@ -26,6 +26,7 @@ import { createPaintSettingsRegistry } from './app/settingsRegistry.js';
 import { initAboutPanel } from './app/aboutPanel.js';
 import { initShortcutSettings } from './app/shortcutSettings.js';
 import { initRibbonSettings } from './app/ribbonSettings.js';
+import { initCanvasViewportSettings, getCanvasViewportPadding } from './app/canvasViewportSettings.js';
 import { initSettingsHydration, getDefaultZoom } from './app/settingsHydration.js';
 import { markBoot } from './app/bootTiming.js';
 import { createPencilTool, createBrushTool, createEraserTool } from './tools/FreehandTools.js';
@@ -239,6 +240,7 @@ const saveSettings = () => {
 		interfaceDirection: directionSelect?.value || 'auto',
 			canvasBackground: bgSelect.value,
 			solidBackgroundColor: solidBackgroundColorInput?.value || DEFAULT_SETTINGS.solidBackgroundColor,
+			canvasViewportPadding: getCanvasViewportPadding(),
 			defaultCanvasSize: defaultCanvasSizeSelect?.value || '800x600',
 			defaultCanvasWidth: Number(defaultCanvasWidthInput?.value) || 800,
 			defaultCanvasHeight: Number(defaultCanvasHeightInput?.value) || 600,
@@ -1507,6 +1509,8 @@ settingsRibbonPositionButtons.forEach((button, index) => {
 
 const { updateAboutStats } = initAboutPanel();
 const { syncRibbonSettingsControls } = initRibbonSettings({ sidebar, saveSettings });
+// Canvas viewport padding slider: the module owns its hydration and wiring.
+initCanvasViewportSettings({ settingsStore });
 
 document.getElementById('settings-reset').addEventListener('click', async () => {
 	const confirmed = await dialogService.confirm({
@@ -1619,6 +1623,21 @@ showZoomResetCheckbox?.addEventListener('change', () => {
 	if (zoomReset) zoomReset.hidden = !showZoomResetCheckbox.checked;
 	saveSettings();
 });
+
+// Zoom input dynamic step: 5% up to 200%, 10% above 200%
+const updateZoomStep = () => {
+	const val = Number(zoomInput?.value) || 100;
+	zoomInput.step = val > 200 ? '10' : '5';
+};
+zoomInput?.addEventListener('input', () => {
+	updateZoomStep();
+	const zoom = Math.max(10, Math.min(800, Number(zoomInput.value) || 100));
+	viewportManager.setZoom(zoom);
+	saveSettings();
+});
+zoomInput?.addEventListener('focus', updateZoomStep);
+zoomInput?.addEventListener('blur', updateZoomStep);
+updateZoomStep();
 keepSelectionAspectCheckbox?.addEventListener('change', saveSettings);
 defaultCanvasSizeSelect?.addEventListener('change', () => {
 	if (defaultCanvasSizeSelect.value !== 'custom') syncDefaultCanvasInputsFromSelect();
@@ -1678,6 +1697,7 @@ bgSelect.addEventListener('change', (e) => {
 	applyCanvasBackgroundMode(e.target.value);
 	saveSettings();
 });
+
 solidBackgroundColorInput?.addEventListener('input', (event) => {
 	canvasManager.setBackgroundColor(event.target.value);
 	saveSettings();
@@ -1714,9 +1734,9 @@ restoreDialogFromUrl();
 // The app icon and the app name open Settings ▸ About. They used to cycle
 // through icon formats on the clipboard, which surprised anyone who just wanted
 // to see the version.
-const appNameEntry = document.querySelector('.status-item.app-name');
+const appIconBtn = document.querySelector('.app-icon-btn');
 const openAboutFromAppIdentity = () => openSettingsDialog('about');
-appNameEntry?.addEventListener('click', openAboutFromAppIdentity);
+appIconBtn?.addEventListener('click', openAboutFromAppIdentity);
 appNameEntry?.addEventListener('keydown', (event) => {
 	if (event.key !== 'Enter' && event.key !== ' ') return;
 	event.preventDefault();

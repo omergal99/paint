@@ -1560,10 +1560,14 @@ test('sidebar identity, panels and disclosure sections behave as one contract', 
   const css = read('css/styles.css');
 
   // 1. App icon / app name open Settings ▸ About; the clipboard icon-copy cycle is gone.
+  // The icon is the click target; the app-name element is keyboard-only (Enter/Space)
+  // so a wide text label is not an accidental click surface.
   assert.match(main, /const openAboutFromAppIdentity = \(\) => openSettingsDialog\('about'\);/);
-  assert.match(main, /appNameEntry\?\.addEventListener\('click', openAboutFromAppIdentity\);/);
+  assert.match(main, /appIconBtn\?\.addEventListener\('click', openAboutFromAppIdentity\);/);
+  assert.match(main, /appNameEntry\?\.addEventListener\('keydown'/);
   assert.doesNotMatch(main, /copyAppIcon|iconCopyFormats/);
-  assert.match(html, /class="status-item app-name" role="button" tabindex="0"/);
+  assert.match(html, /class="status-item app-name" data-tag="app-name-about"/);
+  assert.match(html, /<button type="button" class="app-icon-btn" aria-label="About Paint"/);
 
   // 2. Every sidebar panel persists, addressed by a stable key (never a localised title).
   assert.match(sidebar, /this\.activeTab = `group:\$\{mirrorKey\}`;/);

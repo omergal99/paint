@@ -1235,9 +1235,10 @@
 				<span class="status-spacer"></span>
 			</div>
 
-			<div class="status-item app-name" role="button" tabindex="0" data-tag="app-name-about"
-				 aria-label="About Paint" title="About Paint">
-				<img class="app-icon" src="css/assets/icon.svg" alt="Paint icon" />
+			<div class="status-item app-name" data-tag="app-name-about">
+				<button type="button" class="app-icon-btn" aria-label="About Paint" title="About Paint">
+					<img class="app-icon" src="css/assets/icon.svg" alt="Paint icon" />
+				</button>
 				<span class="status-item">paint</span>
 			</div>
 
@@ -1422,6 +1423,11 @@
 						</span>
 					</div>
 				</div>
+								<div class="settings-field"><span data-i18n="ui.canvasViewportPadding">Canvas Viewport Padding</span>
+						<input type="range" id="setting-canvas-viewport-padding" min="0" max="30" value="10"
+							aria-label="Canvas viewport padding" />
+						<output id="setting-canvas-viewport-padding-value">10px</output>
+					</div>
 								<div class="settings-field choice-field"><span data-i18n="ui.defaultNewImage">Default new image</span>
 					<select id="setting-default-canvas-size">
 						<option value="800x600">800 × 600</option>

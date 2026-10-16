@@ -193,6 +193,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
 	interfaceDirection: 'auto',
 	canvasBackground: 'none',
 	solidBackgroundColor: '#ffffff',
+	canvasViewportPadding: 10,
 	defaultCanvasSize: '800x600',
 	defaultZoom: 100,
 	showZoomReset: false,

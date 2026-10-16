@@ -44,6 +44,7 @@
 	--ribbon-title-band: 12px;
 	--ribbon-compact-height: 74px;
 	--font-ui: "Segoe UI", -apple-system, "Helvetica Neue", Arial, sans-serif;
+	--canvas-viewport-padding: 10px;
 }
 
 body.dark-mode {
@@ -93,6 +94,37 @@ body.dark-mode ::-webkit-scrollbar-thumb {
 body.dark-mode ::-webkit-scrollbar-thumb:hover {
 	background: var(--w10-scrollbar-thumb-hover);
 }
+
+body.dark-mode input,
+body.dark-mode select,
+body.dark-mode textarea {
+	background: var(--w10-input-bg);
+	border: 1px solid var(--w10-input-border);
+	color: var(--w10-text);
+}
+
+body.dark-mode input::placeholder,
+body.dark-mode textarea::placeholder {
+	color: var(--w10-text-dim);
+	opacity: 0.7;
+}
+
+body.dark-mode button:not(:disabled):hover {
+	filter: none;
+	background: var(--w10-hover);
+	color: var(--w10-text);
+}
+
+body.dark-mode .rbtn.cell.mirror-shape-tile {
+	background: var(--w10-field-bg);
+	border-color: var(--w10-field-border);
+	color: var(--w10-text);
+}
+
+body.dark-mode .rbtn.cell.mirror-shape-tile:hover {
+	background: var(--w10-hover);
+}
+
 
 * {
 	box-sizing: border-box;
@@ -1591,7 +1623,7 @@ html[dir="rtl"] .ci-toggle[aria-expanded="false"] .menu-arrow {
 	flex: 1;
 	overflow: auto;
 	background: var(--w10-canvas-bg);
-	padding: 10px;
+	padding: var(--canvas-viewport-padding);
 	position: relative;
 	min-width: 0;
 	min-height: 0;

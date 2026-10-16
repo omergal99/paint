@@ -27,6 +27,7 @@ const SETTINGS_VALIDATORS = Object.freeze({
   selectionResizeKeepAspect: (value) => typeof value === 'boolean',
   canvasBackground: (value) => ['none', 'solid', 'transparent', 'checkerboard', 'grid'].includes(value),
   solidBackgroundColor: (value) => typeof value === 'string' && /^#[0-9a-f]{6}$/i.test(value),
+  canvasViewportPadding: (value) => Number.isFinite(Number(value)) && Number(value) >= 0 && Number(value) <= 30,
   defaultZoom: (value) => Number.isFinite(Number(value)) && Number(value) > 0,
   interfaceDirection: (value) => ['auto', 'ltr', 'rtl'].includes(value),
   historyAutoSaveMode: (value) => ['all', 'close', 'lifecycle'].includes(value),

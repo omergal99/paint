@@ -163,6 +163,7 @@ export const initializeFr = (english) => {
     "ui.showStatusBar": "Afficher la barre d’état",
     "ui.showColorInspector": "Afficher l’inspecteur de couleurs",
     "ui.canvasBackground": "Arrière-plan de la zone",
+    "ui.canvasViewportPadding": "Marge de la zone de travail",
     "ui.solidColor": "Couleur unie",
     "ui.transparent": "Transparent",
     "ui.transparentCheckerboard": "Damier transparent",

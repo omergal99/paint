@@ -162,6 +162,7 @@ export const initializeAr = (english) => {
     "ui.showStatusBar": "إظهار شريط الحالة",
     "ui.showColorInspector": "إظهار فاحص الألوان",
     "ui.canvasBackground": "خلفية اللوحة",
+    "ui.canvasViewportPadding": "حشو منفذ عرض اللوحة",
     "ui.solidColor": "لون ثابت",
     "ui.transparent": "شفاف",
     "ui.transparentCheckerboard": "مربعات شفافة",

@@ -163,6 +163,7 @@ export const initializeDe = (english) => {
     "ui.showStatusBar": "Statusleiste anzeigen",
     "ui.showColorInspector": "Farbinformationen anzeigen",
     "ui.canvasBackground": "Leinwandhintergrund",
+    "ui.canvasViewportPadding": "Leinwand-Viewrandabstand",
     "ui.solidColor": "Einfarbig",
     "ui.transparent": "Transparent",
     "ui.transparentCheckerboard": "Transparente Schachbrettfläche",
