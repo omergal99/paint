@@ -795,7 +795,11 @@ test('Plain wheel scrolls natively; only Ctrl/Cmd+wheel zooms', () => {
   // without moving the view percentage).
   assert.match(vpm, /if \(!event\.ctrlKey && !event\.metaKey\) return/);
   // Zoom still works both directions for Ctrl+wheel…
-  assert.match(vpm, /this\.zoom \+ \(event\.deltaY < 0 \? STEP : -STEP\)/);
+  assert.match(vpm, /this\.zoom \+ \(event\.deltaY < 0 \? this\._zoomStep\(\) : -this\._zoomStep\(\)\)/);
+  // …with 5% steps at/below 200% and 10% above 200%…
+  assert.match(vpm, /STEP_BELOW_200 = 5/);
+  assert.match(vpm, /STEP_ABOVE_200 = 10/);
+  assert.match(vpm, /this\._zoomStep = \(\) => \(this\.zoom > 200 \? STEP_ABOVE_200 : STEP_BELOW_200\)/);
   // …and stays disabled while a canvas resize drag owns the wheel.
   assert.match(vpm, /dataset\.resizing === 'true'/);
   assert.match(resizer, /wheelAdjust/);
@@ -1160,7 +1164,7 @@ test('Round-2 fixes: V glyph, session persistence, view-aware actions, storage m
   // Emoji tiles live inside `.action-menu-items`, so their rules must be scoped
   // under `.shape-gallery` (0,2,0 > 0,1,1) to out-specify `.action-menu-items
   // button` without leaking size/alignment into other menu items.
-  assert.match(css, /\.shape-gallery \.shape-emoji-btn\s*\{[^}]*font-size:\s*16px/s);
+  assert.match(css, /\.shape-gallery \.shape-emoji-btn\s*\{[^}]*font-size:\s*18px/s);
   assert.match(css, /\.shape-gallery \.shape-emoji-btn\s*\{[^}]*justify-content:\s*center/s);
   assert.match(css, /\.shape-gallery \.shape-emoji-btn:hover\s*\{/);
   assert.match(css, /\.shape-gallery \.shape-emoji-btn\.active\s*\{/);

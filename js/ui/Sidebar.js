@@ -1169,10 +1169,10 @@ export class Sidebar {
 			if (!confirmed) return;
 			if (type === 'global') {
 				await this.canvasManager.loadImageDataUrl(entry.dataUrl, entry.width, entry.height);
-				this.statusBar.flash('Loaded from history');
+				this.statusBar.flash(t('ui.loadedFromHistory'));
 			} else {
 				await this.historyManager.restore(entry);
-				this.statusBar.flash('Restored session step');
+				this.statusBar.flash(t('ui.restoredSessionStep'));
 				void this.refreshHistory();
 			}
 			return;
@@ -1183,7 +1183,7 @@ export class Sidebar {
 			if (type === 'global') {
 				await this.globalHistory.deleteSession(entry.id);
 				await this.refreshHistory();
-				this.statusBar.flash('History item deleted');
+				this.statusBar.flash(t('ui.historyItemDeleted'));
 			} else if (this.historyManager.removeSessionEntry(entry.id)) {
 				void this.refreshHistory();
 				this.statusBar?.flash?.(entry.kind === 'current' ? 'Current session card hidden' : 'Session step deleted');

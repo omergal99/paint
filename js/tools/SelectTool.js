@@ -60,7 +60,7 @@ export const createSelectTool = ({
 	};
 
 	const startAutoScroll = (vp, clientX, clientY) => {
-		if (!vp) return;
+		if (!vp || !isAutoScrollEnabled()) { stopAutoScroll(); return; }
 		const rect = vp.getBoundingClientRect();
 		let dirX = 0;
 		let dirY = 0;
@@ -80,6 +80,7 @@ export const createSelectTool = ({
 			if (dirY !== 0) vp.scrollTop += dirY * AUTO_SCROLL_SPEED;
 			state.autoScroll.raf = requestFrame(scroll);
 		};
+		stopAutoScroll();
 		state.autoScroll = { raf: null };
 		state.autoScroll.raf = requestFrame(scroll);
 	};
@@ -93,6 +94,7 @@ export const createSelectTool = ({
 	};
 
 	const onDeactivate = (ctx) => {
+		stopAutoScroll();
 		cancelPreview();
 		ctx.setMarqueeStatus?.(false);
 		ctx.commitFloatingSelection();

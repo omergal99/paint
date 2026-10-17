@@ -15,7 +15,8 @@
 
 const MIN_ZOOM = 10;
 const MAX_ZOOM = 800;
-const STEP = 10;
+const STEP_BELOW_200 = 5;
+const STEP_ABOVE_200 = 10;
 const SLIDER_MIN = 0;
 const SLIDER_MID = 500;
 const SLIDER_MAX = 1000;
@@ -54,8 +55,10 @@ export class ViewportManager {
 
     this.onZoomChange = null; // callback(zoomPercent)
 
-    this._onZoomIn = () => this.setZoom(this.zoom + STEP);
-    this._onZoomOut = () => this.setZoom(this.zoom - STEP);
+    // Zoom buttons/wheel step 5% at or below 200%, 10% above 200%.
+    this._zoomStep = () => (this.zoom > 200 ? STEP_ABOVE_200 : STEP_BELOW_200);
+    this._onZoomIn = () => this.setZoom(this.zoom + this._zoomStep());
+    this._onZoomOut = () => this.setZoom(this.zoom - this._zoomStep());
     this._onZoomReset = () => this.setZoom(100);
     this._onZoomInputChange = () => {
       const val = parseInt(this.zoomInput.value, 10);
@@ -75,7 +78,7 @@ export class ViewportManager {
       if (document.body.dataset.resizing === 'true') return;
       if (!event.ctrlKey && !event.metaKey) return; // let native scroll happen
       event.preventDefault();
-      this.setZoom(this.zoom + (event.deltaY < 0 ? STEP : -STEP));
+      this.setZoom(this.zoom + (event.deltaY < 0 ? this._zoomStep() : -this._zoomStep()));
     };
     this._onGeometryChange = () => this.invalidateGeometry();
 
