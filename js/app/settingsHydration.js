@@ -93,6 +93,11 @@ const applySavedSettings = () => {
       : DEFAULT_SETTINGS.solidBackgroundColor;
     if (byId('setting-solid-background-color')) byId('setting-solid-background-color').value = solidColor;
     canvasManager.setBackgroundColor(solidColor);
+    const vpBg = saved.canvasViewportBackgroundColor || DEFAULT_SETTINGS.canvasViewportBackgroundColor;
+    const vpInput = byId('setting-canvas-viewport-bg-color');
+    if (vpInput) vpInput.value = vpBg;
+    const vpEl = document.getElementById('canvas-viewport');
+    if (vpEl) vpEl.style.backgroundColor = vpBg;
     const sizeSelect = byId('setting-default-canvas-size');
     sizeSelect.value = saved.defaultCanvasSize || '800x600';
     if (byId('setting-restore-last-image')) byId('setting-restore-last-image').checked = saved.restoreLastImage === true;

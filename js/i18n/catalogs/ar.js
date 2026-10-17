@@ -165,6 +165,7 @@ export const initializeAr = (english) => {
     "ui.showColorInspector": "إظهار فاحص الألوان",
     "ui.canvasBackground": "خلفية اللوحة",
     "ui.canvasViewportPadding": "حشو منفذ عرض اللوحة",
+	"ui.canvasViewportBackgroundColor": "لون خلفية منفذ عرض اللوحة",
     "ui.solidColor": "لون ثابت",
     "ui.transparent": "شفاف",
     "ui.transparentCheckerboard": "مربعات شفافة",

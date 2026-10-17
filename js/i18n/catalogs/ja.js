@@ -166,6 +166,7 @@ export const initializeJa = (english) => {
     "ui.showColorInspector": "カラーインスペクターを表示",
     "ui.canvasBackground": "キャンバスの背景",
     "ui.canvasViewportPadding": "キャンバス ビューポート余白",
+	"ui.canvasViewportBackgroundColor": "キャンバスビューポートの背景色",
     "ui.solidColor": "単色",
     "ui.transparent": "透明",
     "ui.transparentCheckerboard": "透明チェッカーボード",

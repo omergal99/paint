@@ -281,6 +281,7 @@ export const ES_MESSAGES = Object.freeze({
     showColorInspector: "Mostrar inspector de color",
     canvasBackground: "Fondo del lienzo",
     canvasViewportPadding: "Relleno del área de trabajo",
+  canvasViewportBackgroundColor: "Color de fondo del viewport del lienzo",
     solidColor: "Color sólido",
     transparent: "Transparente",
     transparentCheckerboard: "Cuadrícula transparente",

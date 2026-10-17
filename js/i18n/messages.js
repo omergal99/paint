@@ -194,7 +194,7 @@ export const EN_MESSAGES = deepFreeze({
 		zoom100: '100%', zoomTo100: 'Zoom to 100%',
 		tabGeneral: 'GENERAL', tabCanvas: 'CANVAS', tabShortcuts: 'SHORTCUTS', tabHistory: 'HISTORY', tabRibbon: 'RIBBON', tabReleaseNotes: 'RELEASE NOTES',
 		tabAbout: 'ABOUT', tabBrowser: 'BROWSER DATA', tabApp: 'APP', tabFeedback: 'FEEDBACK', darkMode: 'Dark Mode', showStatusBar: 'Show Status Bar', showColorInspector: 'Show Color Inspector',
-		canvasBackground: 'Canvas Background', canvasViewportPadding: 'Canvas Viewport Padding', solidColor: 'Solid Color', transparent: 'Transparent', transparentCheckerboard: 'Transparent Checkerboard',
+		canvasBackground: 'Canvas Background', canvasViewportPadding: 'Canvas Viewport Padding', canvasViewportBackgroundColor: 'Canvas Viewport Background Color', solidColor: 'Solid Color', transparent: 'Transparent', transparentCheckerboard: 'Transparent Checkerboard',
 		gridlines: 'Gridlines', selected: 'Selected:', defaultNewImage: 'Default new image', custom: 'Custom', initialZoom: 'Initial zoom',
 		showZoomReset: 'Show the 100% zoom reset button',
 		keyboardShortcuts: 'Keyboard shortcuts', shortcutHelp: 'Focus a shortcut field, press the keys you want, then leave the field. Changes are saved in this browser.',

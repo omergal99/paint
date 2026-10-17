@@ -170,6 +170,7 @@ export const initializePtBr = (english) => {
     "ui.showColorInspector": "Mostrar inspetor de cores",
     "ui.canvasBackground": "Fundo da tela",
     "ui.canvasViewportPadding": "Preenchimento da área de visualização",
+	"ui.canvasViewportBackgroundColor": "Cor de fundo da área de visualização",
     "ui.solidColor": "Cor sólida",
     "ui.transparent": "Transparente",
     "ui.transparentCheckerboard": "Quadriculado transparente",

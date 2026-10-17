@@ -198,6 +198,7 @@ const ciCheckbox = document.getElementById('setting-show-color-inspector');
 const aiCheckbox = document.getElementById('setting-show-ai-chat');
 const directionSelect = document.getElementById('setting-direction');
 const solidBackgroundColorInput = document.getElementById('setting-solid-background-color');
+const viewportBgColorInput = document.getElementById('setting-canvas-viewport-bg-color');
 const defaultCanvasSizeSelect = document.getElementById('setting-default-canvas-size');
 const defaultCanvasWidthInput = document.getElementById('setting-default-canvas-width');
 const defaultCanvasHeightInput = document.getElementById('setting-default-canvas-height');
@@ -240,6 +241,7 @@ const saveSettings = () => {
 		interfaceDirection: directionSelect?.value || 'auto',
 			canvasBackground: bgSelect.value,
 			solidBackgroundColor: solidBackgroundColorInput?.value || DEFAULT_SETTINGS.solidBackgroundColor,
+			canvasViewportBackgroundColor: viewportBgColorInput?.value || DEFAULT_SETTINGS.canvasViewportBackgroundColor,
 			canvasViewportPadding: getCanvasViewportPadding(),
 			defaultCanvasSize: defaultCanvasSizeSelect?.value || '800x600',
 			defaultCanvasWidth: Number(defaultCanvasWidthInput?.value) || 800,
@@ -1708,6 +1710,12 @@ bgSelect.addEventListener('change', (e) => {
 
 solidBackgroundColorInput?.addEventListener('input', (event) => {
 	canvasManager.setBackgroundColor(event.target.value);
+	saveSettings();
+});
+
+viewportBgColorInput?.addEventListener('input', (event) => {
+	const vp = document.getElementById('canvas-viewport');
+	if (vp) vp.style.backgroundColor = event.target.value;
 	saveSettings();
 });
 

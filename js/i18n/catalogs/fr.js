@@ -166,6 +166,7 @@ export const initializeFr = (english) => {
     "ui.showColorInspector": "Afficher l’inspecteur de couleurs",
     "ui.canvasBackground": "Arrière-plan de la zone",
     "ui.canvasViewportPadding": "Marge de la zone de travail",
+	"ui.canvasViewportBackgroundColor": "Couleur d'arrière-plan du viewport du canevas",
     "ui.solidColor": "Couleur unie",
     "ui.transparent": "Transparent",
     "ui.transparentCheckerboard": "Damier transparent",

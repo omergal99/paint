@@ -166,6 +166,7 @@ export const initializeDe = (english) => {
     "ui.showColorInspector": "Farbinformationen anzeigen",
     "ui.canvasBackground": "Leinwandhintergrund",
     "ui.canvasViewportPadding": "Leinwand-Viewrandabstand",
+	"ui.canvasViewportBackgroundColor": "Hintergrundfarbe des Canvas-Viewports",
     "ui.solidColor": "Einfarbig",
     "ui.transparent": "Transparent",
     "ui.transparentCheckerboard": "Transparente Schachbrettfläche",
