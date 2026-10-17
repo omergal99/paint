@@ -533,7 +533,13 @@ test('main.js stays a composition root as feature sections move into js/app/', (
   const shortcutSettings = read('js/app/shortcutSettings.js');
   assert.match(main, /const settingsRegistry = createPaintSettingsRegistry\(\{ colorPalette, sidebar \}\);/);
   assert.match(main, /const \{ shortcutManager, renderShortcutSettings \} = initShortcutSettings\(\{ settingsStore \}\);/);
-  assert.match(main, /const \{ updateAboutStats \} = initAboutPanel\(\);/);
+  // main.js holds the panel handle so it can call `aboutPanel.destroy()` on
+  // teardown; the locale listeners are registered and owned inside the panel.
+  assert.match(main, /const aboutPanel = initAboutPanel\(\);/);
+  assert.match(main, /const \{ updateAboutStats \} = aboutPanel;/);
+  assert.match(main, /aboutPanel\.destroy\(\);/);
+  assert.match(aboutPanel, /const destroy = \(\) => \{/);
+  assert.match(aboutPanel, /return Object\.freeze\(\{ updateAboutStats, renderReleaseNotes, destroy \}\);/);
   const ribbonSettings = read('js/app/ribbonSettings.js');
   assert.match(main, /const \{ syncRibbonSettingsControls \} = initRibbonSettings\(\{ sidebar, saveSettings \}\);/);
   assert.match(ribbonSettings, /import \{ t \} from '\.\.\/i18n\/messages\.js';/);
@@ -575,7 +581,7 @@ test('main.js stays a composition root as feature sections move into js/app/', (
   assert.doesNotMatch(main, /canvasBackground: \(value\) =>/);
   assert.doesNotMatch(main, /favoriteShapes: \(value\) =>/);
   assert.match(main, /const \{ openResizeDialog \} = initResizeDialog\(\{/);
-  assert.match(main, /const \{[\s\S]*?showToast,[\s\S]*?crop,\s*\} = fileActions;/);
+  assert.match(main, /const \{[\s\S]*?showToast,[\s\S]*?crop,[\s\S]*?resetFileHandle,\s*\} = fileActions;/);
   // No module reaches for a global: collaborators are injected or imported.
   assert.doesNotMatch(fileActions, /\bwindow\.location\b/);
   assert.doesNotMatch(resizeDialog, /\bwindow\.location\b/);

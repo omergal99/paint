@@ -31,6 +31,7 @@ const getRestoreConfirmOptions = ({ src, alt } = {}) => ({
 	title: t('ui.restoreOverrideTitle'),
 	message: t('ui.restoreOverrideMessage'),
 	confirmLabel: t('ui.restoreOverrideAction'),
+	actionTag: 'restore-image',
 	danger: true,
 	preview: { src, alt },
 });
@@ -176,6 +177,7 @@ export class Sidebar {
 					title: 'Clear session',
 					message: 'Delete all session steps for this browser tab? Saved history is kept.',
 					confirmLabel: 'Clear session',
+					actionTag: 'clear-session',
 					danger: true,
 				});
 				if (confirmed) {
@@ -189,6 +191,7 @@ export class Sidebar {
 				title: 'Clear history',
 				message: 'Are you sure you want to permanently delete all saved history? This cannot be undone.',
 				confirmLabel: 'Clear history',
+				actionTag: 'clear-history',
 				danger: true,
 			});
 			if (confirmed) {

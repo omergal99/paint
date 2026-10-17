@@ -32,13 +32,18 @@ const createIcon = (documentRef, id) => {
 	return svg;
 };
 
-export const mountAdjustmentEntries = (host, { buttonClass = 'mirror-action' } = {}) => {
+export const mountAdjustmentEntries = (host, { buttonClass = 'mirror-action', tagNamespace = '' } = {}) => {
 	host.replaceChildren();
+	// The same entries mount in two mirrors (Image + Colors), so the buttons
+	// carry the host namespace: `sidebar-mirror-image-open-adjustment-brightness`
+	// vs `sidebar-mirror-colors-open-adjustment-brightness`. A bare tag would
+	// appear twice in the DOM and tell nobody which panel it belongs to.
+	const prefix = tagNamespace ? `${tagNamespace}-` : '';
 	Object.entries(ADJUSTMENTS).forEach(([id, metadata]) => {
 		const button = document.createElement('button');
 		button.type = 'button';
 		button.className = `${buttonClass} mirror-adjustment-action`;
-		button.dataset.tag = `open-adjustment-${id}`;
+		button.dataset.tag = `${prefix}open-adjustment-${id}`;
 		const documentRef = host.ownerDocument || document;
 		const label = documentRef.createElement('span');
 		label.textContent = t(metadata.labelKey);

@@ -363,24 +363,24 @@ export const createBrushStudioPanel = ({ brushState, getPrimaryColor, setPrimary
 			(state.presets || []).forEach((preset) => {
 				const group = document.createElement('div');
 				group.className = 'brush-studio-custom-preset';
-				group.dataset.tag = 'brush-preset-card';
+				group.dataset.tag = `brush-preset-card-${preset.id}`;
 				const button = document.createElement('button');
 				button.type = 'button';
 				button.className = 'brush-studio-preset';
 				button.dataset.brushCustomPreset = preset.id;
-				button.dataset.tag = 'brush-preset-apply';
+				button.dataset.tag = `brush-preset-apply-${preset.id}`;
 				button.setAttribute('aria-label', preset.name);
 				button.title = preset.name;
 				button.append(makeBrushIcon(preset.tipShape || 'round'));
 				const label = document.createElement('span');
 				label.textContent = preset.name;
 				label.title = preset.name;
-				label.dataset.tag = 'brush-preset-name';
+				label.dataset.tag = `brush-preset-label-${preset.id}`;
 				button.append(label);
 				const rename = document.createElement('button');
 				rename.type = 'button';
 				rename.className = 'brush-studio-rename-preset';
-				rename.dataset.tag = 'brush-preset-rename';
+				rename.dataset.tag = `brush-preset-rename-${preset.id}`;
 				rename.setAttribute('aria-label', t('common.actions.rename'));
 				rename.title = t('common.actions.rename');
 				rename.append(makeRenameIcon());
@@ -390,13 +390,13 @@ export const createBrushStudioPanel = ({ brushState, getPrimaryColor, setPrimary
 				nameInput.value = preset.name;
 				nameInput.maxLength = 40;
 				nameInput.hidden = true;
-				nameInput.dataset.tag = 'brush-preset-name-input';
+				nameInput.dataset.tag = `brush-preset-name-input-${preset.id}`;
 				nameInput.setAttribute('aria-label', t('common.actions.rename'));
 				const remove = document.createElement('button');
 				remove.type = 'button';
 				remove.className = 'brush-studio-delete-preset';
 				remove.dataset.brushDeletePreset = preset.id;
-				remove.dataset.tag = 'brush-preset-delete';
+				remove.dataset.tag = `brush-preset-delete-${preset.id}`;
 				remove.setAttribute('aria-label', t('common.actions.delete'));
 				remove.title = t('common.actions.delete');
 				remove.textContent = '×';
@@ -409,6 +409,7 @@ export const createBrushStudioPanel = ({ brushState, getPrimaryColor, setPrimary
 				button.type = 'button';
 				button.className = 'brush-studio-history-chip';
 				button.dataset.brushHistory = String(index);
+				button.dataset.tag = `brush-studio-history-chip-${index}`;
 				button.style.setProperty('--brush-history-color', entry.color || '#000000');
 				button.title = t('ui.brushHistoryTooltip', {
 					size: entry.size,
@@ -525,7 +526,7 @@ export const createBrushStudioPanel = ({ brushState, getPrimaryColor, setPrimary
 		});
 
 		const beginPresetRename = (group) => {
-			const label = group?.querySelector('[data-tag="brush-preset-name"]');
+			const label = group?.querySelector('[data-tag^="brush-preset-label-"]');
 			const input = group?.querySelector('.brush-studio-preset-name-input');
 			if (!label || !input) return;
 			label.hidden = true;
@@ -536,7 +537,7 @@ export const createBrushStudioPanel = ({ brushState, getPrimaryColor, setPrimary
 		};
 		const finishPresetRename = (input, commit) => {
 			const group = input.closest('.brush-studio-custom-preset');
-			const label = group?.querySelector('[data-tag="brush-preset-name"]');
+			const label = group?.querySelector('[data-tag^="brush-preset-label-"]');
 			const applyButton = group?.querySelector('[data-brush-custom-preset]');
 			if (!label || !applyButton) return;
 			const name = input.value.trim().slice(0, input.maxLength);
@@ -609,7 +610,7 @@ export const createBrushStudioPanel = ({ brushState, getPrimaryColor, setPrimary
 			}
 		});
 		host.addEventListener('dblclick', (event) => {
-			const label = event.target.closest?.('[data-tag="brush-preset-name"]');
+			const label = event.target.closest?.('[data-tag^="brush-preset-label-"]');
 			if (!label || !host.contains(label)) return;
 			event.preventDefault();
 			beginPresetRename(label.closest('.brush-studio-custom-preset'));

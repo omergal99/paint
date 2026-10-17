@@ -489,6 +489,9 @@ const crop = () => {
   return Object.freeze({
     fileInput,
     persistSession,
+    // `fileHandle` is private to this closure; main.js clears it after a
+    // drop/import so the next Save does not reuse a stale picker handle.
+    resetFileHandle: () => { fileHandle = null; },
     backgroundRemovalController,
     selectAll,
     deleteSelection,

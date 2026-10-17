@@ -109,10 +109,11 @@ body.dark-mode textarea::placeholder {
 	opacity: 0.7;
 }
 
+/* Dark surfaces don't read a darker `brightness(.94)` as feedback, so invert
+   the hover filter to lighten instead. This keeps each button's own background
+   and border intact rather than clobbering them with one blanket colour. */
 body.dark-mode button:not(:disabled):hover {
-	filter: none;
-	background: var(--w10-hover);
-	color: var(--w10-text);
+	filter: brightness(1.1);
 }
 
 body.dark-mode .rbtn.cell.mirror-shape-tile {
@@ -1627,6 +1628,11 @@ html[dir="rtl"] .ci-toggle[aria-expanded="false"] .menu-arrow {
 	position: relative;
 	min-width: 0;
 	min-height: 0;
+	/* This is the scroll container for a large canvas. `layout paint` (the safe
+	   subset of `contain`, avoiding size containment that would fight `flex: 1`)
+	   scopes reflow and painting to this box, so panning/zooming the canvas
+	   invalidates a smaller tree instead of the whole app. */
+	contain: layout paint;
 }
 
 .canvas-viewport.bg-checkerboard {
@@ -4797,12 +4803,11 @@ dialog h3 {
 	width: min(480px, calc(100vw - 32px));
 	min-height: 330px;
 }
+/* `user-select` is inherited, so enabling it on the dialog root reaches every
+   descendant — no universal selector needed. */
 #settings-dialog {
 	max-width: calc(100vw - 24px);
 	overflow: hidden;
-	user-select: auto;
-}
-#settings-dialog * {
 	user-select: auto;
 }
 .settings-shell {
@@ -5432,6 +5437,22 @@ dialog input[type="number"] {
 .dialog-actions button.dialog-button-primary:hover {
 	background: color-mix(in srgb, var(--w10-green) 28%, var(--w10-bg));
 }
+/* A destructive confirm is also the primary confirm button (e.g. "Clear Data").
+   `danger` and `dialog-button-primary` share specificity, so source order alone
+   let the primary green override the danger red. This combined selector
+   outranks both so destructive confirms always read as danger-red. */
+.dialog-actions button.dialog-button-primary.danger,
+.settings-panel button.dialog-button-primary.danger {
+	border-color: #e7a5a5;
+	background: #fde7e7;
+	color: #9f1d1d;
+	font-weight: 600;
+}
+.dialog-actions button.dialog-button-primary.danger:hover,
+.settings-panel button.dialog-button-primary.danger:hover {
+	background: #f8cccc;
+	border-color: #c93636;
+}
 .dialog-actions button.dialog-button-warning {
 	border-color: color-mix(in srgb, var(--w10-warning) 45%, var(--w10-border));
 	background: color-mix(in srgb, var(--w10-warning) 16%, var(--w10-bg));
@@ -5471,6 +5492,29 @@ button:not(:disabled):hover {
 	align-items: center;
 	justify-content: center;
 	gap: 4px;
+}
+/* The About control is a real <button> for keyboard/AT support, but it must
+   read as the bare icon — no chrome, no extra box — so the 26px status bar
+   keeps its height. */
+.app-icon-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0;
+	margin: 0;
+	border: none;
+	background: transparent;
+	color: inherit;
+	line-height: 0;
+	cursor: pointer;
+	border-radius: 3px;
+}
+.app-icon-btn:hover {
+	background: var(--w10-hover);
+}
+.app-icon-btn:focus-visible {
+	outline: 2px solid var(--w10-accent);
+	outline-offset: 1px;
 }
 .app-icon {
 	width: 20px;

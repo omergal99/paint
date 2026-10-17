@@ -125,12 +125,19 @@ export const createColorPalette = ({
   // The ribbon grid is the controller's primary surface; later surfaces (the
   // sidebar picker) register themselves through mountGrid.
   if (gridEl) grids.set(gridEl, RIBBON_MODE);
-  const createSwatchButton = (hex, index = null) => {
+  const sanitizeHexTag = (hex) => String(hex || '').replace('#', '').toLowerCase();
+  const createSwatchButton = (hex, index = null, mode = RIBBON_MODE) => {
     const button = document.createElement('button');
     button.type = 'button';
     button.style.background = hex;
     button.title = hex;
-    button.dataset.tag = 'palette-swatch';
+    // One `palette-swatch` tag used to repeat ~140 times across the ribbon grid
+    // and the sidebar picker. Ribbon cells keep their slot index
+    // (`palette-swatch-ribbon-slot-3`); picker cells carry their colour
+    // (`palette-swatch-extended-ff0000`), so every tag is unique and
+    // self-describing when copied out of DevTools.
+    const suffix = Number.isInteger(index) ? `slot-${index}` : sanitizeHexTag(hex);
+    button.dataset.tag = `palette-swatch-${mode}-${suffix}`;
     button.dataset.color = hex;
     button.setAttribute('aria-label', t('ui.paletteSwatch', { hex }));
     // Slot editing only makes sense for the ribbon grid, where the index maps to
@@ -168,11 +175,11 @@ export const createColorPalette = ({
   const renderGridInto = (grid, mode) => {
     grid.innerHTML = '';
     if (mode === EXTENDED_MODE) {
-      extendedPickerColors().forEach((hex) => grid.appendChild(createSwatchButton(hex)));
+      extendedPickerColors().forEach((hex) => grid.appendChild(createSwatchButton(hex, null, EXTENDED_MODE)));
       syncSwatchSelection(grid);
       return;
     }
-    palette.forEach((hex, index) => grid.appendChild(createSwatchButton(hex, index)));
+    palette.forEach((hex, index) => grid.appendChild(createSwatchButton(hex, index, RIBBON_MODE)));
     grid.append(createPagerArrow(-1), createPagerArrow(1));
     syncSwatchSelection(grid);
   }

@@ -132,5 +132,13 @@ export const initAboutPanel = () => {
   renderAboutIdentity();
   renderReleaseNotes();
 
-  return Object.freeze({ updateAboutStats, renderReleaseNotes });
+  // This panel registers its own locale listeners, so it must own their
+  // teardown. main.js used to remove them by name, but those names are local
+  // to this closure and were never in scope there (ReferenceError on destroy).
+  const destroy = () => {
+    document.documentElement?.removeEventListener('paint:locale-change', refreshAboutOnLocaleChange);
+    document.documentElement?.removeEventListener('paint:locale-change', refreshReleaseNotesOnLocaleChange);
+  };
+
+  return Object.freeze({ updateAboutStats, renderReleaseNotes, destroy });
 };

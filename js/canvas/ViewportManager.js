@@ -65,6 +65,11 @@ export class ViewportManager {
     this._onZoomInputKeydown = (event) => {
       if (event.key === 'Enter') this.zoomInput.blur();
     };
+    // While typing, mirror the spinner increment to the value being entered so
+    // the +/- arrows step by 5 up to 200% and 10 above it. The committed zoom
+    // itself still lands via the `change` handler, so this stays a cheap
+    // attribute write and never re-lays-out the canvas per keystroke.
+    this._onZoomInputLiveInput = () => this._syncZoomInputStep(Number(this.zoomInput.value) || this.zoom);
     this._onZoomSliderInput = () => this.setZoom(zoomFromSliderPosition(this.zoomSlider.value));
     this._onWheel = (event) => {
       if (document.body.dataset.resizing === 'true') return;
@@ -80,6 +85,7 @@ export class ViewportManager {
 
     this.zoomInput.addEventListener('change', this._onZoomInputChange);
     this.zoomInput.addEventListener('keydown', this._onZoomInputKeydown);
+    this.zoomInput.addEventListener('input', this._onZoomInputLiveInput);
     this.zoomSlider.addEventListener('input', this._onZoomSliderInput);
 
     // Plain wheel scrolls the viewport natively - it must NEVER change the
@@ -169,9 +175,19 @@ export class ViewportManager {
     this.scaleEl.style.transform = `scale(${scale})`;
     this.scaleEl.style.setProperty('--zoom-inverse', String(1 / scale));
     this.zoomInput.value = this.zoom;
+    this._syncZoomInputStep(this.zoom);
     this.zoomSlider.value = sliderPositionFromZoom(this.zoom);
     this.zoomSlider.setAttribute('aria-valuetext', `${this.zoom}%`);
     this.syncStageSize();
+  }
+
+  /**
+   * Keep the number-input spinner increment in sync with the current zoom: the
+   * native +/- arrows step by 5 up to 200% and by 10 above it, so coarse steps
+   * stay usable near the 800% ceiling without flooding the canvas with redraws.
+   */
+  _syncZoomInputStep(percent) {
+    this.zoomInput.step = Number(percent) > 200 ? '10' : '5';
   }
 
   invalidateGeometry() {
@@ -206,6 +222,7 @@ export class ViewportManager {
     this.zoomResetBtn?.removeEventListener('click', this._onZoomReset);
     this.zoomInput.removeEventListener('change', this._onZoomInputChange);
     this.zoomInput.removeEventListener('keydown', this._onZoomInputKeydown);
+    this.zoomInput.removeEventListener('input', this._onZoomInputLiveInput);
     this.zoomSlider.removeEventListener('input', this._onZoomSliderInput);
     this.viewportEl.removeEventListener('wheel', this._onWheel);
     this.viewportEl.removeEventListener('scroll', this._onGeometryChange);

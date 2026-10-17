@@ -116,6 +116,7 @@ document.getElementById('btn-rotate-free').addEventListener('click', async () =>
 		value: '15',
 		type: 'number',
 		confirmLabel: t('ui.rotate'),
+		actionTag: 'free-rotate',
 	});
 	const degrees = Number.parseFloat(value);
 	if (Number.isFinite(degrees)) applyTransformation(

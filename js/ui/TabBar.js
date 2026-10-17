@@ -40,10 +40,17 @@ const focusTab = (root, index) => {
  * Mount an accessible tab strip. The supplied `root` is optional so the same
  * controller can be used as a state adapter before the main UI is migrated.
  */
-export const createTabBar = ({ root = null, sessionService, onSelect, onClose, onNew, onManage } = {}) => {
+export const createTabBar = ({ root = null, sessionService, onSelect, onClose, onNew, onManage, tagNamespace = '' } = {}) => {
 	let destroyed = false;
 	let unsubscribe = () => {};
 	let lastState = sessionService?.getState?.() || { documents: [], tabOrder: [] };
+	// Two TabBar roots (strip + manager dialog) render the same documents, so
+	// per-tab tags carry the caller's namespace plus the document id:
+	// `workspace-tab-strip-select-<id>`. A bare `workspace-tab-select` would
+	// match one node in each root and say nothing about which document it is.
+	const tagPrefix = tagNamespace ? `${tagNamespace}-` : '';
+	const safeDocumentTag = (id) => String(id ?? '').trim().toLowerCase()
+		.replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'document';
 
 	const select = (id) => {
 		if (destroyed || !id) return;
@@ -115,15 +122,15 @@ export const createTabBar = ({ root = null, sessionService, onSelect, onClose, o
 			tab.className = 'workspace-tab';
 			if (model.active) tab.classList.add('is-active');
 			tab.dataset.documentId = model.id;
-			tab.dataset.tag = 'workspace-tab';
+			tab.dataset.tag = `${tagPrefix}workspace-tab-${safeDocumentTag(model.id)}`;
 			const button = root.ownerDocument.createElement('button');
 			button.type = 'button';
 			button.className = 'workspace-tab-select';
-			button.dataset.tag = 'workspace-tab-select';
+			button.dataset.tag = `${tagPrefix}workspace-tab-select-${safeDocumentTag(model.id)}`;
 			button.setAttribute('role', 'tab');
 			button.setAttribute('aria-selected', String(model.active));
 			button.tabIndex = model.active ? 0 : -1;
-			button.id = `workspace-tab-${model.id}`;
+			button.id = `${tagPrefix}workspace-tab-${safeDocumentTag(model.id)}`;
 			button.textContent = `${model.label}${model.dirty ? ' •' : ''}`;
 			button.title = model.dirty ? `${model.label} (unsaved)` : model.label;
 			button.setAttribute('aria-label', button.title);
@@ -132,7 +139,7 @@ export const createTabBar = ({ root = null, sessionService, onSelect, onClose, o
 			const closeButton = root.ownerDocument.createElement('button');
 			closeButton.type = 'button';
 			closeButton.className = 'workspace-tab-close';
-			closeButton.dataset.tag = 'workspace-tab-close';
+			closeButton.dataset.tag = `${tagPrefix}workspace-tab-close-${safeDocumentTag(model.id)}`;
 			closeButton.dataset.tabAction = 'close';
 			closeButton.dataset.documentId = model.id;
 			closeButton.setAttribute('aria-label', `Close ${model.label}`);
@@ -143,7 +150,7 @@ export const createTabBar = ({ root = null, sessionService, onSelect, onClose, o
 		const add = root.ownerDocument.createElement('button');
 		add.type = 'button';
 		add.className = 'workspace-tab-new';
-		add.dataset.tag = 'workspace-tab-new';
+		add.dataset.tag = `${tagPrefix}workspace-tab-new`;
 		add.dataset.tabAction = 'new';
 		add.setAttribute('aria-label', 'New image');
 		add.title = 'New image';
@@ -153,7 +160,7 @@ export const createTabBar = ({ root = null, sessionService, onSelect, onClose, o
 			const manage = root.ownerDocument.createElement('button');
 			manage.type = 'button';
 			manage.className = 'workspace-tab-manage';
-			manage.dataset.tag = 'workspace-tab-manage';
+			manage.dataset.tag = `${tagPrefix}workspace-tab-manage`;
 			manage.dataset.tabAction = 'manage';
 			manage.setAttribute('aria-label', 'Manage open images');
 			manage.title = 'Manage open images';

@@ -51,7 +51,7 @@ export const colorsMirrorDescriptor = Object.freeze({
           kind: 'custom',
           mount: (host) => {
             host.dataset.tag = 'sidebar-mirror-colors-adjustments';
-            mountAdjustmentEntries(host);
+            mountAdjustmentEntries(host, { tagNamespace: 'sidebar-mirror-colors' });
           },
         }),
       ]),

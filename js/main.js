@@ -381,6 +381,7 @@ const workspaceSplitRoot = (() => {
 const workspaceTabBar = createTabBar({
 	root: workspaceStripRoot?.querySelector('#workspace-tab-bar') || document.getElementById('workspace-tab-bar'),
 	sessionService: workspaceSession,
+	tagNamespace: 'workspace-tab-strip',
 	onSelect: (id) => statusBar.flash(`Active document: ${workspaceSession.getDocument?.(id)?.metadata?.label || 'Image'}`),
 	onManage: () => workspaceManagerDialog?.showModal?.(),
 	onNew: () => {
@@ -408,6 +409,7 @@ const workspaceStripController = createWorkspaceStripController({
 const workspaceManagerTabs = createTabBar({
 	root: document.getElementById('workspace-manager-tabs'),
 	sessionService: workspaceSession,
+	tagNamespace: 'workspace-manager-tabs',
 	onSelect: (id) => {
 		workspaceManagerDialog?.close?.();
 		statusBar.flash(`Active document: ${workspaceSession.getDocument?.(id)?.metadata?.label || 'Image'}`);
@@ -503,6 +505,19 @@ let autoScrollFrame = null;
 let autoScrollActive = false;
 let autoScrollPointerX = 0;
 let autoScrollPointerY = 0;
+// The viewport's own bounding rect does not change while it scrolls — only its
+// scrollTop/scrollLeft do — so re-reading it every frame was pure overhead.
+// We measure once per drag (in startAutoScroll) and drop the cache on stop and
+// on window resize, so a layout shift between drags is always picked up.
+let autoScrollRect = null;
+
+const measureAutoScrollRect = () => {
+    const viewport = viewportManager?.viewportEl;
+    autoScrollRect = viewport ? viewport.getBoundingClientRect() : null;
+};
+
+const onWindowResizeMeasureAutoScrollRect = () => { autoScrollRect = null; };
+window.addEventListener('resize', onWindowResizeMeasureAutoScrollRect);
 
 const isAutoScrollEnabled = () => {
     try { return localStorage.getItem('paint:auto-scroll') === 'true'; } catch { return false; }
@@ -511,11 +526,13 @@ const isAutoScrollEnabled = () => {
 const startAutoScroll = () => {
     if (autoScrollActive) return;
     autoScrollActive = true;
+    measureAutoScrollRect();
     autoScrollLoop();
 };
 
 const stopAutoScroll = () => {
     autoScrollActive = false;
+    autoScrollRect = null;
     if (autoScrollFrame) {
         cancelAnimationFrame(autoScrollFrame);
         autoScrollFrame = null;
@@ -526,7 +543,8 @@ const autoScrollLoop = () => {
     if (!autoScrollActive || !isAutoScrollEnabled()) { stopAutoScroll(); return; }
     const viewport = viewportManager?.viewportEl;
     if (!viewport) { stopAutoScroll(); return; }
-    const rect = viewport.getBoundingClientRect();
+    if (!autoScrollRect) measureAutoScrollRect();
+    const rect = autoScrollRect;
     const dir = document.documentElement?.dir === 'rtl' ? -1 : 1;
     let newLeft = viewport.scrollLeft;
     let newTop = viewport.scrollTop;
@@ -1187,6 +1205,7 @@ const {
 	saveImageAs,
 	showToast,
 	crop,
+	resetFileHandle,
 } = fileActions;
 
 const adjustmentService = createAdjustmentService({
@@ -1507,7 +1526,8 @@ settingsRibbonPositionButtons.forEach((button, index) => {
 	});
 });
 
-const { updateAboutStats } = initAboutPanel();
+const aboutPanel = initAboutPanel();
+const { updateAboutStats } = aboutPanel;
 const { syncRibbonSettingsControls } = initRibbonSettings({ sidebar, saveSettings });
 // Canvas viewport padding slider: the module owns its hydration and wiring.
 initCanvasViewportSettings({ settingsStore });
@@ -1517,6 +1537,7 @@ document.getElementById('settings-reset').addEventListener('click', async () => 
 		title: t('ui.resetSettings'),
 		message: t('settings.resetConfirm') || resetSettingsConfirmationFallback,
 		confirmLabel: t('ui.resetSettings'),
+		actionTag: 'reset-settings',
 		danger: true,
 	});
 	if (!confirmed) return;
@@ -1543,6 +1564,7 @@ document.getElementById('settings-clear-data').addEventListener('click', async (
 		title: t('settings.clearDataTitle'),
 		message: t('settings.clearDataConfirm'),
 		confirmLabel: t('ui.clearData'),
+		actionTag: 'clear-data',
 		danger: true,
 	});
 	if (!confirmed) return;
@@ -1624,20 +1646,6 @@ showZoomResetCheckbox?.addEventListener('change', () => {
 	saveSettings();
 });
 
-// Zoom input dynamic step: 5% up to 200%, 10% above 200%
-const updateZoomStep = () => {
-	const val = Number(zoomInput?.value) || 100;
-	zoomInput.step = val > 200 ? '10' : '5';
-};
-zoomInput?.addEventListener('input', () => {
-	updateZoomStep();
-	const zoom = Math.max(10, Math.min(800, Number(zoomInput.value) || 100));
-	viewportManager.setZoom(zoom);
-	saveSettings();
-});
-zoomInput?.addEventListener('focus', updateZoomStep);
-zoomInput?.addEventListener('blur', updateZoomStep);
-updateZoomStep();
 keepSelectionAspectCheckbox?.addEventListener('change', saveSettings);
 defaultCanvasSizeSelect?.addEventListener('change', () => {
 	if (defaultCanvasSizeSelect.value !== 'custom') syncDefaultCanvasInputsFromSelect();
@@ -1735,6 +1743,7 @@ restoreDialogFromUrl();
 // through icon formats on the clipboard, which surprised anyone who just wanted
 // to see the version.
 const appIconBtn = document.querySelector('.app-icon-btn');
+const appNameEntry = document.querySelector('[data-tag="app-name-about"]');
 const openAboutFromAppIdentity = () => openSettingsDialog('about');
 appIconBtn?.addEventListener('click', openAboutFromAppIdentity);
 appNameEntry?.addEventListener('keydown', (event) => {
@@ -1952,7 +1961,7 @@ clipboardService.attach();
 // ---------- Drag and Drop ----------
 const imageDropController = createImageDropController({
 	insertImageBlob: (file, options) => clipboardManager.insertImageBlob(file, options),
-	onImageImported: () => { fileHandle = null; },
+	onImageImported: () => { resetFileHandle(); },
 });
 
 let editorDestroyed = false;
@@ -1982,10 +1991,10 @@ const destroyEditor = () => {
 	document.documentElement?.removeEventListener('paint:locale-change', syncSelectionActionsOnLocaleChange);
 	hydration.destroy();
 	document.documentElement?.removeEventListener('paint:locale-change', browserInfoPanel.refresh);
-	document.documentElement?.removeEventListener('paint:locale-change', refreshAboutOnLocaleChange);
-	document.documentElement?.removeEventListener('paint:locale-change', refreshReleaseNotesOnLocaleChange);
+	aboutPanel.destroy();
 	window.removeEventListener('paint:ribbon-change', onRibbonChange);
 	window.removeEventListener(EVENTS.openAdjustments, openAdjustments);
+	window.removeEventListener('resize', onWindowResizeMeasureAutoScrollRect);
 	ribbonLayoutManager.destroy();
 	actionMenuController.destroy();
 	canvasContextMenu.destroy();

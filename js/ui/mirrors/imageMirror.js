@@ -35,7 +35,7 @@ export const imageMirrorDescriptor = Object.freeze({
       titleKey: 'ui.adjustments',
       open: false,
       items: Object.freeze([
-        Object.freeze({ kind: 'custom', mount: (host) => { host.dataset.tag = 'sidebar-mirror-adjustments'; mountAdjustmentEntries(host); } }),
+        Object.freeze({ kind: 'custom', mount: (host) => { host.dataset.tag = 'sidebar-mirror-adjustments'; mountAdjustmentEntries(host, { tagNamespace: 'sidebar-mirror-image' }); } }),
       ]),
     }),
   ]),

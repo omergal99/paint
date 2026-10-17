@@ -136,6 +136,7 @@ test('dialog text updates discard stale runtime translation keys', () => {
     return {
       ...eventTarget(),
       attributes,
+      dataset: {},
       textContent,
       removeAttribute(name) { attributes.delete(name); },
       classList: { toggle() {} },
@@ -174,6 +175,18 @@ test('dialog text updates discard stale runtime translation keys', () => {
   assert.equal(confirmButton.textContent, 'Override');
   assert.equal(title.attributes.has('data-i18n-runtime'), false);
   assert.equal(confirmButton.attributes.has('data-i18n-runtime-source'), false);
+  assert.equal(confirmButton.dataset.tag, 'app-dialog-confirm');
+  assert.equal(cancelButton.dataset.tag, 'app-dialog-cancel');
+
+  void service.confirm({
+    title: 'Clear data',
+    message: 'Delete everything?',
+    confirmLabel: 'Clear Data',
+    actionTag: 'clear-data',
+  });
+
+  assert.equal(confirmButton.dataset.tag, 'app-dialog-confirm-clear-data');
+  assert.equal(cancelButton.dataset.tag, 'app-dialog-cancel-clear-data');
 });
 
 test('checkbox rows toggle their whitespace through one delegated listener', () => {

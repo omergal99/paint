@@ -232,15 +232,14 @@
 
 			<div class="separator separator-after-file"></div>
 
-			<!-- Clipboard group -->
-			<section class="ribbon-group ribbon-group-clipboard" data-ribbon-key="clipboard">
-				<div class="rbtn-row">
+			<!-- Clipboard group: hidden by default (W4) — the user can bring it
+			     back via Settings ▸ Ribbon ▸ "Clipboard". File>More still exposes
+			     Cut/Copy/Paste, and the canvas context menu is unaffected. -->
+			<section class="ribbon-group ribbon-group-clipboard" data-ribbon-key="clipboard" hidden>
+				<div class="rbtn-row" hidden>
 					<button class="rbtn big" id="btn-paste" data-tag="btn-paste" title="Paste (Ctrl+V)">
 						<svg class="icon size5" viewBox="0 0 20 20" aria-hidden="true"><use href="#icon-paste" /></svg>
 						<span data-i18n="common.actions.paste">Paste</span></button>
-					<div class="rbtn-col">
-
-					</div>
 					<div class="rbtn-stack">
 						<button class="rbtn small" id="btn-cut" data-tag="btn-cut" data-requires-selection
 							title="Cut (Ctrl+X)">
@@ -257,7 +256,7 @@
 				<div class="ribbon-group-title">Clipboard</div>
 			</section>
 
-			<div class="separator separator-after-clipboard"></div>
+			<div class="separator separator-after-clipboard" style="display:none"></div>
 
 			<!-- Image group -->
 			<section class="ribbon-group ribbon-group-image" data-ribbon-key="image">

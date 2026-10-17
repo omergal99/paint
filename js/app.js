@@ -94,6 +94,7 @@ const showStorageFailure = async (failure, { onDiscard = null } = {}) => {
       message: 'Your image is still open. Download a PNG copy now before continuing.',
       confirmLabel: 'Download now',
       cancelLabel: 'Keep editing',
+      actionTag: 'download-recovery',
     });
     if (!download) return false;
     try {
@@ -116,6 +117,7 @@ const showStorageFailure = async (failure, { onDiscard = null } = {}) => {
       confirmLabel: 'Reset autosave',
       cancelLabel: 'Keep it',
       danger: true,
+      actionTag: 'reset-autosave',
     });
     if (!discard) return false;
     const result = await onDiscard();

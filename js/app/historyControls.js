@@ -213,6 +213,7 @@ export const initHistoryControls = ({
 			title: t('history.clearTitle'),
 			message: t('history.clearConfirm'),
 			confirmLabel: t('history.clearTitle'),
+			actionTag: 'clear-history',
 			danger: true,
 		});
 		if (!confirmed) return;

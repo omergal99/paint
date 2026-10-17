@@ -28,13 +28,20 @@ export const createDialogService = ({ dialog, title, message, preview, closeButt
     element.textContent = value;
   };
 
-  const setContent = ({ heading, body, confirmLabel, cancelLabel, danger, prompt, preview: previewOptions }) => {
+  const setContent = ({ heading, body, confirmLabel, cancelLabel, danger, prompt, actionTag, preview: previewOptions }) => {
     releaseOwnedPreviewUrl();
     setDynamicText(title, heading);
     setDynamicText(message, body);
     setDynamicText(confirmButton, confirmLabel);
     setDynamicText(cancelButton, cancelLabel);
     confirmButton.classList.toggle('danger', Boolean(danger));
+    // The confirm/cancel buttons are one shared node reused by every dialog, so a
+    // static data-tag can never say which action is on screen. When the caller
+    // passes an action slug we stamp it so the hook is self-describing when
+    // copied (e.g. app-dialog-confirm-clear-data); with no slug we fall back to
+    // the id-derived default so the node keeps a stable identity.
+    confirmButton.dataset.tag = actionTag ? `app-dialog-confirm-${actionTag}` : 'app-dialog-confirm';
+    cancelButton.dataset.tag = actionTag ? `app-dialog-cancel-${actionTag}` : 'app-dialog-cancel';
     input.hidden = !prompt;
     input.value = prompt?.value ?? '';
     input.placeholder = prompt?.placeholder || '';
@@ -79,6 +86,7 @@ export const createDialogService = ({ dialog, title, message, preview, closeButt
         confirmLabel: options.confirmLabel || 'Continue',
         cancelLabel: options.cancelLabel || 'Cancel',
         danger: options.danger === true,
+        actionTag: options.actionTag || '',
         preview: options.preview || null,
       });
     },
@@ -88,6 +96,7 @@ export const createDialogService = ({ dialog, title, message, preview, closeButt
         body: options.message || '',
         confirmLabel: options.confirmLabel || 'Apply',
         cancelLabel: options.cancelLabel || 'Cancel',
+        actionTag: options.actionTag || '',
         prompt: {
           value: options.value || '',
           placeholder: options.placeholder || '',
