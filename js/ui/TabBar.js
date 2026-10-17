@@ -116,7 +116,10 @@ export const createTabBar = ({ root = null, sessionService, onSelect, onClose, o
 		root.replaceChildren();
 		root.setAttribute('role', 'tablist');
 		root.setAttribute('aria-label', root.getAttribute('aria-label') || 'Open images');
-		root.dataset.tag ||= 'workspace-tab-bar';
+		// The two live roots (strip + manager dialog) share documents, so the
+		// root itself carries the namespace: two `workspace-tab-bar` values
+		// would otherwise say nothing about which root a copied tag came from.
+		root.dataset.tag ||= `${tagPrefix}workspace-tab-bar`;
 		createTabBarModel(state).forEach((model) => {
 			const tab = root.ownerDocument.createElement('div');
 			tab.className = 'workspace-tab';

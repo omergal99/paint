@@ -150,11 +150,11 @@ export const createColorPalette = ({
   // The two trailing cells of the 3x10 ribbon grid are pager arrows instead of
   // colours. They cycle the built-in palettes in order, so a user reaches all
   // four pages without leaving the ribbon.
-  const createPagerArrow = (direction) => {
+  const createPagerArrow = (direction, mode = RIBBON_MODE) => {
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'palette-pager';
-    button.dataset.tag = direction < 0 ? 'palette-page-prev' : 'palette-page-next';
+    button.dataset.tag = direction < 0 ? `palette-page-prev-${mode}` : `palette-page-next-${mode}`;
     button.dataset.direction = String(direction);
     button.title = t(direction < 0 ? 'ui.palettePagePrevious' : 'ui.palettePageNext');
     button.setAttribute('aria-label', button.title);
@@ -180,7 +180,7 @@ export const createColorPalette = ({
       return;
     }
     palette.forEach((hex, index) => grid.appendChild(createSwatchButton(hex, index, RIBBON_MODE)));
-    grid.append(createPagerArrow(-1), createPagerArrow(1));
+    grid.append(createPagerArrow(-1, mode), createPagerArrow(1, mode));
     syncSwatchSelection(grid);
   }
   // Mirror the current foreground onto the matching swatch(s) so the chosen

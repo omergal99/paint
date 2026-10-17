@@ -156,6 +156,36 @@ test('TabBar delegates item actions and keyboard navigation through its root', (
 	assert.equal(root.listeners.size, 0, 'destroy removes delegated root listeners');
 });
 
+test('TabBar data-tags carry the root namespace and document id', () => {
+	const state = { documents: [document('one', 'One'), document('two', 'Two')], activeDocumentId: 'one' };
+	const sessionService = { getState: () => state };
+	const tagsOf = (namespace) => {
+		const documentRef = createFakeTabDocument();
+		const root = new FakeTabElement('div', documentRef);
+		const tabBar = createTabBar({ root, sessionService, tagNamespace: namespace });
+		tabBar.render(state);
+		const tags = [];
+		const visit = (node) => {
+			if (node.dataset?.tag) tags.push(node.dataset.tag);
+			node.children.forEach(visit);
+		};
+		visit(root);
+		tabBar.destroy();
+		return tags;
+	};
+	const plain = tagsOf('');
+	assert.ok(plain.includes('workspace-tab-select-one'), `plain select tag present, got ${plain}`);
+	assert.ok(plain.includes('workspace-tab-close-two'), `plain close tag present, got ${plain}`);
+	const strip = tagsOf('workspace-tab-strip');
+	assert.ok(strip.includes('workspace-tab-strip-workspace-tab-select-one'), `strip select tag namespaced, got ${strip}`);
+	assert.ok(strip.includes('workspace-tab-strip-workspace-tab-close-two'), `strip close tag namespaced, got ${strip}`);
+	assert.ok(strip.includes('workspace-tab-strip-workspace-tab-new'), 'strip new tag namespaced');
+	// Two roots for the same documents must never share a tag value.
+	const manager = tagsOf('workspace-manager-tabs');
+	const overlap = strip.filter((tag) => manager.includes(tag));
+	assert.deepEqual(overlap, [], 'strip and manager roots share no data-tag');
+});
+
 test('SplitView model reflects pane assignments and bounds divider ratio', () => {
 	const state = { activePane: 'secondary', panes: { primary: 'one', secondary: 'two' } };
 	assert.deepEqual(createSplitViewModel(state, 99), {
