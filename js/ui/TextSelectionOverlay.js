@@ -83,10 +83,11 @@ export const createTextSelectionOverlay = ({
 			target.style.height = `${Math.max(24, object.height + TEXT_TARGET_PADDING * 2)}px`;
 
 			// W4-13: Copy text box content to clipboard
-			const copyBtn = document.createElement('div');
-			copyBtn.role = 'button';
+			const copyBtn = document.createElement('button');
+copyBtn.type = 'button';
+
 			copyBtn.className = 'text-object-copy-btn';
-			copyBtn.tabIndex = 0;
+
 			copyBtn.setAttribute('aria-label', t('ui.textCopy'));
 			copyBtn.title = t('ui.textCopy');
 			copyBtn.innerHTML = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="7" width="9" height="9" rx="1"/><rect x="4" y="4" width="9" height="9" rx="1"/></svg>';

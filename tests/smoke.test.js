@@ -137,7 +137,7 @@ test('resize scale presets are grouped with the scale field and zoom has a 100% 
 	assert.ok(resizeDialog.indexOf('id="resize-percent"') < resizeDialog.indexOf('data-resize-scale="50"'));
 	assert.match(resizeDialog, /class="resize-scale-row"[\s\S]*id="resize-percent"[\s\S]*class="resize-scale-presets"/);
 	assert.doesNotMatch(resizeDialog.slice(0, resizeDialog.indexOf('class="resize-presets"')), /resize-scale-presets/);
-	assert.match(html, /id="zoom-slider"[^>]*min="0" max="1000" step="1" value="500"/);
+	assert.match(html, /id="zoom-slider"[^>]*min="0" max="1000" step="5" value="500"/);
 	assert.match(read('js/canvas/ViewportManager.js'), /aria-valuetext', `\$\{this\.zoom\}%`/);
 	assert.match(read('css/styles.css'), /\.zoom-controls input\[type="range"\]\s*\{[\s\S]*width:\s*170px/);
 });
@@ -659,6 +659,35 @@ test('Settings dialog has a HISTORY tab with history controls', () => {
   assert.match(html, /id="setting-history-save-limit"/);
   assert.match(html, /id="settings-history-export-all"/);
   assert.match(html, /id="settings-history-clear"/);
+});
+
+test('zoom slider has 5% minimum step and zoom input accepts wide manual range', () => {
+  assert.match(html, /id="zoom-slider"[^>]*step="5"/);
+  assert.match(html, /id="zoom-input"[^>]*min="2"[^>]*max="2000"/);
+  const vpm = read('js/canvas/ViewportManager.js');
+  assert.match(vpm, /const MIN_ZOOM = 5;/);
+  assert.match(vpm, /step = Number\(percent\) > 200 \? '10' : '5'/);
+});
+
+test('text object copy button is a real button with click handler', () => {
+  const tso = read('js/ui/TextSelectionOverlay.js');
+  assert.match(tso, /const copyBtn = document\.createElement\('button'\)/);
+  assert.match(tso, /copyBtn\.type = 'button'/);
+  assert.match(tso, /copyBtn\.addEventListener\('click',/);
+  assert.match(tso, /event\.stopPropagation\(\)/);
+});
+
+test('settings history export button has data-tag and dialog-button-secondary class', () => {
+  assert.match(html, /id="settings-history-export-all"[^>]*data-tag="settings-history-export-all"/);
+  assert.match(html, /id="settings-history-export-all"[^>]*class="dialog-button-secondary"/);
+});
+
+test('dark-mode CSS provides contrast for settings footer and danger buttons', () => {
+  const css = read('css/styles.css');
+  assert.match(css, /body\.dark-mode \.settings-footer button/);
+  assert.match(css, /body\.dark-mode \.settings-panel button\.danger/);
+  assert.match(css, /body\.dark-mode \.dialog-actions button\.danger/);
+  assert.match(css, /body\.dark-mode .zoom-controls input\[type="range"\]::-webkit-slider-thumb/);
 });
 
 	test('startup image restore is opt-in and settings search is modular', () => {

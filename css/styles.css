@@ -5642,3 +5642,57 @@ button:not(:disabled):hover {
 		left: -18px;
 	}
 }
+
+/* Settings footer buttons: dark-mode hover/focus contrast. */
+body.dark-mode .settings-footer button {
+	border-color: var(--w10-border);
+	background: var(--w10-field-bg);
+}
+body.dark-mode .settings-footer button:hover,
+body.dark-mode .settings-footer button:focus-visible {
+	border-color: var(--w10-hover-border);
+	background: var(--w10-hover);
+	color: var(--w10-text);
+}
+
+/* Destructive danger buttons inside settings panels: dark-mode variants */
+body.dark-mode .settings-panel button.danger,
+body.dark-mode .dialog-actions button.danger {
+	background: #3f1717;
+	border-color: #a44;
+	color: #f3b8b8;
+}
+body.dark-mode .settings-panel button.danger:hover,
+body.dark-mode .dialog-actions button.danger:hover {
+	background: #5a1a1a;
+	border-color: #c93636;
+	color: #fff5f5;
+}
+
+/* Zoom slider: visible track and thumb in dark mode. */
+body.dark-mode .zoom-controls input[type="range"]::-webkit-slider-track {
+	background: var(--w10-field-border);
+	border: none;
+	height: 4px;
+	border-radius: 2px;
+}
+body.dark-mode .zoom-controls input[type="range"]::-webkit-slider-thumb {
+	background: var(--w10-accent);
+	border: none;
+	width: 14px;
+	height: 14px;
+	border-radius: 50%;
+}
+body.dark-mode .zoom-controls input[type="range"]::-moz-range-track {
+	background: var(--w10-field-border);
+	border: none;
+	height: 4px;
+	border-radius: 2px;
+}
+body.dark-mode .zoom-controls input[type="range"]::-moz-range-thumb {
+	background: var(--w10-accent);
+	border: none;
+	width: 14px;
+	height: 14px;
+	border-radius: 50%;
+}

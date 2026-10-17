@@ -1254,13 +1254,13 @@
 								stroke-linecap="round" />
 						</svg>
 					</button>
-					<input type="range" id="zoom-slider" data-tag="zoom-slider" min="0" max="1000" step="1" value="500"
+					<input type="range" id="zoom-slider" data-tag="zoom-slider" min="0" max="1000" step="5" value="500"
 						aria-label="Zoom percentage slider" />
 					<button type="button" id="zoom-reset" data-tag="zoom-reset" title="Zoom to 100%" hidden
 						aria-label="Zoom to 100%" data-i18n-attr="title:ui.zoomTo100,aria-label:ui.zoomTo100">
 						<span data-i18n="ui.zoom100">100%</span>
 					</button>
-					<input type="number" id="zoom-input" data-tag="zoom-input" min="10" max="800" value="100"
+					<input type="number" id="zoom-input" data-tag="zoom-input" min="2" max="2000" value="100"
 						aria-label="Zoom percentage" />
 					<span>%</span>
 					<button id="zoom-in" data-tag="zoom-in" title="Zoom in">
@@ -1516,7 +1516,7 @@
 					</div>
 				</div>
 				<div class="dialog-actions">
-					<button type="button" id="settings-history-export-all" data-i18n="ui.exportAllHistory">Export All History</button>
+					<button type="button" id="settings-history-export-all" data-tag="settings-history-export-all" class="dialog-button-secondary" data-i18n="ui.exportAllHistory">Export All History</button>
 					<button type="button" id="settings-history-clear" data-tag="settings-history-clear" class="danger"><span data-i18n="history.clearAll">Clear All</span></button>
 				</div>
 			</section>

@@ -13,7 +13,7 @@
 //                    CanvasResizer) and carries the CSS `scale()` transform.
 //                    All drawing/handle math stays in true image coordinates.
 
-const MIN_ZOOM = 10;
+const MIN_ZOOM = 5;
 const MAX_ZOOM = 800;
 const STEP_BELOW_200 = 5;
 const STEP_ABOVE_200 = 10;

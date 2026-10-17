@@ -136,9 +136,9 @@ test('zoom reset returns to actual-size 100% and updates every zoom surface', ()
 
 test('zoom slider centers 100% and maps its endpoints to the supported range', () => {
 	withViewport(({ manager, zoomSlider }) => {
-		manager.setZoom(10);
+		manager.setZoom(5);
 		assert.equal(zoomSlider.value, '0');
-		assert.equal(zoomSlider.getAttribute('aria-valuetext'), '10%');
+		assert.equal(zoomSlider.getAttribute('aria-valuetext'), '5%');
 
 		manager.setZoom(100);
 		assert.equal(zoomSlider.value, '500');
@@ -153,7 +153,7 @@ test('zoom slider centers 100% and maps its endpoints to the supported range', (
 		assert.equal(manager.zoom, 100);
 		zoomSlider.value = '0';
 		zoomSlider.dispatch('input');
-		assert.equal(manager.zoom, 10);
+		assert.equal(manager.zoom, 5);
 		zoomSlider.value = '1000';
 		zoomSlider.dispatch('input');
 		assert.equal(manager.zoom, 800);

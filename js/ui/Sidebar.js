@@ -1168,11 +1168,15 @@ export class Sidebar {
 			}));
 			if (!confirmed) return;
 			if (type === 'global') {
-				await this.canvasManager.loadImageDataUrl(entry.dataUrl, entry.width, entry.height);
-				this.statusBar.flash(t('ui.loadedFromHistory'));
+				// Only flash success when the image actually loaded. A failed
+				// decode/admission already flashes its own error message via
+				// onImageLoadError/onAdmissionRejected; overwriting that with a
+				// success message made a broken restore look like it worked.
+				const loaded = await this.canvasManager.loadImageDataUrl(entry.dataUrl, entry.width, entry.height);
+				if (loaded) this.statusBar.flash(t('ui.loadedFromHistory'));
 			} else {
-				await this.historyManager.restore(entry);
-				this.statusBar.flash(t('ui.restoredSessionStep'));
+				const restored = await this.historyManager.restore(entry);
+				if (restored) this.statusBar.flash(t('ui.restoredSessionStep'));
 				void this.refreshHistory();
 			}
 			return;

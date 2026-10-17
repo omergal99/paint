@@ -42,3 +42,54 @@ test('rerendered AI quick-action buttons do not own click listeners', () => {
 	assert.match(delegatedHandler, /this\.aiActions\.contains\(button\)/);
 	assert.match(delegatedHandler, /this\.handleAiSubmit\(button\.dataset\.aiCommand\)/);
 });
+
+test('history restore only flashes success when the load actually succeeded', () => {
+	// The restore path must check the boolean returned by loadImageDataUrl /
+	// historyManager.restore before flashing a success message. Previously the
+	// flash fired unconditionally, overwriting the error message emitted by
+	// onImageLoadError/onAdmissionRejected when the decode or admission failed.
+	const handler = source.match(/async _handleHistoryItemClick\(event\) \{[\s\S]*?\n\t\}/)?.[0] || '';
+	assert.ok(handler.length > 0, '_handleHistoryItemClick source must be found');
+
+	// Global history path: loadImageDataUrl result is captured and gated.
+	assert.match(handler, /const loaded = await this\.canvasManager\.loadImageDataUrl\(/);
+	assert.match(handler, /if \(loaded\) this\.statusBar\.flash\(t\('ui\.loadedFromHistory'\)\)/);
+
+	// Session history path: historyManager.restore result is captured and gated.
+	assert.match(handler, /const restored = await this\.historyManager\.restore\(entry\)/);
+	assert.match(handler, /if \(restored\) this\.statusBar\.flash\(t\('ui\.restoredSessionStep'\)\)/);
+});
+
+test('history restore does not flash a success message after a failed load', async () => {
+	// Behavioural regression: simulate a failed global-history load and assert
+	// that statusBar.flash is never called with the success message.
+	const flashes = [];
+	const sidebar = Object.assign(Object.create(Sidebar.prototype), {
+		historyGrid: { contains: () => true },
+		_historyItemsByKey: new Map([['global:1', {
+			type: 'global',
+			entry: { dataUrl: 'data:image/png;base64,broken', width: 10, height: 10 },
+			index: 0,
+		}]]),
+		dialogService: { confirm: async () => true },
+		canvasManager: { loadImageDataUrl: async () => false },
+		statusBar: { flash: (msg) => flashes.push(msg) },
+	});
+
+	// The handler first calls event.target.closest('[data-history-action]'),
+	// then actionElement.closest('.history-item') to locate the record.
+	const item = { dataset: { historyKey: 'global:1' } };
+	const actionElement = {
+		dataset: { historyAction: 'restore' },
+		closest: (sel) => (sel === '.history-item' ? item : null),
+	};
+	const eventTarget = { closest: (sel) => (sel === '[data-history-action]' ? actionElement : null) };
+
+	await sidebar._handleHistoryItemClick({ target: eventTarget, stopPropagation() {} });
+	assert.deepEqual(flashes, [], 'failed load must not flash a success message');
+
+	// Now simulate a successful load and assert the success message fires.
+	sidebar.canvasManager.loadImageDataUrl = async () => true;
+	await sidebar._handleHistoryItemClick({ target: eventTarget, stopPropagation() {} });
+	assert.deepEqual(flashes, ['Loaded from history'], 'successful load flashes the success message');
+});
