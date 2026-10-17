@@ -665,7 +665,11 @@ test('zoom slider has 5% minimum step and zoom input accepts wide manual range',
   assert.match(html, /id="zoom-slider"[^>]*step="5"/);
   assert.match(html, /id="zoom-input"[^>]*min="2"[^>]*max="2000"/);
   const vpm = read('js/canvas/ViewportManager.js');
-  assert.match(vpm, /const MIN_ZOOM = 5;/);
+  assert.match(vpm, /const MIN_ZOOM = 2;/);
+  assert.match(vpm, /const MAX_ZOOM = 2000;/);
+  // The slider keeps its own tighter 5–800 mapping independent of the clamp.
+  assert.match(vpm, /const SLIDER_ZOOM_MIN = 5;/);
+  assert.match(vpm, /const SLIDER_ZOOM_MAX = 800;/);
   assert.match(vpm, /step = Number\(percent\) > 200 \? '10' : '5'/);
 });
 

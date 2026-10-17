@@ -5467,12 +5467,14 @@ dialog input[type="number"] {
 	background: color-mix(in srgb, var(--w10-warning) 16%, var(--w10-bg));
 	color: var(--w10-text);
 }
-.dialog-actions button.dialog-button-secondary {
+.dialog-actions button.dialog-button-secondary,
+.settings-footer .dialog-button-secondary {
 	background: var(--w10-ribbon-bg);
 	border: 1px solid var(--w10-border-strong);
 	color: var(--w10-text);
 }
-body.dark-mode .dialog-actions button.dialog-button-secondary {
+body.dark-mode .dialog-actions button.dialog-button-secondary,
+body.dark-mode .settings-footer .dialog-button-secondary {
 	background: var(--w10-field-bg);
 	border-color: var(--w10-field-border);
 	color: var(--w10-text);

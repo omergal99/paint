@@ -163,10 +163,15 @@ test('zoom slider centers 100% and maps its endpoints to the supported range', (
 test('zoom clamps valid values, ignores invalid values, and preserves image coordinate mapping', () => {
 	withViewport((fixture) => {
 		const { manager, canvas, zoomInput } = fixture;
+		// The editable input allows 2%–2000%, so the runtime clamp must too.
 		manager.setZoom(900);
-		assert.equal(manager.zoom, 800);
+		assert.equal(manager.zoom, 900);
+		manager.setZoom(5000);
+		assert.equal(manager.zoom, 2000);
+		manager.setZoom(1);
+		assert.equal(manager.zoom, 2);
 		manager.setZoom(Number.NaN);
-		assert.equal(manager.zoom, 800);
+		assert.equal(manager.zoom, 2);
 		manager.setZoom(50);
 		assert.deepEqual(manager.clientToImage(70, 80), { x: 100, y: 100 });
 		zoomInput.value = '';

@@ -13,8 +13,13 @@
 //                    CanvasResizer) and carries the CSS `scale()` transform.
 //                    All drawing/handle math stays in true image coordinates.
 
-const MIN_ZOOM = 5;
-const MAX_ZOOM = 800;
+// Zoom percent bounds for the editable input and every runtime clamp
+// (matches `#zoom-input` min="2" max="2000"). The slider is a coarse control
+// with fixed 0–1000 tracks, so it keeps its own tighter 5–800 mapping.
+const MIN_ZOOM = 2;
+const MAX_ZOOM = 2000;
+const SLIDER_ZOOM_MIN = 5;
+const SLIDER_ZOOM_MAX = 800;
 const STEP_BELOW_200 = 5;
 const STEP_ABOVE_200 = 10;
 const SLIDER_MIN = 0;
@@ -26,16 +31,18 @@ const INITIAL_ZOOM_STORAGE_KEY = 'paint:initial-zoom';
 const zoomFromSliderPosition = (position) => {
   const clamped = Math.min(SLIDER_MAX, Math.max(SLIDER_MIN, Number(position)));
   const percent = clamped <= SLIDER_MID
-    ? MIN_ZOOM + (clamped / SLIDER_MID) * (100 - MIN_ZOOM)
-    : 100 + ((clamped - SLIDER_MID) / (SLIDER_MAX - SLIDER_MID)) * (MAX_ZOOM - 100);
+    ? SLIDER_ZOOM_MIN + (clamped / SLIDER_MID) * (100 - SLIDER_ZOOM_MIN)
+    : 100 + ((clamped - SLIDER_MID) / (SLIDER_MAX - SLIDER_MID)) * (SLIDER_ZOOM_MAX - 100);
   return Math.round(percent);
 };
 
 const sliderPositionFromZoom = (zoom) => {
   const position = zoom <= 100
-    ? ((zoom - MIN_ZOOM) / (100 - MIN_ZOOM)) * SLIDER_MID
-    : SLIDER_MID + ((zoom - 100) / (MAX_ZOOM - 100)) * (SLIDER_MAX - SLIDER_MID);
-  return String(Math.round(position));
+    ? ((zoom - SLIDER_ZOOM_MIN) / (100 - SLIDER_ZOOM_MIN)) * SLIDER_MID
+    : SLIDER_MID + ((zoom - 100) / (SLIDER_ZOOM_MAX - 100)) * (SLIDER_MAX - SLIDER_MID);
+  // Outside the slider's 5–800 window (e.g. a typed 2000%) the handle parks at
+  // the matching end stop instead of clamping to a bogus track value.
+  return String(Math.round(Math.min(SLIDER_MAX, Math.max(SLIDER_MIN, position))));
 };
 
 export class ViewportManager {

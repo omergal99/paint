@@ -17,6 +17,15 @@ export const createStatusBar = ({
   selectionEl?.setAttribute?.('data-i18n-ignore', '');
   selectionEl?.removeAttribute?.('data-i18n-runtime');
   selectionEl?.removeAttribute?.('data-i18n-runtime-source');
+  // Flash messages arrive pre-translated (`t('ui.loadedFromHistory')`) and are
+  // owned by the timer below. LocaleController's observer auto-stamps any node
+  // whose text matches a message key with `data-i18n-runtime`; once stamped,
+  // clearing the text makes the controller re-apply the message on the next
+  // microtask, so the flash never expires. `data-i18n-ignore` keeps the node
+  // out of the controller's hands entirely.
+  flashEl?.setAttribute?.('data-i18n-ignore', '');
+  flashEl?.removeAttribute?.('data-i18n-runtime');
+  flashEl?.removeAttribute?.('data-i18n-runtime-source');
 
   const setPointer = (pt) => {
     currentPointer = pt;

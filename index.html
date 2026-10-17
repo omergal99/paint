@@ -1230,7 +1230,7 @@
 				<span class="status-item location" id="status-pointer" data-tag="status-pointer">Pointer: -</span>
 				<span class="status-item" id="status-selection" data-tag="status-selection"></span>
 				<span class="status-item" id="status-flash" data-tag="status-flash" role="status"
-					aria-live="polite" aria-atomic="true"></span>
+					aria-live="polite" aria-atomic="true" data-i18n-ignore=""></span>
 				<span class="status-spacer"></span>
 			</div>
 
@@ -1367,6 +1367,7 @@
 			</header>
 			<nav class="settings-tabs" data-tag="settings-tabs" aria-label="Settings sections">
 				<button type="button" class="settings-tab active" data-settings-tab="general">GENERAL</button>
+				<button type="button" class="settings-tab" data-settings-tab="canvas">CANVAS</button>
 				<button type="button" class="settings-tab" data-settings-tab="history">HISTORY</button>
 				<button type="button" class="settings-tab" data-settings-tab="ribbon">RIBBON</button>
 				<button type="button" class="settings-tab" data-settings-tab="release">RELEASE NOTES</button>
@@ -1406,15 +1407,18 @@
 						<option value="rtl" data-i18n="ui.directionRtl">Right to left</option>
 					</select>
 				</div>
-								<div class="settings-field choice-field"><span data-i18n="ui.canvasBackground">Canvas Background</span>
+			</form>
+			<section class="settings-panel settings-body" data-settings-panel="canvas" hidden>
+				<h3 data-i18n="settings.canvas">Canvas</h3>
+				<div class="settings-field choice-field"><span data-i18n="ui.canvasBackground">Canvas Background</span>
 					<select id="setting-canvas-bg">
-										<option value="none" data-i18n="ui.solidColor">Solid Color</option>
-										<option value="transparent" data-i18n="ui.transparent">Transparent</option>
-										<option value="checkerboard" data-i18n="ui.transparentCheckerboard">Transparent Checkerboard</option>
-										<option value="grid" data-i18n="ui.gridlines">Gridlines</option>
+						<option value="none" data-i18n="ui.solidColor">Solid Color</option>
+						<option value="transparent" data-i18n="ui.transparent">Transparent</option>
+						<option value="checkerboard" data-i18n="ui.transparentCheckerboard">Transparent Checkerboard</option>
+						<option value="grid" data-i18n="ui.gridlines">Gridlines</option>
 					</select>
 					<div class="choice-summary" id="setting-canvas-bg-choice" data-select-id="setting-canvas-bg">
-										<span class="choice-summary-label"><span data-i18n="ui.selected">Selected:</span> <strong data-selected-label></strong>
+						<span class="choice-summary-label"><span data-i18n="ui.selected">Selected:</span> <strong data-selected-label></strong>
 							<span class="choice-custom-inputs" data-solid-color-control hidden>
 								<input type="color" id="setting-solid-background-color" value="#ffffff"
 									aria-label="Solid canvas background color" />
@@ -1422,23 +1426,23 @@
 						</span>
 					</div>
 				</div>
-								<div class="settings-field"><span data-i18n="ui.canvasViewportPadding">Canvas Viewport Padding</span>
-						<input type="range" id="setting-canvas-viewport-padding" min="0" max="30" value="10"
-							aria-label="Canvas viewport padding" />
-						<output id="setting-canvas-viewport-padding-value">10px</output>
-					</div>
-								<div class="settings-field choice-field"><span data-i18n="ui.defaultNewImage">Default new image</span>
+				<div class="settings-field"><span data-i18n="ui.canvasViewportPadding">Canvas Viewport Padding</span>
+					<input type="range" id="setting-canvas-viewport-padding" min="0" max="30" value="10"
+						aria-label="Canvas viewport padding" />
+					<output id="setting-canvas-viewport-padding-value">10px</output>
+				</div>
+				<div class="settings-field choice-field"><span data-i18n="ui.defaultNewImage">Default new image</span>
 					<select id="setting-default-canvas-size">
 						<option value="800x600">800 × 600</option>
 						<option value="1024x768">1024 × 768</option>
 						<option value="1000x1000" data-i18n="ui.squareCanvasSize">1000 × 1000 (square)</option>
 						<option value="1123x794" data-i18n="ui.a4LandscapeCanvasSize">A4 landscape (1123 × 794)</option>
 						<option value="794x1123" data-i18n="ui.a4PortraitCanvasSize">A4 portrait (794 × 1123)</option>
-										<option value="custom" data-i18n="ui.custom">Custom</option>
+						<option value="custom" data-i18n="ui.custom">Custom</option>
 					</select>
 					<div class="choice-summary" id="setting-default-canvas-size-choice"
 						data-select-id="setting-default-canvas-size">
-										<span class="choice-summary-label"><span data-i18n="ui.selected">Selected:</span> <strong data-selected-label></strong>
+						<span class="choice-summary-label"><span data-i18n="ui.selected">Selected:</span> <strong data-selected-label></strong>
 							<span class="choice-custom-inputs">
 								<input type="number" id="setting-default-canvas-width" min="1" max="10000" value="800"
 									aria-label="Custom canvas width" />
@@ -1449,7 +1453,7 @@
 						</span>
 					</div>
 				</div>
-								<div class="settings-field choice-field"><span data-i18n="ui.initialZoom">Initial zoom</span>
+				<div class="settings-field choice-field"><span data-i18n="ui.initialZoom">Initial zoom</span>
 					<select id="setting-default-zoom">
 						<option value="50">50%</option>
 						<option value="75">75%</option>
@@ -1462,7 +1466,7 @@
 					<div class="choice-summary" id="setting-default-zoom-choice" data-select-id="setting-default-zoom">
 						<span class="choice-summary-label"><span data-i18n="ui.selected">Selected:</span> <strong data-selected-label></strong>
 							<span class="choice-custom-inputs">
-								<input type="number" id="setting-default-zoom-custom" min="10" max="800" step="1" value="100"
+								<input type="number" id="setting-default-zoom-custom" min="2" max="2000" step="1" value="100"
 									aria-label="Custom initial zoom percentage" />%
 							</span>
 						</span>
@@ -1472,7 +1476,7 @@
 						<label for="setting-show-zoom-reset" data-i18n="ui.showZoomReset">Show the 100% zoom reset button</label>
 					</div>
 				</div>
-			</form>
+			</section>
 			<section class="settings-panel settings-body" data-settings-panel="shortcuts" hidden>
 				<h3 data-i18n="ui.keyboardShortcuts">Keyboard shortcuts</h3>
 				<p data-i18n="ui.shortcutHelp">Focus a shortcut field, press the keys you want, then leave the field. Changes are saved in this browser.</p>

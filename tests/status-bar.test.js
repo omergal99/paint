@@ -57,7 +57,12 @@ const createFixture = () => {
 		removeAttribute(name) { this.attributes.delete(name); },
 	};
 	const canvasSizeEl = { textContent: '800 × 600px' };
-	const flashEl = { textContent: '' };
+	const flashEl = {
+		textContent: '',
+		attributes: new Set(),
+		setAttribute(name) { this.attributes.add(name); },
+		removeAttribute(name) { this.attributes.delete(name); },
+	};
 	const statusBar = createStatusBar({
 		pointerEl,
 		selectionEl,
@@ -69,6 +74,21 @@ const createFixture = () => {
 	});
 	return { localeTarget, timers, pointerEl, selectionEl, canvasSizeEl, flashEl, statusBar };
 };
+
+test('flash messages stay owned by the timer, not the locale controller', () => {
+	const fixture = createFixture();
+	// Without the ignore tag, LocaleController's observer re-applies a stamped
+	// message key the moment the timer clears the text — the flash never expires.
+	assert.equal(fixture.flashEl.attributes.has('data-i18n-ignore'), true);
+	assert.equal(fixture.flashEl.attributes.has('data-i18n-runtime'), false);
+	assert.equal(fixture.flashEl.attributes.has('data-i18n-runtime-source'), false);
+	fixture.statusBar.flash('Loaded from history');
+	const timer = [...fixture.timers.pending.keys()][0];
+	fixture.timers.run(timer);
+	assert.equal(fixture.flashEl.textContent, '');
+	assert.equal(fixture.flashEl.attributes.has('data-i18n-runtime'), false);
+	fixture.statusBar.destroy();
+});
 
 test('status bar keeps pointer and selection output refreshed across locale changes', () => {
 	const fixture = createFixture();
