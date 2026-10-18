@@ -494,6 +494,9 @@ body {
 	pointer-events: auto;
 	cursor: progress;
 }
+.canvas-loading-mask[hidden] {
+\tdisplay: none !important;
+}
 .canvas-loading-spinner {
 	width: 28px;
 	height: 28px;

@@ -18,12 +18,40 @@ export const getDebugLoadingDelay = () => {
 let canvasReleased = false;
 let ribbonReleased = false;
 
+// Safety net: if the readiness events never fire, the canvas loading mask
+// would stay on screen forever. Release it automatically after a bounded
+// window so users are never blocked by a stuck overlay.
+const CANVAS_RELEASE_FALLBACK_MS = 10000;
+let canvasReleaseFallbackTimer = null;
+
+const startCanvasReleaseFallback = () => {
+  if (canvasReleaseFallbackTimer) return;
+  canvasReleaseFallbackTimer = setTimeout(() => {
+    releaseCanvasLoading();
+  }, CANVAS_RELEASE_FALLBACK_MS);
+};
+
 /** Hide the canvas loading overlay once zoom geometry is final. Idempotent. */
 export const releaseCanvasLoading = () => {
   if (canvasReleased) return;
   canvasReleased = true;
+  if (canvasReleaseFallbackTimer) {
+    clearTimeout(canvasReleaseFallbackTimer);
+    canvasReleaseFallbackTimer = null;
+  }
   const mask = document.querySelector('.canvas-loading-mask');
-  if (mask && !mask.hidden) mask.hidden = true;
+  if (mask) {
+    // `hidden` carries semantics; `style.display = 'none'` is the reliable
+    // way to actually remove it from layout because `.canvas-loading-mask`
+    // sets `display: flex` in the app stylesheet, which beats the UA
+    // `[hidden] { display: none }` rule (author stylesheets beat UA).
+    if (!mask.hidden) mask.hidden = true;
+    // `style.display = 'none'` is the reliable way to actually remove the
+    // mask from layout because `.canvas-loading-mask` sets `display: flex`
+    // in the app stylesheet, which beats the UA `[hidden] { display: none }`
+    // rule (author stylesheets beat UA). Guarded for test mocks without `style`.
+    if (mask.style) mask.style.display = 'none';
+  }
 };
 
 /** Hide the ribbon startup mask once paint:ready fires. Idempotent. */
@@ -38,3 +66,17 @@ export const isCanvasReleased = () => canvasReleased;
 
 /** True if the ribbon startup mask has been released. */
 export const isRibbonReleased = () => ribbonReleased;
+
+/** Reset internal release flags. Test-only seam. */
+export const __resetLoadingStateForTesting = () => {
+  canvasReleased = false;
+  ribbonReleased = false;
+  if (canvasReleaseFallbackTimer) {
+    clearTimeout(canvasReleaseFallbackTimer);
+    canvasReleaseFallbackTimer = null;
+  }
+};
+
+// Start the safety net immediately when the module loads. If readiness
+// events fire first, releaseCanvasLoading() clears this timer.
+startCanvasReleaseFallback();
