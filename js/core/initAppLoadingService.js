@@ -33,6 +33,7 @@ let ribbonReleased = false;
 // would stay on screen forever. Release it automatically after a bounded
 // window so users are never blocked by a stuck overlay.
 const CANVAS_RELEASE_FALLBACK_MS = 10000;
+/** @type {ReturnType<typeof setTimeout> | null} */
 let canvasReleaseFallbackTimer = null;
 
 const startCanvasReleaseFallback = () => {
@@ -54,21 +55,19 @@ export const releaseCanvasLoading = () => {
   }
   const mask = document.querySelector('.canvas-loading-mask');
   if (mask && 'hidden' in mask && 'style' in mask) {
-    // `hidden` carries semantics; `style.display = 'none'` is the reliable
-    // way to actually remove it from layout because `.canvas-loading-mask`
-    // sets `display: flex` in the app stylesheet, which beats the UA
-    // `[hidden] { display: none }` rule (author stylesheets beat UA).
     if (!mask.hidden) mask.hidden = true;
     // `style.display = 'none'` is the reliable way to actually remove the
     // mask from layout because `.canvas-loading-mask` sets `display: flex`
     // in the app stylesheet, which beats the UA `[hidden] { display: none }`
-    // rule (author stylesheets beat UA).
-    mask.style.display = 'none';
+    // rule (author stylesheets beat UA). The cast keeps checkJs happy with the
+    // duck-typed `in` guard above (plain-object mocks only carry `style`).
+    const style = /** @type {CSSStyleDeclaration} */ (mask.style);
+    style.display = 'none';
   }
 };
 
 /** Hide the ribbon startup mask once paint:ready fires. Idempotent. */
-export const releaseRibbonLoading = (ribbonEl) => {
+export const releaseRibbonLoading = (/** @type {HTMLElement | null} */ ribbonEl) => {
   if (DEV_LOADING_HOLD) return; // Hold loading open for dev inspection
   if (ribbonReleased) return;
   ribbonReleased = true;

@@ -27,7 +27,6 @@ export const createPersistentDropdown = ({
 	};
 	const wrapper = documentRef.createElement('div');
 	wrapper.className = `persistent-dropdown ${select.className || ''}`.trim();
-	if (id) wrapper.id = id;
 	if (name) wrapper.setAttribute('name', name);
 	if (select.dataset?.tag) {
 		wrapper.dataset.tag = select.dataset.tag;
@@ -37,6 +36,12 @@ export const createPersistentDropdown = ({
 	const trigger = documentRef.createElement('button');
 	trigger.type = 'button';
 	trigger.className = 'persistent-dropdown-trigger';
+	// The original select's id moves to the trigger (a <button>, which is
+	// labelable) instead of the wrapper <div>, so any static
+	// `<label for="...">` in the markup keeps a valid association after this
+	// enhancement. A <div> target breaks `label.control` and Lighthouse/axe
+	// report "Incorrect use of <label for=FORM_ELEMENT>".
+	if (id) trigger.id = id;
 	trigger.setAttribute('role', 'combobox');
 	trigger.setAttribute('aria-haspopup', 'listbox');
 	trigger.setAttribute('aria-expanded', 'false');

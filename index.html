@@ -106,8 +106,10 @@
 		<!-- ===================== RIBBON ===================== -->
 		<header class="ribbon ribbon-loading" id="ribbon" data-tag="ribbon">
 			<div class="ribbon-loading-mask" data-tag="ribbon-loading-mask" role="status" aria-live="polite">
-				<span class="ribbon-loading-spinner" aria-hidden="true"></span>
-				<span class="ribbon-loading-label" data-i18n="ui.loadingHeader">Loading header…</span>
+				<div class="ribbon-loading-content">
+					<span class="ribbon-loading-spinner" aria-hidden="true"></span>
+					<span class="ribbon-loading-label" data-i18n="ui.loadingHeader">Loading header…</span>
+				</div>
 			</div>
 			<button type="button" class="ribbon-drag-handle" id="ribbon-drag-handle" title="Drag floating ribbon">⠿</button>
 
@@ -1135,8 +1137,10 @@
 					     overlay-canvas resize is never visible as a jump. Released by
 					     ViewportManager.releaseCanvasLoading() after applyZoom(). -->
 					<div class="canvas-loading-mask" data-tag="canvas-loading-mask" role="status" aria-live="polite">
-						<span class="canvas-loading-spinner" aria-hidden="true"></span>
-						<span class="canvas-loading-label" data-i18n="ui.loadingPaintArea">Loading paint area…</span>
+						<div class="canvas-loading-content">
+							<span class="canvas-loading-spinner" aria-hidden="true"></span>
+							<span class="canvas-loading-label" data-i18n="ui.loadingPaintArea">Loading paint area…</span>
+						</div>
 					</div>
 					<!-- Outer box: sized to the scaled canvas so scrollbars match the
              visible canvas exactly (no dead gray space when zoomed out,

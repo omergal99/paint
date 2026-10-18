@@ -6,6 +6,8 @@ import { createRecentTextDropdown } from '../js/ui/RecentTextDropdown.js';
 class FakeElement {
 	constructor(tagName) {
 		this.tagName = tagName;
+		// Real DOM elements expose id as '' when unset; keep the fake aligned.
+		this.id = '';
 		this.children = [];
 		this.attributes = new Map();
 		this.listeners = new Map();
@@ -86,7 +88,8 @@ test('recent-text dropdown retains names and titles for full text in custom opti
 
 	dropdown.setEntries([entry]);
 	assert.equal(root.tagName, 'div');
-	assert.equal(root.id, 'text-history-select');
+	assert.equal(root.id, '', 'the wrapper keeps no id so static label[for] stays valid');
+	assert.equal(control.trigger.id, 'text-history-select', 'the labelable trigger carries the id');
 	assert.equal(root.getAttribute('name'), 'textHistorySelect');
 	assert.equal(control.trigger.getAttribute('aria-labelledby'), 'text-history-label');
 	assert.equal(control.title, 'Recent text…');
