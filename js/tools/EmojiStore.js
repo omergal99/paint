@@ -4,8 +4,7 @@
 
 export const EMOJI_CATALOG = Object.freeze([
   // Faces / emotion
-  '😀', '😍', '😅', '😂', '😮', '😢', '😭', '🥳', '🤣', '😊', 
-	
+  '😀', '😍', '😅', '😂', '😮', '😢', '😭', '🥳', '🤣', '😊',
   // Gestures / people
   // Hearts / symbols
    '✅', '❌', '⚠️', '⭕', '❗', '❓', '💯', '🟢', '🔵', '🟣', '🔶', '🔷',
