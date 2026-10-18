@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   getDebugLoadingDelay,
+  isDevLoadingHold,
   releaseCanvasLoading,
   releaseRibbonLoading,
   isCanvasReleased,
@@ -32,6 +33,10 @@ const withDocument = (doc, fn) => {
     globalThis.document = saved;
   }
 };
+
+test('DEV_LOADING_HOLD is disabled by default (CI guard)', () => {
+  assert.equal(isDevLoadingHold(), false);
+});
 
 test('getDebugLoadingDelay() returns 0 when debugLoading is absent', () => {
   withLocation('', () => {

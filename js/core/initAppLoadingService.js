@@ -7,6 +7,17 @@
 // for canvas, paint:ready for ribbon) with zero artificial delay.
 // Local debug: append ?debugLoading=1&loadingMs=N to hold both masks open for
 // inspection. The delay is capped at 10 seconds.
+//
+// Dev-only loading hold: set DEV_LOADING_HOLD = true to keep the canvas loading
+// mask on screen indefinitely for manual inspection. This bypasses both the
+// auto-release fallback timer and releaseCanvasLoading()/releaseRibbonLoading()
+// so the UI stays masked until you flip the flag back to false and reload.
+// Change this constant directly in the source (not an env var). CI fails if it
+// is true when committed.
+export const DEV_LOADING_HOLD = false;
+
+/** True when the dev loading hold is active (loading masks stay open). */
+export const isDevLoadingHold = () => DEV_LOADING_HOLD;
 
 export const getDebugLoadingDelay = () => {
   const params = new URLSearchParams(globalThis.location?.search || '');
@@ -25,6 +36,7 @@ const CANVAS_RELEASE_FALLBACK_MS = 10000;
 let canvasReleaseFallbackTimer = null;
 
 const startCanvasReleaseFallback = () => {
+  if (DEV_LOADING_HOLD) return; // Hold loading open for dev inspection
   if (canvasReleaseFallbackTimer) return;
   canvasReleaseFallbackTimer = setTimeout(() => {
     releaseCanvasLoading();
@@ -33,6 +45,7 @@ const startCanvasReleaseFallback = () => {
 
 /** Hide the canvas loading overlay once zoom geometry is final. Idempotent. */
 export const releaseCanvasLoading = () => {
+  if (DEV_LOADING_HOLD) return; // Hold loading open for dev inspection
   if (canvasReleased) return;
   canvasReleased = true;
   if (canvasReleaseFallbackTimer) {
@@ -56,6 +69,7 @@ export const releaseCanvasLoading = () => {
 
 /** Hide the ribbon startup mask once paint:ready fires. Idempotent. */
 export const releaseRibbonLoading = (ribbonEl) => {
+  if (DEV_LOADING_HOLD) return; // Hold loading open for dev inspection
   if (ribbonReleased) return;
   ribbonReleased = true;
   ribbonEl?.classList.remove('ribbon-loading');
