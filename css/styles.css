@@ -444,10 +444,16 @@ body {
 	justify-content: center;
 	gap: 10px;
 	direction: inherit;
-	background: var(--w10-ribbon-bg);
+	/* Skeleton effect: let the default header show through faintly while
+	   loading so users see the UI shape before it becomes interactive. */
+	background: color-mix(in srgb, var(--w10-ribbon-bg) 55%, transparent);
 	color: var(--w10-text-dim);
 	pointer-events: auto;
 	cursor: progress;
+}
+.ribbon-loading-spinner,
+.ribbon-loading-label {
+	opacity: 1;
 }
 .ribbon:not(.ribbon-loading) .ribbon-loading-mask {
 	display: none;

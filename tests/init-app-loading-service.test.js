@@ -64,7 +64,7 @@ test('getDebugLoadingDelay() clamps negative values to 0', () => {
 });
 
 test('releaseCanvasLoading() hides the mask and is idempotent', () => {
-  const mask = { hidden: false };
+  const mask = { hidden: false, style: {} };
   withDocument({ querySelector: () => mask }, () => {
     assert.equal(isCanvasReleased(), false);
     releaseCanvasLoading();

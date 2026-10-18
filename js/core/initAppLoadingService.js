@@ -40,7 +40,7 @@ export const releaseCanvasLoading = () => {
     canvasReleaseFallbackTimer = null;
   }
   const mask = document.querySelector('.canvas-loading-mask');
-  if (mask) {
+  if (mask && 'hidden' in mask && 'style' in mask) {
     // `hidden` carries semantics; `style.display = 'none'` is the reliable
     // way to actually remove it from layout because `.canvas-loading-mask`
     // sets `display: flex` in the app stylesheet, which beats the UA
@@ -49,8 +49,8 @@ export const releaseCanvasLoading = () => {
     // `style.display = 'none'` is the reliable way to actually remove the
     // mask from layout because `.canvas-loading-mask` sets `display: flex`
     // in the app stylesheet, which beats the UA `[hidden] { display: none }`
-    // rule (author stylesheets beat UA). Guarded for test mocks without `style`.
-    if (mask.style) mask.style.display = 'none';
+    // rule (author stylesheets beat UA).
+    mask.style.display = 'none';
   }
 };
 
