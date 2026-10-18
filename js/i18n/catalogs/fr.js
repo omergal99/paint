@@ -242,6 +242,8 @@ export const initializeFr = (english) => {
     "ui.aboutPaint": "À propos de paint",
     "ui.version": "Version",
     "ui.loading": "Chargement…",
+    "ui.loadingHeader": "Chargement de l'en-tête…",
+    "ui.loadingPaintArea": "Chargement de la zone de peinture…",
     "ui.loadingApp": "Chargement de l'application…",
     "ui.loadingLastImage": "Chargement de la dernière image…",
     "ui.activity": "Activité",

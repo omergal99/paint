@@ -251,6 +251,8 @@ export const initializePtBr = (english) => {
     "ui.aboutPaint": "Sobre o paint",
     "ui.version": "Versão",
     "ui.loading": "Carregando…",
+    "ui.loadingHeader": "Carregando cabeçalho…",
+    "ui.loadingPaintArea": "Carregando área de pintura…",
     "ui.loadingApp": "Carregando o aplicativo…",
     "ui.loadingLastImage": "Carregando a última imagem…",
     "ui.activity": "Atividade",

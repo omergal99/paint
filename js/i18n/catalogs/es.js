@@ -317,6 +317,8 @@ export const ES_MESSAGES = Object.freeze({
       "paint es un espacio de dibujo local en el navegador para editar imágenes de forma rápida y privada.",
     version: "Versión",
     loading: "Cargando…",
+    loadingHeader: "Loading header…",
+    loadingPaintArea: "Loading paint area…",
     loadingApp: "Cargando la aplicación…",
     loadingLastImage: "Cargando la última imagen…",
     activity: "Actividad",

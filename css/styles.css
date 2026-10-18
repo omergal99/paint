@@ -126,7 +126,6 @@ body.dark-mode .rbtn.cell.mirror-shape-tile:hover {
 	background: var(--w10-hover);
 }
 
-
 * {
 	box-sizing: border-box;
 }
@@ -213,7 +212,7 @@ body.dark-mode .rbtn.cell.mirror-shape-tile:hover {
 	background: var(--w10-ribbon-bg);
 }
 .workspace-strip[hidden] {
-	display: none !important;
+	display: none;
 }
 .workspace-strip .workspace-tab-bar {
 	min-width: 0;
@@ -238,7 +237,7 @@ body.dark-mode .rbtn.cell.mirror-shape-tile:hover {
 	border-bottom: 0;
 }
 .workspace-split-host[hidden] {
-	display: none !important;
+	display: none;
 }
 .workspace-split-host.is-expanded {
 	position: fixed;
@@ -468,7 +467,9 @@ body {
 	unicode-bidi: isolate;
 }
 @keyframes ribbon-loading-spin {
-	to { transform: rotate(1turn); }
+	to {
+		transform: rotate(1turn);
+	}
 }
 @media (prefers-reduced-motion: reduce) {
 	.ribbon-loading-spinner {
@@ -495,7 +496,7 @@ body {
 	cursor: progress;
 }
 .canvas-loading-mask[hidden] {
-\tdisplay: none !important;
+	display: none;
 }
 .canvas-loading-spinner {
 	width: 28px;
@@ -511,7 +512,9 @@ body {
 	unicode-bidi: isolate;
 }
 @keyframes canvas-loading-spin {
-	to { transform: rotate(1turn); }
+	to {
+		transform: rotate(1turn);
+	}
 }
 @media (prefers-reduced-motion: reduce) {
 	.canvas-loading-spinner {
@@ -522,10 +525,10 @@ body {
 	display: none;
 }
 .ribbon-group[hidden] {
-	display: none !important;
+	display: none;
 }
 .ribbon[hidden] {
-	display: none !important;
+	display: none;
 }
 
 .ribbon-group {
@@ -2719,8 +2722,10 @@ html[dir="rtl"] .adjustment-mask-finish {
 }
 .brush-cursor-overlay[data-tip-shape="soft"] {
 	border-style: dashed;
-	box-shadow: 0 0 0 1px var(--w10-bg), inset 0 0 3px var(--w10-text);
-	opacity: .8;
+	box-shadow:
+		0 0 0 1px var(--w10-bg),
+		inset 0 0 3px var(--w10-text);
+	opacity: 0.8;
 }
 .dialog-arrow-icon {
 	display: inline-block;
@@ -2817,7 +2822,9 @@ body.rtl .dialog-arrow-icon {
 	cursor: pointer;
 	opacity: 0;
 	pointer-events: none;
-	transition: opacity 0.15s, transform 0.15s;
+	transition:
+		opacity 0.15s,
+		transform 0.15s;
 	z-index: 10;
 }
 
@@ -3031,7 +3038,7 @@ html[dir="rtl"] .resize-ghost {
 }
 .text-history-select .persistent-dropdown-trigger:disabled {
 	cursor: default;
-	opacity: .7;
+	opacity: 0.7;
 }
 .persistent-dropdown {
 	position: relative;
@@ -3088,7 +3095,7 @@ html[dir="rtl"] .resize-ghost {
 	border: 1px solid var(--w10-border-strong);
 	border-radius: 3px;
 	background: var(--w10-bg);
-	box-shadow: 0 4px 12px rgba(0, 0, 0, .22);
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.22);
 }
 .persistent-dropdown-options[hidden] {
 	display: none;
@@ -3576,7 +3583,7 @@ dialog h3 {
 }
 .adjustment-target-choice:disabled {
 	cursor: not-allowed;
-	opacity: .55;
+	opacity: 0.55;
 }
 .adjustment-value-controls {
 	display: grid;
@@ -3693,7 +3700,11 @@ dialog h3 {
 		linear-gradient(45deg, transparent 75%, var(--w10-hover) 75%),
 		linear-gradient(-45deg, transparent 75%, var(--w10-hover) 75%);
 	background-size: 12px 12px;
-	background-position: 0 0, 0 6px, 6px -6px, -6px 0;
+	background-position:
+		0 0,
+		0 6px,
+		6px -6px,
+		-6px 0;
 }
 .brush-studio-controls,
 .brush-studio-dynamics {
@@ -4048,12 +4059,14 @@ dialog h3 {
 	border: 1px solid var(--w10-border);
 	background-color: var(--w10-canvas-bg);
 	background-image:
-		linear-gradient(45deg, #d8d8d8 25%, transparent 25%),
-		linear-gradient(-45deg, #d8d8d8 25%, transparent 25%),
-		linear-gradient(45deg, transparent 75%, #d8d8d8 75%),
-		linear-gradient(-45deg, transparent 75%, #d8d8d8 75%);
+		linear-gradient(45deg, #d8d8d8 25%, transparent 25%), linear-gradient(-45deg, #d8d8d8 25%, transparent 25%),
+		linear-gradient(45deg, transparent 75%, #d8d8d8 75%), linear-gradient(-45deg, transparent 75%, #d8d8d8 75%);
 	background-size: 16px 16px;
-	background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+	background-position:
+		0 0,
+		0 8px,
+		8px -8px,
+		-8px 0;
 }
 .adjustments-preview-wrap canvas {
 	display: block;
@@ -5317,10 +5330,10 @@ html[dir="rtl"] .submenu-arrow {
 	border: 1px solid var(--w10-border-strong);
 	border-radius: 4px;
 	background: var(--w10-panel-bg, var(--w10-ribbon-bg));
-	box-shadow: 0 4px 12px rgba(0, 0, 0, .24);
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.24);
 }
 .font-family-picker-listbox[hidden] {
-	display: none !important;
+	display: none;
 }
 .font-family-picker-option {
 	display: flex;
@@ -5550,10 +5563,13 @@ body.dark-mode .dialog-actions button.dialog-button-secondary:focus-visible {
 }
 
 button:not(:disabled) {
-	transition: background-color 100ms ease, border-color 100ms ease, filter 100ms ease;
+	transition:
+		background-color 100ms ease,
+		border-color 100ms ease,
+		filter 100ms ease;
 }
 button:not(:disabled):hover {
-	filter: brightness(.94);
+	filter: brightness(0.94);
 }
 #new-file-dialog .dialog-body {
 	display: flex;

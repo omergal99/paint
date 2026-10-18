@@ -203,7 +203,7 @@ export const EN_MESSAGES = deepFreeze({
 		autoSaveWhen: 'Auto-save when', allAutomaticEvents: 'All automatic events', onlyManual: 'Only manually (Save Current button)', saveLimit: 'Save limit',
 		exportAllHistory: 'Export All History', ribbon: 'Ribbon', ribbonHelp: 'Choose which ribbon groups are visible. Detailed group options open in the sidebar.',
 		ribbonPosition: 'Ribbon position', top: 'Top', left: 'Left', bottom: 'Bottom', floating: 'Floating', aboutPaint: 'About paint',
-		aboutPaintText: 'paint is a local-first browser drawing workspace built for fast, private image editing.', version: 'Version', loading: 'Loading…',
+		aboutPaintText: 'paint is a local-first browser drawing workspace built for fast, private image editing.', version: 'Version', loading: 'Loading…', loadingHeader: 'Loading header…', loadingPaintArea: 'Loading paint area…',
 		loadingApp: 'Loading app…', loadingLastImage: 'Loading last image…',
 		activity: 'Activity', storedData: 'Browser storage used (estimate)', freeSpace: 'Free space', usage: 'Usage', usagePercent: 'Usage ({percent}%)', storageQuota: 'Browser storage quota (estimate)', resetSettings: 'Reset Settings', clearData: 'Clear Data',
 		browserData: 'Browser & device information', browserPrivacy: 'Shown locally on this device. Paint does not send this information anywhere.',

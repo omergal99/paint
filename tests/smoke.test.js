@@ -76,7 +76,7 @@ test('More tools are rendered from one localized menu definition and retain sour
 	const loadingMask = html.match(/<div class="ribbon-loading-mask"[^>]*>([\s\S]*?)<\/div>/)?.[1] || '';
 	assert.match(html, /class="ribbon-loading-mask"[^>]*role="status" aria-live="polite"/);
 	assert.match(loadingMask, /class="ribbon-loading-spinner" aria-hidden="true"/);
-	assert.match(loadingMask, /class="ribbon-loading-label" data-i18n="ui\.loading">Loading…<\/span>/);
+	assert.match(loadingMask, /class="ribbon-loading-label" data-i18n="ui.loadingHeader">Loading header…<\/span>/);
 	assert.ok(
 		loadingMask.indexOf('ribbon-loading-spinner') < loadingMask.indexOf('ribbon-loading-label'),
 		'the spinner precedes the localized loading label in DOM order',

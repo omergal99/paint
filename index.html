@@ -72,8 +72,7 @@
 		<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
 			<defs>
 				<symbol id="icon-copy" viewBox="0 0 20 20">
-					<rect x="5" y="6" width="10" height="11" rx="1" fill="none" stroke="currentColor"
-						stroke-linejoin="round" />
+					<rect x="5" y="6" width="10" height="11" rx="1" fill="none" stroke="currentColor" stroke-linejoin="round" />
 					<path d="M7.5 6V4a1.5 1.5 0 0 1 1.5-1.5h6A1.5 1.5 0 0 1 16.5 4v8a1.5 1.5 0 0 1-1.5 1.5h-1" fill="none"
 						stroke="currentColor" stroke-linejoin="round" />
 				</symbol>
@@ -83,19 +82,18 @@
 					<path d="M6.5 6.5L17 17M6.5 13.5L17 3" fill="none" stroke="currentColor" stroke-linecap="round" />
 				</symbol>
 				<symbol id="icon-paste" viewBox="0 0 20 20">
-					<path d="M6 4h8.5A1.5 1.5 0 0 1 16 5.5V17a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V5.5A1.5 1.5 0 0 1 6 4Z"
-						fill="none" stroke="currentColor" />
-					<path d="M8 2.5h4a1 1 0 0 1 1 1V5H7V3.5a1 1 0 0 1 1-1ZM8 9h6M8 12h6M8 15h3" fill="none"
-						stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" />
+					<path d="M6 4h8.5A1.5 1.5 0 0 1 16 5.5V17a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V5.5A1.5 1.5 0 0 1 6 4Z" fill="none"
+						stroke="currentColor" />
+					<path d="M8 2.5h4a1 1 0 0 1 1 1V5H7V3.5a1 1 0 0 1 1-1ZM8 9h6M8 12h6M8 15h3" fill="none" stroke="currentColor"
+						stroke-linecap="round" stroke-linejoin="round" />
 				</symbol>
 				<symbol id="icon-select-all" viewBox="0 0 20 20">
-					<path d="M3 7V3h4M13 3h4v4M17 13v4h-4M7 17H3v-4" fill="none" stroke="currentColor"
-						stroke-linecap="round" stroke-linejoin="round" />
+					<path d="M3 7V3h4M13 3h4v4M17 13v4h-4M7 17H3v-4" fill="none" stroke="currentColor" stroke-linecap="round"
+						stroke-linejoin="round" />
 					<path d="M7 7h6v6H7z" fill="none" stroke="currentColor" />
 				</symbol>
 				<symbol id="icon-save" viewBox="0 0 20 20">
-					<path d="M3 3h11l3 3v11H3zM6 3v5h7V3M6 13h8v4H6z" fill="none" stroke="currentColor"
-						stroke-linejoin="round" />
+					<path d="M3 3h11l3 3v11H3zM6 3v5h7V3M6 13h8v4H6z" fill="none" stroke="currentColor" stroke-linejoin="round" />
 				</symbol>
 				<symbol id="icon-image-file" viewBox="0 0 20 20">
 					<rect x="3" y="3" width="14" height="14" fill="none" stroke="currentColor" />
@@ -109,7 +107,7 @@
 		<header class="ribbon ribbon-loading" id="ribbon" data-tag="ribbon">
 			<div class="ribbon-loading-mask" data-tag="ribbon-loading-mask" role="status" aria-live="polite">
 				<span class="ribbon-loading-spinner" aria-hidden="true"></span>
-				<span class="ribbon-loading-label" data-i18n="ui.loading">Loading…</span>
+				<span class="ribbon-loading-label" data-i18n="ui.loadingHeader">Loading header…</span>
 			</div>
 			<button type="button" class="ribbon-drag-handle" id="ribbon-drag-handle" title="Drag floating ribbon">⠿</button>
 
@@ -167,37 +165,56 @@
 							<div class="action-menu-items" role="menu" aria-label="More file actions">
 								<div class="action-menu action-submenu save-menu">
 									<button type="button" class="action-menu-trigger action-submenu-trigger" id="btn-save"
-										data-tag="btn-save" role="menuitem" data-i18n-attr="title:ui.saveAs" title="Save as" aria-haspopup="menu" aria-expanded="false">
-										<span class="submenu-label"><svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><use href="#icon-save" /></svg><span data-i18n="ui.saveAs">Save as</span></span>
+										data-tag="btn-save" role="menuitem" data-i18n-attr="title:ui.saveAs" title="Save as"
+										aria-haspopup="menu" aria-expanded="false">
+										<span class="submenu-label"><svg class="icon" viewBox="0 0 20 20" aria-hidden="true">
+												<use href="#icon-save" />
+											</svg><span data-i18n="ui.saveAs">Save as</span></span>
 										<span class="submenu-arrow" aria-hidden="true">›</span>
 									</button>
-									<div class="action-menu-items action-submenu-items" role="menu" data-i18n-attr="aria-label:ui.saveImageAs" aria-label="Save image as">
-										<button type="button" role="menuitem" data-export-format="png"><svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><use href="#icon-image-file" /></svg><span data-i18n="ui.formatPng">PNG image</span></button>
-										<button type="button" role="menuitem" data-export-format="jpeg"><svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><use href="#icon-image-file" /></svg><span data-i18n="ui.formatJpeg">JPEG image</span></button>
-										<button type="button" role="menuitem" data-export-format="webp"><svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><use href="#icon-image-file" /></svg><span data-i18n="ui.formatWebp">WebP image</span></button>
+									<div class="action-menu-items action-submenu-items" role="menu"
+										data-i18n-attr="aria-label:ui.saveImageAs" aria-label="Save image as">
+										<button type="button" role="menuitem" data-export-format="png"><svg class="icon" viewBox="0 0 20 20"
+												aria-hidden="true">
+												<use href="#icon-image-file" />
+											</svg><span data-i18n="ui.formatPng">PNG image</span></button>
+										<button type="button" role="menuitem" data-export-format="jpeg"><svg class="icon"
+												viewBox="0 0 20 20" aria-hidden="true">
+												<use href="#icon-image-file" />
+											</svg><span data-i18n="ui.formatJpeg">JPEG image</span></button>
+										<button type="button" role="menuitem" data-export-format="webp"><svg class="icon"
+												viewBox="0 0 20 20" aria-hidden="true">
+												<use href="#icon-image-file" />
+											</svg><span data-i18n="ui.formatWebp">WebP image</span></button>
 									</div>
 								</div>
-							<!-- Clipboard actions live in File > More so the header ribbon can
+								<!-- Clipboard actions live in File > More so the header ribbon can
 							     collapse the whole Clipboard group by default; the items share
 							     the same Toolbar handlers (and commands) as the ribbon. -->
-							<button type="button" id="btn-file-cut" data-tag="btn-file-cut" role="menuitem"
-								data-requires-selection disabled aria-disabled="true" title="Cut (Ctrl+X)">
-								<svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><use href="#icon-cut" /></svg>
-								<span data-i18n="common.actions.cut">Cut</span>
-								<span class="menu-shortcut" aria-hidden="true">Ctrl+X</span>
-							</button>
-							<button type="button" id="btn-file-copy" data-tag="btn-file-copy" role="menuitem"
-								data-requires-selection disabled aria-disabled="true" title="Copy (Ctrl+C)">
-								<svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><use href="#icon-copy" /></svg>
-								<span data-i18n="common.actions.copy">Copy</span>
-								<span class="menu-shortcut" aria-hidden="true">Ctrl+C</span>
-							</button>
-							<button type="button" id="btn-file-paste" data-tag="btn-file-paste" role="menuitem"
-								title="Paste (Ctrl+V)">
-								<svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><use href="#icon-paste" /></svg>
-								<span data-i18n="common.actions.paste">Paste</span>
-								<span class="menu-shortcut" aria-hidden="true">Ctrl+V</span>
-							</button>
+								<button type="button" id="btn-file-cut" data-tag="btn-file-cut" role="menuitem" data-requires-selection
+									disabled aria-disabled="true" title="Cut (Ctrl+X)">
+									<svg class="icon" viewBox="0 0 20 20" aria-hidden="true">
+										<use href="#icon-cut" />
+									</svg>
+									<span data-i18n="common.actions.cut">Cut</span>
+									<span class="menu-shortcut" aria-hidden="true">Ctrl+X</span>
+								</button>
+								<button type="button" id="btn-file-copy" data-tag="btn-file-copy" role="menuitem"
+									data-requires-selection disabled aria-disabled="true" title="Copy (Ctrl+C)">
+									<svg class="icon" viewBox="0 0 20 20" aria-hidden="true">
+										<use href="#icon-copy" />
+									</svg>
+									<span data-i18n="common.actions.copy">Copy</span>
+									<span class="menu-shortcut" aria-hidden="true">Ctrl+C</span>
+								</button>
+								<button type="button" id="btn-file-paste" data-tag="btn-file-paste" role="menuitem"
+									title="Paste (Ctrl+V)">
+									<svg class="icon" viewBox="0 0 20 20" aria-hidden="true">
+										<use href="#icon-paste" />
+									</svg>
+									<span data-i18n="common.actions.paste">Paste</span>
+									<span class="menu-shortcut" aria-hidden="true">Ctrl+V</span>
+								</button>
 
 
 								<button type="button" id="btn-manage-workspace" data-tag="btn-manage-workspace" role="menuitem"
@@ -238,15 +255,17 @@
 			<section class="ribbon-group ribbon-group-clipboard" data-ribbon-key="clipboard" hidden>
 				<div class="rbtn-row" hidden>
 					<button class="rbtn big" id="btn-paste" data-tag="btn-paste" title="Paste (Ctrl+V)">
-						<svg class="icon size5" viewBox="0 0 20 20" aria-hidden="true"><use href="#icon-paste" /></svg>
+						<svg class="icon size5" viewBox="0 0 20 20" aria-hidden="true">
+							<use href="#icon-paste" />
+						</svg>
 						<span data-i18n="common.actions.paste">Paste</span></button>
 					<div class="rbtn-stack">
-						<button class="rbtn small" id="btn-cut" data-tag="btn-cut" data-requires-selection
-							title="Cut (Ctrl+X)">
-							<svg class="icon size5" viewBox="0 0 20 20" aria-hidden="true"><use href="#icon-cut" /></svg>
+						<button class="rbtn small" id="btn-cut" data-tag="btn-cut" data-requires-selection title="Cut (Ctrl+X)">
+							<svg class="icon size5" viewBox="0 0 20 20" aria-hidden="true">
+								<use href="#icon-cut" />
+							</svg>
 							<span>Cut</span></button>
-						<button class="rbtn small" id="btn-copy" data-tag="btn-copy" data-requires-selection
-							title="Copy (Ctrl+C)">
+						<button class="rbtn small" id="btn-copy" data-tag="btn-copy" data-requires-selection title="Copy (Ctrl+C)">
 							<svg class="icon size5" viewBox="0 0 20 20" aria-hidden="true">
 								<use href="#icon-copy" />
 							</svg>
@@ -271,17 +290,17 @@
 						</svg>
 						<span data-i18n="ribbon.tools.select">Select</span></button>
 					<div class="rbtn-stack">
-							<button type="button" class="rbtn small" id="btn-resize-quick" data-tag="btn-resize-quick"
-								title="Resize canvas" data-i18n-attr="title:ui.resizeCanvas">
-								<svg class="icon size4" viewBox="0 0 20 20" aria-hidden="true">
-									<rect x="3" y="4" width="10" height="12" rx="1" fill="none" stroke="currentColor" />
-									<path d="M14 6V3h3M17 3l-4 4M14 14v3h3M17 17l-4-4" fill="none" stroke="currentColor"
-										stroke-linecap="round" stroke-linejoin="round" />
-								</svg>
-								<span data-i18n="ribbon.image.resize">Resize</span>
-							</button>
-							<div class="action-menu image-more-menu">
-								<button class="rbtn small action-menu-trigger" id="btn-image-more" data-tag="btn-image-more"
+						<button type="button" class="rbtn small" id="btn-resize-quick" data-tag="btn-resize-quick"
+							title="Resize canvas" data-i18n-attr="title:ui.resizeCanvas">
+							<svg class="icon size4" viewBox="0 0 20 20" aria-hidden="true">
+								<rect x="3" y="4" width="10" height="12" rx="1" fill="none" stroke="currentColor" />
+								<path d="M14 6V3h3M17 3l-4 4M14 14v3h3M17 17l-4-4" fill="none" stroke="currentColor"
+									stroke-linecap="round" stroke-linejoin="round" />
+							</svg>
+							<span data-i18n="ribbon.image.resize">Resize</span>
+						</button>
+						<div class="action-menu image-more-menu">
+							<button class="rbtn small action-menu-trigger" id="btn-image-more" data-tag="btn-image-more"
 								title="More image actions" aria-haspopup="menu" aria-label="More image actions">
 								<svg class="icon size4" viewBox="0 0 20 20" aria-hidden="true">
 									<circle cx="4" cy="10" r="1.5" fill="currentColor" />
@@ -301,7 +320,8 @@
 											</svg><span data-i18n="ui.selectionMenu">Selection</span></span><span class="submenu-arrow"
 											aria-hidden="true">›</span>
 									</button>
-									<div class="action-menu-items action-submenu-items" role="menu" data-i18n-attr="aria-label:ui.selectionMenu">
+									<div class="action-menu-items action-submenu-items" role="menu"
+										data-i18n-attr="aria-label:ui.selectionMenu">
 										<button type="button" id="btn-select-rectangle" role="menuitemradio" aria-checked="true"
 											data-selection-mode="rect"><svg class="icon size4" viewBox="0 0 20 20" aria-hidden="true">
 												<rect x="3" y="3" width="14" height="14" rx="1" fill="none" stroke="currentColor"
@@ -309,8 +329,8 @@
 											</svg><span data-i18n="ui.selectRectangle">Rectangular Selection</span></button>
 										<button type="button" id="btn-select-lasso" role="menuitemradio" aria-checked="false"
 											data-selection-mode="lasso"><svg class="icon size4" viewBox="0 0 20 20" aria-hidden="true">
-												<path d="M4 10c0-4 3-7 7-7s6 2 6 6-3 8-7 8c-3 0-5-2-5-4 0-1 1-2 2-2"
-													fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" />
+												<path d="M4 10c0-4 3-7 7-7s6 2 6 6-3 8-7 8c-3 0-5-2-5-4 0-1 1-2 2-2" fill="none"
+													stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" />
 											</svg><span data-i18n="ui.selectLasso">Free-form Selection</span></button>
 										<div class="menu-checkbox">
 											<input type="checkbox" id="selection-keep-aspect-toggle" checked>
@@ -324,10 +344,13 @@
 											<input type="checkbox" id="selection-auto-scroll" />
 											<label for="selection-auto-scroll" data-i18n="ui.autoScroll">Auto-scroll at edges</label>
 										</div>
-										<span class="menu-option-note" id="selection-auto-scroll-note" data-i18n="ui.autoScrollHint">When dragging a selection, scroll the viewport if the pointer reaches an edge.</span>
+										<span class="menu-option-note" id="selection-auto-scroll-note" data-i18n="ui.autoScrollHint">When
+											dragging a selection, scroll the viewport if the pointer reaches an edge.</span>
 										<button type="button" id="btn-select-all" role="menuitem" title="Select All" data-action="selectAll"
 											data-i18n-attr="title:ui.selectAll">
-											<svg class="icon size4" viewBox="0 0 20 20" aria-hidden="true"><use href="#icon-select-all" /></svg><span data-i18n="ui.selectAll">Select All</span></button>
+											<svg class="icon size4" viewBox="0 0 20 20" aria-hidden="true">
+												<use href="#icon-select-all" />
+											</svg><span data-i18n="ui.selectAll">Select All</span></button>
 									</div>
 								</div>
 								<div class="action-menu action-submenu">
@@ -350,8 +373,9 @@
 													stroke-linecap="round" />
 											</svg>
 											<span data-i18n="ribbon.image.cropToSelection">Crop to selection</span></button>
-										<button type="button" id="btn-remove-bg" data-tag="btn-remove-bg" role="menuitem" aria-haspopup="dialog"
-											title="Open background removal options" data-i18n-attr="title:ui.openBackgroundRemovalOptions">
+										<button type="button" id="btn-remove-bg" data-tag="btn-remove-bg" role="menuitem"
+											aria-haspopup="dialog" title="Open background removal options"
+											data-i18n-attr="title:ui.openBackgroundRemovalOptions">
 											<svg class="icon size4 menu-dialog-icon" viewBox="0 0 20 20" aria-hidden="true">
 												<path d="M4 5h12M4 10h12M4 15h12" stroke="currentColor" stroke-width="1.6"
 													stroke-linecap="round" />
@@ -394,9 +418,9 @@
 												<path d="M15 3v3h-3" fill="none" stroke="currentColor" stroke-linecap="round" />
 												<path d="M10 10h.01M10 13h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
 											</svg><span data-i18n="ui.rotate270">Rotate 270</span></button>
-										<button type="button" id="btn-rotate-free" data-tag="btn-rotate-free" role="menuitem" title="Free rotate by angle"
-											data-i18n-attr="title:ui.freeRotate"><svg class="icon size4" viewBox="0 0 20 20"
-												aria-hidden="true">
+										<button type="button" id="btn-rotate-free" data-tag="btn-rotate-free" role="menuitem"
+											title="Free rotate by angle" data-i18n-attr="title:ui.freeRotate"><svg class="icon size4"
+												viewBox="0 0 20 20" aria-hidden="true">
 												<circle cx="10" cy="10" r="6" fill="none" stroke="currentColor" />
 												<path d="M10 10 14 7M10 10V5" fill="none" stroke="currentColor" stroke-linecap="round" />
 											</svg><span data-i18n="ui.freeRotate">Free Rotate</span></button>
@@ -482,31 +506,30 @@
 												d="M5.5 1.99902C5.22386 1.99902 5 2.22288 5 2.49902L5.00002 11.0034C5.00002 12.1079 5.89545 13.0034 7.00002 13.0034H8.00411V16.0007C8.00411 17.1053 8.89954 18.0007 10.0041 18.0007C11.1087 18.0007 12.0041 17.1053 12.0041 16.0007V13.0034H13C14.1046 13.0034 15 12.1079 15 11.0034V9.50339L15 9.49897V2.49902C15 2.22288 14.7761 1.99902 14.5 1.99902H5.5ZM6.00002 10.0034H14V11.0034C14 11.5557 13.5523 12.0034 13 12.0034H11.5041C11.228 12.0034 11.0041 12.2272 11.0041 12.5034V16.0007C11.0041 16.553 10.5564 17.0007 10.0041 17.0007C9.45183 17.0007 9.00411 16.553 9.00411 16.0007V12.5034C9.00411 12.2272 8.78026 12.0034 8.50411 12.0034H7.00002C6.44773 12.0034 6.00002 11.5557 6.00002 11.0034V10.0034ZM14 9.00339H6V2.99902H10V4.49902C10 4.77517 10.2239 4.99902 10.5 4.99902C10.7761 4.99902 11 4.77517 11 4.49902V2.99902H12V5.50122C12 5.77736 12.2239 6.00122 12.5 6.00122C12.7761 6.00122 13 5.77736 13 5.50122V2.99902H14V9.00339Z" />
 										</svg>
 									</button>
-									<button type="button" class="rbtn cell brush-tool-menu-arrow action-menu-trigger"
-										id="btn-brush-menu" aria-label="Brush options" title="Brush options"
-										data-i18n-attr="aria-label:ui.brushOptions,title:ui.brushOptions"
-										aria-haspopup="menu" aria-expanded="false"><span class="menu-arrow"
-											aria-hidden="true">▾</span></button>
+									<button type="button" class="rbtn cell brush-tool-menu-arrow action-menu-trigger" id="btn-brush-menu"
+										aria-label="Brush options" title="Brush options"
+										data-i18n-attr="aria-label:ui.brushOptions,title:ui.brushOptions" aria-haspopup="menu"
+										aria-expanded="false"><span class="menu-arrow" aria-hidden="true">▾</span></button>
 								</div>
 								<div class="action-menu-items brush-tool-menu-items" role="menu" aria-label="Brush options"
 									data-i18n-attr="aria-label:ui.brushOptions">
 									<div class="brush-option-row">
 										<label for="brush-menu-size" data-i18n="ui.brushSize">Size</label>
 										<output for="brush-menu-size" data-brush-value="size">3 px</output>
-										<input id="brush-menu-size" data-brush-option="size" type="range" min="1" max="300"
-											value="3" aria-label="Brush size" data-i18n-attr="aria-label:ui.brushSize" />
+										<input id="brush-menu-size" data-brush-option="size" type="range" min="1" max="300" value="3"
+											aria-label="Brush size" data-i18n-attr="aria-label:ui.brushSize" />
 									</div>
 									<div class="brush-option-row">
 										<label for="brush-menu-alpha" data-i18n="ui.brushOpacity">Opacity</label>
 										<output for="brush-menu-alpha" data-brush-value="alpha">100%</output>
-										<input id="brush-menu-alpha" data-brush-option="alpha" type="range" min="0" max="100"
-											value="100" aria-label="Brush opacity" data-i18n-attr="aria-label:ui.brushOpacity" />
+										<input id="brush-menu-alpha" data-brush-option="alpha" type="range" min="0" max="100" value="100"
+											aria-label="Brush opacity" data-i18n-attr="aria-label:ui.brushOpacity" />
 									</div>
 									<div class="brush-option-row">
 										<label for="brush-menu-flow" data-i18n="ui.brushFlow">Flow</label>
 										<output for="brush-menu-flow" data-brush-value="flow">100%</output>
-										<input id="brush-menu-flow" data-brush-option="flow" type="range" min="0" max="100"
-											value="100" aria-label="Brush flow" data-i18n-attr="aria-label:ui.brushFlow" />
+										<input id="brush-menu-flow" data-brush-option="flow" type="range" min="0" max="100" value="100"
+											aria-label="Brush flow" data-i18n-attr="aria-label:ui.brushFlow" />
 									</div>
 									<div class="brush-option-row">
 										<label for="brush-menu-hardness" data-i18n="ui.brushHardness">Hardness</label>
@@ -517,13 +540,14 @@
 									<div class="brush-option-row">
 										<label for="brush-menu-spacing" data-i18n="ui.brushSpacing">Spacing</label>
 										<output for="brush-menu-spacing" data-brush-value="spacing">20%</output>
-										<input id="brush-menu-spacing" data-brush-option="spacing" type="range" min="5" max="200"
-											value="20" aria-label="Brush spacing" data-i18n-attr="aria-label:ui.brushSpacing" />
+										<input id="brush-menu-spacing" data-brush-option="spacing" type="range" min="5" max="200" value="20"
+											aria-label="Brush spacing" data-i18n-attr="aria-label:ui.brushSpacing" />
 									</div>
-									<button type="button" class="brush-more-action" data-tag="brush-open-studio" data-brush-open-studio role="menuitem">
+									<button type="button" class="brush-more-action" data-tag="brush-open-studio" data-brush-open-studio
+										role="menuitem">
 										<svg class="icon size4" viewBox="0 0 20 20" aria-hidden="true">
-											<path d="M3 4h14M3 10h14M3 16h14M7 2v4m6 2v4m-4 2v4" fill="none"
-												stroke="currentColor" stroke-linecap="round" />
+											<path d="M3 4h14M3 10h14M3 16h14M7 2v4m6 2v4m-4 2v4" fill="none" stroke="currentColor"
+												stroke-linecap="round" />
 										</svg><span data-i18n="ui.brushMoreOptions">More brush options</span>
 									</button>
 								</div>
@@ -554,23 +578,28 @@
 										title="Text options" aria-label="Text options"><span class="menu-arrow"
 											aria-hidden="true">▾</span></button>
 								</div>
-								<div class="action-menu-items text-tool-menu-items menu-stay-open" role="menu" aria-label="Text options">
+								<div class="action-menu-items text-tool-menu-items menu-stay-open" role="menu"
+									aria-label="Text options">
 									<div class="menu-checkbox" title="Show or hide recent text controls in the editor">
 										<input type="checkbox" id="text-history-toolbar-toggle" /> <label
 											for="text-history-toolbar-toggle">Show Recent text toolbar</label>
 									</div>
 									<div class="menu-checkbox" title="Enter places the text on the canvas">
-										<input type="checkbox" id="text-enter-saves" /> <label for="text-enter-saves" data-i18n="ui.textEnterSaves">Enter
+										<input type="checkbox" id="text-enter-saves" /> <label for="text-enter-saves"
+											data-i18n="ui.textEnterSaves">Enter
 											places the text</label>
 									</div>
-									<span class="menu-option-note" id="text-enter-saves-note" data-i18n="ui.textEnterSavesHint">Enter places the
+									<span class="menu-option-note" id="text-enter-saves-note" data-i18n="ui.textEnterSavesHint">Enter
+										places the
 										text; Shift+Enter adds a new line. Tab reaches OK.</span>
 									<div class="menu-checkbox" title="Show the text-layer boxes on hover">
 										<input type="checkbox" id="text-layer-visible" /> <label for="text-layer-visible"
 											data-i18n="ui.textLayerVisible">Show text layer</label>
 									</div>
-									<span class="menu-option-note" id="text-layer-visible-note" data-i18n="ui.textLayerVisibleHint">Show the
-										text-layer boxes when the pointer is over them. Off keeps the canvas clear until you place text.</span>
+									<span class="menu-option-note" id="text-layer-visible-note" data-i18n="ui.textLayerVisibleHint">Show
+										the
+										text-layer boxes when the pointer is over them. Off keeps the canvas clear until you place
+										text.</span>
 									<div class="menu-checkbox" title="Focus the committed text object after drawing">
 										<input type="checkbox" id="text-select-after-draw" /> <label for="text-select-after-draw">Select
 											text after draw</label>
@@ -578,9 +607,11 @@
 									<span class="menu-option-note" id="text-select-after-draw-note">Focus targets are safe; editing
 										existing text remains deferred.</span>
 									<div class="menu-checkbox" title="Auto-scroll at viewport edges during selection drag">
-										<input type="checkbox" id="text-auto-scroll" /> <label for="text-auto-scroll" data-i18n="ui.autoScroll">Auto-scroll at edges</label>
+										<input type="checkbox" id="text-auto-scroll" /> <label for="text-auto-scroll"
+											data-i18n="ui.autoScroll">Auto-scroll at edges</label>
 									</div>
-									<span class="menu-option-note" id="text-auto-scroll-note" data-i18n="ui.autoScrollHint">When dragging a selection, scroll the viewport if the pointer reaches an edge.</span>
+									<span class="menu-option-note" id="text-auto-scroll-note" data-i18n="ui.autoScrollHint">When dragging
+										a selection, scroll the viewport if the pointer reaches an edge.</span>
 									<div class="text-style-picker" aria-label="Text styles">
 										<div class="text-style-picker-heading">
 											<span>Text style</span>
@@ -593,17 +624,19 @@
 													class="style-sample">Aa</span><span>Outline</span></button>
 											<button type="button" class="text-style-option" data-text-style="black-outline"><span
 													class="style-sample">Aa</span><span>Black outline</span></button>
-										<div class="text-outline-width">
-											<label for="text-outline-stroke-width" data-i18n="ui.blackOutlineStrokeWidth">Black outline width</label>
-											<input type="range" id="text-outline-stroke-width" min="1" max="20" step="1" value="1"
-											aria-label="Black outline width" data-i18n-attr="aria-label:ui.blackOutlineStrokeWidth">
-											<output id="text-outline-stroke-width-value" for="text-outline-stroke-width">1px</output>
-									</div>
-						<div class="text-outline-color">
-							<label for="text-outline-stroke-color" data-i18n="ui.blackOutlineStrokeColor">Black outline color</label>
-							<input type="color" id="text-outline-stroke-color" value="#000000"
-								aria-label="Black outline color" data-i18n-attr="aria-label:ui.blackOutlineStrokeColor">
-						</div>
+											<div class="text-outline-width">
+												<label for="text-outline-stroke-width" data-i18n="ui.blackOutlineStrokeWidth">Black outline
+													width</label>
+												<input type="range" id="text-outline-stroke-width" min="1" max="20" step="1" value="1"
+													aria-label="Black outline width" data-i18n-attr="aria-label:ui.blackOutlineStrokeWidth">
+												<output id="text-outline-stroke-width-value" for="text-outline-stroke-width">1px</output>
+											</div>
+											<div class="text-outline-color">
+												<label for="text-outline-stroke-color" data-i18n="ui.blackOutlineStrokeColor">Black outline
+													color</label>
+												<input type="color" id="text-outline-stroke-color" value="#000000"
+													aria-label="Black outline color" data-i18n-attr="aria-label:ui.blackOutlineStrokeColor">
+											</div>
 											<button type="button" class="text-style-option" data-text-style="shadow"><span
 													class="style-sample">Aa</span><span>Shadow</span></button>
 											<button type="button" class="text-style-option" data-text-style="neon"><span
@@ -642,7 +675,8 @@
 						</button>
 						<button class="rbtn small action-menu-trigger tools-menu-arrow" id="btn-tools-menu" title="More tools"
 							aria-haspopup="menu" aria-expanded="false" aria-label="More tools"
-							data-i18n-attr="title:ribbon.annotations.moreTools,aria-label:ribbon.annotations.moreTools"><span data-i18n="ribbon.annotations.more">More</span>
+							data-i18n-attr="title:ribbon.annotations.moreTools,aria-label:ribbon.annotations.moreTools"><span
+								data-i18n="ribbon.annotations.more">More</span>
 							<span class="menu-arrow">▾</span></button>
 						<div class="action-menu-items" role="menu" aria-label="More tools"
 							data-i18n-attr="aria-label:ribbon.annotations.moreTools">
@@ -1007,7 +1041,8 @@
 							</svg>
 							<span>Redo</span></button>
 					</div>
-					<button class="rbtn small history-panel-button" id="btn-history-panel" data-tag="btn-history-panel" title="Global History">
+					<button class="rbtn small history-panel-button" id="btn-history-panel" data-tag="btn-history-panel"
+						title="Global History">
 						<svg class="icon size4" viewBox="0 0 20 20">
 							<path d="M10 2a8 8 0 1 0 8 8" fill="none" stroke-linecap="round" />
 							<path d="M10 5v5l3 3" fill="none" stroke-linecap="round" />
@@ -1057,9 +1092,10 @@
 					</button>
 					<span class="ci-field">
 						<code id="ci-hex" data-tag="ci-hex" style="user-select: text;">#a349a4</code>
-						<button class="ci-copy" data-copy-target="ci-hex" data-tag="ci-copy-hex" title="Copy HEX"><svg class="icon" viewBox="0 0 20 20" aria-hidden="true" focusable="false">
-							<use href="#icon-copy" />
-						</svg></button>
+						<button class="ci-copy" data-copy-target="ci-hex" data-tag="ci-copy-hex" title="Copy HEX"><svg class="icon"
+								viewBox="0 0 20 20" aria-hidden="true" focusable="false">
+								<use href="#icon-copy" />
+							</svg></button>
 					</span>
 					<button type="button" class="ci-toggle" id="ci-toggle" data-tag="ci-toggle"
 						data-i18n-attr="aria-label:ui.collapseColorInspector,title:ui.collapseColorInspector"
@@ -1070,7 +1106,8 @@
 				<span class="ci-field">
 					<!-- RGB  -->
 					<code id="ci-rgb" data-tag="ci-rgb" style="user-select: text;">rgb(163, 73, 164)</code>
-					<button class="ci-copy" data-copy-target="ci-rgb" data-tag="ci-copy-rgb" title="Copy RGB"><svg class="icon" viewBox="0 0 20 20" aria-hidden="true" focusable="false">
+					<button class="ci-copy" data-copy-target="ci-rgb" data-tag="ci-copy-rgb" title="Copy RGB"><svg class="icon"
+							viewBox="0 0 20 20" aria-hidden="true" focusable="false">
 							<use href="#icon-copy" />
 						</svg></button>
 				</span>
@@ -1099,7 +1136,7 @@
 					     ViewportManager.releaseCanvasLoading() after applyZoom(). -->
 					<div class="canvas-loading-mask" data-tag="canvas-loading-mask" role="status" aria-live="polite">
 						<span class="canvas-loading-spinner" aria-hidden="true"></span>
-						<span class="canvas-loading-label" data-i18n="ui.loading">Loading…</span>
+						<span class="canvas-loading-label" data-i18n="ui.loadingPaintArea">Loading paint area…</span>
 					</div>
 					<!-- Outer box: sized to the scaled canvas so scrollbars match the
              visible canvas exactly (no dead gray space when zoomed out,
@@ -1159,17 +1196,20 @@
 							<!-- Phase 2 step-04: undo/redo inside the History tab, wired to the
 							     same path as data-tag="btn-undo" / "btn-redo" and Ctrl+Z. -->
 							<div class="history-undo-row">
-								<button type="button" id="history-undo-btn" data-tag="history-undo" data-action="undo" data-i18n="common.actions.undo"
-									disabled>Undo</button>
-								<button type="button" id="history-redo-btn" data-tag="history-redo" data-action="redo" data-i18n="common.actions.redo"
-									disabled>Redo</button>
+								<button type="button" id="history-undo-btn" data-tag="history-undo" data-action="undo"
+									data-i18n="common.actions.undo" disabled>Undo</button>
+								<button type="button" id="history-redo-btn" data-tag="history-redo" data-action="redo"
+									data-i18n="common.actions.redo" disabled>Redo</button>
 							</div>
 							<div class="history-preferences" aria-live="polite">
-								<span class="history-pref-item"><span data-i18n="ui.autoSaveLabel">Auto-save</span> <strong id="history-auto-status">Exit/refresh</strong></span>
+								<span class="history-pref-item"><span data-i18n="ui.autoSaveLabel">Auto-save</span> <strong
+										id="history-auto-status">Exit/refresh</strong></span>
 								<span class="history-pref-sep" aria-hidden="true">·</span>
-								<span class="history-pref-item"><span data-i18n="ui.saveLimitLabel">Save limit</span> <strong id="history-limit-status">50</strong></span>
+								<span class="history-pref-item"><span data-i18n="ui.saveLimitLabel">Save limit</span> <strong
+										id="history-limit-status">50</strong></span>
 								<span class="history-pref-sep" aria-hidden="true">·</span>
-								<button type="button" id="history-settings-link" data-tag="history-settings-link"><span data-i18n="ui.openHistorySettings">Open</span></button>
+								<button type="button" id="history-settings-link" data-tag="history-settings-link"><span
+										data-i18n="ui.openHistorySettings">Open</span></button>
 							</div>
 							<!-- Hidden mirrors keep the existing settings/state contract while the
 						     sidebar presents a read-only summary. -->
@@ -1185,7 +1225,8 @@
 							<!-- Label sits above the action buttons and mirrors the active tab
 					     (History / Session), so "Save Current / Export All / Clear All"
 				 		always read as actions on the currently shown store. -->
-							<div class="history-actions-label" id="history-actions-label" aria-live="polite" data-i18n="ui.actionsHistory">
+							<div class="history-actions-label" id="history-actions-label" aria-live="polite"
+								data-i18n="ui.actionsHistory">
 								Actions: History
 							</div>
 							<div class="history-actions">
@@ -1194,14 +1235,15 @@
 								<button type="button" id="history-export-all-btn"
 									title="Export the whole history to your computer">Export
 									All</button>
-								<button type="button" id="history-clear-btn" data-tag="history-clear-btn" title="Clear all saved history"><span data-i18n="history.clearAll">Clear All</span></button>
+								<button type="button" id="history-clear-btn" data-tag="history-clear-btn"
+									title="Clear all saved history"><span data-i18n="history.clearAll">Clear All</span></button>
 							</div>
 						</div>
 						<div class="history-view-tabs" id="history-view-tabs" role="tablist" aria-label="History views">
-									<button type="button" class="history-view-tab active" data-history-view="history" role="tab" data-i18n="history.title"
-								aria-selected="true">History</button>
-									<button type="button" class="history-view-tab" data-history-view="session" role="tab" data-i18n="history.session"
-								aria-selected="false">Session</button>
+							<button type="button" class="history-view-tab active" data-history-view="history" role="tab"
+								data-i18n="history.title" aria-selected="true">History</button>
+							<button type="button" class="history-view-tab" data-history-view="session" role="tab"
+								data-i18n="history.session" aria-selected="false">Session</button>
 						</div>
 						<div class="history-grid" id="history-grid"></div>
 					</div>
@@ -1237,8 +1279,8 @@
 			<div>
 				<span class="status-item location" id="status-pointer" data-tag="status-pointer">Pointer: -</span>
 				<span class="status-item" id="status-selection" data-tag="status-selection"></span>
-				<span class="status-item" id="status-flash" data-tag="status-flash" role="status"
-					aria-live="polite" aria-atomic="true" data-i18n-ignore=""></span>
+				<span class="status-item" id="status-flash" data-tag="status-flash" role="status" aria-live="polite"
+					aria-atomic="true" data-i18n-ignore=""></span>
 				<span class="status-spacer"></span>
 			</div>
 
@@ -1256,8 +1298,7 @@
 					<button id="zoom-out" data-tag="zoom-out" title="Zoom out">
 						<svg class="icon" viewBox="0 0 20 20" aria-hidden="true" focusable="false">
 							<circle cx="8.5" cy="8.5" r="5.5" fill="none" stroke="currentColor" stroke-width="1.6" />
-							<path d="M6.1 8.5h4.8" fill="none" stroke="currentColor" stroke-width="1.6"
-								stroke-linecap="round" />
+							<path d="M6.1 8.5h4.8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
 							<path d="m12.7 12.7 4.1 4.1" fill="none" stroke="currentColor" stroke-width="1.6"
 								stroke-linecap="round" />
 						</svg>
@@ -1274,10 +1315,8 @@
 					<button id="zoom-in" data-tag="zoom-in" title="Zoom in">
 						<svg class="icon" viewBox="0 0 20 20" aria-hidden="true" focusable="false">
 							<circle cx="8.5" cy="8.5" r="5.5" fill="none" stroke="currentColor" stroke-width="1.6" />
-							<path d="M6.1 8.5h4.8" fill="none" stroke="currentColor" stroke-width="1.6"
-								stroke-linecap="round" />
-							<path d="M8.5 6.1v4.8" fill="none" stroke="currentColor" stroke-width="1.6"
-								stroke-linecap="round" />
+							<path d="M6.1 8.5h4.8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+							<path d="M8.5 6.1v4.8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
 							<path d="m12.7 12.7 4.1 4.1" fill="none" stroke="currentColor" stroke-width="1.6"
 								stroke-linecap="round" />
 						</svg>
@@ -1303,24 +1342,24 @@
 			<h3>Resize canvas</h3>
 			<div class="resize-presets" id="resize-presets" role="group" aria-labelledby="resize-presets-title">
 				<span class="resize-presets-title" id="resize-presets-title" data-i18n="ui.quickSizes">Quick sizes</span>
-				<button type="button" data-resize-preset="800x600" aria-pressed="false"><span class="resize-preset-name">800 × 600</span><span
-						class="resize-preset-size">800 × 600 px</span></button>
-				<button type="button" data-resize-preset="1024x768" aria-pressed="false"><span class="resize-preset-name">1024 × 768</span><span
-						class="resize-preset-size">1024 × 768 px</span></button>
-				<button type="button" data-resize-preset="1000x1000" aria-pressed="false"><span class="resize-preset-name">Square</span><span
-						class="resize-preset-size">1000 × 1000 px</span></button>
-				<button type="button" data-resize-preset="1123x794" aria-pressed="false"><span class="resize-preset-name">A4 landscape</span><span
-						class="resize-preset-size">1123 × 794 px</span></button>
-				<button type="button" data-resize-preset="794x1123" aria-pressed="false"><span class="resize-preset-name">A4 portrait</span><span
-						class="resize-preset-size">794 × 1123 px</span></button>
-				<button type="button" data-resize-preset="1600x1200" aria-pressed="false"><span class="resize-preset-name">1600 × 1200</span><span
-						class="resize-preset-size">1600 × 1200 px</span></button>
-				<button type="button" data-resize-preset="1920x1080" aria-pressed="false"><span class="resize-preset-name">Full HD</span><span
-						class="resize-preset-size">1920 × 1080 px</span></button>
-				<button type="button" data-resize-preset="2560x1440" aria-pressed="false"><span class="resize-preset-name">2K</span><span
-						class="resize-preset-size">2560 × 1440 px</span></button>
-				<button type="button" data-resize-preset="3840x2160" aria-pressed="false"><span class="resize-preset-name">4K</span><span
-						class="resize-preset-size">3840 × 2160 px</span></button>
+				<button type="button" data-resize-preset="800x600" aria-pressed="false"><span class="resize-preset-name">800 ×
+						600</span><span class="resize-preset-size">800 × 600 px</span></button>
+				<button type="button" data-resize-preset="1024x768" aria-pressed="false"><span class="resize-preset-name">1024 ×
+						768</span><span class="resize-preset-size">1024 × 768 px</span></button>
+				<button type="button" data-resize-preset="1000x1000" aria-pressed="false"><span
+						class="resize-preset-name">Square</span><span class="resize-preset-size">1000 × 1000 px</span></button>
+				<button type="button" data-resize-preset="1123x794" aria-pressed="false"><span class="resize-preset-name">A4
+						landscape</span><span class="resize-preset-size">1123 × 794 px</span></button>
+				<button type="button" data-resize-preset="794x1123" aria-pressed="false"><span class="resize-preset-name">A4
+						portrait</span><span class="resize-preset-size">794 × 1123 px</span></button>
+				<button type="button" data-resize-preset="1600x1200" aria-pressed="false"><span class="resize-preset-name">1600
+						× 1200</span><span class="resize-preset-size">1600 × 1200 px</span></button>
+				<button type="button" data-resize-preset="1920x1080" aria-pressed="false"><span class="resize-preset-name">Full
+						HD</span><span class="resize-preset-size">1920 × 1080 px</span></button>
+				<button type="button" data-resize-preset="2560x1440" aria-pressed="false"><span
+						class="resize-preset-name">2K</span><span class="resize-preset-size">2560 × 1440 px</span></button>
+				<button type="button" data-resize-preset="3840x2160" aria-pressed="false"><span
+						class="resize-preset-name">4K</span><span class="resize-preset-size">3840 × 2160 px</span></button>
 			</div>
 			<label class="resize-dimension-row" for="resize-width"><span>Width (px)</span><input type="number"
 					id="resize-width" data-tag="resize-width" min="1" max="10000" step="any" required /></label>
@@ -1328,17 +1367,19 @@
 					id="resize-height" data-tag="resize-height" min="1" max="10000" step="any" required /></label>
 			<div class="resize-scale-controls">
 				<div class="resize-scale-row">
-				<label for="resize-percent" id="resize-percent-label" data-i18n="ui.scalePercent">Scale (%)</label>
-				<input type="number" id="resize-percent" data-tag="resize-percent" min="1" max="1000" step="any" value="100" />
-				<span id="resize-target-status" role="status" data-i18n-runtime="ui.resizeTargetWholeCanvas">Target: Whole Canvas</span>
-				<div class="resize-scale-presets" role="group" aria-labelledby="resize-percent-label">
-					<button type="button" data-resize-scale="50" aria-pressed="false">50%</button>
-					<button type="button" data-resize-scale="75" aria-pressed="false">75%</button>
-					<button type="button" data-resize-scale="100" aria-pressed="false">100%</button>
-					<button type="button" data-resize-scale="125" aria-pressed="false">125%</button>
-					<button type="button" data-resize-scale="150" aria-pressed="false">150%</button>
-					<button type="button" data-resize-scale="200" aria-pressed="false">200%</button>
-				</div>
+					<label for="resize-percent" id="resize-percent-label" data-i18n="ui.scalePercent">Scale (%)</label>
+					<input type="number" id="resize-percent" data-tag="resize-percent" min="1" max="1000" step="any"
+						value="100" />
+					<span id="resize-target-status" role="status" data-i18n-runtime="ui.resizeTargetWholeCanvas">Target: Whole
+						Canvas</span>
+					<div class="resize-scale-presets" role="group" aria-labelledby="resize-percent-label">
+						<button type="button" data-resize-scale="50" aria-pressed="false">50%</button>
+						<button type="button" data-resize-scale="75" aria-pressed="false">75%</button>
+						<button type="button" data-resize-scale="100" aria-pressed="false">100%</button>
+						<button type="button" data-resize-scale="125" aria-pressed="false">125%</button>
+						<button type="button" data-resize-scale="150" aria-pressed="false">150%</button>
+						<button type="button" data-resize-scale="200" aria-pressed="false">200%</button>
+					</div>
 				</div>
 			</div>
 			<div class="checkbox-row" data-tag="resize-keep-aspect-row"><input type="checkbox" id="resize-keep-aspect"
@@ -1347,7 +1388,8 @@
 			</div>
 			<p class="resize-summary" id="resize-summary" role="status" aria-live="polite"></p>
 			<div class="dialog-actions">
-				<button type="button" id="resize-cancel" class="dialog-button-secondary" data-tag="resize-cancel">Cancel</button>
+				<button type="button" id="resize-cancel" class="dialog-button-secondary"
+					data-tag="resize-cancel">Cancel</button>
 				<button type="submit" id="resize-ok" class="dialog-button-primary" data-tag="resize-ok"
 					data-i18n="ribbon.image.resize">Resize</button>
 			</div>
@@ -1380,7 +1422,8 @@
 				<button type="button" class="settings-tab" data-settings-tab="ribbon">RIBBON</button>
 				<button type="button" class="settings-tab" data-settings-tab="release">RELEASE NOTES</button>
 				<button type="button" class="settings-tab" data-settings-tab="about">ABOUT</button>
-				<button type="button" class="settings-tab" data-settings-tab="browser" data-i18n="ui.tabBrowser">BROWSER DATA</button>
+				<button type="button" class="settings-tab" data-settings-tab="browser" data-i18n="ui.tabBrowser">BROWSER
+					DATA</button>
 				<button type="button" class="settings-tab" data-settings-tab="app">APP</button>
 				<button type="button" class="settings-tab" data-settings-tab="feedback">FEEDBACK</button>
 				<button type="button" class="settings-tab" data-settings-tab="shortcuts">SHORTCUTS</button>
@@ -1389,18 +1432,21 @@
 				<h3 data-i18n="settings.general">General</h3>
 				<div class="settings-general-options" aria-label="General display options">
 					<div class="checkbox-row" data-tag="setting-dark-mode-row"><input type="checkbox" id="setting-dark-mode"
-							data-tag="setting-dark-mode" /> <label for="setting-dark-mode" data-tag="setting-dark-mode-label" data-i18n="ui.darkMode">Dark
+							data-tag="setting-dark-mode" /> <label for="setting-dark-mode" data-tag="setting-dark-mode-label"
+							data-i18n="ui.darkMode">Dark
 							Mode</label></div>
 					<div class="checkbox-row" data-tag="setting-show-status-bar-row"><input type="checkbox"
 							id="setting-show-status-bar" data-tag="setting-show-status-bar" checked /> <label
-							for="setting-show-status-bar" data-tag="setting-show-status-bar-label" data-i18n="ui.showStatusBar">Show Status Bar</label></div>
+							for="setting-show-status-bar" data-tag="setting-show-status-bar-label" data-i18n="ui.showStatusBar">Show
+							Status Bar</label></div>
 					<div class="checkbox-row" data-tag="setting-show-color-inspector-row"><input type="checkbox"
 							id="setting-show-color-inspector" data-tag="setting-show-color-inspector" checked /> <label
-							for="setting-show-color-inspector" data-tag="setting-show-color-inspector-label" data-i18n="ui.showColorInspector">Show Color
+							for="setting-show-color-inspector" data-tag="setting-show-color-inspector-label"
+							data-i18n="ui.showColorInspector">Show Color
 							Inspector</label></div>
 					<div class="checkbox-row" data-tag="setting-show-ai-chat-row"><input type="checkbox" id="setting-show-ai-chat"
-							data-tag="setting-show-ai-chat" /> <label for="setting-show-ai-chat"
-							data-tag="setting-show-ai-chat-label" data-i18n="ui.showAiChat">Show AI Chat</label></div>
+							data-tag="setting-show-ai-chat" /> <label for="setting-show-ai-chat" data-tag="setting-show-ai-chat-label"
+							data-i18n="ui.showAiChat">Show AI Chat</label></div>
 				</div>
 				<div class="settings-field choice-field inline-choice-field">
 					<label for="setting-locale" data-i18n="settings.language">Language</label>
@@ -1426,7 +1472,8 @@
 						<option value="grid" data-i18n="ui.gridlines">Gridlines</option>
 					</select>
 					<div class="choice-summary" id="setting-canvas-bg-choice" data-select-id="setting-canvas-bg">
-						<span class="choice-summary-label"><span data-i18n="ui.selected">Selected:</span> <strong data-selected-label></strong>
+						<span class="choice-summary-label"><span data-i18n="ui.selected">Selected:</span> <strong
+								data-selected-label></strong>
 							<span class="choice-custom-inputs" data-solid-color-control hidden>
 								<input type="color" id="setting-solid-background-color" value="#ffffff"
 									aria-label="Solid canvas background color" />
@@ -1439,7 +1486,8 @@
 						aria-label="Canvas viewport padding" />
 					<output id="setting-canvas-viewport-padding-value">10px</output>
 				</div>
-				<div class="settings-field"><span data-i18n="ui.canvasViewportBackgroundColor">Canvas Viewport Background Color</span>
+				<div class="settings-field"><span data-i18n="ui.canvasViewportBackgroundColor">Canvas Viewport Background
+						Color</span>
 					<input type="color" id="setting-canvas-viewport-bg-color" value="#808080"
 						aria-label="Canvas viewport background color" />
 				</div>
@@ -1454,7 +1502,8 @@
 					</select>
 					<div class="choice-summary" id="setting-default-canvas-size-choice"
 						data-select-id="setting-default-canvas-size">
-						<span class="choice-summary-label"><span data-i18n="ui.selected">Selected:</span> <strong data-selected-label></strong>
+						<span class="choice-summary-label"><span data-i18n="ui.selected">Selected:</span> <strong
+								data-selected-label></strong>
 							<span class="choice-custom-inputs">
 								<input type="number" id="setting-default-canvas-width" min="1" max="10000" value="800"
 									aria-label="Custom canvas width" />
@@ -1476,7 +1525,8 @@
 						<option value="custom" data-i18n="ui.custom">Custom</option>
 					</select>
 					<div class="choice-summary" id="setting-default-zoom-choice" data-select-id="setting-default-zoom">
-						<span class="choice-summary-label"><span data-i18n="ui.selected">Selected:</span> <strong data-selected-label></strong>
+						<span class="choice-summary-label"><span data-i18n="ui.selected">Selected:</span> <strong
+								data-selected-label></strong>
 							<span class="choice-custom-inputs">
 								<input type="number" id="setting-default-zoom-custom" min="2" max="2000" step="1" value="100"
 									aria-label="Custom initial zoom percentage" />%
@@ -1491,21 +1541,26 @@
 			</section>
 			<section class="settings-panel settings-body" data-settings-panel="shortcuts" hidden>
 				<h3 data-i18n="ui.keyboardShortcuts">Keyboard shortcuts</h3>
-				<p data-i18n="ui.shortcutHelp">Focus a shortcut field, press the keys you want, then leave the field. Changes are saved in this browser.</p>
-				<p id="shortcut-settings-status" class="pwa-status" role="status" aria-live="polite" data-i18n="ui.defaultsActive">Defaults are active.</p>
+				<p data-i18n="ui.shortcutHelp">Focus a shortcut field, press the keys you want, then leave the field. Changes
+					are saved in this browser.</p>
+				<p id="shortcut-settings-status" class="pwa-status" role="status" aria-live="polite"
+					data-i18n="ui.defaultsActive">Defaults are active.</p>
 				<div id="shortcut-settings-list" class="shortcut-settings-list"></div>
 			</section>
 			<section class="settings-panel settings-body" data-settings-panel="history" hidden>
 				<h3 data-i18n="history.title">History</h3>
 				<div class="checkbox-row history-checkbox-row" data-tag="setting-history-auto-save-row"><input type="checkbox"
 						id="setting-history-auto-save" data-tag="setting-history-auto-save" checked /> <label
-						for="setting-history-auto-save" data-tag="setting-history-auto-save-label" data-i18n="ui.autoSaveHistory">Auto-save to history</label>
+						for="setting-history-auto-save" data-tag="setting-history-auto-save-label"
+						data-i18n="ui.autoSaveHistory">Auto-save to history</label>
 				</div>
 				<div class="checkbox-row history-checkbox-row" data-tag="setting-restore-last-image-row"><input type="checkbox"
 						id="setting-restore-last-image" data-tag="setting-restore-last-image" /> <label
-						for="setting-restore-last-image" data-tag="setting-restore-last-image-label" data-i18n="ui.restoreLastImage">Load last image on
+						for="setting-restore-last-image" data-tag="setting-restore-last-image-label"
+						data-i18n="ui.restoreLastImage">Load last image on
 						startup</label></div>
-				<p class="settings-help" data-i18n="ui.restoreHelp">Off starts with a blank canvas. Turn it on when you want Paint to restore the last
+				<p class="settings-help" data-i18n="ui.restoreHelp">Off starts with a blank canvas. Turn it on when you want
+					Paint to restore the last
 					working image automatically.</p>
 				<div class="settings-field choice-field"><span data-i18n="ui.autoSaveWhen">Auto-save when</span>
 					<select id="setting-history-auto-save-mode">
@@ -1515,7 +1570,8 @@
 					</select>
 					<div class="choice-summary" id="setting-history-auto-save-mode-choice"
 						data-select-id="setting-history-auto-save-mode">
-						<span class="choice-summary-label"><span data-i18n="ui.selected">Selected:</span> <strong data-selected-label></strong></span>
+						<span class="choice-summary-label"><span data-i18n="ui.selected">Selected:</span> <strong
+								data-selected-label></strong></span>
 					</div>
 				</div>
 				<div class="settings-field choice-field"><span data-i18n="ui.saveLimit">Save limit</span>
@@ -1528,17 +1584,21 @@
 					</select>
 					<div class="choice-summary" id="setting-history-save-limit-choice"
 						data-select-id="setting-history-save-limit">
-						<span class="choice-summary-label"><span data-i18n="ui.selected">Selected:</span> <strong data-selected-label></strong></span>
+						<span class="choice-summary-label"><span data-i18n="ui.selected">Selected:</span> <strong
+								data-selected-label></strong></span>
 					</div>
 				</div>
 				<div class="dialog-actions">
-					<button type="button" id="settings-history-export-all" data-tag="settings-history-export-all" class="dialog-button-secondary" data-i18n="ui.exportAllHistory">Export All History</button>
-					<button type="button" id="settings-history-clear" data-tag="settings-history-clear" class="danger"><span data-i18n="history.clearAll">Clear All</span></button>
+					<button type="button" id="settings-history-export-all" data-tag="settings-history-export-all"
+						class="dialog-button-secondary" data-i18n="ui.exportAllHistory">Export All History</button>
+					<button type="button" id="settings-history-clear" data-tag="settings-history-clear" class="danger"><span
+							data-i18n="history.clearAll">Clear All</span></button>
 				</div>
 			</section>
 			<section class="settings-panel settings-body" data-settings-panel="ribbon" hidden>
 				<h3 data-i18n="ui.ribbon">Ribbon</h3>
-				<p data-i18n="ui.ribbonHelp">Choose which ribbon groups are visible. Detailed group options open in the sidebar.</p>
+				<p data-i18n="ui.ribbonHelp">Choose which ribbon groups are visible. Detailed group options open in the sidebar.
+				</p>
 				<div class="checkbox-row" data-tag="setting-show-ribbon-row"><input type="checkbox" id="setting-show-ribbon"
 						data-tag="setting-show-ribbon" checked /> <label for="setting-show-ribbon"
 						data-tag="setting-show-ribbon-label" data-i18n="ui.showRibbon">Show ribbon</label></div>
@@ -1555,7 +1615,8 @@
 			</section>
 			<section class="settings-panel settings-body" data-settings-panel="about" hidden>
 				<h3 data-i18n="ui.aboutPaint">About paint</h3>
-				<p data-i18n="ui.aboutPaintText">paint is a local-first browser drawing workspace built for fast, private image editing.</p>
+				<p data-i18n="ui.aboutPaintText">paint is a local-first browser drawing workspace built for fast, private image
+					editing.</p>
 				<p class="settings-help" data-i18n="ui.storageQuota">Browser storage quota estimate</p>
 				<p id="about-loading-state" class="about-loading-state" data-i18n="ui.loading" role="status">Loading…</p>
 				<dl class="about-stats">
@@ -1584,7 +1645,8 @@
 				</dl>
 				<div class="dialog-actions">
 					<button type="button" id="settings-reset" data-tag="settings-reset" class="danger">Reset Settings</button>
-					<button type="button" id="settings-clear-data" data-tag="settings-clear-data" class="danger">Clear Data</button>
+					<button type="button" id="settings-clear-data" data-tag="settings-clear-data" class="danger">Clear
+						Data</button>
 				</div>
 			</section>
 			<section class="settings-panel settings-body" data-settings-panel="release" hidden>
@@ -1594,51 +1656,99 @@
 			</section>
 			<section class="settings-panel settings-body" data-settings-panel="browser" hidden>
 				<h3 data-i18n="ui.browserData">Browser &amp; device information</h3>
-				<p class="settings-help" data-i18n="ui.browserPrivacy">Shown locally on this device. Paint does not send this information anywhere.</p>
+				<p class="settings-help" data-i18n="ui.browserPrivacy">Shown locally on this device. Paint does not send this
+					information anywhere.</p>
 				<dl id="browser-info-list" class="browser-info-list">
-					<div><dt data-i18n="ui.browserName">Browser</dt><dd data-browser-info="browser"></dd></div>
-					<div><dt data-i18n="ui.browserSystem">System</dt><dd data-browser-info="system"></dd></div>
-					<div><dt data-i18n="ui.browserDevice">Device type</dt><dd data-browser-info="device"></dd></div>
-					<div><dt data-i18n="ui.browserDisplay">Screen / viewport</dt><dd data-browser-info="display"></dd></div>
-					<div><dt data-i18n="ui.browserPixelRatio">Display scale</dt><dd data-browser-info="pixelRatio"></dd></div>
-					<div><dt data-i18n="ui.browserCapacity">CPU / memory estimate</dt><dd data-browser-info="capacity"></dd></div>
-					<div><dt data-i18n="ui.browserLanguageZone">Language / time zone</dt><dd data-browser-info="languageZone"></dd></div>
-					<div><dt data-i18n="ui.browserBattery">Battery</dt><dd data-browser-info="battery"></dd></div>
-					<div><dt data-i18n="ui.browserNetwork">Network status</dt><dd data-browser-info="online"></dd></div>
-					<div><dt data-i18n="ui.browserPointer">Live pointer position</dt><dd data-browser-info="pointer"></dd></div>
-					<div><dt data-i18n="ui.browserUserAgent">User agent</dt><dd data-browser-info="userAgent"></dd></div>
+					<div>
+						<dt data-i18n="ui.browserName">Browser</dt>
+						<dd data-browser-info="browser"></dd>
+					</div>
+					<div>
+						<dt data-i18n="ui.browserSystem">System</dt>
+						<dd data-browser-info="system"></dd>
+					</div>
+					<div>
+						<dt data-i18n="ui.browserDevice">Device type</dt>
+						<dd data-browser-info="device"></dd>
+					</div>
+					<div>
+						<dt data-i18n="ui.browserDisplay">Screen / viewport</dt>
+						<dd data-browser-info="display"></dd>
+					</div>
+					<div>
+						<dt data-i18n="ui.browserPixelRatio">Display scale</dt>
+						<dd data-browser-info="pixelRatio"></dd>
+					</div>
+					<div>
+						<dt data-i18n="ui.browserCapacity">CPU / memory estimate</dt>
+						<dd data-browser-info="capacity"></dd>
+					</div>
+					<div>
+						<dt data-i18n="ui.browserLanguageZone">Language / time zone</dt>
+						<dd data-browser-info="languageZone"></dd>
+					</div>
+					<div>
+						<dt data-i18n="ui.browserBattery">Battery</dt>
+						<dd data-browser-info="battery"></dd>
+					</div>
+					<div>
+						<dt data-i18n="ui.browserNetwork">Network status</dt>
+						<dd data-browser-info="online"></dd>
+					</div>
+					<div>
+						<dt data-i18n="ui.browserPointer">Live pointer position</dt>
+						<dd data-browser-info="pointer"></dd>
+					</div>
+					<div>
+						<dt data-i18n="ui.browserUserAgent">User agent</dt>
+						<dd data-browser-info="userAgent"></dd>
+					</div>
 				</dl>
 				<div class="browser-info-location">
-					<button type="button" id="browser-location-button" class="settings-link-button" data-i18n="ui.browserShowLocation">Show my location</button>
-					<p id="browser-location-status" class="settings-help" role="status" aria-live="polite" data-i18n-ignore="true">Location is only requested when you select this button.</p>
+					<button type="button" id="browser-location-button" class="settings-link-button"
+						data-i18n="ui.browserShowLocation">Show my location</button>
+					<p id="browser-location-status" class="settings-help" role="status" aria-live="polite"
+						data-i18n-ignore="true">Location is only requested when you select this button.</p>
 				</div>
-				<p class="settings-help" data-i18n="ui.browserUnavailable">Web pages cannot read your IP address, ISP, running processes, or installed extensions. Paint does not create a browser fingerprint.</p>
+				<p class="settings-help" data-i18n="ui.browserUnavailable">Web pages cannot read your IP address, ISP, running
+					processes, or installed extensions. Paint does not create a browser fingerprint.</p>
 			</section>
 			<section class="settings-panel settings-body" data-settings-panel="app" hidden>
 				<h3 data-i18n="ui.installUpdates">Install &amp; updates</h3>
-				<p data-i18n="ui.installHelp">Install Paint as an app for a focused window, quick launch, and offline use. The browser decides when direct installation is available.</p>
+				<p data-i18n="ui.installHelp">Install Paint as an app for a focused window, quick launch, and offline use. The
+					browser decides when direct installation is available.</p>
 				<div class="pwa-install-card">
 					<div class="pwa-action-row">
-						<button type="button" class="settings-link-button" id="pwa-install-button" data-tag="pwa-install-button" data-i18n="ui.installPaint">Install paint</button>
-						<p id="pwa-install-action-status" data-tag="pwa-install-action-status" data-i18n-ignore="true" class="pwa-status" role="status" aria-live="polite" hidden></p>
+						<button type="button" class="settings-link-button" id="pwa-install-button" data-tag="pwa-install-button"
+							data-i18n="ui.installPaint">Install paint</button>
+						<p id="pwa-install-action-status" data-tag="pwa-install-action-status" data-i18n-ignore="true"
+							class="pwa-status" role="status" aria-live="polite" hidden></p>
 					</div>
 				</div>
 				<div class="pwa-update-card">
 					<strong data-i18n="ui.versionUpdates">Version updates</strong>
-					<p data-i18n="ui.updateHelp">Paint checks for a newer version and reports the result here. Nothing is applied until you select Update now.</p>
+					<p data-i18n="ui.updateHelp">Paint checks for a newer version and reports the result here. Nothing is applied
+						until you select Update now.</p>
 					<div class="pwa-action-row">
-						<span class="pwa-current-version"><span data-i18n="ui.currentVersion">Current version:</span> <strong id="pwa-current-version" data-tag="pwa-current-version"></strong></span>
-						<button type="button" class="settings-link-button" id="pwa-update-button" data-tag="pwa-update-button" data-i18n="ui.checkUpdates">Check for updates</button>
-						<button type="button" class="settings-link-button" id="pwa-apply-update-button" data-tag="pwa-apply-update-button" data-i18n="ui.updateNow" hidden>Update now</button>
-						<p id="pwa-install-status" data-tag="pwa-install-status" data-i18n-ignore="true" class="pwa-status" role="status" aria-live="polite" hidden></p>
+						<span class="pwa-current-version"><span data-i18n="ui.currentVersion">Current version:</span> <strong
+								id="pwa-current-version" data-tag="pwa-current-version"></strong></span>
+						<button type="button" class="settings-link-button" id="pwa-update-button" data-tag="pwa-update-button"
+							data-i18n="ui.checkUpdates">Check for updates</button>
+						<button type="button" class="settings-link-button" id="pwa-apply-update-button"
+							data-tag="pwa-apply-update-button" data-i18n="ui.updateNow" hidden>Update now</button>
+						<p id="pwa-install-status" data-tag="pwa-install-status" data-i18n-ignore="true" class="pwa-status"
+							role="status" aria-live="polite" hidden></p>
 					</div>
 				</div>
 				<div class="pwa-offline-card">
 					<strong data-i18n="ui.offlineUse">Offline use</strong>
-					<p data-i18n="ui.offlineHelp">Prepare the app files currently available for use without an internet connection.</p>
+					<p data-i18n="ui.offlineHelp">Prepare the app files currently available for use without an internet
+						connection.</p>
 					<div class="pwa-action-row">
-						<button type="button" class="settings-link-button" id="pwa-offline-button" data-tag="pwa-offline-button" data-i18n="ui.prepareOffline">Prepare offline use</button>
-						<p id="pwa-offline-status" data-tag="pwa-offline-status" data-i18n-ignore="true" class="pwa-status" role="status" aria-live="polite" hidden></p>
+						<button type="button" class="settings-link-button" id="pwa-offline-button" data-tag="pwa-offline-button"
+							data-i18n="ui.prepareOffline">Prepare offline use</button>
+						<p id="pwa-offline-status" data-tag="pwa-offline-status" data-i18n-ignore="true" class="pwa-status"
+							role="status" aria-live="polite" hidden></p>
 					</div>
 				</div>
 			</section>
@@ -1656,7 +1766,8 @@
 				</div>
 			</section>
 			<div class="settings-footer settings-footer-nav" aria-hidden="true"></div>
-			<footer class="settings-footer"><button type="button" class="dialog-button-secondary" id="settings-footer-close" data-tag="settings-footer-close">Close</button></footer>
+			<footer class="settings-footer"><button type="button" class="dialog-button-secondary" id="settings-footer-close"
+					data-tag="settings-footer-close">Close</button></footer>
 		</div>
 	</dialog>
 
@@ -1678,7 +1789,8 @@
 			<h3 id="workspace-manager-title" data-tag="workspace-manager-title">Manage multiple Paint</h3>
 			<p data-tag="workspace-manager-help">Choose an open document or close one before switching to split view.</p>
 			<div id="workspace-manager-tabs" class="workspace-manager-tabs" data-tag="workspace-manager-tabs"></div>
-			<div class="dialog-actions"><button type="submit" class="dialog-button-secondary" data-tag="workspace-manager-close">Close</button></div>
+			<div class="dialog-actions"><button type="submit" class="dialog-button-secondary"
+					data-tag="workspace-manager-close">Close</button></div>
 		</form>
 	</dialog>
 
@@ -1754,14 +1866,14 @@
 				<output id="background-removal-phase" data-tag="background-removal-phase" aria-live="polite">Ready</output>
 			</div>
 			<div class="dialog-actions">
-				<button type="button" id="background-removal-cancel" class="dialog-button-secondary" data-tag="background-removal-cancel"
-					data-i18n="common.actions.cancel">Cancel</button>
-				<button type="button" id="background-removal-close" class="dialog-button-secondary" data-tag="background-removal-close"
-					data-i18n="common.actions.close" hidden>Close</button>
-				<button type="button" id="background-removal-preview-button" class="dialog-button-secondary" data-tag="background-removal-preview-button"
-					data-i18n="ui.preview">Preview</button>
-				<button type="button" id="background-removal-apply" class="dialog-button-primary" data-tag="background-removal-apply"
-					data-i18n="common.actions.apply" disabled>Apply</button>
+				<button type="button" id="background-removal-cancel" class="dialog-button-secondary"
+					data-tag="background-removal-cancel" data-i18n="common.actions.cancel">Cancel</button>
+				<button type="button" id="background-removal-close" class="dialog-button-secondary"
+					data-tag="background-removal-close" data-i18n="common.actions.close" hidden>Close</button>
+				<button type="button" id="background-removal-preview-button" class="dialog-button-secondary"
+					data-tag="background-removal-preview-button" data-i18n="ui.preview">Preview</button>
+				<button type="button" id="background-removal-apply" class="dialog-button-primary"
+					data-tag="background-removal-apply" data-i18n="common.actions.apply" disabled>Apply</button>
 			</div>
 		</form>
 	</dialog>
@@ -1808,18 +1920,16 @@
 				</select>
 			</fieldset>
 			<fieldset class="adjustments-group adjustments-value-group">
-				<legend>
-					<label for="adjustment-value" id="adjustment-value-label" data-i18n="ui.adjustmentValue">Amount</label>
-				</legend>
+				<legend id="adjustment-value-label" data-i18n="ui.adjustmentValue">Amount</legend>
 				<div class="adjustment-value-controls">
 					<div class="adjustment-range-wrap">
 						<input id="adjustment-value" data-tag="adjustment-value" type="range" min="0" max="200" value="100"
-							aria-describedby="adjustment-error" />
+							aria-labelledby="adjustment-value-label" aria-describedby="adjustment-error" />
 						<output id="adjustment-value-output" class="adjustment-slider-tooltip" for="adjustment-value"
 							aria-hidden="true"></output>
 					</div>
 					<input id="adjustment-value-number" data-tag="adjustment-value-number" type="number" min="0" max="200"
-						step="1" value="100" aria-labelledby="adjustment-value-label"
+						step="1" value="100" aria-labelledby="adjustment-value-label" aria-labelledby="adjustment-value-label"
 						aria-describedby="adjustment-error" />
 				</div>
 			</fieldset>
@@ -1873,56 +1983,84 @@
 	<div class="action-menu canvas-context-menu" id="canvas-context-menu" hidden>
 		<div class="action-menu-items canvas-context-menu-items" role="menu"
 			data-i18n-attr="aria-label:ui.canvasContextMenu" aria-label="Canvas actions">
-			<button type="button" role="menuitem" data-canvas-action="cut" data-requires-selection
-				disabled aria-disabled="true" title="Cut (Ctrl+X)">
-				<svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><use href="#icon-cut" /></svg>
+			<button type="button" role="menuitem" data-canvas-action="cut" data-requires-selection disabled
+				aria-disabled="true" title="Cut (Ctrl+X)">
+				<svg class="icon" viewBox="0 0 20 20" aria-hidden="true">
+					<use href="#icon-cut" />
+				</svg>
 				<span data-i18n="common.actions.cut">Cut</span>
 				<span class="menu-shortcut" aria-hidden="true">Ctrl+X</span>
 			</button>
-			<button type="button" role="menuitem" data-canvas-action="copy" data-requires-selection
-				disabled aria-disabled="true" title="Copy (Ctrl+C)">
-				<svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><use href="#icon-copy" /></svg>
+			<button type="button" role="menuitem" data-canvas-action="copy" data-requires-selection disabled
+				aria-disabled="true" title="Copy (Ctrl+C)">
+				<svg class="icon" viewBox="0 0 20 20" aria-hidden="true">
+					<use href="#icon-copy" />
+				</svg>
 				<span data-i18n="common.actions.copy">Copy</span>
 				<span class="menu-shortcut" aria-hidden="true">Ctrl+C</span>
 			</button>
 			<button type="button" role="menuitem" data-canvas-action="paste" title="Paste (Ctrl+V)">
-				<svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><use href="#icon-paste" /></svg>
+				<svg class="icon" viewBox="0 0 20 20" aria-hidden="true">
+					<use href="#icon-paste" />
+				</svg>
 				<span data-i18n="common.actions.paste">Paste</span>
 				<span class="menu-shortcut" aria-hidden="true">Ctrl+V</span>
 			</button>
 			<button type="button" role="menuitem" data-canvas-action="selectAll" title="Select All"
 				data-i18n-attr="title:ui.selectAll">
-				<svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><use href="#icon-select-all" /></svg>
+				<svg class="icon" viewBox="0 0 20 20" aria-hidden="true">
+					<use href="#icon-select-all" />
+				</svg>
 				<span data-i18n="ui.selectAll">Select All</span>
 				<span class="menu-shortcut" aria-hidden="true">Ctrl+A</span>
 			</button>
 			<div class="action-menu action-submenu">
-				<button class="action-menu-trigger action-submenu-trigger" type="button" role="menuitem"
-					aria-haspopup="menu" aria-expanded="false" aria-label="Save image as"
-					data-i18n-attr="aria-label:ui.saveImageAs">
-					<span class="submenu-label"><svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><use href="#icon-save" /></svg><span data-i18n="ui.saveImageAs">Save image as</span></span>
+				<button class="action-menu-trigger action-submenu-trigger" type="button" role="menuitem" aria-haspopup="menu"
+					aria-expanded="false" aria-label="Save image as" data-i18n-attr="aria-label:ui.saveImageAs">
+					<span class="submenu-label"><svg class="icon" viewBox="0 0 20 20" aria-hidden="true">
+							<use href="#icon-save" />
+						</svg><span data-i18n="ui.saveImageAs">Save image as</span></span>
 					<span class="submenu-arrow" aria-hidden="true">›</span>
 				</button>
 				<div class="action-menu-items action-submenu-items" role="menu" aria-label="Save image as"
 					data-i18n-attr="aria-label:ui.saveImageAs">
-					<button type="button" role="menuitem" data-export-format="png" data-export-scope="image"><svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><use href="#icon-image-file" /></svg><span data-i18n="ui.formatPng">PNG image</span></button>
-					<button type="button" role="menuitem" data-export-format="jpeg" data-export-scope="image"><svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><use href="#icon-image-file" /></svg><span data-i18n="ui.formatJpeg">JPEG image</span></button>
-					<button type="button" role="menuitem" data-export-format="webp" data-export-scope="image"><svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><use href="#icon-image-file" /></svg><span data-i18n="ui.formatWebp">WebP image</span></button>
+					<button type="button" role="menuitem" data-export-format="png" data-export-scope="image"><svg class="icon"
+							viewBox="0 0 20 20" aria-hidden="true">
+							<use href="#icon-image-file" />
+						</svg><span data-i18n="ui.formatPng">PNG image</span></button>
+					<button type="button" role="menuitem" data-export-format="jpeg" data-export-scope="image"><svg class="icon"
+							viewBox="0 0 20 20" aria-hidden="true">
+							<use href="#icon-image-file" />
+						</svg><span data-i18n="ui.formatJpeg">JPEG image</span></button>
+					<button type="button" role="menuitem" data-export-format="webp" data-export-scope="image"><svg class="icon"
+							viewBox="0 0 20 20" aria-hidden="true">
+							<use href="#icon-image-file" />
+						</svg><span data-i18n="ui.formatWebp">WebP image</span></button>
 				</div>
 			</div>
 			<div class="action-menu action-submenu">
-				<button class="action-menu-trigger action-submenu-trigger" type="button" role="menuitem"
-					aria-haspopup="menu" aria-expanded="false" aria-label="Save selection as"
-					data-i18n-attr="aria-label:ui.saveSelectionAs" data-requires-selection
-					disabled aria-disabled="true">
-					<span class="submenu-label"><svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><use href="#icon-save" /></svg><span data-i18n="ui.saveSelectionAs">Save selection as</span></span>
+				<button class="action-menu-trigger action-submenu-trigger" type="button" role="menuitem" aria-haspopup="menu"
+					aria-expanded="false" aria-label="Save selection as" data-i18n-attr="aria-label:ui.saveSelectionAs"
+					data-requires-selection disabled aria-disabled="true">
+					<span class="submenu-label"><svg class="icon" viewBox="0 0 20 20" aria-hidden="true">
+							<use href="#icon-save" />
+						</svg><span data-i18n="ui.saveSelectionAs">Save selection as</span></span>
 					<span class="submenu-arrow" aria-hidden="true">›</span>
 				</button>
 				<div class="action-menu-items action-submenu-items" role="menu" aria-label="Save selection as"
 					data-i18n-attr="aria-label:ui.saveSelectionAs">
-					<button type="button" role="menuitem" data-export-format="png" data-export-scope="selection"><svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><use href="#icon-image-file" /></svg><span data-i18n="ui.formatPng">PNG image</span></button>
-					<button type="button" role="menuitem" data-export-format="jpeg" data-export-scope="selection"><svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><use href="#icon-image-file" /></svg><span data-i18n="ui.formatJpeg">JPEG image</span></button>
-					<button type="button" role="menuitem" data-export-format="webp" data-export-scope="selection"><svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><use href="#icon-image-file" /></svg><span data-i18n="ui.formatWebp">WebP image</span></button>
+					<button type="button" role="menuitem" data-export-format="png" data-export-scope="selection"><svg class="icon"
+							viewBox="0 0 20 20" aria-hidden="true">
+							<use href="#icon-image-file" />
+						</svg><span data-i18n="ui.formatPng">PNG image</span></button>
+					<button type="button" role="menuitem" data-export-format="jpeg" data-export-scope="selection"><svg
+							class="icon" viewBox="0 0 20 20" aria-hidden="true">
+							<use href="#icon-image-file" />
+						</svg><span data-i18n="ui.formatJpeg">JPEG image</span></button>
+					<button type="button" role="menuitem" data-export-format="webp" data-export-scope="selection"><svg
+							class="icon" viewBox="0 0 20 20" aria-hidden="true">
+							<use href="#icon-image-file" />
+						</svg><span data-i18n="ui.formatWebp">WebP image</span></button>
 				</div>
 			</div>
 		</div>
