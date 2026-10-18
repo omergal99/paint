@@ -971,11 +971,16 @@ test('CanvasManager revokes a temporary object URL after loading a saved Blob', 
 	const overlay = { width: 0, height: 0, getContext: () => context };
 	const previousDocument = globalThis.document;
 	const previousImage = globalThis.Image;
+	const previousWindow = globalThis.window;
 	globalThis.document = { createElement: () => ({ width: 0, height: 0, getContext: () => context }) };
 	globalThis.Image = class {
 		constructor() { this.width = 24; this.height = 12; }
 		set src(_value) { queueMicrotask(() => this.onload?.()); }
 	};
+	// loadImageDataUrl dispatches `paint:image-loaded` on window once the raster
+	// is composed; without this stub the onload handler throws and the awaited
+	// promise never settles (the suite used to hang right here).
+	globalThis.window = { dispatchEvent: () => {}, addEventListener: () => {}, removeEventListener: () => {} };
 	try {
 		const manager = new CanvasManager({ canvas, overlay, width: 20, height: 10 });
 		const revoked = [];
@@ -993,6 +998,8 @@ test('CanvasManager revokes a temporary object URL after loading a saved Blob', 
 		else delete globalThis.document;
 		if (previousImage) globalThis.Image = previousImage;
 		else delete globalThis.Image;
+		if (previousWindow === undefined) delete globalThis.window;
+		else globalThis.window = previousWindow;
 	}
 });
 

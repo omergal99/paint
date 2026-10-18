@@ -132,7 +132,7 @@ test('the settings save path reads helpers that exist from module start', () => 
   // `getDefaultZoom` used to be produced by a late factory call. It is now a
   // plain module export, so importing it is initialised before any code runs.
   const main = read('js/main.js');
-  assert.match(main, /import \{ initSettingsHydration, getDefaultZoom \} from '\.\/app\/settingsHydration\.js';/);
+  assert.match(main, /import \{\s*initSettingsHydration,\s*getDefaultZoom,\s*\} from "\.\/app\/settingsHydration\.js";/);
   assert.match(read('js/app/settingsHydration.js'), /export const getDefaultZoom = \(\) => \{/);
   // It must no longer be pulled out of the late `hydration` destructure.
   assert.doesNotMatch(main, /const \{[\s\S]*?getDefaultZoom,[\s\S]*?\} = hydration;/);
