@@ -28,6 +28,7 @@ import { initShortcutSettings } from './app/shortcutSettings.js';
 import { initRibbonSettings } from './app/ribbonSettings.js';
 import { initCanvasViewportSettings, getCanvasViewportPadding } from './app/canvasViewportSettings.js';
 import { initSettingsHydration, getDefaultZoom } from './app/settingsHydration.js';
+import { getDebugLoadingDelay, releaseCanvasLoading } from './core/initAppLoadingService.js';
 import { markBoot } from './app/bootTiming.js';
 import { createPencilTool, createBrushTool, createEraserTool } from './tools/FreehandTools.js';
 import { createFillTool } from './tools/FillTool.js';
@@ -436,6 +437,28 @@ const viewportManager = new ViewportManager({
 	zoomSlider: document.getElementById('zoom-slider'),
 });
 viewportManagerRef.current = viewportManager;
+
+// The remembered zoom is applied to the viewport only after the restored raster
+// finishes decoding: the constructor updated the scale transform and the input
+// cues, but deliberately deferred the scroll-stage resize so the picture cannot
+// jump mid-load (the raster is async and the stage must not resize it).
+const applyRestoredZoom = () => {
+  window.removeEventListener('paint:image-loaded', applyRestoredZoom);
+  viewportManager.applyZoom();
+  // Release the canvas loading overlay once the zoom geometry is final. The
+  // service handles the debug delay uniformly with the ribbon mask.
+  const delayMs = getDebugLoadingDelay();
+  if (delayMs > 0) {
+    window.setTimeout(() => releaseCanvasLoading(), delayMs);
+  } else {
+    releaseCanvasLoading();
+  }
+};
+window.addEventListener('paint:image-loaded', applyRestoredZoom);
+// Fallback: if no image restores, paint:image-loaded never fires. Apply the
+// remembered zoom to the default canvas size so the scroll stage is correctly
+// sized. applyZoom() is idempotent - if an image did restore, this is a no-op.
+window.addEventListener('paint:ready', applyRestoredZoom, { once: true });
 
 const canvasResizer = new CanvasResizer({
 	stage,
@@ -1738,6 +1761,14 @@ markBoot('boot:after-hydrate');
 
 // Ribbon groups exist now, so a remembered sidebar panel can be reopened.
 sidebar.restorePendingPanel();
+
+// The scroll stage is intentionally left unsized until the restored raster is
+// composed. `applyZoom()` fires once - from `paint:image-loaded` when an image
+// restores, or as a `paint:ready` fallback when none does - setting _zoomReady
+// and running syncStageSize() exactly once with the correct canvas dimensions.
+// No mid-load resize, no jump. The loading mask stays until `paint:ready`,
+// which fires after both paths complete.
+statusBar.flash(t('ui.loadingApp'));
 
 const restoreDialogFromUrl = () => {
 	const { dialog, tab } = router.resolveDeepLink();

@@ -203,6 +203,8 @@ export const UI_TEXT_KEYS = Object.freeze({
 	'Defaults are active.': 'ui.defaultsActive',
 	'Auto-save to history': 'ui.autoSaveHistory',
 	'Load last image on startup': 'ui.restoreLastImage',
+	'Loading app': 'ui.loadingApp',
+	'Loading last image': 'ui.loadingLastImage',
 	'Off starts with a blank canvas. Turn it on when you want Paint to restore the last working image automatically.': 'ui.restoreHelp',
 	'Auto-save when': 'ui.autoSaveWhen',
 	'All automatic events': 'ui.allAutomaticEvents',

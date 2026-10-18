@@ -304,6 +304,13 @@ export class CanvasManager {
         this.markDocumentDirty();
         this.onRasterLoad?.({ reason: 'load-image-data' });
         if (this.onSizeChange) this.onSizeChange(targetWidth, targetHeight);
+        // The restored raster is fully composed below. Notify listeners (most
+        // importantly the viewport manager) so the remembered zoom is applied to
+        // the new canvas dimensions instead of resizing the scroll box mid-load,
+        // which would make the picture jump on reload.
+        window.dispatchEvent(new CustomEvent('paint:image-loaded', {
+          detail: { width: targetWidth, height: targetHeight },
+        }));
         resolve(true);
       };
       img.onerror = () => {

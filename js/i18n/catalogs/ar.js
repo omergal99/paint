@@ -87,6 +87,8 @@ export const initializeAr = (english) => {
     "ui.underline": "تحته خط",
     "ui.handPan": "يد / تحريك",
     "ui.loading": "جارٍ التحميل…",
+    "ui.loadingApp": "جارٍ تحميل التطبيق…",
+    "ui.loadingLastImage": "جارٍ تحميل الصورة الأخيرة…",
     "ui.line": "خط",
     "ui.arrow": "سهم",
     "ui.rectangle": "مستطيل",

@@ -122,6 +122,9 @@ test('zoom reset returns to actual-size 100% and updates every zoom surface', ()
 	withViewport((fixture) => {
 		const { manager, zoomResetBtn, zoomInput, zoomSlider, stage, scaleEl, styleProperties, storage } = fixture;
 		assert.equal(manager.zoom, 250);
+		// Simulate app readiness: in production `applyZoom()` runs once on
+		// `paint:image-loaded` before any user interaction.
+		manager.applyZoom();
 		zoomResetBtn.click();
 		assert.equal(manager.zoom, 100);
 		assert.equal(zoomInput.value, 100);
@@ -194,3 +197,5 @@ test('viewport teardown removes zoom controls and browser lifecycle listeners', 
 		assert.equal(fixture.observerDisconnected, true);
 	});
 });
+
+

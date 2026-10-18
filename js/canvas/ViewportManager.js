@@ -59,6 +59,7 @@ export class ViewportManager {
     this.zoom = this._restoreZoom(); // percent
     this._canvasRect = null;
     this._geometryDirty = true;
+    this._zoomReady = false; // canvas content (e.g. restored image) not ready yet
 
     this.onZoomChange = null; // callback(zoomPercent)
 
@@ -113,7 +114,11 @@ export class ViewportManager {
       this._geometryObserver.observe(this.viewportEl);
     }
 
-    this._applyZoom();
+    // Apply the remembered zoom to the scale transform and input cues now, but
+    // deliberately defer the scroll-stage resize (see `applyZoom`): the restored
+    // image may still be decoding, and resizing the scroll box mid-load makes
+    // the picture jump.
+    this._updateZoomUI();
   }
 
   setZoom(percent) {
@@ -133,6 +138,7 @@ export class ViewportManager {
    * scroll through), above 100% it grows (scrollbars appear to pan around).
    */
   syncStageSize() {
+    if (!this._zoomReady) return;
     const scale = this.zoom / 100;
     const w = Math.max(1, Math.round(this.canvasManager.width * scale));
     const h = Math.max(1, Math.round(this.canvasManager.height * scale));
@@ -180,7 +186,14 @@ export class ViewportManager {
     }
   }
 
-  _applyZoom() {
+  /**
+   * Update the zoom input, slider and CSS transform to match `this.zoom`.
+   * Cheap, pure style writes; no layout, so it can run while the canvas content
+   * is still loading (e.g. right after a page reload, before the restored
+   * image is composed). The scrolling stage is intentionally left untouched
+   * here.
+   */
+  _updateZoomUI() {
     const scale = this.zoom / 100;
     this.scaleEl.style.transform = `scale(${scale})`;
     this.scaleEl.style.setProperty('--zoom-inverse', String(1 / scale));
@@ -188,7 +201,33 @@ export class ViewportManager {
     this._syncZoomInputStep(this.zoom);
     this.zoomSlider.value = sliderPositionFromZoom(this.zoom);
     this.zoomSlider.setAttribute('aria-valuetext', `${this.zoom}%`);
+  }
+
+  /**
+   * Apply the zoom to viewport geometry: size the outer scroll stage to the
+   * scaled canvas and sync the zoom cues. Call only once the canvas content is
+   * fully loaded (e.g. after the restored last image has decoded), otherwise
+   * the scroll box resizes mid-load and the picture jumps.
+   */
+  _applyZoom() {
+    this._updateZoomUI();
+    // Size the inner pixel box to the canvas dimensions so the canvas,
+    // handles and selection overlays all match the restored image size in one
+    // layout pass - no intermediate white-cube or wrong-size flash before the
+    // scroll stage is resized to the scaled extent.
+    this.scaleEl.style.width = `${this.canvasManager.width}px`;
+    this.scaleEl.style.height = `${this.canvasManager.height}px`;
     this.syncStageSize();
+  }
+
+  /**
+   * Mark the remembered zoom as ready and apply it. Used at startup after the
+   * restored image finishes loading.
+   */
+  applyZoom() {
+    if (this._zoomReady) return;
+    this._zoomReady = true;
+    this._applyZoom();
   }
 
   /**

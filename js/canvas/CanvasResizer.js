@@ -27,11 +27,14 @@ export class CanvasResizer {
     if (this._destroyed) return;
     const w = this.canvasManager.width;
     const h = this.canvasManager.height;
-    // The inner box keeps image-pixel dimensions so all absolute-positioned
-    // handles/ghosts remain in true image coordinates before the zoom scale.
-    this.scaleEl.style.width = `${w}px`;
-    this.scaleEl.style.height = `${h}px`;
-    // The outer stage (scroll extent) follows the scaled canvas size.
+    // During startup (before the restored image is composed), _zoomReady is
+    // false: deferring scale-box sizing to ViewportManager.applyZoom() avoids
+    // a mid-load flash where the canvas jumps from the default size to the
+    // image size. syncStageSize() remains blocked by _zoomReady=false here.
+    if (this.viewportManager?._zoomReady) {
+      this.scaleEl.style.width = `${w}px`;
+      this.scaleEl.style.height = `${h}px`;
+    }
     this.viewportManager?.syncStageSize?.();
   }
 

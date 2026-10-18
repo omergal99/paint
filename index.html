@@ -1093,6 +1093,14 @@
 			<div class="workspace-content" id="workspace-content" data-tag="workspace-content">
 				<!-- ===================== CANVAS AREA ===================== -->
 				<main class="canvas-viewport" id="canvas-viewport" data-tag="canvas-viewport">
+					<!-- Canvas loading overlay: covers the workspace while the restored
+					     raster is composed and the zoom geometry is applied, so the
+					     overlay-canvas resize is never visible as a jump. Released by
+					     ViewportManager.releaseCanvasLoading() after applyZoom(). -->
+					<div class="canvas-loading-mask" data-tag="canvas-loading-mask" role="status" aria-live="polite">
+						<span class="canvas-loading-spinner" aria-hidden="true"></span>
+						<span class="canvas-loading-label" data-i18n="ui.loading">Loading…</span>
+					</div>
 					<!-- Outer box: sized to the scaled canvas so scrollbars match the
              visible canvas exactly (no dead gray space when zoomed out,
              full panning room when zoomed in). -->

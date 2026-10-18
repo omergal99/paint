@@ -21,40 +21,26 @@ let destroyEditor = null;
 let setPwaUpdateSafetyGuard = null;
 let shouldRestoreLastImage = () => false;
 
+import { getDebugLoadingDelay, releaseRibbonLoading } from './core/initAppLoadingService.js';
+
 // The static shell paints immediately, then main.js applies saved layout,
 // locale, and ribbon visibility. Mask that short reconciliation window so the
 // ribbon never visibly jumps between defaults and the user's saved layout.
 // Flip this single constant to false if the product prefers the instant shell.
 const RIBBON_STARTUP_MASK_ENABLED = true;
-// Development preview only: append `?debugLoading=1&loadingMs=1500` to hold
-// the startup mask for 1.5s after Paint is ready. Without the explicit flag,
-// production behavior remains event-driven and adds no artificial delay.
-const getDebugLoadingDelay = () => {
-  const params = new URLSearchParams(globalThis.location?.search || '');
-  if (params.get('debugLoading') !== '1') return 0;
-  const value = Number(params.get('loadingMs'));
-  return Number.isFinite(value) ? Math.min(10000, Math.max(0, Math.round(value))) : 0;
-};
 const RIBBON_STARTUP_MASK_DELAY_MS = getDebugLoadingDelay();
 const ribbon = document.getElementById('ribbon');
-let ribbonMaskReleased = false;
-const releaseRibbonStartupMask = () => {
-  if (ribbonMaskReleased) return;
-  ribbonMaskReleased = true;
-  ribbon?.classList.remove('ribbon-loading');
-};
-const releaseRibbonStartupMaskAfterReady = () => {
-  if (RIBBON_STARTUP_MASK_DELAY_MS > 0) {
-    window.setTimeout(releaseRibbonStartupMask, RIBBON_STARTUP_MASK_DELAY_MS);
-    return;
-  }
-  releaseRibbonStartupMask();
-};
 if (ribbon) {
   if (RIBBON_STARTUP_MASK_ENABLED) {
-    window.addEventListener('paint:ready', releaseRibbonStartupMaskAfterReady, { once: true });
+    window.addEventListener('paint:ready', () => {
+      if (RIBBON_STARTUP_MASK_DELAY_MS > 0) {
+        window.setTimeout(() => releaseRibbonLoading(ribbon), RIBBON_STARTUP_MASK_DELAY_MS);
+      } else {
+        releaseRibbonLoading(ribbon);
+      }
+    }, { once: true });
   } else {
-    releaseRibbonStartupMask();
+    releaseRibbonLoading(ribbon);
   }
 }
 

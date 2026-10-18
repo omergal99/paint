@@ -247,6 +247,8 @@ export const initializeJa = (english) => {
     "ui.aboutPaint": "paintについて",
     "ui.version": "バージョン",
     "ui.loading": "読み込み中…",
+    "ui.loadingApp": "アプリを読み込み中…",
+    "ui.loadingLastImage": "最後の画像を読み込み中…",
     "ui.activity": "アクティビティ",
     "ui.storedData": "ブラウザーの推定使用量",
     "ui.freeSpace": "空き容量",

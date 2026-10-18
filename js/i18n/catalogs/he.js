@@ -252,6 +252,8 @@ export const initializeHe = (english) => {
     "ui.bottom": "למטה",
     "ui.floating": "צף",
     "ui.loading": "טוען…",
+    "ui.loadingApp": "טוען את היישום…",
+    "ui.loadingLastImage": "טוען את התמונה האחרונה…",
     "ui.version": "גרסה",
     "ui.activity": "פעילות",
     "ui.storedData": "שימוש משוער באחסון הדפדפן",

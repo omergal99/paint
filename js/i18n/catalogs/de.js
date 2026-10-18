@@ -247,6 +247,8 @@ export const initializeDe = (english) => {
     "ui.aboutPaint": "Über paint",
     "ui.version": "Version",
     "ui.loading": "Wird geladen…",
+    "ui.loadingApp": "App wird geladen…",
+    "ui.loadingLastImage": "Letztes Bild wird geladen…",
     "ui.activity": "Aktivität",
     "ui.storedData": "Geschätzte Browser-Speichernutzung",
     "ui.freeSpace": "Freier Speicher",
