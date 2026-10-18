@@ -42,7 +42,7 @@ test('crop commits floating selections through the shared history transition', (
 test('Workspace strip has explicit management and split controls', () => {
 	assert.doesNotMatch(html, /id="workspace-strip"|class="workspace-strip"/);
 	assert.match(main, /const workspaceStripRoot =/);
-	assert.match(main, /id = 'workspace-tab-bar'/);
+	assert.match(main, /id = "workspace-tab-bar"/);
 	assert.doesNotMatch(html, /workspace-split-toolbar/);
 	assert.match(main, /workspace-split-view/);
 	assert.match(html, /id="btn-manage-workspace"/);
@@ -60,9 +60,11 @@ test('About stats use one shared loading status and resolve their values', () =>
 	assert.equal((about.match(/data-i18n="ui\.loading"/g) || []).length, 1);
 	assert.match(read('js/app/aboutPanel.js'), /const loading = document\.getElementById\('about-loading-state'\)/);
 	assert.match(read('js/app/aboutPanel.js'), /finally \{[\s\S]*loading\.hidden = true/);
-	assert.match(app, /debugLoading=1&loadingMs=1500/);
+	// The debug delay lives in the shared loading service; app.js consumes it.
+	assert.match(app, /getDebugLoadingDelay/);
 	assert.match(app, /RIBBON_STARTUP_MASK_DELAY_MS/);
-	assert.match(app, /Math\.min\(10000, Math\.max\(0/);
+	assert.match(read('js/core/initAppLoadingService.js'), /params\.get\('debugLoading'\)/);
+	assert.match(read('js/core/initAppLoadingService.js'), /Math\.min\(10000, Math\.max\(0/);
 });
 test('More tools are rendered from one localized menu definition and retain source icons', () => {
 	const toolbar = read('js/ui/Toolbar.js');
@@ -350,7 +352,7 @@ test('Keyboard paste defers to the native paste event for macOS support', () => 
   assert.match(service, /documentRef\?\.addEventListener\('copy', handleCopy\)/);
   assert.match(service, /documentRef\?\.addEventListener\('cut', handleCut\)/);
   assert.match(main, /clipboardService\.attach\(\);/);
-  assert.doesNotMatch(main, /document\.addEventListener\('paste'/,
+  assert.doesNotMatch(main, /document\.addEventListener\("paste"/,
     'the native paste listener must have one owner');
   const shortcutBlock = main.match(/window\.addEventListener\('keydown'[\s\S]*?\n\}\);\n/)?.[0] || '';
   assert.ok(!/case 'v':[\s\S]*clipboardManager\.paste\(\)/.test(shortcutBlock),
@@ -400,7 +402,7 @@ test('History tab exposes undo/redo, one concise preferences row, and event-driv
   assert.match(main, /\[SHORTCUT_ACTIONS\.undo\]: runUndo/);
   assert.match(html, /id="history-undo-btn"[^>]*data-action="undo"/);
   assert.match(html, /id="history-redo-btn"[^>]*data-action="redo"/);
-  assert.match(main, /createActionDispatcher\(\{ commandRegistry, root: document\.body \}\)/);
+  assert.match(main, /createActionDispatcher\(\{\s*commandRegistry,\s*root: document\.body,?\s*\}\)/);
   // State flows through one event, so no surface polls.
   assert.match(historyManager, /EVENTS\.historyChanged/);
   assert.match(main, /window\.addEventListener\(EVENTS\.historyChanged/);
@@ -491,8 +493,8 @@ test('History preferences row re-translates on locale and settings changes', () 
   // Values JS renders must be tagged for LocaleController (data-i18n-runtime),
   // otherwise they freeze in the language that was active at render time.
   assert.match(main, /const setLocalizedText = \(node, key\)/);
-  assert.match(main, /setAttribute\('data-i18n-runtime', key\)/);
-  assert.match(main, /removeAttribute\('data-i18n-runtime'\)/);
+  assert.match(main, /setAttribute\("data-i18n-runtime", key\)/);
+  assert.match(main, /removeAttribute\("data-i18n-runtime"\)/);
   // Auto-save state keeps message keys (not pre-translated strings).
   assert.match(historyControls, /modeKeys = \{ lifecycle: 'ui\.autoSaveLifecycle', all: 'ui\.allAutomaticEvents', manual: 'ui\.onlyManualShort' \}/);
   assert.match(historyControls, /setLocalizedText\(status, prefs\.autoSave \? \(modeKeys\[prefs\.mode\] \?\? null\) : 'ui\.off'\)/);
@@ -513,7 +515,7 @@ test('Action menus only consume Escape when a menu was open', () => {
   assert.match(controller, /if \(openMenus\.length > 0\) \{\s*event\.preventDefault\(\);\s*event\.stopPropagation\(\);/);
   // Deep-linked dialogs still open and Escape keeps the URL in sync.
   assert.match(main, /const restoreDialogFromUrl = \(\) => \{/);
-  assert.match(main, /newFileDialog\.addEventListener\('close', \(\) => \{\s*if \(router\.param\('dialog'\) === 'new'\) setDialogUrl\(null\);/);
+  assert.match(main, /newFileDialog\.addEventListener\("close", \(\) => \{\s*if \(router\.param\("dialog"\) === "new"\) setDialogUrl\(null\);/);
   assert.doesNotMatch(escapeBranch.slice(0, 200), /event\.preventDefault\(\);\s*event\.stopPropagation\(\);\s*const openMenus/);
 });
 
@@ -521,18 +523,18 @@ test('main.js stays a composition root as feature sections move into js/app/', (
   const fileActions = read('js/app/fileActions.js');
   const resizeDialog = read('js/app/resizeDialog.js');
   // Sections live in modules; main only wires them and consumes their API.
-  assert.match(main, /import \{ initFileActions \} from '\.\/app\/fileActions\.js'/);
-  assert.match(main, /import \{ initResizeDialog \} from '\.\/app\/resizeDialog\.js'/);
+  assert.match(main, /import \{ initFileActions \} from "\.\/app\/fileActions\.js"/);
+  assert.match(main, /import \{ initResizeDialog \} from "\.\/app\/resizeDialog\.js"/);
   assert.match(main, /const fileActions = initFileActions\(\{/);
-  assert.match(main, /import \{ initCanvasTransforms, pruneRotationState, resetRotationState \} from '\.\/app\/canvasTransforms\.js';/);
-  assert.match(main, /import \{ initHistoryControls \} from '\.\/app\/historyControls\.js';/);
+  assert.match(main, /import \{\s*initCanvasTransforms,\s*pruneRotationState,\s*resetRotationState,?\s*\} from "\.\/app\/canvasTransforms\.js";/);
+  assert.match(main, /import \{ initHistoryControls \} from "\.\/app\/historyControls\.js";/);
   assert.match(main, /const historyControls = initHistoryControls\(\{/);
   // Settings definitions live in js/app/*; main.js only wires them.
   const settingsRegistry = read('js/app/settingsRegistry.js');
   const aboutPanel = read('js/app/aboutPanel.js');
   const shortcutSettings = read('js/app/shortcutSettings.js');
   assert.match(main, /const settingsRegistry = createPaintSettingsRegistry\(\{ colorPalette, sidebar \}\);/);
-  assert.match(main, /const \{ shortcutManager, renderShortcutSettings \} = initShortcutSettings\(\{ settingsStore \}\);/);
+  assert.match(main, /const \{ shortcutManager, renderShortcutSettings \} = initShortcutSettings\(\{\s*settingsStore,?\s*\}\);/);
   // main.js holds the panel handle so it can call `aboutPanel.destroy()` on
   // teardown; the locale listeners are registered and owned inside the panel.
   assert.match(main, /const aboutPanel = initAboutPanel\(\);/);
@@ -541,7 +543,7 @@ test('main.js stays a composition root as feature sections move into js/app/', (
   assert.match(aboutPanel, /const destroy = \(\) => \{/);
   assert.match(aboutPanel, /return Object\.freeze\(\{ updateAboutStats, renderReleaseNotes, destroy \}\);/);
   const ribbonSettings = read('js/app/ribbonSettings.js');
-  assert.match(main, /const \{ syncRibbonSettingsControls \} = initRibbonSettings\(\{ sidebar, saveSettings \}\);/);
+  assert.match(main, /const \{ syncRibbonSettingsControls \} = initRibbonSettings\(\{\s*sidebar,\s*saveSettings,?\s*\}\);/);
   assert.match(ribbonSettings, /import \{ t \} from '\.\.\/i18n\/messages\.js';/);
   assert.match(ribbonSettings, /const RIBBON_GROUP_ORDER = Object\.freeze\(\[/);
   assert.doesNotMatch(main, /const RIBBON_GROUP_ORDER/);
@@ -574,7 +576,7 @@ test('main.js stays a composition root as feature sections move into js/app/', (
   assert.match(transforms, /export const resetRotationState = \(\) => \{/);
   assert.doesNotMatch(main, /let selectionRotation = null;/);
   const settingsStore = read('js/app/settingsStore.js');
-  assert.match(main, /import \{ createPaintSettingsStore \} from '\.\/app\/settingsStore\.js';/);
+  assert.match(main, /import \{ createPaintSettingsStore \} from "\.\/app\/settingsStore\.js";/);
   assert.match(settingsStore, /export const createPaintSettingsStore = \(\{ storage = globalThis\.localStorage, key = STORAGE_KEYS\.settings \} = \{\}\) => createSettingsStore\(\{/);
   assert.match(settingsStore, /import \{ createSettingsStore \} from '\.\.\/settings\/SettingsStore\.js';/);
   // One schema owner: no validators left inline in the composition root.
@@ -600,7 +602,7 @@ test('History save limit follows Settings instead of the IndexedDB copy', () => 
   assert.match(constants, /historyLimit: 50,/);
   assert.match(read('js/app/settingsStore.js'), /historyLimit: \(value\) => HISTORY_LIMIT_OPTIONS\.includes\(Number\(value\)\)/);
   // saveSettings keeps the store value instead of scraping a control.
-  assert.match(main, /historyLimit: Number\(readSettings\(\)\.historyLimit/);
+  assert.match(main, /historyLimit: Number\(\s*readSettings\(\)\.historyLimit/);
   // applyHistoryLimit writes the store first, then the views + enforcement copy.
   assert.match(historyControls, /settingsStore\.set\(\{ historyLimit: safe \}\);[\s\S]*?syncHistoryLimitSelect\(safe\);[\s\S]*?globalHistory\.saveSettings\(safe, safe > 0\)/);
   // Startup restores from the store (with a one-time IndexedDB migration).
@@ -784,13 +786,13 @@ test('settings search keeps text intact and reports only deepest areas', () => {
   assert.match(main, /viewportManager\.invalidateGeometry\(\);[\s\S]*canvasResizer\.reposition\(\)/);
   assert.match(read('js/canvas/ViewportManager.js'), /alignRtlResizeEdge/);
   assert.match(read('js/canvas/ViewportManager.js'), /scrollLeft = -maxScroll/);
-  assert.match(main, /directionEventTarget\.addEventListener\('paint:locale-change', refreshCanvasDirectionGeometry\)/);
-  assert.match(main, /directionEventTarget\.removeEventListener\('paint:locale-change', refreshCanvasDirectionGeometry\)/);
+  assert.match(main, /directionEventTarget\.addEventListener\(\s*"paint:locale-change",\s*refreshCanvasDirectionGeometry,?\s*\)/);
+  assert.match(main, /directionEventTarget\.removeEventListener\(\s*"paint:locale-change",\s*refreshCanvasDirectionGeometry,?\s*\)/);
   assert.match(read('index.html'), /data-i18n="ribbon\.annotations\.more">More<\/span>/);
   assert.match(read('js/i18n/messages.js'), /more: 'More'/);
   assert.match(read('index.html'), /class="ribbon ribbon-loading"/);
   assert.match(read('js/app.js'), /RIBBON_STARTUP_MASK_ENABLED = true/);
-  assert.match(read('js/app.js'), /paint:ready.*releaseRibbonStartupMask/s);
+  assert.match(read('js/app.js'), /paint:ready.*releaseRibbonLoading/s);
   assert.match(read('index.html'), /class="ribbon-group ribbon-group-file" data-ribbon-key="file"/);
   assert.match(main, /getRibbonGroupKey/);
   assert.match(read('js/app/settingsHydration.js'), /ribbonVisibility\[stableKey\] \?\? ribbonVisibility\[legacyKey\]/);
@@ -903,7 +905,7 @@ test('Hand/Pan is available as a shared tool and shortcut', () => {
 	const pan = read('js/tools/PanTool.js');
 	assert.match(read('js/ui/Toolbar.js'), /tool: 'pan', labelKey: 'ui\.handPan'/);
 	assert.match(main, /createPanTool/);
-	assert.match(main, /\[SHORTCUT_ACTIONS\.panTool\]: \(\) => toolManager\.setActive\('pan'\)/);
+	assert.match(main, /\[SHORTCUT_ACTIONS\.panTool\]: \(\) => toolManager\.setActive\("pan"\)/);
 	assert.match(pan, /scrollLeft/);
 	assert.match(pan, /scrollTop/);
 	assert.match(read('css/styles.css'), /#canvas-viewport\.pan-mode/);
@@ -1012,7 +1014,7 @@ test('New defaults are safe and configurable', () => {
   assert.match(html, /id="setting-show-ai-chat"[^>]*\/>/);
   assert.match(read('js/app/settingsHydration.js'), /saved\.showAiChat === true/);
   assert.match(html, /id="rotate-selection-toggle" checked/);
-  assert.match(main, /mode: s\.historyAutoSaveMode.*lifecycle/);
+  assert.match(main, /mode:\s*s\.historyAutoSaveMode\s*===\s*"close"\s*\?\s*"lifecycle"/);
   assert.match(html, /id="setting-default-canvas-size"/);
   assert.match(html, /id="setting-default-zoom"/);
   assert.match(html, /id="setting-show-zoom-reset"/);
@@ -1045,7 +1047,7 @@ test('Text editor alignment scales from one layout object', () => {
 });
 
 test('Dialogs and palette settings have persistent UX hooks', () => {
-  assert.match(main, /setDialogUrl\('settings'/);
+  assert.match(main, /setDialogUrl\("settings"/);
 	assert.match(main, /restoreDialogFromUrl/);
 	// URL shape lives in the router now: closing a dialog drops `dialog`+`tab`.
 	assert.match(read('js/app/router.js'), /params\.delete\('dialog'\)|params\.delete\(key\)/);
@@ -1084,15 +1086,15 @@ test('app state store and router are the single owners of view state and URLs', 
   assert.match(appStateModule, /queueMicrotask\(notify\)/);
   assert.match(appStateModule, /subscribe = \(listener, selector = null\)/);
   // Writers dispatch; nothing writes the snapshot directly.
-  assert.match(main, /appState\.dispatch\(\{ type: 'tool\/changed'/);
-  assert.match(main, /appState\.dispatch\(\{ type: 'selection\/changed'/);
-  assert.match(main, /appState\.dispatch\(\{ type: 'history\/changed'/);
+  assert.match(main, /appState\.dispatch\(\{ type: "tool\/changed"/);
+  assert.match(main, /appState\.dispatch\(\{ type: "selection\/changed"/);
+  assert.match(main, /appState\.dispatch\(\{ type: "history\/changed"/);
   // Router: one URL owner, deep links resolved without acting on them.
   assert.match(routerModule, /export const createRouter/);
   assert.match(routerModule, /resolveDeepLink/);
   assert.match(routerModule, /onChange/);
-  assert.match(main, /from '\.\/app\/router\.js'/);
-  assert.match(main, /from '\.\/app\/appState\.js'/);
+  assert.match(main, /from "\.\/app\/router\.js"/);
+  assert.match(main, /from "\.\/app\/appState\.js"/);
   assert.equal((main.match(/window\.location\.search/g) || []).length, 0, 'no module may read location.search directly');
 });
 
@@ -1251,7 +1253,7 @@ test('Round-2 stabilization: alpha, text commit, and nested image actions', () =
 	assert.match(main, /const commitFloatingPixels = \(region\) =>/);
 	assert.match(canvas, /export const commitLayerWithSourceOver = \(context, layer, region\) =>/);
 	assert.match(canvas, /globalAlpha = 1;[\s\S]*globalCompositeOperation = 'source-over'/);
-	assert.match(main, /commitLayerWithSourceOver\(canvasManager\.ctx/);
+	assert.match(main, /commitLayerWithSourceOver\(\s*canvasManager\.ctx/);
 	assert.match(textTool, /commit\(\);[\s\S]*getTextSelectAfterDraw\?\.\(\) === true/);
 	assert.match(css, /\.text-editor-toolbar\.is-empty\s*\{/);
 	assert.match(textTool, /toolbar\.hidden = false/);
@@ -1319,8 +1321,8 @@ test('select after draw: a lifted shape is a layer, and unload bakes it', () => 
   assert.match(shapeTool, /snapshot\?\.\(\{ force: true \}\)/);
   // Closing or refreshing counts as leaving the selection: bake before saving,
   // otherwise the just-drawn shape would be silently discarded.
-  assert.match(main, /beforeunload'[\s\S]{0,400}?commitFloatingSelection\(\)/);
-  assert.match(main, /pagehide'[\s\S]{0,200}?commitFloatingSelection\(\)/);
+  assert.match(main, /beforeunload"[\s\S]{0,400}?commitFloatingSelection\(\)/);
+  assert.match(main, /pagehide"[\s\S]{0,200}?commitFloatingSelection\(\)/);
   // Moving a lifted layer must not lift + erase again (that erased artwork under
   // the shape). SelectTool only lifts when nothing is floating yet.
   assert.match(read('js/tools/SelectTool.js'), /if \(!ctx\.canvasManager\.floatingCanvas\) \{[\s\S]*?fillRegion\(selection, ctx\.canvasManager\.backgroundColor\)/);
@@ -1344,7 +1346,7 @@ test('selection-handle drags are explicitly released with the editor', () => {
 	const destroyEditorBlock = main.match(/const destroyEditor = \(\) => \{[\s\S]*?\n\};/)?.[0] || '';
 	const selectionOverlay = read('js/app/selectionOverlayController.js');
 	assert.match(selectionOverlay, /const bindSelectionHandles = \(\) => \{[\s\S]*?handle\.removeEventListener\('pointerdown', onPointerDown\)[\s\S]*?stopDrag\(\)/);
-	assert.match(main, /const destroySelectionHandleBindings = selectionOverlayController\.bindSelectionHandles\(\);/);
+	assert.match(main, /const destroySelectionHandleBindings =\s*selectionOverlayController\.bindSelectionHandles\(\);/);
 	const transforms = read('js/app/canvasTransforms.js');
 	assert.match(transforms, /const bindRotateSelectionHandle = \(\) => \{[\s\S]*?stopSelectionRotationDrag\(\)[\s\S]*?rotateSelectionHandle\.removeEventListener\('pointerdown', onPointerDown\)/);
 	assert.match(transforms, /window\.addEventListener\('pointercancel', onCancel, \{ once: true \}\);/);
@@ -1429,7 +1431,7 @@ test('Color-inspector toggle keeps the shared arrow and zoom buttons use SVG ico
   assert.doesNotMatch(toggle, /<svg/);
   const setter = main.slice(main.indexOf('const setColorInspectorCollapsed'), main.indexOf('let colorInspectorCollapsed'));
   assert.doesNotMatch(setter, /innerHTML/);
-  assert.match(setter, /setAttribute\('aria-expanded'/);
+  assert.match(setter, /setAttribute\("aria-expanded"/);
   assert.match(css, /\.ci-toggle \{[^}]*width: 16px/s);
   assert.match(css, /\.ci-toggle \.menu-arrow\s*\{[^}]*rotate\(-90deg\)/s);
   assert.match(css, /\.ci-toggle\[aria-expanded="false"\] \.menu-arrow\s*\{[^}]*rotate\(90deg\)/s);
@@ -1472,8 +1474,8 @@ test('boot phases are measurable instead of guessed', () => {
   assert.match(bootTiming, /export const markBoot = \(name, detail\) => \{/);
   assert.match(bootTiming, /export const bootTiming = \(\) => marks\.slice\(\);/);
   // The timeline must bracket the parts that decide when the app feels ready.
-  assert.match(main, /markBoot\('boot:start'\);/);
-  assert.match(main, /markBoot\('boot:before-hydrate'\);[\s\S]{0,800}?applySavedSettings\(\);[\s\S]{0,200}?markBoot\('boot:after-hydrate'\);/);
+  assert.match(main, /markBoot\("boot:start"\);/);
+  assert.match(main, /markBoot\("boot:before-hydrate"\);[\s\S]{0,800}?applySavedSettings\(\);[\s\S]{0,200}?markBoot\("boot:after-hydrate"\);/);
   assert.match(read('js/app.js'), /markBoot\('boot:main-module-evaluated'\);/);
   assert.match(read('js/app.js'), /markBoot\('boot:interactive'\);/);
 });
@@ -1524,7 +1526,7 @@ test('global Ctrl+A capture prevents native selection before shortcut dispatch',
   assert.doesNotMatch(shortcuts.match(/export const shortcutFromEvent =[\s\S]*?;\n};/)?.[0] || '', /event\.key/);
   assert.match(main, /\[SHORTCUT_ACTIONS\.selectAll\]: selectAll/);
   assert.match(html, /id="btn-select-all"[^>]*data-action="selectAll"/);
-  assert.match(main, /createActionDispatcher\(\{ commandRegistry, root: document\.body \}\)/);
+  assert.match(main, /createActionDispatcher\(\{\s*commandRegistry,\s*root: document\.body,?\s*\}\)/);
 });
 
 test('pending session previews resolve the settled snapshot source', () => {
@@ -1605,9 +1607,9 @@ test('sidebar identity, panels and disclosure sections behave as one contract', 
   // 1. App icon / app name open Settings ▸ About; the clipboard icon-copy cycle is gone.
   // The icon is the click target; the app-name element is keyboard-only (Enter/Space)
   // so a wide text label is not an accidental click surface.
-  assert.match(main, /const openAboutFromAppIdentity = \(\) => openSettingsDialog\('about'\);/);
-  assert.match(main, /appIconBtn\?\.addEventListener\('click', openAboutFromAppIdentity\);/);
-  assert.match(main, /appNameEntry\?\.addEventListener\('keydown'/);
+  assert.match(main, /const openAboutFromAppIdentity = \(\) => openSettingsDialog\("about"\);/);
+  assert.match(main, /appIconBtn\?\.addEventListener\("click", openAboutFromAppIdentity\);/);
+  assert.match(main, /appNameEntry\?\.addEventListener\("keydown"/);
   assert.doesNotMatch(main, /copyAppIcon|iconCopyFormats/);
   assert.match(html, /class="status-item app-name" data-tag="app-name-about"/);
   assert.match(html, /<button type="button" class="app-icon-btn" aria-label="About Paint"/);

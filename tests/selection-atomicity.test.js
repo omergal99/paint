@@ -27,7 +27,7 @@ test('an outside press while a shape lift is pending draws a new shape (W4-01b)'
   // ToolManager exists, so an eager shorthand there would hit the temporal dead
   // zone and crash boot with "used before initialization".
   const mainSource = read('js/main.js');
-  assert.match(mainSource, /get toolManager\(\) \{ return toolManager; \},/);
+  assert.match(mainSource, /get toolManager\(\) \{\s*return toolManager;\s*\},/);
   // Everything written before `const toolManager = ...` must not read it
   // eagerly (arrow bodies are fine; they resolve at call time).
   const contextZone = mainSource.slice(0, mainSource.indexOf('const toolManager ='));
@@ -163,7 +163,7 @@ test('preview mode hides the frame and every handle but keeps the float', () => 
   // Handles, rotate and the frame all hide while previewing.
   assert.match(overlay, /const hidden = isPreviewActive\(\) \|\| !isToolActive\(\)/);
   // The preview control lives in the sidebar panel, not the overlay.
-  assert.match(main, /document\.getElementById\('setting-selection-preview'\)\?\.checked === true/);
+  assert.match(main, /document\.getElementById\("setting-selection-preview"\)\?\.checked === true/);
 });
 
 test('the clipboard service owns copy, cut and paste for every trigger', () => {
@@ -268,7 +268,7 @@ test('preview is driven only from the sidebar, not the canvas overlay', () => {
   const main = read('js/main.js');
   const overlayController = read('js/app/selectionOverlayController.js');
   assert.doesNotMatch(main, /selectionPreviewButton/);
-  assert.match(main, /const isSelectionPreviewEnabled = \(\) => document\.getElementById\('setting-selection-preview'\)\?\.checked === true;/);
+  assert.match(main, /const isSelectionPreviewEnabled = \(\) =>\s*document\.getElementById\("setting-selection-preview"\)\?\.checked === true;/);
   // Preview still hides the frame and every handle.
   assert.match(overlayController, /const hidden = isPreviewActive\(\) \|\|/);
 });
@@ -487,7 +487,7 @@ test('every undo trigger routes through one runUndo/runRedo pair', () => {
   assert.match(html, /id="btn-redo"[^>]*data-action="redo"/);
   assert.match(html, /id="history-undo-btn"[^>]*data-action="undo"/);
   assert.match(html, /id="history-redo-btn"[^>]*data-action="redo"/);
-  assert.match(main, /createActionDispatcher\(\{ commandRegistry, root: document\.body \}\)/);
+  assert.match(main, /createActionDispatcher\(\{\s*commandRegistry,\s*root: document\.body,?\s*\}\)/);
   assert.match(read('js/ui/ActionDispatcher.js'), /commandRegistry\.execute\(\{ action, event \}\)/);
 });
 
