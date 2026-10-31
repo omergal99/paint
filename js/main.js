@@ -1611,6 +1611,7 @@ actionDispatcher.bind();
 const globalShortcutController = createGlobalShortcutController({
   commandRegistry,
   shortcutManager,
+  getSelection,
 });
 globalShortcutController.bind();
 

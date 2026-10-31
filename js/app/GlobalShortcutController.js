@@ -15,11 +15,23 @@ export const createGlobalShortcutController = ({
 	shortcutManager,
 	eventTarget = globalThis.window,
 	documentRef = globalThis.document,
+	getSelection,
 } = {}) => {
 	const handleKeydown = (event) => {
 		const activeElement = documentRef?.activeElement;
 		if (event.defaultPrevented || event.isComposing || isEditableTarget(activeElement)) return;
-		if (KEYBOARD_KEYS.arrows.includes(event.key) && isArrowNavigationTarget(activeElement)) return;
+
+		// When a selection is active, arrow keys always nudge it regardless of
+		// which element has focus. This keeps behavior consistent across platforms
+		// (e.g. macOS where focus may linger on a ribbon/sidebar control whose
+		// native arrow navigation would otherwise steal the keystroke).
+		const selection = getSelection ? getSelection() : null;
+		const selectionActive = Boolean(selection?.w && selection?.h);
+		if (
+			KEYBOARD_KEYS.arrows.includes(event.key) &&
+			!selectionActive &&
+			isArrowNavigationTarget(activeElement)
+		) return;
 
 		const shortcut = shortcutFromEvent(event);
 		const action = shortcutManager.resolve(shortcut);

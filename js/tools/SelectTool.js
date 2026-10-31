@@ -238,7 +238,16 @@ export const createSelectTool = ({
 	const onCancel = (_point, ctx, event) => {
 		stopAutoScroll();
 		cancelPreview();
-		if (!state.moving) ctx.setSelection(null);
+		if (state.moving) {
+			// An in-progress move drag was cancelled: restore the original
+			// position so the user does not lose the selection's placement.
+			if (state.originalSelection) {
+				ctx.setSelection(state.originalSelection);
+			}
+		}
+		// When !state.moving (marquee creation): do NOT clear the selection. It
+		// was already painted by onMove, and a pointercancel (e.g. macOS dropping
+		// pointerup) is not an explicit user cancel. Keep the marquee intact.
 		ctx.setMarqueeStatus?.(false);
 		state.start = null;
 		state.moving = false;
