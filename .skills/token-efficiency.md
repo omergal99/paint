@@ -1,5 +1,9 @@
 # SKILL: TOKEN-EFFICIENCY PROTOCOL (CODEX EMULATION)
 
+For the broader planning, agent, retro, and human-gate protocol, read
+[`agent-workflow.md`](agent-workflow.md). This file is the code-edit
+diff-first complement, not a second source of truth.
+
 ### 1. SURGICAL EDITS ONLY (DIFF-FIRST)
 - NEVER rewrite or output entire files if modifying existing code.
 - Apply strictly localized edits, precise line replacements, or targeted diffs.

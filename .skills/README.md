@@ -4,6 +4,8 @@ These concise notes are the project contract for future agents. Read the
 relevant note before editing; read `AGENTS.md` first for the required baseline.
 
 - [`coding.md`](coding.md) - clean code, KISS, SSOT, no duplication.
+- [`agent-workflow.md`](agent-workflow.md) - bounded, budgeted, deterministic,
+  documented, and independently reviewed AI-agent sessions.
 - [`architecture.md`](architecture.md) - logic/data/UI separation and module boundaries.
 - [`ui-components.md`](ui-components.md) - reusable, responsive infrastructure UI.
 - [`performance.md`](performance.md) - browser/canvas performance rules.

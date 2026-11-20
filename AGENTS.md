@@ -4,6 +4,11 @@ Before changing this app, read [`.skills/README.md`](.skills/README.md) and the
 specific skill notes relevant to the task. Keep this file as the short entry
 point; detailed guidance belongs in `.skills/`.
 
+For multi-step, long-running, planning, retro, or multi-agent work, read
+[`.skills/agent-workflow.md`](.skills/agent-workflow.md). It defines bounded
+scope, token/context budgets, deterministic fact gathering, sub-agent gates,
+verification, handoff, and human approval points.
+
 Required habits:
 
 - Keep logic, persisted data, and UI rendering separate.
