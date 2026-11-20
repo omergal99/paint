@@ -7,8 +7,8 @@ intended to be updated when community processes or GitHub settings change.
 
 | Area | Status | Evidence / next action |
 | --- | --- | --- |
-| Project description and setup | Present | `README.md` describes purpose, local serving, features, browser support, and architecture. |
-| Contributing guide | Present | `CONTRIBUTING.md` documents setup, tests, code expectations, and PR behavior. |
+| Project description and setup | Present | `README.md` describes purpose, local serving, key capabilities, data flow, and documentation entry points. |
+| Contributing guide | Present | `CONTRIBUTING.md` documents setup, local checks, review expectations, and a human-reviewed AI contribution path. |
 | Code of conduct | Present | `CODE_OF_CONDUCT.md` defines scope, expected behavior, reporting, and enforcement. |
 | Security policy | Present | `SECURITY.md` directs reports away from public issues and documents scope and response. |
 | Bug/feature issue templates | Present | `.github/ISSUE_TEMPLATE/` contains privacy-safe templates and security contact guidance. |
@@ -21,9 +21,16 @@ intended to be updated when community processes or GitHub settings change.
   are opened on their official sites; Paint does not collect provider keys.
 - Browser clipboard, file access, local storage, service-worker caching, and
   external links are documented areas for future security review.
-- CI currently runs the smoke test suite. Dependency/security scanning and
-  private vulnerability reporting still require GitHub configuration or an
-  explicit maintainer decision.
+- CI and local gates cover tests, localization, typing, docs, and release
+  consistency. They do not prove physical-device behavior or replace an
+  independent security review.
+- `AGENTS.md`, `.skills/`, and `.agents/skills/` are contributor guidance and
+  tooling, not app runtime. Keep the short project entry point and the skills
+  that are actively used; periodically check for duplication or obsolete
+  instructions before adding more. Do not remove them solely because their
+  names are hidden files.
+- Dependency/security scanning and private vulnerability reporting still
+  require GitHub configuration or an explicit maintainer decision.
 
 ## GitHub-hosted controls to verify manually
 

@@ -69,6 +69,7 @@ export const initializeFr = (english) => {
     "ui.systemUiDefaultFont": "Interface système (sans empattement par défaut)",
     "ui.blackOutlineStrokeColor": "Couleur du contour noir",
     "ui.selectionMenu": "Sélection",
+    "ui.deselect": "Désélectionner",
     "ui.selectRectangle": "Sélection rectangulaire",
     "ui.selectLasso": "Sélection à main levée",
     "ui.blackOutlineStrokeWidth": "Épaisseur du contour noir",

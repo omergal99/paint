@@ -243,10 +243,18 @@ if ('serviceWorker' in navigator && window.isSecureContext) {
   // indefinitely. Ask for an update on load, whenever the tab becomes visible,
   // and on a slow timer, then reload once the new worker takes control.
   let refreshing = false;
+  let hadController = Boolean(navigator.serviceWorker.controller);
   const reloadOnce = () => {
     if (refreshing) return;
     refreshing = true;
     window.location.reload();
+  };
+  const onControllerChange = () => {
+    if (!hadController) {
+      hadController = true;
+      return;
+    }
+    reloadOnce();
   };
 
   const trackUpdates = (registration) => {
@@ -264,7 +272,7 @@ if ('serviceWorker' in navigator && window.isSecureContext) {
     });
   };
 
-  navigator.serviceWorker.addEventListener('controllerchange', reloadOnce);
+  navigator.serviceWorker.addEventListener('controllerchange', onControllerChange);
 
   const checkForUpdate = async (registration) => {
     try {

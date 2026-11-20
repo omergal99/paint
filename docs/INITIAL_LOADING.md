@@ -17,11 +17,32 @@ initial-load masking:
 Both `js/app.js` (ribbon) and `js/main.js` (canvas) import from this module,
 so there is one shared state machine and no duplicated delay logic.
 
+The static shell in `index.html` is shown first. `js/app.js` yields a browser
+paint before dynamically importing `js/main.js`; the editor then hydrates
+settings and, when enabled, resolves the working-canvas recovery record before
+dispatching `paint:ready`. This is a staged startup, not two sequential
+one-second waits.
+
 ## Production behaviour
 
 Masks are released by their readiness events with **zero artificial delay**.
 The 10-second fallback timer in `startCanvasReleaseFallback()` is a safety net
 so users are never blocked by a stuck overlay if a readiness event is missed.
+
+### Service-worker control and reloads
+
+The service worker may claim a page during the first visit. The global
+`controllerchange` listener in `js/app.js` ignores that first transition; it
+reloads only when a page that already had a controller changes to an updated
+worker. This separates initial control from an update, which previously could
+make first-time startup look like a second load.
+
+Local check (2026-11-20): a fresh origin at `127.0.0.1:4175`, 1280 × 800,
+reported one navigation of type `navigate`; the editor reached its ready state
+without a second navigation. This is local browser evidence, not proof for a
+production domain or physical mobile device. Test a later worker update on an
+already-controlled page separately; a warm tab is not evidence for the
+first-visit case.
 
 ## Developer options
 

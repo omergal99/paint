@@ -69,6 +69,7 @@ export const initializeJa = (english) => {
     "ui.systemUiDefaultFont": "システム UI（既定のサンセリフ）",
     "ui.blackOutlineStrokeColor": "黒い輪郭の色",
     "ui.selectionMenu": "選択範囲",
+    "ui.deselect": "選択解除",
     "ui.selectRectangle": "長方形選択",
     "ui.selectLasso": "自由選択",
     "ui.blackOutlineStrokeWidth": "黒い輪郭の幅",

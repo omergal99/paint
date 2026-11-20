@@ -77,11 +77,16 @@ forgetting this: the sidebar header title and the History auto-save state.
 
 ## Composition root wiring
 
-`js/main.js` only wires modules. A section that grows its own state moves with
-it and the root keeps a single-line call — e.g.
-`const settingsStore = createPaintSettingsStore();`. Schema, validators and
-registry definitions live in `js/app/settingsStore.js` and
-`js/app/settingsRegistry.js`.
+`js/main.js` is the composition root and still owns significant coordination.
+New feature state should live with its owner; extract a focused controller once
+its contract is stable rather than growing another unrelated section in the
+root. Schema, validators and registry definitions live in
+`js/app/settingsStore.js` and `js/app/settingsRegistry.js`.
+
+There is no Storybook or standalone visual catalog yet. Until a live gallery is
+added, this guide and the owning component/module are the source of truth. A
+future gallery should render the real components and states, not copied
+examples that can drift.
 
 ## Everyday rule (during development)
 
@@ -108,9 +113,9 @@ release-verification lifecycle hooks also run this sync automatically:
 
 | Source | Value |
 |---|---|
-| `package.json` | `1.7.0` |
-| `js/version.js` | `APP_VERSION = '1.7.0'` |
-| `sw.js` | `CACHE_NAME = 'paint-shell-v1-7-0-<shell-hash>'` |
+| `package.json` | `1.9.1` |
+| `js/version.js` | `APP_VERSION = '1.9.1'` |
+| `sw.js` | `CACHE_NAME = 'paint-shell-v1-9-1-<shell-hash>'` |
 
 The hash changes whenever a precached source changes. Never edit `CACHE_NAME`
 by hand; run `npm run sw:sync` only when syncing manually during development.

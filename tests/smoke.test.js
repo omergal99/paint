@@ -708,7 +708,8 @@ test('dark-mode CSS provides contrast for settings footer and danger buttons', (
 	assert.match(read('js/ui/DialogSearch.js'), /previousButton/);
 	assert.doesNotMatch(read('js/ui/DialogSearch.js'), /press Enter to go/);
 	assert.match(main, /createDialogSearch/);
-	assert.match(sidebar, /snapshot\?\.\(\{ force: true \}\)/);
+	assert.match(sidebar, /saveCurrentSession/);
+	assert.doesNotMatch(sidebar, /snapshot\?\.\(\{ force: true \}\)/);
 	assert.match(sidebar, /waitForPendingSnapshots/);
 	const makefile = read('Makefile');
 	assert.match(makefile, /^setup:/m);

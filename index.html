@@ -92,6 +92,11 @@
 						stroke-linejoin="round" />
 					<path d="M7 7h6v6H7z" fill="none" stroke="currentColor" />
 				</symbol>
+				<symbol id="icon-deselect" viewBox="0 0 20 20">
+					<path d="M3 7V3h4M13 3h4v4M17 13v4h-4M7 17H3v-4" fill="none" stroke="currentColor" stroke-linecap="round"
+						stroke-linejoin="round" />
+					<path d="m8 8 4 4m0-4-4 4" fill="none" stroke="currentColor" stroke-linecap="round" />
+				</symbol>
 				<symbol id="icon-save" viewBox="0 0 20 20">
 					<path d="M3 3h11l3 3v11H3zM6 3v5h7V3M6 13h8v4H6z" fill="none" stroke="currentColor" stroke-linejoin="round" />
 				</symbol>
@@ -353,6 +358,11 @@
 											<svg class="icon size4" viewBox="0 0 20 20" aria-hidden="true">
 												<use href="#icon-select-all" />
 											</svg><span data-i18n="ui.selectAll">Select All</span></button>
+										<button type="button" id="btn-deselect" role="menuitem" title="Deselect" data-action="deselect"
+											data-i18n-attr="title:ui.deselect">
+											<svg class="icon size4" viewBox="0 0 20 20" aria-hidden="true">
+												<use href="#icon-deselect" />
+											</svg><span data-i18n="ui.deselect">Deselect</span></button>
 									</div>
 								</div>
 								<div class="action-menu action-submenu">
@@ -2017,6 +2027,13 @@
 				</svg>
 				<span data-i18n="ui.selectAll">Select All</span>
 				<span class="menu-shortcut" aria-hidden="true">Ctrl+A</span>
+			</button>
+			<button type="button" role="menuitem" data-canvas-action="deselect" title="Deselect"
+				data-i18n-attr="title:ui.deselect">
+				<svg class="icon" viewBox="0 0 20 20" aria-hidden="true">
+					<use href="#icon-deselect" />
+				</svg>
+				<span data-i18n="ui.deselect">Deselect</span>
 			</button>
 			<div class="action-menu action-submenu">
 				<button class="action-menu-trigger action-submenu-trigger" type="button" role="menuitem" aria-haspopup="menu"

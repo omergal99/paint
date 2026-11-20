@@ -2,46 +2,45 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const root = path.resolve(import.meta.dirname, '..');
-// Work 2 status docs moved to the internal tree; CI checkouts do not include it.
-const phase2 = path.join(root, 'docs-internal/develop/work2/phase-2');
-const read = (relativePath) => fs.readFileSync(path.join(root, relativePath), 'utf8');
 const errors = [];
+const requiredFiles = [
+  'README.md',
+  'CONTRIBUTING.md',
+  'SECURITY.md',
+  'docs/ARCHITECTURE.md',
+  'docs/AUDIT-REPORT.md',
+  'docs/COMMUNITY_STANDARDS.md',
+  'docs/INITIAL_LOADING.md',
+  'docs/RELEASING.md',
+  'docs/UI-PATTERNS.md',
+];
 
-if (!fs.existsSync(phase2)) {
-  console.log('Documentation consistency: SKIP - internal work2 docs are not present in this checkout.');
-  process.exit(0);
+requiredFiles.forEach((file) => {
+  if (!fs.existsSync(path.join(root, file))) errors.push(`Missing public guide: ${file}`);
+});
+
+const documents = [...requiredFiles];
+if (fs.existsSync(path.join(root, 'docs-internal/README.md'))) {
+  documents.push('docs-internal/README.md');
+}
+if (fs.existsSync(path.join(root, 'docs-internal/CURRENT-PLAN.md'))) {
+  documents.push('docs-internal/CURRENT-PLAN.md');
 }
 
-const statusFiles = fs.readdirSync(phase2)
-  .filter((name) => /^PHASE-2-STATUS_\d+\.md$/.test(name))
-  .map((name) => ({ name, round: Number(name.match(/_(\d+)\.md$/)[1]) }))
-  .sort((a, b) => b.round - a.round);
+for (const document of documents) {
+  const documentPath = path.join(root, document);
+  if (!fs.existsSync(documentPath)) continue;
+  const contents = fs.readFileSync(documentPath, 'utf8');
+  const links = contents.matchAll(/!?\[[^\]]*\]\(([^)]+)\)/g);
 
-if (!statusFiles.length) {
-  errors.push('No numbered Phase 2 status file exists.');
-} else {
-  const latest = statusFiles[0];
-  const latestHtml = `PHASE-2-STATUS_${latest.round}.html`;
-  const canonical = fs.readFileSync(path.join(phase2, 'PHASE-2-STATUS.md'), 'utf8');
-  const latestMarkdown = fs.readFileSync(path.join(phase2, latest.name), 'utf8');
-  const latestHtmlPath = path.join(phase2, latestHtml);
-
-  if (!fs.existsSync(latestHtmlPath)) errors.push(`Missing HTML companion: ${latestHtml}`);
-  if (!canonical.includes(`(${latest.name})`)) errors.push(`Canonical status does not link to ${latest.name}.`);
-  if (!canonical.includes(`(${latestHtml})`)) errors.push(`Canonical status does not link to ${latestHtml}.`);
-  if (!latestMarkdown.includes('npm test')) errors.push(`${latest.name} has no test verification line.`);
-  if (fs.existsSync(latestHtmlPath) && !fs.readFileSync(latestHtmlPath, 'utf8').includes('<h1>Phase 2')) {
-    errors.push(`${latestHtml} has no Phase 2 heading.`);
+  for (const [, rawTarget] of links) {
+    const target = rawTarget.trim().split(/[\s#]/, 1)[0].replace(/^<|>$/g, '');
+    if (!target || target.startsWith('#') || target.startsWith('//') || /^[a-z]+:/i.test(target)) continue;
+    const resolved = path.resolve(path.dirname(documentPath), decodeURIComponent(target));
+    if (!fs.existsSync(resolved)) {
+      errors.push(`${document} links to missing path: ${target}`);
+    }
   }
-
-  const testCount = fs.readdirSync(path.join(root, 'tests')).filter((name) => name.endsWith('.test.js')).length;
-  const expectedTestMarker = `${testCount}/${testCount}`;
-  if (!canonical.includes(expectedTestMarker)) {
-    errors.push(`Canonical status does not reflect the current test-file count (${expectedTestMarker}).`);
-  }
-
-  const progress = fs.readFileSync(path.join(phase2, 'PROGRESS-LOG.md'), 'utf8');
-  if (!progress.includes(`Round ${latest.round}`)) errors.push(`Progress log has no Round ${latest.round} entry.`);
 }
 
 if (errors.length) {
@@ -49,5 +48,5 @@ if (errors.length) {
   errors.forEach((error) => console.error(`- ${error}`));
   process.exitCode = 1;
 } else {
-  console.log('Documentation consistency: PASS');
+  console.log(`Documentation consistency: PASS (${documents.length} guides checked).`);
 }

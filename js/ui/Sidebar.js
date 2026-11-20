@@ -208,15 +208,16 @@ export class Sidebar {
 		if (this.saveToHistoryBtn) {
 			this.saveToHistoryBtn.addEventListener('click', async () => {
 				if (this.historyView === HISTORY_VIEWS.session) {
-					this.historyManager?.snapshot?.({ force: true });
+					const saved = this.historyManager?.saveCurrentSession?.();
+					if (!saved) return;
 					await this.historyManager?.waitForPendingSnapshots?.();
 					this.historyManager?.persistSession?.();
 					await this.refreshHistory();
 					this.statusBar?.flash?.('Saved to session');
 					return;
 				}
-				await this.saveCurrentToHistory();
-				this.statusBar?.flash?.('Saved to history');
+				const saved = await this.saveCurrentToHistory();
+				if (saved) this.statusBar?.flash?.('Saved to history');
 			});
 		}
 
@@ -398,7 +399,7 @@ export class Sidebar {
 	}
 
 	async saveCurrentToHistory() {
-		if (!this.globalHistory.historyEnabled) return;
+		if (!this.globalHistory.historyEnabled || this.canvasManager.isCleanDocument?.() === true) return false;
 		const blob = await this.canvasManager.toBlob('image/png');
 		const width = Number(this.canvasManager.canvas.width);
 		const height = Number(this.canvasManager.canvas.height);
@@ -410,7 +411,7 @@ export class Sidebar {
 			reader.readAsDataURL(blob);
 		});
 
-		await this.saveDataUrlToHistory(dataUrl, width, height);
+		const saved = await this.saveDataUrlToHistory(dataUrl, width, height);
 		// beforeunload also places a synchronous fallback in localStorage. If the
 		// IndexedDB write won the race, consume that fallback to avoid a duplicate
 		// history image on the next refresh.
@@ -418,17 +419,19 @@ export class Sidebar {
 			const pending = JSON.parse(localStorage.getItem('paint:pending-history-save') || 'null');
 			if (pending?.dataUrl === dataUrl) localStorage.removeItem('paint:pending-history-save');
 		} catch { }
+		return saved;
 	}
 
 	async saveDataUrlToHistory(dataUrl, width, height) {
-		if (!this.globalHistory.historyEnabled) return;
+		if (!this.globalHistory.historyEnabled) return false;
 		// Skip no-change saves: identical pixels to the newest entry are dropped.
 		try {
 			const latest = (await this.globalHistory.getSessions())[0];
-			if (latest && latest.dataUrl === dataUrl) return;
+			if (latest && latest.dataUrl === dataUrl) return false;
 		} catch { }
 		await this.globalHistory.addSession(dataUrl, width, height);
 		if (this.activeTab === HISTORY_VIEWS.history) this.refreshHistory();
+		return true;
 	}
 
 	async flushPendingAutoSave() {

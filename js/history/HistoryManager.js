@@ -446,6 +446,11 @@ export class HistoryManager {
     return true;
   }
 
+  saveCurrentSession() {
+    if (this.canvasManager.isCleanDocument?.() === true) return false;
+    return this.snapshot();
+  }
+
   /**
    * Begin an atomic transaction.
    *

@@ -874,6 +874,7 @@ const setDialogUrl = (dialog, extra = {}) => {
 // CSS custom properties, so Settings can change them without editing this file.
 let selectionPreviewActive = false;
 let activeToolName = "select";
+let lastNonSelectToolName = "pencil";
 
 // Two genuinely different selection modes, and the difference is whether the
 // pixels have been lifted off the canvas:
@@ -1570,11 +1571,20 @@ const selectAll = () => {
   selectAllCanvas();
 };
 
+const deselectSelection = () => {
+  if (toolManager.active?.name === "select") {
+    toolManager.setActive(lastNonSelectToolName);
+  }
+  if (canvasManager.floatingCanvas) commitFloatingSelection();
+  setSelection(null);
+};
+
 const commandRegistry = createCommandRegistry({
   commands: {
     [SHORTCUT_ACTIONS.undo]: runUndo,
     [SHORTCUT_ACTIONS.redo]: runRedo,
     [SHORTCUT_ACTIONS.selectAll]: selectAll,
+    [SHORTCUT_ACTIONS.deselect]: deselectSelection,
     [SHORTCUT_ACTIONS.copy]: () => clipboardService.copy(),
     [SHORTCUT_ACTIONS.cut]: () => clipboardService.cut(),
     [SHORTCUT_ACTIONS.paste]: () => clipboardService.paste(),
@@ -2166,6 +2176,9 @@ brushState.subscribe((state) => {
 const toolbarToolChange = toolManager.onToolChange;
 toolManager.onToolChange = (name) => {
   activeToolName = name;
+  if (name !== "select" && name !== "adjustment-mask") {
+    lastNonSelectToolName = name;
+  }
   brushCursorOverlay.setTool(name);
   toolbarToolChange?.(name);
   selectionOverlayController.updateSelectionHandles(canvasManager.selection);
@@ -2242,7 +2255,11 @@ window.addEventListener(EVENTS.historyChanged, (event) => {
 
 let lifecycleSnapshotQueued = false;
 const queueLifecycleHistorySnapshot = () => {
-  if (lifecycleSnapshotQueued || !sidebar.globalHistory.historyEnabled) return;
+  if (
+    lifecycleSnapshotQueued
+    || !sidebar.globalHistory.historyEnabled
+    || canvasManager.isCleanDocument()
+  ) return;
   lifecycleSnapshotQueued = true;
   try {
     localStorage.setItem(

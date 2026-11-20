@@ -662,6 +662,31 @@ test('History session entries are current/newest first and delete by stable ID',
 	assert.equal(history.getSessionEntries()[0].kind, 'session');
 });
 
+test('manual session saves skip a clean canvas and duplicate snapshots', async () => {
+	let clean = true;
+	let captures = 0;
+	const history = new HistoryManager({
+		width: 20,
+		height: 10,
+		isCleanDocument: () => clean,
+		_pixelsSignature: () => 'same-document',
+		toBlob: () => {
+			captures += 1;
+			return Promise.resolve(new Blob(['pixels'], { type: 'image/png' }));
+		},
+	}, { sessionStorage: memoryStorage() });
+
+	assert.equal(history.saveCurrentSession(), false);
+	assert.equal(captures, 0, 'a clean blank canvas does not start a PNG encode');
+	assert.equal(history.getSessionEntries().length, 1, 'no session snapshot is added');
+
+	clean = false;
+	assert.equal(history.saveCurrentSession(), true);
+	assert.equal(history.saveCurrentSession(), false, 'the same document is not duplicated');
+	assert.equal(captures, 1);
+	await history.waitForPendingSnapshots();
+});
+
 test('HistoryManager captures Blob snapshots before mutation, revokes owned URLs, and skips oversized encodes', async () => {
 	const captures = [];
 	const resolvers = [];

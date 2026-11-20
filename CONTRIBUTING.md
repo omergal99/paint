@@ -19,20 +19,25 @@ The app is a static browser application. Serve the project over HTTP so ES
 modules and browser APIs work:
 
 ```bash
-npx serve .
-# or
 python3 -m http.server 8000
 ```
 
-Run the repository checks before submitting a change:
+Node.js 24 or newer is required for repository scripts. Install the locked
+development dependencies, then run the checks relevant to the change:
 
 ```bash
+npm install
 npm test
+npm run check:i18n
+npm run typecheck
+npm run verify:docs
 git diff --check
-node --check js/main.js
 ```
 
-For JavaScript changes, also run `node --check` on each changed module.
+For JavaScript changes, run `node --check` on changed modules. For service
+worker/module graph, version, or release changes, run `npm run verify:release`.
+For user-visible UI changes, include browser/keyboard evidence and screenshots
+when they help explain the result.
 
 ## Code expectations
 
@@ -43,6 +48,32 @@ For JavaScript changes, also run `node --check` on each changed module.
   explicitly a migration.
 - Keep browser permissions and external data transfers visible to users.
 - Add or update a focused smoke test for important user-facing contracts.
+- Keep user-visible text in the shared i18n messages and every ready locale.
+- Keep `docs-internal/` local-only; publish only reviewed public guidance.
+
+## AI-assisted contributions
+
+AI tools may help implement or review a change, but they do not replace
+maintainer judgment or CI:
+
+1. **Context:** read `AGENTS.md`, `.skills/README.md`, and the relevant
+   project skill; start from an issue or a concrete user problem.
+2. **Plan:** state the scope, acceptance checks, data/storage impact, and
+   accessibility/localization risks before changing broad seams.
+3. **Build:** make one reviewable change, preserve existing user data, and add
+   focused tests for the behavior.
+4. **Review:** have a fresh reviewer inspect the diff independently; the
+   implementation agent should not be the only reviewer.
+5. **Risk gate:** explicitly consider security, privacy, permissions,
+   accessibility, RTL, i18n, storage limits, and failure UX where applicable.
+6. **Merge and deploy:** report exact commands and browser evidence in the PR.
+   CI and a human maintainer decide whether it is ready; do not grant an agent
+   merge or deployment authority by default.
+
+[Google's Modern Web Guidance](https://github.com/GoogleChrome/modern-web-guidance)
+can inform performance, accessibility, CSS, and platform API decisions. Use
+only guidance relevant to the change and reconcile it with Paint's local-first
+architecture and repository instructions; do not install it wholesale.
 
 ## Pull requests
 

@@ -73,6 +73,7 @@ export const initializePtBr = (english) => {
     "ui.systemUiDefaultFont": "Interface do sistema (sans-serif padrão)",
     "ui.blackOutlineStrokeColor": "Cor do contorno preto",
     "ui.selectionMenu": "Seleção",
+    "ui.deselect": "Desmarcar seleção",
     "ui.selectRectangle": "Seleção retangular",
     "ui.selectLasso": "Seleção à mão livre",
     "ui.blackOutlineStrokeWidth": "Espessura do contorno preto",

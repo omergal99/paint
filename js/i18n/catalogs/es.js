@@ -109,6 +109,7 @@ export const ES_MESSAGES = Object.freeze({
     systemUiDefaultFont: "Interfaz del sistema (Sans serif predeterminada)",
     blackOutlineStrokeColor: "Color del contorno negro",
     selectionMenu: "Selección",
+    deselect: "Deseleccionar",
     selectRectangle: "Selección rectangular",
     selectLasso: "Selección a mano alzada",
     blackOutlineStrokeWidth: "Grosor del contorno negro",

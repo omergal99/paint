@@ -93,3 +93,34 @@ test('history restore does not flash a success message after a failed load', asy
 	await sidebar._handleHistoryItemClick({ target: eventTarget, stopPropagation() {} });
 	assert.deepEqual(flashes, ['Loaded from history'], 'successful load flashes the success message');
 });
+
+test('manual global-history saves skip a clean canvas before encoding', async () => {
+	let encodeCalls = 0;
+	const sidebar = Object.assign(Object.create(Sidebar.prototype), {
+		globalHistory: { historyEnabled: true },
+		canvasManager: {
+			isCleanDocument: () => true,
+			toBlob: async () => {
+				encodeCalls += 1;
+				return new Blob(['blank'], { type: 'image/png' });
+			},
+		},
+	});
+
+	assert.equal(await sidebar.saveCurrentToHistory(), false);
+	assert.equal(encodeCalls, 0);
+});
+
+test('global history drops a duplicate newest image', async () => {
+	let addCalls = 0;
+	const sidebar = Object.assign(Object.create(Sidebar.prototype), {
+		globalHistory: {
+			historyEnabled: true,
+			getSessions: async () => [{ dataUrl: 'data:image/png;base64,existing' }],
+			addSession: async () => { addCalls += 1; },
+		},
+	});
+
+	assert.equal(await sidebar.saveDataUrlToHistory('data:image/png;base64,existing', 10, 10), false);
+	assert.equal(addCalls, 0);
+});

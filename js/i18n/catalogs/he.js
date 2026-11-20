@@ -81,6 +81,7 @@ export const initializeHe = (english) => {
     "ui.systemUiDefaultFont": "ממשק מערכת (ללא סריף כברירת מחדל)",
     "ui.blackOutlineStrokeColor": "צבע המתאר השחור",
     "ui.selectionMenu": "בחירה",
+    "ui.deselect": "בטל בחירה",
     "ui.selectRectangle": "בחירה מלבנית",
     "ui.selectLasso": "בחירה חופשית",
     "ui.blackOutlineStrokeWidth": "רוחב המתאר השחור",

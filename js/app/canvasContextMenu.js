@@ -18,6 +18,7 @@ const COMMAND_BY_ACTION = Object.freeze({
   copy: SHORTCUT_ACTIONS.copy,
   paste: SHORTCUT_ACTIONS.paste,
   selectAll: SHORTCUT_ACTIONS.selectAll,
+  deselect: SHORTCUT_ACTIONS.deselect,
 });
 
 /** @param {object} deps collaborators owned by main.js */

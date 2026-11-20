@@ -63,6 +63,7 @@ export const SHORTCUT_ACTIONS = Object.freeze({
 	undo: 'undo',
 	redo: 'redo',
 	selectAll: 'selectAll',
+	deselect: 'deselect',
 	copy: 'copy',
 	cut: 'cut',
 	paste: 'paste',

@@ -69,6 +69,7 @@ export const initializeDe = (english) => {
     "ui.systemUiDefaultFont": "Systemoberfläche (Standardschrift ohne Serifen)",
     "ui.blackOutlineStrokeColor": "Farbe der schwarzen Kontur",
     "ui.selectionMenu": "Auswahl",
+    "ui.deselect": "Auswahl aufheben",
     "ui.selectRectangle": "Rechteckige Auswahl",
     "ui.selectLasso": "Freihandauswahl",
     "ui.blackOutlineStrokeWidth": "Breite der schwarzen Kontur",

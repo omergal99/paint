@@ -109,7 +109,7 @@ export const EN_MESSAGES = deepFreeze({
 		rotate180: 'Rotate 180', rotate270: 'Rotate 270', freeRotate: 'Free Rotate', showRotateInSelection: 'Show Rotate in selection',
 		selectionHandleSize: 'Selection handle size', selectionOutlineColor: 'Selection outline color',
 		selectionActiveColor: 'Active selection outline color', selectionPreview: 'Preview selection without frame', selectionReset: 'Reset to Defaults',
-		selectionLabel: 'Selection:', selectingArea: 'Selecting...', selectionMenu: 'Selection', selectAll: 'Select All',
+		selectionLabel: 'Selection:', selectingArea: 'Selecting...', selectionMenu: 'Selection', selectAll: 'Select All', deselect: 'Deselect',
 		selectRectangle: 'Rectangular Selection', selectLasso: 'Free-form Selection',
 		recentText: 'Recent text', recentTextPlaceholder: 'Recent text…', restoreRecentText: 'Restore recent text',
 		textEnterSaves: 'Enter places the text', textEnterSavesHint: 'Enter places the text; Shift+Enter adds a new line. Tab reaches OK.',

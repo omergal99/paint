@@ -49,6 +49,7 @@ export const UI_TEXT_KEYS = Object.freeze({
 	'Text font family': 'ui.textFontFamily',
 	'System UI (Default Sans-Serif)': 'ui.systemUiDefaultFont',
 	Selection: 'ui.selectionMenu',
+	Deselect: 'ui.deselect',
 	'Rectangular Selection': 'ui.selectRectangle',
 	'Free-form Selection': 'ui.selectLasso',
 	'Restore Image by Override': 'ui.restoreOverrideTitle',
