@@ -24,6 +24,7 @@ export const createPaintAdapter = async ({ browser, baseUrl } = {}) => {
     await browser.clearOrigin(new URL(baseUrl).origin);
     await browser.setViewport({ width, height, mobile });
     await browser.navigate(baseUrl);
+    await browser.resetSessionStorage(baseUrl);
     await browser.waitForFunction(
       'window.__paintLocalTestReady === true && document.querySelector("#paint-canvas")?.width > 0',
     );
@@ -68,6 +69,13 @@ export const createPaintAdapter = async ({ browser, baseUrl } = {}) => {
     await browser.mouseClick(bounds);
   };
 
+  const assertActiveTool = async (toolName) => {
+    if (typeof toolName !== 'string' || !toolName.trim()) {
+      throw new Error('An active tool name is required.');
+    }
+    await browser.waitForFunction(`document.querySelector(${JSON.stringify(`.tool-btn[data-tool="${toolName}"]`)})?.classList.contains('active') === true`);
+  };
+
   const strokeCoordinates = async () => {
     const rect = await canvasGeometry();
     if (!rect || rect.width <= 0 || rect.height <= 0) {
@@ -100,5 +108,5 @@ export const createPaintAdapter = async ({ browser, baseUrl } = {}) => {
     `(${canvasSampleHash}) !== ${previousHash}`,
   );
 
-  return Object.freeze({ open, canvasGeometry, selectBrush, drawStroke, sampleHash, waitForHashChange });
+  return Object.freeze({ open, canvasGeometry, selectBrush, assertActiveTool, drawStroke, sampleHash, waitForHashChange });
 };

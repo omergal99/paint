@@ -12,6 +12,7 @@ const describeException = (details) => (
 export const createBrowserSession = async ({ webSocketUrl, commandTimeoutMs = 5000 } = {}) => {
   const cdp = await connectCdp({ url: webSocketUrl, timeoutMs: commandTimeoutMs });
   const browserErrors = [];
+  const externalRequests = [];
   try {
     await cdp.send('Page.enable');
     await cdp.send('Runtime.enable');
@@ -28,6 +29,19 @@ export const createBrowserSession = async ({ webSocketUrl, commandTimeoutMs = 50
     });
     cdp.on('Log.entryAdded', ({ entry }) => {
       if (entry.level === 'error') browserErrors.push(entry.text || 'Browser log error');
+    });
+    cdp.on('Network.requestWillBeSent', ({ request }) => {
+      const url = request?.url;
+      if (!url) return;
+      if (!/^https?:/i.test(url)) return;
+      try {
+        const parsed = new URL(url);
+        if (parsed.hostname !== '127.0.0.1' && parsed.hostname !== 'localhost') {
+          externalRequests.push(url);
+        }
+      } catch {
+        externalRequests.push(url);
+      }
     });
 
     const send = (method, params) => cdp.send(method, params);
@@ -84,6 +98,11 @@ export const createBrowserSession = async ({ webSocketUrl, commandTimeoutMs = 50
         storageTypes: 'all',
       });
     };
+    const resetSessionStorage = async (origin) => {
+      const parsed = new URL(origin);
+      await waitForFunction(`location.origin === ${JSON.stringify(parsed.origin)}`);
+      await evaluate(`(() => { sessionStorage.clear(); return true; })()`);
+    };
     const mouseClick = async ({ x, y } = {}) => {
       await send('Input.dispatchMouseEvent', { type: 'mouseMoved', x, y });
       await send('Input.dispatchMouseEvent', { type: 'mousePressed', x, y, button: 'left', buttons: 1, clickCount: 1 });
@@ -108,9 +127,13 @@ export const createBrowserSession = async ({ webSocketUrl, commandTimeoutMs = 50
       return filePath;
     };
     const assertNoBrowserErrors = () => {
-      if (browserErrors.length === 0) return;
-      const uniqueErrors = [...new Set(browserErrors.filter(Boolean))];
-      throw new Error(`Browser reported JavaScript errors:\n${uniqueErrors.map((error) => `- ${error}`).join('\n')}`);
+      const issues = [
+        ...browserErrors.filter(Boolean),
+        ...externalRequests.map((url) => `Unexpected external network request: ${url}`),
+      ];
+      if (issues.length === 0) return;
+      const uniqueIssues = [...new Set(issues)];
+      throw new Error(`Browser reported test failures:\n${uniqueIssues.map((issue) => `- ${issue}`).join('\n')}`);
     };
 
     return Object.freeze({
@@ -121,11 +144,15 @@ export const createBrowserSession = async ({ webSocketUrl, commandTimeoutMs = 50
       navigate,
       installScriptOnNewDocument,
       clearOrigin,
+      resetSessionStorage,
       mouseClick,
       mouseDrag,
       touchDrag,
       captureScreenshot,
-      clearBrowserErrors: () => { browserErrors.length = 0; },
+      clearBrowserErrors: () => {
+        browserErrors.length = 0;
+        externalRequests.length = 0;
+      },
       assertNoBrowserErrors,
       close: cdp.close,
     });

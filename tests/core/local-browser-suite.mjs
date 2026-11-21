@@ -32,10 +32,12 @@ export const runLocalBrowserSuite = async ({
 
   let server;
   let chrome;
+  let suiteError;
+  let exitCode = 1;
   try {
     server = await startServer();
     chrome = await launchHeadlessChrome();
-    return await runTestProcess({
+    exitCode = await runTestProcess({
       cwd,
       testFiles,
       env: {
@@ -46,7 +48,17 @@ export const runLocalBrowserSuite = async ({
       },
     });
   } finally {
-    await chrome?.close();
-    await server?.close();
+    try {
+      await chrome?.close();
+    } catch (error) {
+      suiteError = suiteError || error;
+    }
+    try {
+      await server?.close();
+    } catch (error) {
+      suiteError = suiteError || error;
+    }
   }
+  if (suiteError) throw suiteError;
+  return exitCode;
 };

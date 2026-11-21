@@ -2,6 +2,7 @@ import { spawn, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { terminateChildProcess } from './process-lifecycle.mjs';
 
 const delay = (durationMs) => new Promise((resolve) => setTimeout(resolve, durationMs));
 
@@ -96,15 +97,7 @@ export const launchHeadlessChrome = async ({ timeoutMs = 12000 } = {}) => {
     const target = await waitForPageTarget({ port, child, timeoutMs });
 
     const close = async () => {
-      if (child.exitCode === null && child.signalCode === null) {
-        const exited = new Promise((resolve) => child.once('exit', resolve));
-        child.kill('SIGTERM');
-        await Promise.race([exited, delay(2000)]);
-        if (child.exitCode === null && child.signalCode === null) {
-          child.kill('SIGKILL');
-          await exited;
-        }
-      }
+      await terminateChildProcess({ child });
       fs.rmSync(profileDirectory, { recursive: true, force: true });
     };
 
@@ -115,7 +108,7 @@ export const launchHeadlessChrome = async ({ timeoutMs = 12000 } = {}) => {
     });
   } catch (error) {
     clearTimeout(startupTimer);
-    if (child.exitCode === null && child.signalCode === null) child.kill('SIGTERM');
+    await terminateChildProcess({ child });
     fs.rmSync(profileDirectory, { recursive: true, force: true });
     throw error;
   }

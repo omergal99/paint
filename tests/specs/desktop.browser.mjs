@@ -26,6 +26,7 @@ browserTest('desktop app loads and Brush changes canvas pixels', async () => {
 
   const before = await paint.sampleHash();
   await paint.selectBrush();
+  await paint.assertActiveTool('brush');
   await paint.drawStroke();
   await paint.waitForHashChange(before);
 });

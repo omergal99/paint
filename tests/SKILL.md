@@ -48,6 +48,9 @@ infrastructure.
 - Wait for a concrete app or UI condition rather than a fixed sleep.
 - Start each journey with clean origin storage and a known viewport.
 - Let uncaught page exceptions and browser console errors fail the run.
+- Do not let a browser journey rely on session state left by another journey.
+- Keep browser HTTP(S) requests loopback-only unless a spec explicitly declares
+  and verifies an external integration dependency.
 - Preserve test intent. Never delete or weaken an assertion to make a failure
   disappear; change a test only after an explicit product/spec decision.
 - After any fix, rerun the full `npm run test:local` command and verify exit

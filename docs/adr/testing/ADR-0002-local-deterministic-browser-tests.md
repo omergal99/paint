@@ -30,6 +30,12 @@ Chromium browser through the Chrome DevTools Protocol (CDP).
   `npm run test:local`. The browser specs use `.browser.mjs` names so the
   existing `npm test` command and GitHub Actions workflow remain unchanged.
 - Capture browser screenshots only for failed cases, under ignored `output/`.
+- Reset sessionStorage together with the origin stores before each journey.
+- Reject unexpected external HTTP(S) requests from browser specs so a passing
+  run does not depend on silent third-party network access.
+- Use shared SIGTERM/SIGKILL lifecycle cleanup for startup failures and normal
+  shutdown; close Chrome and the server independently so one close failure
+  cannot leave the other running.
 - Keep test execution free of AI. AI may help diagnose and fix a regression,
   but must not delete or weaken a test to hide a failure, and must rerun the
   complete local suite after a fix.

@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process';
+import { terminateChildProcess } from './process-lifecycle.mjs';
 
 export const startProcessServer = async ({
   command,
@@ -41,19 +42,12 @@ export const startProcessServer = async ({
     return Object.freeze({
       url,
       close: async () => {
-        if (child.exitCode !== null || child.signalCode !== null) return;
-        const exited = new Promise((resolve) => child.once('exit', resolve));
-        child.kill('SIGTERM');
-        await Promise.race([exited, new Promise((resolve) => setTimeout(resolve, 2000))]);
-        if (child.exitCode === null && child.signalCode === null) {
-          child.kill('SIGKILL');
-          await exited;
-        }
+        await terminateChildProcess({ child });
       },
     });
   } catch (error) {
     clearTimeout(timer);
-    if (child.exitCode === null && child.signalCode === null) child.kill('SIGTERM');
+    await terminateChildProcess({ child });
     throw error;
   }
 };

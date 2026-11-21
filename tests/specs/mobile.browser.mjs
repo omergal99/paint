@@ -25,6 +25,7 @@ browserTest('mobile viewport receives touch input and paints canvas pixels', asy
 
   const before = await paint.sampleHash();
   await paint.selectBrush();
+  await paint.assertActiveTool('brush');
   await paint.drawStroke({ input: 'touch' });
   await paint.waitForHashChange(before);
 });

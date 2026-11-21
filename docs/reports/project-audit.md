@@ -11,7 +11,7 @@ change are recorded at handoff.
 |---|---|---|
 | Editor core | Strong foundation | Plain ES modules; canvas pixels, transient overlays, tools, and UI have named owners |
 | Local data | Separate bounded stores | Undo, working-canvas recovery, explicit image history, and settings are distinct |
-| Validation | Useful, with a new browser baseline | 416 Node tests plus two local Chromium journeys; browser coverage is initial and not in CI |
+| Validation | Useful, with a hardened browser baseline | 418 Node tests plus two local Chromium journeys; browser coverage is initial and not in CI |
 | Onboarding | Improved | README, documentation index, ADRs, and audit now point to the current structure |
 | Visual discovery | Missing | No component gallery/Storybook; reusable patterns are documented but not browsable as live examples |
 | Mobile workflow | Needs focused validation | A touch/brush smoke test exists; pan visibility, navigation, and location context still need deliberate mobile journeys |
@@ -56,6 +56,7 @@ storage map.
 | The public audit, README links, and docs consistency check were stale | Fixed | Current docs replace obsolete scores/claims; docs gate checks public links and optional local internal docs |
 | README screenshot showed an obsolete UI | Fixed | Replaced with a current 1280×800 local browser capture |
 | Local deterministic browser checks were missing | Added | `npm run test:local` checks desktop app/brush behavior and mobile touch/brush behavior; it remains outside GitHub Actions |
+| Process cleanup, session isolation, external-network policy, and active-tool assertion were missing from the initial harness | Fixed | Shared SIGTERM/SIGKILL cleanup, sessionStorage reset, loopback-only request policy, and Brush-active verification now cover the hardening findings |
 
 The local release gates and initial desktop/mobile browser journeys pass.
 Coverage of selection, resize, history, settings, and physical-device UX is
@@ -122,7 +123,7 @@ links and the index whenever a document moves.
 
 | Check | Result |
 |---|---|
-| `npm run test:local` | PASS — 416 Node tests and 2 browser tests (desktop mouse + mobile touch) |
+| `npm run test:local` | PASS — 418 Node tests and 2 browser tests (desktop mouse + mobile touch) |
 | `npm run check:i18n` | PASS — 8 locales, 563 keys, 410 UI labels |
 | `npm run typecheck` | PASS |
 | `npm run verify:docs` | PASS — 21 guides checked |
