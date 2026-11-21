@@ -50,7 +50,11 @@ output/test-artifacts/
 `latest.json` is a small portable pointer to the most recent report; it is not
 a symlink. Open the standalone `report.html` directly or consume `report.json`
 from tools. The JSON is the source of truth; HTML has no external assets or
-runtime dependencies. `--rerun-failed latest` (or an explicit prior run ID)
+runtime dependencies. JSON/HTML reports and `latest.json` are atomically
+replaced, and report links are limited to safe relative artifact paths. Run
+directories are currently retained without automatic pruning so failure
+evidence is not deleted unexpectedly; a bounded retention policy remains open.
+`--rerun-failed latest` (or an explicit prior run ID)
 executes only browser test IDs marked failed in that report; infrastructure-only
 failures without test failures must be diagnosed and rerun through normal
 selection.
@@ -82,7 +86,10 @@ HTTP(S) requests from browser tests are intercepted: loopback requests are
 continued, and external requests are blocked and recorded as failures. HTTP
 error responses, failed requests, browser log errors, console errors, and
 uncaught exceptions are also included in test diagnostics. There is no implicit
-external-host allowlist.
+external-host allowlist. Reported network URLs omit credentials, query strings,
+and fragments. Reports stay local under `output/`; review screenshots and
+application error text before sharing them, since those may reflect local test
+fixtures or application state.
 
 ## Structure and reuse
 

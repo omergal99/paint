@@ -3,8 +3,35 @@ import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 
 export const createRunId = (date = new Date()) => (
-  `${date.toISOString().replace(/[-:TZ.]/g, '').slice(0, 14)}-${randomUUID().slice(0, 8)}`
+  `${date.toISOString().replace(/[-:TZ.]/g, '').slice(0, 14)}-${randomUUID()}`
 );
+
+const safeArtifactPath = (value) => {
+  if (typeof value !== 'string' || !value || value.includes('\\') || value.includes(':')) return null;
+  const segments = value.split('/');
+  if (segments.some((segment) => (
+    !segment || segment === '.' || segment === '..' || !/^[a-zA-Z0-9._-]+$/.test(segment)
+  ))) return null;
+  return value;
+};
+
+const writeAtomically = async (filePath, contents) => {
+  const temporaryPath = `${filePath}.${randomUUID()}.tmp`;
+  try {
+    await fs.writeFile(temporaryPath, contents, { flag: 'wx' });
+    await fs.rename(temporaryPath, filePath);
+  } catch (error) {
+    try {
+      await fs.rm(temporaryPath, { force: true });
+    } catch (cleanupError) {
+      throw new AggregateError(
+        [error, cleanupError],
+        `Could not write ${filePath} atomically or clean up its temporary file.`,
+      );
+    }
+    throw error;
+  }
+};
 
 const escapeHtml = (value) => String(value ?? '')
   .replaceAll('&', '&amp;')
@@ -15,14 +42,18 @@ const escapeHtml = (value) => String(value ?? '')
 
 const renderTest = (test) => {
   const failed = test.status === 'failed';
+  const screenshotPath = safeArtifactPath(test.screenshot);
   const error = test.error
     ? `<pre>${escapeHtml(test.error.stack || test.error.message || test.error)}</pre>`
     : '';
-  const screenshot = test.screenshot
-    ? `<a href="${escapeHtml(test.screenshot)}"><img src="${escapeHtml(test.screenshot)}" alt="Failure screenshot for ${escapeHtml(test.name)}"></a>`
+  const screenshot = screenshotPath
+    ? `<a href="${escapeHtml(screenshotPath)}"><img src="${escapeHtml(screenshotPath)}" alt="Failure screenshot for ${escapeHtml(test.name)}"></a>`
     : '';
   const steps = test.steps?.length
-    ? `<ol>${test.steps.map((step) => `<li class="${step.status === 'failed' ? 'failed' : ''}"><strong>${escapeHtml(step.name)}</strong> — ${escapeHtml(step.status)} (${escapeHtml(step.durationMs)} ms) ${step.screenshot ? `<a href="${escapeHtml(step.screenshot)}">Screenshot</a>` : ''}</li>`).join('')}</ol>`
+    ? `<ol>${test.steps.map((step) => {
+      const stepScreenshot = safeArtifactPath(step.screenshot);
+      return `<li class="${step.status === 'failed' ? 'failed' : ''}"><strong>${escapeHtml(step.name)}</strong> — ${escapeHtml(step.status)} (${escapeHtml(step.durationMs)} ms) ${stepScreenshot ? `<a href="${escapeHtml(stepScreenshot)}">Screenshot</a>` : ''}</li>`;
+    }).join('')}</ol>`
     : '';
   const browserDiagnostics = Object.entries(test.browserDiagnostics || {})
     .filter(([, values]) => Array.isArray(values) && values.length)
@@ -44,7 +75,8 @@ export const renderHtmlReport = (report) => {
     ? `<section class="failed"><h2>Infrastructure failure</h2><pre>${escapeHtml(report.infrastructureError.stack || report.infrastructureError.message)}</pre></section>`
     : '';
   const artifacts = Object.entries(report.diagnostics || {})
-    .filter(([, value]) => typeof value === 'string')
+    .map(([name, value]) => [name, safeArtifactPath(value)])
+    .filter(([, value]) => value)
     .map(([name, value]) => `<li><a href="${escapeHtml(value)}">${escapeHtml(name)}</a></li>`)
     .join('');
   const embeddedJson = JSON.stringify(report).replaceAll('<', '\\u003c');
@@ -78,8 +110,8 @@ export const writeRunReports = async ({ report, artifactRoot, runDirectory } = {
   await fs.mkdir(runDirectory, { recursive: true });
   const jsonPath = path.join(runDirectory, 'report.json');
   const htmlPath = path.join(runDirectory, 'report.html');
-  await fs.writeFile(jsonPath, `${JSON.stringify(report, null, 2)}\n`);
-  await fs.writeFile(htmlPath, renderHtmlReport(report));
+  await writeAtomically(jsonPath, `${JSON.stringify(report, null, 2)}\n`);
+  await writeAtomically(htmlPath, renderHtmlReport(report));
   await fs.mkdir(artifactRoot, { recursive: true });
   const latest = {
     schemaVersion: 1,
@@ -87,7 +119,7 @@ export const writeRunReports = async ({ report, artifactRoot, runDirectory } = {
     json: path.relative(artifactRoot, jsonPath).split(path.sep).join('/'),
     html: path.relative(artifactRoot, htmlPath).split(path.sep).join('/'),
   };
-  await fs.writeFile(path.join(artifactRoot, 'latest.json'), `${JSON.stringify(latest, null, 2)}\n`);
+  await writeAtomically(path.join(artifactRoot, 'latest.json'), `${JSON.stringify(latest, null, 2)}\n`);
   return Object.freeze({ jsonPath, htmlPath });
 };
 

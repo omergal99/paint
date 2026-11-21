@@ -3,7 +3,7 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
-import { renderHtmlReport, writeRunReports } from './core/test-run-report.mjs';
+import { createRunId, renderHtmlReport, writeRunReports } from './core/test-run-report.mjs';
 
 const sampleReport = {
   schemaVersion: 1,
@@ -43,7 +43,18 @@ test('HTML report escapes test text and highlights failure details', () => {
   assert.match(html, /href="logs\/stderr\.log">stderrPath/);
 });
 
+test('HTML report links only to safe relative artifact paths', () => {
+  const report = structuredClone(sampleReport);
+  report.tests[0].screenshot = '../../private.txt';
+  report.tests[0].steps[0].screenshot = 'javascript:alert(1)';
+  report.diagnostics.stderrPath = '/etc/passwd';
+  const html = renderHtmlReport(report);
+  assert.doesNotMatch(html, /href="(?:\.\.\/|javascript:|\/etc)/);
+  assert.doesNotMatch(html, /src="(?:\.\.\/|javascript:)/);
+});
+
 test('report writer creates versioned JSON, standalone HTML, and latest pointer', async () => {
+  assert.match(createRunId(), /^\d{14}-[a-f0-9-]{36}$/);
   const artifactRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'paint-e2e-report-'));
   const runDirectory = path.join(artifactRoot, 'runs', sampleReport.runId);
   try {
@@ -56,6 +67,10 @@ test('report writer creates versioned JSON, standalone HTML, and latest pointer'
     assert.match(html, /Local E2E test report/);
     assert.equal(latest.runId, sampleReport.runId);
     assert.equal((await fs.lstat(latestPath)).isFile(), true);
+    assert.deepEqual(
+      (await fs.readdir(runDirectory)).sort(),
+      ['report.html', 'report.json'],
+    );
   } finally {
     await fs.rm(artifactRoot, { recursive: true, force: true });
   }

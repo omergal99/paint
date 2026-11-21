@@ -11,7 +11,7 @@ change are recorded at handoff.
 |---|---|---|
 | Editor core | Strong foundation | Plain ES modules; canvas pixels, transient overlays, tools, and UI have named owners |
 | Local data | Separate bounded stores | Undo, working-canvas recovery, explicit image history, and settings are distinct |
-| Validation | Useful, with a reporting browser harness | 425 Node tests plus two isolated local Chromium journeys; browser coverage is initial and not in CI |
+| Validation | Useful, with a reporting browser harness | 427 Node tests plus two isolated local Chromium journeys; browser coverage is initial and not in CI |
 | Onboarding | Improved | README, documentation index, ADRs, and audit now point to the current structure |
 | Visual discovery | Missing | No component gallery/Storybook; reusable patterns are documented but not browsable as live examples |
 | Mobile workflow | Needs focused validation | A touch/brush smoke test exists; pan visibility, navigation, and location context still need deliberate mobile journeys |
@@ -61,6 +61,9 @@ storage map.
 | Process cleanup, session isolation, external-network policy, and active-tool assertion were missing from the initial harness | Fixed | Shared SIGTERM/SIGKILL cleanup, sessionStorage reset, loopback-only request policy, and Brush-active verification now cover the hardening findings |
 | Local harness lacked test selection, centralized timeouts, isolated contexts, and structured reports | Fixed | `test:browser` supports stable IDs/groups, each test uses a new BrowserContext/process, config is validated centrally, and every run writes JSON/HTML plus diagnostics |
 | Failure evidence needed end-to-end proof | Verified | A temporary assertion failure produced the expected failed step, stack, screenshot, JSON, HTML, and exit code 1; the assertion was restored and full suite rerun |
+| Report writes and generated links needed stronger concurrency/path safety | Hardened and verified | Reports and `latest.json` are written via atomic rename; run IDs use full UUIDs; HTML links accept only safe relative artifact paths; concurrent Desktop/Mobile runs produced distinct valid reports and a valid latest pointer |
+| Diagnostic URLs could preserve credentials or query secrets | Hardened and unit-verified | Network diagnostic URLs drop userinfo, query strings, and fragments; HTML escapes dynamic text and test paths |
+| Reports needed predictable retention | Open maintenance decision | Artifacts are retained to preserve failure evidence; no automatic pruning currently exists |
 
 The local release gates and initial desktop/mobile browser journeys pass.
 Coverage of selection, resize, history, settings, and physical-device UX is
@@ -80,16 +83,40 @@ ignored by Git and remains local working material.
 
 ### B. Recommended product and maintenance backlog
 
-| Priority | Work | Why now | Done when |
-|---|---|---|---|
-| 1 | Expand browser regression coverage to selection/resize, history saves, settings, and narrow screens | The new suite currently covers only cold load and brush input | Deterministic journeys prove selection exit/resize, blank or duplicate saves, settings behavior, and narrow-screen layout without console errors |
-| 2 | Mobile canvas ergonomics: make Hand/Pan and drawing/selection state unmistakable; assess a viewport minimap | A narrow canvas needs navigation without hiding the active mode | Touch journey is tested at 320–375 px; pan is easy to enter/exit; viewport position is understandable; desktop interaction remains unchanged |
-| 3 | Build a lightweight UI gallery | A live, maintained gallery will make UI behavior easier to explain and regression-test than screenshots alone | Gallery uses actual components/controllers, has no copied state logic, and covers key, selected, disabled, open, RTL, and narrow states |
-| 4 | Add configurable Quick Actions | Valuable customization, but depends on a clear action catalog and mobile/keyboard interaction rules | Users can add, reorder, remove, and reset actions; persistence is versioned; drag has a keyboard alternative; mirrors stay synchronized |
-| 5 | Expand release notes into a visual, browsable feature history | Helps first-time users understand meaningful changes without relying on terse version bullets | About/release UI explains features with examples, works offline, and gets content from one versioned source |
-| 6 | Continue measured modularization | `js/main.js`, `js/ui/Sidebar.js`, and `css/styles.css` are still large; avoid a rewrite without a measured seam | Each extraction has one owner, focused tests, no duplicated state, and a before/after maintenance benefit |
+Priority (impact/urgency) and effort are independent. Normally select one
+Quick Win, one medium improvement, and one major initiative; work serially when
+there are dependencies. Security, correctness, and release blockers override
+the mix. These are candidates, not an instruction to start all three at once.
 
-### C. AI-assisted contribution workflow
+| Candidate | Priority | Effort | Category | Status | Dependencies | Acceptance criteria | Evidence / next gate |
+|---|---|---|---|---|---|---|---|
+| Verify Clipboard copy/paste in a real browser | P2 | S | Quality | Planned | None | Cover granted, denied, and unavailable permission paths without relying on clipboard contents from another test | Unit/contracts cover clipboard routing and fallbacks; next gate is to identify browser-safe fixtures and assert the user-visible result |
+| Add Selection / Deselect / Resize browser journeys | P1 | M | Quality / Product | Planned | Current local browser harness (verified) | Exercise a real selection, Deselect, resize, and relevant undo behavior; assert resulting canvas state and no browser errors | Unit coverage and earlier manual interaction evidence exist, but these are not E2E journeys; next gate is a minimal stable desktop scenario |
+| Establish a separate performance baseline | P1 | L | Performance | Planned | Define repeatable measurement conditions; keep benchmarks separate from `test:local` | Record cold start, first interaction, large-canvas behavior (including 6000×6000), drawing latency, memory/history and storage growth with environment metadata; do not invent pass thresholds before a baseline | No current browser/performance baseline proves these limits; next gate is a measurement protocol and representative machine/browser record |
+
+Keep the other existing roadmap areas visible: mobile Hand/Pan and narrow
+canvas ergonomics; Settings, Zoom, Ribbon and Quick Actions; a UI Catalog and
+Theme Studio; Layers as a future architecture initiative; portable UI
+components and adapters; release-history presentation; and measured
+modularization. The UI catalog and portable-package work must retain their
+existing prerequisites; public npm/ZIP distribution remains blocked on the
+maintainer's licensing decision and a stable consumer contract.
+
+### C. Future browser coverage map
+
+The rows below are coverage gaps, not a request to add a large suite now.
+Chromium remains the only deterministic local browser baseline.
+
+| Area | Verified today | Future coverage / next gate |
+|---|---|---|
+| Drawing and editing | Desktop brush drawing and mobile-emulated touch drawing change canvas pixels; selection, history, and resize have Node/manual evidence in selected flows | Brush/eraser, Selection/Deselect, movement/transforms, resize, Undo/Redo, blank/no-op and duplicate-history behavior |
+| Persistence and storage | Existing code has separate settings, recovery, image-history and bounded undo paths; the smoke suite starts with an isolated browser context | Reload persistence for settings/palette/background, recovery/history restore, IndexedDB failures, quota exhaustion/recovery, high-resolution limits and cleanup |
+| Browser APIs and offline | Local HTTP works; external HTTP(S) is blocked and recorded; clipboard has Node contract tests | Clipboard granted/denied/unavailable, import/export and File API fallback, service-worker install/update/reload, cached-shell and offline behavior |
+| Mobile, input, and visual fidelity | 390×844 mobile emulation verifies touch drawing | 320–375 px layouts, Hand/Pan transitions, selection on touch, fullscreen, RTL, high DPR, browser zoom including true 200%, and pasted-image sharpness |
+| Accessibility | No accessibility journey is part of the current smoke suite | Keyboard-only actions, focus visibility/restoration, dialogs, names/roles, error feedback, and non-pointer alternatives |
+| Compatibility and performance | Chromium on the local environment only | Assess Firefox/WebKit and physical-device coverage against actual compatibility risk; measure cold start, first use, 6000×6000+ canvas, memory, history, storage, repeated drawing and imports in a separate benchmark command |
+
+### D. AI-assisted contribution workflow
 
 Use the following as a **human-reviewed process**, not an autonomous merge
 promise:
@@ -127,11 +154,11 @@ links and the index whenever a document moves.
 
 | Check | Result |
 |---|---|
-| `npm run test:local` | PASS — 425 Node tests and 2 browser tests (desktop mouse + mobile touch) |
+| `npm run test:local` | PASS — 427 Node tests and 2 browser tests (desktop mouse + mobile touch) |
 | `npm run check:i18n` | PASS — 8 locales, 563 keys, 410 UI labels |
 | `npm run typecheck` | PASS |
 | `npm run verify:docs` | PASS — 21 guides checked |
-| `npm run audit:skills` | PASS — 7 valid skills, 4 recorded sessions |
+| `npm run audit:skills` | PASS — 7 valid skills, 5 recorded sessions |
 | `npm run sw:check` | PASS — 150 shell assets, 141 app modules |
 | `git diff --check` | PASS |
 | `npm run verify:release` | PASS — version 1.9.1, 144 app JavaScript files, runtime and release checks |
@@ -143,6 +170,11 @@ journey verified clean session storage before app scripts, active Brush
 selection, and a canvas pixel change; the 390×844 mobile-emulated journey
 verified active Brush selection and touch drawing. A separate reverse-order
 run with CLI timeout overrides also passed; each individual test ID has passed.
+An isolated failed-run replay passed, the `--diagnostics` run passed both
+journeys, and concurrent Desktop/Mobile runs produced separate reports. A
+blocked external-request probe appeared in its report without its query or
+fragment. Infrastructure-failure probes produced reports without leaving
+Chrome or server processes behind.
 
 A controlled temporary assertion failure returned exit code 1 and produced the
 expected failed step, assertion message/stack, browser diagnostics, 1280×800

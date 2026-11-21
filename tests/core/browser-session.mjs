@@ -10,6 +10,19 @@ const describeException = (details) => (
   || 'Uncaught browser exception'
 );
 
+export const sanitizeNetworkUrl = (value) => {
+  try {
+    const url = new URL(value);
+    url.username = '';
+    url.password = '';
+    url.search = '';
+    url.hash = '';
+    return url.href;
+  } catch {
+    return '<invalid URL>';
+  }
+};
+
 const isLoopbackRequest = (url) => {
   try {
     const parsed = new URL(url);
@@ -53,7 +66,7 @@ export const createBrowserSession = async ({ webSocketUrl, config = createTestCo
     });
     cdp.on('Network.responseReceived', ({ response }) => {
       if (response?.status >= 400) {
-        networkFailures.push(`${response.status} ${response.url}`);
+        networkFailures.push(`${response.status} ${sanitizeNetworkUrl(response.url)}`);
       }
     });
     cdp.on('Network.loadingFailed', ({ errorText, requestId, blockedReason }) => {
@@ -63,7 +76,7 @@ export const createBrowserSession = async ({ webSocketUrl, config = createTestCo
       const url = request?.url || '';
       const action = isLoopbackRequest(url)
         ? send('Fetch.continueRequest', { requestId })
-        : (externalRequests.push(url), send('Fetch.failRequest', { requestId, errorReason: 'BlockedByClient' }));
+        : (externalRequests.push(sanitizeNetworkUrl(url)), send('Fetch.failRequest', { requestId, errorReason: 'BlockedByClient' }));
       action.catch((error) => browserLogErrors.push(`Network policy enforcement failed: ${error.message}`));
     });
 

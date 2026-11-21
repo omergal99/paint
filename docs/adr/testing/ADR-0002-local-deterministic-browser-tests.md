@@ -37,7 +37,10 @@ Chromium browser through the Chrome DevTools Protocol (CDP).
 - Write versioned JSON and standalone HTML reports for passing, failing, and
   infrastructure-failed browser runs. Store screenshots and logs in an ignored
   per-run artifact directory; capture screenshots on failures and optionally at
-  named steps.
+  named steps. Use collision-resistant UUID run IDs and atomic replacement for
+  run reports and the `latest.json` pointer; render only safe relative artifact
+  links and omit URL credentials, query strings, and fragments from network
+  diagnostics.
 - Provide stable test IDs, group/single-test CLI selection, a validated shared
   timeout configuration, and a portable `latest.json` report pointer.
 - Use shared SIGTERM/SIGKILL lifecycle cleanup for startup failures and normal
@@ -59,6 +62,9 @@ Chromium browser through the Chrome DevTools Protocol (CDP).
 - Each test can be run and diagnosed independently, with structured evidence
   even when browser setup fails before the first test.
 - Local test execution is reproducible and has an unambiguous exit status.
+- Run artifacts are retained locally without automatic pruning for now, so
+  failure evidence is not silently discarded; a bounded retention policy
+  remains a separate maintenance decision.
 
 ### Trade-offs
 
