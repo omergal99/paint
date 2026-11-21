@@ -7,8 +7,8 @@ jobs:
   audit:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.1.0
         with:
           node-version-file: .nvmrc
           cache: npm
@@ -34,7 +34,7 @@ jobs:
       - name: Enforce desktop performance budget
         run: node scripts/lighthouse-budget.mjs ./lighthouse-report.json performance=0.9 accessibility=0.9 best-practices=0.9 seo=0.9
       - name: Upload Lighthouse report
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v7.0.0
         with:
           name: lighthouse-report
           path: lighthouse-report.json
