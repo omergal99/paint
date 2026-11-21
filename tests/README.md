@@ -15,7 +15,9 @@ tests/
   fixtures/paint/       Paint browser fixtures
   helpers/              Shared Node-test helpers
   skills/               Agent instructions for running and fixing tests
-  specs/browser/        Browser test catalog and user journeys
+  specs/browser/        Catalog plus one file per browser journey
+    catalog.mjs         Stable CLI IDs, groups, viewports, and report names
+    *.browser.mjs       Brush, Clipboard, Selection, resize, and mobile flows
   unit/                 Node regression tests grouped by product concern
   run-local.mjs         Local browser suite entry point
 ```

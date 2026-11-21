@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "runId": "example-successful-run",
+  "runId": "example-successful-diagnostic-run",
   "rerunOf": null,
-  "startedAt": "2026-11-21T19:29:45.550Z",
-  "finishedAt": "2026-11-21T19:29:52.925Z",
-  "durationMs": 7375,
+  "startedAt": "2026-11-21T20:11:04.340Z",
+  "finishedAt": "2026-11-21T20:11:18.070Z",
+  "durationMs": 13730,
   "gitCommit": null,
   "status": "passed",
   "environment": {
@@ -28,13 +28,25 @@
       "spec": "desktop"
     },
     {
+      "id": "selection-select",
+      "spec": "desktop"
+    },
+    {
+      "id": "selection-deselect",
+      "spec": "desktop"
+    },
+    {
+      "id": "canvas-resize",
+      "spec": "desktop"
+    },
+    {
       "id": "brush-mobile",
       "spec": "mobile"
     }
   ],
   "summary": {
-    "total": 3,
-    "passed": 3,
+    "total": 6,
+    "passed": 6,
     "failed": 0,
     "skipped": 0,
     "infrastructureFailures": 0
@@ -53,59 +65,66 @@
         "deviceScaleFactor": 1
       },
       "status": "passed",
-      "startedAt": "2026-11-21T19:29:46.369Z",
-      "finishedAt": "2026-11-21T19:29:49.698Z",
-      "durationMs": 3329,
+      "startedAt": "2026-11-21T20:11:05.225Z",
+      "finishedAt": "2026-11-21T20:11:08.762Z",
+      "durationMs": 3537,
       "failedStep": null,
       "steps": [
         {
           "name": "Seed stale session state on the app origin",
           "status": "passed",
-          "startedAt": "2026-11-21T19:29:46.369Z",
-          "durationMs": 36,
-          "finishedAt": "2026-11-21T19:29:46.406Z"
+          "startedAt": "2026-11-21T20:11:05.225Z",
+          "screenshot": null,
+          "durationMs": 68,
+          "finishedAt": "2026-11-21T20:11:05.294Z"
         },
         {
           "name": "Open app in a clean browser state before app scripts run",
           "status": "passed",
-          "startedAt": "2026-11-21T19:29:46.406Z",
-          "durationMs": 3174,
-          "finishedAt": "2026-11-21T19:29:49.580Z"
+          "startedAt": "2026-11-21T20:11:05.294Z",
+          "screenshot": null,
+          "durationMs": 3070,
+          "finishedAt": "2026-11-21T20:11:08.363Z"
         },
         {
           "name": "Verify session storage is cleared before app startup",
           "status": "passed",
-          "startedAt": "2026-11-21T19:29:49.580Z",
-          "durationMs": 3,
-          "finishedAt": "2026-11-21T19:29:49.584Z"
+          "startedAt": "2026-11-21T20:11:08.363Z",
+          "screenshot": null,
+          "durationMs": 66,
+          "finishedAt": "2026-11-21T20:11:08.430Z"
         },
         {
           "name": "Capture canvas baseline",
           "status": "passed",
-          "startedAt": "2026-11-21T19:29:49.584Z",
-          "durationMs": 2,
-          "finishedAt": "2026-11-21T19:29:49.586Z"
+          "startedAt": "2026-11-21T20:11:08.430Z",
+          "screenshot": null,
+          "durationMs": 78,
+          "finishedAt": "2026-11-21T20:11:08.507Z"
         },
         {
           "name": "Select Brush and verify active tool state",
           "status": "passed",
-          "startedAt": "2026-11-21T19:29:49.586Z",
-          "durationMs": 50,
-          "finishedAt": "2026-11-21T19:29:49.636Z"
+          "startedAt": "2026-11-21T20:11:08.507Z",
+          "screenshot": null,
+          "durationMs": 89,
+          "finishedAt": "2026-11-21T20:11:08.596Z"
         },
         {
           "name": "Draw and verify canvas pixels changed",
           "status": "passed",
-          "startedAt": "2026-11-21T19:29:49.636Z",
-          "durationMs": 62,
-          "finishedAt": "2026-11-21T19:29:49.698Z"
+          "startedAt": "2026-11-21T20:11:08.596Z",
+          "screenshot": "screenshots/desktop-brush.png",
+          "durationMs": 100,
+          "finishedAt": "2026-11-21T20:11:08.696Z"
         },
         {
           "name": "Verify browser and network diagnostics",
           "status": "passed",
-          "startedAt": "2026-11-21T19:29:49.698Z",
-          "durationMs": 0,
-          "finishedAt": "2026-11-21T19:29:49.698Z"
+          "startedAt": "2026-11-21T20:11:08.696Z",
+          "screenshot": null,
+          "durationMs": 66,
+          "finishedAt": "2026-11-21T20:11:08.762Z"
         }
       ],
       "error": null,
@@ -130,38 +149,246 @@
         "deviceScaleFactor": 1
       },
       "status": "passed",
-      "startedAt": "2026-11-21T19:29:50.051Z",
-      "finishedAt": "2026-11-21T19:29:51.152Z",
-      "durationMs": 1101,
+      "startedAt": "2026-11-21T20:11:09.070Z",
+      "finishedAt": "2026-11-21T20:11:10.315Z",
+      "durationMs": 1245,
       "failedStep": null,
       "steps": [
         {
           "name": "Open Paint with a clean desktop browser context",
           "status": "passed",
-          "startedAt": "2026-11-21T19:29:50.051Z",
-          "durationMs": 1048,
-          "finishedAt": "2026-11-21T19:29:51.100Z"
+          "startedAt": "2026-11-21T20:11:09.070Z",
+          "screenshot": null,
+          "durationMs": 979,
+          "finishedAt": "2026-11-21T20:11:10.049Z"
         },
         {
           "name": "Seed the browser clipboard with deterministic text",
           "status": "passed",
-          "startedAt": "2026-11-21T19:29:51.100Z",
-          "durationMs": 21,
-          "finishedAt": "2026-11-21T19:29:51.120Z"
+          "startedAt": "2026-11-21T20:11:10.049Z",
+          "screenshot": null,
+          "durationMs": 82,
+          "finishedAt": "2026-11-21T20:11:10.131Z"
         },
         {
           "name": "Paste through the browser keyboard event",
           "status": "passed",
-          "startedAt": "2026-11-21T19:29:51.120Z",
-          "durationMs": 32,
-          "finishedAt": "2026-11-21T19:29:51.152Z"
+          "startedAt": "2026-11-21T20:11:10.131Z",
+          "screenshot": "screenshots/clipboard-text-paste.png",
+          "durationMs": 102,
+          "finishedAt": "2026-11-21T20:11:10.233Z"
         },
         {
           "name": "Verify browser and network diagnostics",
           "status": "passed",
-          "startedAt": "2026-11-21T19:29:51.152Z",
-          "durationMs": 0,
-          "finishedAt": "2026-11-21T19:29:51.152Z"
+          "startedAt": "2026-11-21T20:11:10.233Z",
+          "screenshot": null,
+          "durationMs": 82,
+          "finishedAt": "2026-11-21T20:11:10.315Z"
+        }
+      ],
+      "error": null,
+      "browserDiagnostics": {
+        "consoleErrors": [],
+        "uncaughtExceptions": [],
+        "browserLogErrors": [],
+        "unexpectedNetworkRequests": [],
+        "networkFailures": []
+      },
+      "screenshot": null
+    },
+    {
+      "schemaVersion": 1,
+      "id": "selection-select",
+      "name": "Rectangular selection displays the expected canvas region",
+      "category": "e2e-feature",
+      "device": "Desktop",
+      "viewport": {
+        "width": 1280,
+        "height": 800,
+        "deviceScaleFactor": 1
+      },
+      "status": "passed",
+      "startedAt": "2026-11-21T20:11:10.628Z",
+      "finishedAt": "2026-11-21T20:11:12.012Z",
+      "durationMs": 1384,
+      "failedStep": null,
+      "steps": [
+        {
+          "name": "Open Paint with a clean desktop canvas",
+          "status": "passed",
+          "startedAt": "2026-11-21T20:11:10.629Z",
+          "screenshot": null,
+          "durationMs": 1069,
+          "finishedAt": "2026-11-21T20:11:11.698Z"
+        },
+        {
+          "name": "Activate Select and draw a rectangular marquee",
+          "status": "passed",
+          "startedAt": "2026-11-21T20:11:11.698Z",
+          "screenshot": null,
+          "durationMs": 149,
+          "finishedAt": "2026-11-21T20:11:11.847Z"
+        },
+        {
+          "name": "Verify selection bounds and unchanged canvas pixels",
+          "status": "passed",
+          "startedAt": "2026-11-21T20:11:11.847Z",
+          "screenshot": "screenshots/selection-select.png",
+          "durationMs": 83,
+          "finishedAt": "2026-11-21T20:11:11.930Z"
+        },
+        {
+          "name": "Verify browser and network diagnostics",
+          "status": "passed",
+          "startedAt": "2026-11-21T20:11:11.930Z",
+          "screenshot": null,
+          "durationMs": 82,
+          "finishedAt": "2026-11-21T20:11:12.012Z"
+        }
+      ],
+      "error": null,
+      "browserDiagnostics": {
+        "consoleErrors": [],
+        "uncaughtExceptions": [],
+        "browserLogErrors": [],
+        "unexpectedNetworkRequests": [],
+        "networkFailures": []
+      },
+      "screenshot": null
+    },
+    {
+      "schemaVersion": 1,
+      "id": "selection-deselect",
+      "name": "Deselect clears selection and restores the previous tool",
+      "category": "e2e-feature",
+      "device": "Desktop",
+      "viewport": {
+        "width": 1280,
+        "height": 800,
+        "deviceScaleFactor": 1
+      },
+      "status": "passed",
+      "startedAt": "2026-11-21T20:11:12.327Z",
+      "finishedAt": "2026-11-21T20:11:14.013Z",
+      "durationMs": 1686,
+      "failedStep": null,
+      "steps": [
+        {
+          "name": "Open Paint and record the clean canvas state",
+          "status": "passed",
+          "startedAt": "2026-11-21T20:11:12.327Z",
+          "screenshot": null,
+          "durationMs": 1187,
+          "finishedAt": "2026-11-21T20:11:13.514Z"
+        },
+        {
+          "name": "Create a selection with Select as the active tool",
+          "status": "passed",
+          "startedAt": "2026-11-21T20:11:13.514Z",
+          "screenshot": null,
+          "durationMs": 136,
+          "finishedAt": "2026-11-21T20:11:13.650Z"
+        },
+        {
+          "name": "Use the Selection menu to deselect and restore Brush",
+          "status": "passed",
+          "startedAt": "2026-11-21T20:11:13.650Z",
+          "screenshot": null,
+          "durationMs": 230,
+          "finishedAt": "2026-11-21T20:11:13.880Z"
+        },
+        {
+          "name": "Verify selection handles are gone and canvas pixels are unchanged",
+          "status": "passed",
+          "startedAt": "2026-11-21T20:11:13.880Z",
+          "screenshot": "screenshots/selection-deselect.png",
+          "durationMs": 66,
+          "finishedAt": "2026-11-21T20:11:13.946Z"
+        },
+        {
+          "name": "Verify browser and network diagnostics",
+          "status": "passed",
+          "startedAt": "2026-11-21T20:11:13.946Z",
+          "screenshot": null,
+          "durationMs": 67,
+          "finishedAt": "2026-11-21T20:11:14.013Z"
+        }
+      ],
+      "error": null,
+      "browserDiagnostics": {
+        "consoleErrors": [],
+        "uncaughtExceptions": [],
+        "browserLogErrors": [],
+        "unexpectedNetworkRequests": [],
+        "networkFailures": []
+      },
+      "screenshot": null
+    },
+    {
+      "schemaVersion": 1,
+      "id": "canvas-resize",
+      "name": "Canvas resize updates dimensions and supports undo and redo",
+      "category": "e2e-feature",
+      "device": "Desktop",
+      "viewport": {
+        "width": 1280,
+        "height": 800,
+        "deviceScaleFactor": 1
+      },
+      "status": "passed",
+      "startedAt": "2026-11-21T20:11:14.324Z",
+      "finishedAt": "2026-11-21T20:11:16.229Z",
+      "durationMs": 1905,
+      "failedStep": null,
+      "steps": [
+        {
+          "name": "Open Paint and draw a deterministic reference stroke",
+          "status": "passed",
+          "startedAt": "2026-11-21T20:11:14.325Z",
+          "screenshot": null,
+          "durationMs": 1173,
+          "finishedAt": "2026-11-21T20:11:15.498Z"
+        },
+        {
+          "name": "Choose a 50% whole-canvas resize",
+          "status": "passed",
+          "startedAt": "2026-11-21T20:11:15.498Z",
+          "screenshot": null,
+          "durationMs": 207,
+          "finishedAt": "2026-11-21T20:11:15.705Z"
+        },
+        {
+          "name": "Apply resize and verify dimensions and painted pixels",
+          "status": "passed",
+          "startedAt": "2026-11-21T20:11:15.705Z",
+          "screenshot": null,
+          "durationMs": 141,
+          "finishedAt": "2026-11-21T20:11:15.846Z"
+        },
+        {
+          "name": "Undo resize and verify the original pixels and dimensions return",
+          "status": "passed",
+          "startedAt": "2026-11-21T20:11:15.846Z",
+          "screenshot": null,
+          "durationMs": 180,
+          "finishedAt": "2026-11-21T20:11:16.026Z"
+        },
+        {
+          "name": "Redo resize and verify the resized canvas is restored",
+          "status": "passed",
+          "startedAt": "2026-11-21T20:11:16.026Z",
+          "screenshot": "screenshots/canvas-resize.png",
+          "durationMs": 136,
+          "finishedAt": "2026-11-21T20:11:16.161Z"
+        },
+        {
+          "name": "Verify browser and network diagnostics",
+          "status": "passed",
+          "startedAt": "2026-11-21T20:11:16.161Z",
+          "screenshot": null,
+          "durationMs": 68,
+          "finishedAt": "2026-11-21T20:11:16.229Z"
         }
       ],
       "error": null,
@@ -186,45 +413,50 @@
         "deviceScaleFactor": 1
       },
       "status": "passed",
-      "startedAt": "2026-11-21T19:29:51.514Z",
-      "finishedAt": "2026-11-21T19:29:52.799Z",
-      "durationMs": 1285,
+      "startedAt": "2026-11-21T20:11:16.539Z",
+      "finishedAt": "2026-11-21T20:11:17.975Z",
+      "durationMs": 1436,
       "failedStep": null,
       "steps": [
         {
           "name": "Open app with a clean mobile-emulated viewport",
           "status": "passed",
-          "startedAt": "2026-11-21T19:29:51.520Z",
-          "durationMs": 1063,
-          "finishedAt": "2026-11-21T19:29:52.583Z"
+          "startedAt": "2026-11-21T20:11:16.544Z",
+          "screenshot": null,
+          "durationMs": 1085,
+          "finishedAt": "2026-11-21T20:11:17.629Z"
         },
         {
           "name": "Select Brush and verify active tool state",
           "status": "passed",
-          "startedAt": "2026-11-21T19:29:52.583Z",
-          "durationMs": 48,
-          "finishedAt": "2026-11-21T19:29:52.631Z"
+          "startedAt": "2026-11-21T20:11:17.629Z",
+          "screenshot": null,
+          "durationMs": 114,
+          "finishedAt": "2026-11-21T20:11:17.743Z"
         },
         {
           "name": "Capture canvas baseline",
           "status": "passed",
-          "startedAt": "2026-11-21T19:29:52.631Z",
-          "durationMs": 2,
-          "finishedAt": "2026-11-21T19:29:52.633Z"
+          "startedAt": "2026-11-21T20:11:17.743Z",
+          "screenshot": null,
+          "durationMs": 99,
+          "finishedAt": "2026-11-21T20:11:17.842Z"
         },
         {
           "name": "Draw by touch and verify canvas pixels changed",
           "status": "passed",
-          "startedAt": "2026-11-21T19:29:52.633Z",
-          "durationMs": 165,
-          "finishedAt": "2026-11-21T19:29:52.799Z"
+          "startedAt": "2026-11-21T20:11:17.842Z",
+          "screenshot": "screenshots/mobile-touch.png",
+          "durationMs": 100,
+          "finishedAt": "2026-11-21T20:11:17.942Z"
         },
         {
           "name": "Verify browser and network diagnostics",
           "status": "passed",
-          "startedAt": "2026-11-21T19:29:52.799Z",
-          "durationMs": 0,
-          "finishedAt": "2026-11-21T19:29:52.799Z"
+          "startedAt": "2026-11-21T20:11:17.942Z",
+          "screenshot": null,
+          "durationMs": 34,
+          "finishedAt": "2026-11-21T20:11:17.975Z"
         }
       ],
       "error": null,

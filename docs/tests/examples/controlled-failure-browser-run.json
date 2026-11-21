@@ -1,0 +1,134 @@
+{
+  "schemaVersion": 1,
+  "runId": "example-controlled-failure",
+  "rerunOf": null,
+  "startedAt": "2026-11-21T19:58:07.219Z",
+  "finishedAt": "2026-11-21T19:58:11.254Z",
+  "durationMs": 4035,
+  "gitCommit": null,
+  "status": "failed",
+  "environment": {
+    "node": "v24.11.1",
+    "browser": "google-chrome Google Chrome 151.0.7922.137",
+    "locale": "en-US",
+    "timezoneId": "UTC",
+    "colorScheme": "light",
+    "reducedMotion": "reduce",
+    "deviceScaleFactor": 1,
+    "platform": "linux",
+    "architecture": "x64"
+  },
+  "selection": [
+    {
+      "id": "example-controlled-failure",
+      "spec": "desktop"
+    }
+  ],
+  "summary": {
+    "total": 1,
+    "passed": 0,
+    "failed": 1,
+    "skipped": 0,
+    "infrastructureFailures": 0
+  },
+  "infrastructureError": null,
+  "tests": [
+    {
+      "schemaVersion": 1,
+      "id": "example-controlled-failure",
+      "name": "Example only: intentional canvas assertion failure",
+      "category": "e2e-example",
+      "device": "Desktop",
+      "viewport": {
+        "width": 1280,
+        "height": 800,
+        "deviceScaleFactor": 1
+      },
+      "status": "failed",
+      "startedAt": "2026-11-21T19:58:08.055Z",
+      "finishedAt": "2026-11-21T19:58:11.143Z",
+      "durationMs": 3088,
+      "failedStep": "Example only: fail an intentionally incorrect canvas-size assertion",
+      "steps": [
+        {
+          "name": "Open Paint and verify the clean canvas dimensions",
+          "status": "passed",
+          "startedAt": "2026-11-21T19:58:08.056Z",
+          "screenshot": null,
+          "durationMs": 2904,
+          "finishedAt": "2026-11-21T19:58:10.960Z"
+        },
+        {
+          "name": "Draw a reference stroke for the failure screenshot",
+          "status": "passed",
+          "startedAt": "2026-11-21T19:58:10.960Z",
+          "screenshot": null,
+          "durationMs": 115,
+          "finishedAt": "2026-11-21T19:58:11.076Z"
+        },
+        {
+          "name": "Example only: fail an intentionally incorrect canvas-size assertion",
+          "status": "failed",
+          "startedAt": "2026-11-21T19:58:11.076Z",
+          "error": {
+            "name": "AssertionError",
+            "message": "Intentional example failure: expected 801x600; actual canvas is 800x600.\n+ actual - expected\n\n  [\n+   800,\n-   801,\n    600\n  ]\n",
+            "code": "ERR_ASSERTION"
+          },
+          "durationMs": 3,
+          "finishedAt": "2026-11-21T19:58:11.078Z",
+          "screenshot": null
+        }
+      ],
+      "error": {
+        "name": "AssertionError",
+        "message": "Intentional example failure: expected 801x600; actual canvas is 800x600.\n+ actual - expected\n\n  [\n+   800,\n-   801,\n    600\n  ]\n",
+        "code": "ERR_ASSERTION"
+      },
+      "browserDiagnostics": {
+        "consoleErrors": [],
+        "uncaughtExceptions": [],
+        "browserLogErrors": [],
+        "unexpectedNetworkRequests": [],
+        "networkFailures": []
+      },
+      "screenshot": "screenshots/controlled-failure.png"
+    }
+  ],
+  "diagnostics": {
+    "nodeTestEvents": [
+      {
+        "type": "test:diagnostic",
+        "message": "tests 1"
+      },
+      {
+        "type": "test:diagnostic",
+        "message": "suites 0"
+      },
+      {
+        "type": "test:diagnostic",
+        "message": "pass 0"
+      },
+      {
+        "type": "test:diagnostic",
+        "message": "fail 1"
+      },
+      {
+        "type": "test:diagnostic",
+        "message": "cancelled 0"
+      },
+      {
+        "type": "test:diagnostic",
+        "message": "skipped 0"
+      },
+      {
+        "type": "test:diagnostic",
+        "message": "todo 0"
+      },
+      {
+        "type": "test:diagnostic",
+        "message": "duration_ms 3276.806796"
+      }
+    ]
+  }
+}

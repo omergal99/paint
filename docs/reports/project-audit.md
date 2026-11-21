@@ -35,11 +35,13 @@ change are recorded at handoff.
   from the module graph, versions are synchronized, and checks cover tests,
   localization, syntax, docs, and release metadata.
 - **A local browser baseline now exists:** `npm run test:local` runs the
-  existing Node suite and desktop/mobile-emulated Chromium checks through a
-  small CDP harness, without adding browser-test npm dependencies or changing
-  CI. It supports individual/group selection, fresh BrowserContexts, named
-  steps, and per-run JSON/HTML reports; product coverage remains intentionally
-  narrow. Direct CDP use is not a public, supported Chrome API and has no
+  existing Node suite and local Chromium journeys through a small CDP harness,
+  without adding browser-test npm dependencies or changing CI. It covers
+  desktop/mobile-emulated drawing, Clipboard text paste, rectangular
+  selection, Deselect, and whole-canvas resize with Undo/Redo. It supports
+  individual/group selection, fresh BrowserContexts, named steps, and per-run
+  JSON/HTML reports; broader product coverage remains intentionally narrow.
+  Direct CDP use is not a public, supported Chrome API and has no
   backwards-compatibility guarantee, so Chrome upgrades require a full-suite
   check.
 - **No credentials are required for ordinary local editing.** Clipboard and
@@ -59,22 +61,22 @@ storage map.
 | First service-worker control could trigger the same unconditional reload as an update | Fixed and verified locally | Fresh origin reported one navigation of type `navigate` and reached ready state; production update behavior still needs a separate deployment check |
 | The public audit, README links, and docs consistency check were stale | Fixed | Current docs replace obsolete scores/claims; docs gate checks public links and optional local internal docs |
 | README screenshot showed an obsolete UI | Fixed | Replaced with a current 1280×800 local browser capture |
-| Local deterministic browser checks were missing | Added | `npm run test:local` checks desktop app/brush behavior and mobile touch/brush behavior; it remains outside GitHub Actions |
+| Local deterministic browser checks were missing | Added and extended | `npm run test:local` checks desktop/mobile drawing, Clipboard text paste, rectangular selection, Deselect, and whole-canvas resize/undo/redo; it remains outside GitHub Actions |
 | Process cleanup, session isolation, external HTTP(S) policy, and active-tool assertion were missing from the initial harness | Fixed | Shared SIGTERM/SIGKILL cleanup, sessionStorage reset, external HTTP(S) blocking/recording, and Brush-active verification now cover the hardening findings; other transports are not claimed to be sandboxed |
 | Local harness lacked test selection, centralized timeouts, isolated contexts, and structured reports | Fixed | `test:browser` supports stable IDs/groups, each test uses a new BrowserContext/process, config is validated centrally, and every run writes JSON/HTML plus diagnostics |
 | Browser environment depended on host defaults | Fixed | Locale, timezone, color scheme, reduced motion, and DPR now have centralized deterministic defaults and per-spec overrides; both smoke journeys assert their emulated environment |
 | SIGINT/SIGTERM during startup or an active browser-test process could skip cleanup/reporting | Fixed and verified | Server-startup cancellation unit test and manual Chrome-startup/browser-test-process probes returned exit 130, wrote interruption reports, and left no observed owned processes |
 | Report persistence failure could hide already-collected test details | Fixed and unit-verified | Terminal test summary prints even when report files cannot be confirmed; log/result read failures are represented rather than thrown away |
 | Full Chrome executable path could be copied to report metadata | Fixed | Reports now retain only executable basename and version |
-| Failure evidence needed end-to-end proof | Verified | A temporary assertion failure produced the expected failed step, stack, screenshot, JSON, HTML, and exit code 1; the assertion was restored and full suite rerun |
+| Failure evidence needed end-to-end proof | Verified and documented | A temporary, deliberately incorrect canvas-size assertion produced a failed step, screenshot, JSON/HTML, and exit code 1; the temporary test was removed and a sanitized example is linked from the test docs |
 | Report writes and generated links needed stronger concurrency/path safety | Hardened and verified | Reports and `latest.json` are written via atomic rename; run IDs use full UUIDs; HTML links accept only safe relative artifact paths; concurrent Desktop/Mobile runs produced distinct valid reports and a valid latest pointer |
 | Diagnostic URLs could preserve credentials or query secrets | Hardened and unit-verified | Network diagnostic URLs drop userinfo, query strings, and fragments; HTML escapes dynamic text and test paths |
 | Reports needed predictable retention | Open maintenance decision | Artifacts are retained to preserve failure evidence; no automatic pruning currently exists |
 | Direct CDP use has no compatibility guarantee | Accepted, documented trade-off | Keep the harness Chromium-only and run the full suite on Chrome upgrades; reassess supported options such as ChromeDriver only if maintenance becomes material |
 
-The local release gates and initial desktop/mobile browser journeys pass.
-Coverage of selection, resize, history, settings, and physical-device UX is
-still separate work; production service-worker behavior and Lighthouse/field
+The local release gates and focused desktop/mobile browser journeys pass.
+Broader selection editing, settings, history, and physical-device UX remain
+separate work; production service-worker behavior and Lighthouse/field
 performance also remain unverified.
 
 ## Agent guidance and hidden files
@@ -97,8 +99,8 @@ the mix. These are candidates, not an instruction to start all three at once.
 
 | Candidate | Priority | Effort | Category | Status | Dependencies | Acceptance criteria | Evidence / next gate |
 |---|---|---|---|---|---|---|---|
-| Verify Clipboard copy/paste in a real browser | P2 | S | Quality | Complete | None | Seed deterministic text with the browser Clipboard API, paste through a trusted keyboard event, and assert the Paint text editor receives it | `clipboard-text-paste` passes locally; denied-permission and image-copy paths remain future coverage |
-| Add Selection / Deselect / Resize browser journeys | P1 | M | Quality / Product | Planned | Current local browser harness (verified) | Exercise a real selection, Deselect, resize, and relevant undo behavior; assert resulting canvas state and no browser errors | Unit coverage and earlier manual interaction evidence exist, but these are not E2E journeys; next gate is a minimal stable desktop scenario |
+| Verify Clipboard modifier behavior | P2 | S | Quality | Partially verified | Current local browser harness | Seed deterministic text with the browser Clipboard API, paste through a trusted keyboard event, and verify default Ctrl/Meta shortcut normalization | The browser journey uses Control+V on Linux; the Node test verifies Ctrl+V and Meta+V map to `mod+v`; native macOS paste remains unverified |
+| Selection / Deselect / Resize browser journeys | P1 | M | Quality / Product | Verified locally (focused scope) | Current local browser harness | Assert rectangular bounds without raster mutation, Deselect and prior-tool restoration, plus 50% whole-canvas resize and pixel/dimension Undo/Redo | All three stable IDs pass individually and in default/reversed desktop order; mobile selection and selection-handle resizing remain open |
 | Establish a separate performance baseline | P1 | L | Performance | Planned | Define repeatable measurement conditions; keep benchmarks separate from `test:local` | Record cold start, first interaction, large-canvas behavior (including 6000×6000), drawing latency, memory/history and storage growth with environment metadata; do not invent pass thresholds before a baseline | No current browser/performance baseline proves these limits; next gate is a measurement protocol and representative machine/browser record |
 
 Keep the other existing roadmap areas visible: mobile Hand/Pan and narrow
@@ -119,7 +121,7 @@ trade-off, not a cross-browser promise.
 
 | Area | Verified today | Future coverage / next gate |
 |---|---|---|
-| Drawing and editing | Desktop brush drawing and mobile-emulated touch drawing change canvas pixels; selection, history, and resize have Node/manual evidence in selected flows | Brush/eraser, Selection/Deselect, movement/transforms, resize, Undo/Redo, blank/no-op and duplicate-history behavior |
+| Drawing and editing | Desktop/mobile-emulated Brush drawing; desktop rectangular selection, Deselect, and whole-canvas resize with Undo/Redo | Brush/eraser, selection movement/handles/lasso, transforms, mobile editing, blank/no-op and duplicate-history behavior |
 | Persistence and storage | Existing code has separate settings, recovery, image-history and bounded undo paths; the smoke suite starts with an isolated browser context | Reload persistence for settings/palette/background, recovery/history restore, IndexedDB failures, quota exhaustion/recovery, high-resolution limits and cleanup |
 | Browser APIs and offline | Local HTTP works; external HTTP(S) is blocked and recorded; text clipboard paste is verified in Chromium | Clipboard denied/unavailable and image-copy paths, import/export and File API fallback, service-worker install/update/reload, cached-shell and offline behavior |
 | Mobile, input, and visual fidelity | 390×844 mobile emulation verifies touch drawing | 320–375 px layouts, Hand/Pan transitions, selection on touch, fullscreen, RTL, high DPR, browser zoom including true 200%, and pasted-image sharpness |
@@ -166,11 +168,11 @@ links and the index whenever a document moves.
 | Check | Result |
 |---|---|
 | `npm run test:local` | PASS — 400+ Node tests and all current browser journeys; `npm test` prints the exact count |
-| `npm run check:i18n` | PASS — 8 locales, 563 keys, 410 UI labels |
+| `npm run check:i18n` | PASS — locale catalogs and UI-label coverage verified |
 | `npm run typecheck` | PASS |
-| `npm run verify:docs` | PASS — 21 guides checked |
+| `npm run verify:docs` | PASS — documentation consistency verified |
 | `npm run audit:runtime` | PASS — static contract census; not runtime teardown proof |
-| `npm run sw:check` | PASS — 150 shell assets, 141 app modules |
+| `npm run sw:check` | PASS — service-worker shell is in sync |
 | `npm run verify:release` | PASS — version 1.9.1 |
 | `npm audit --audit-level=low` | PASS — 0 dependency vulnerabilities |
 | `git diff --check` | PASS |
@@ -181,23 +183,28 @@ links and the index whenever a document moves.
 journey verified clean session storage before app scripts, active Brush
 selection, and a canvas pixel change; the 390×844 mobile-emulated journey
 verified active Brush selection and touch drawing. Locale/timezone/media
-preferences and DPR are explicitly emulated and asserted. A separate reverse-order
-run with CLI timeout overrides also passed; each individual test ID has passed.
-The desktop Clipboard journey seeded text through the browser Clipboard API,
-pasted with a trusted Ctrl+V event, and verified that Paint opened its text
-editor with the exact text. This proves the successful text-paste path, not all
-clipboard permission or image-copy cases.
-An isolated failed-run replay passed, the `--diagnostics` run passed both
-journeys, and concurrent Desktop/Mobile runs produced separate reports. A
-blocked external-request probe appeared in its report without its query or
-fragment. Infrastructure-failure and SIGINT interruption probes produced
-reports without leaving observed Chrome or server processes behind. The test
-guide and ADR explicitly limit the network claim to intercepted HTTP(S).
+preferences and DPR are explicitly emulated and asserted. The desktop
+Clipboard journey seeded text through the browser Clipboard API, pasted with
+a trusted Control+V event on Linux, and verified that Paint opened its text
+editor with the exact text. The shortcut-manager unit test confirms that Ctrl
+and Meta both normalize to the default `mod+v` binding; native macOS browser
+paste remains unverified.
 
-A controlled temporary assertion failure returned exit code 1 and produced the
-expected failed step, assertion message/stack, browser diagnostics, 1280×800
-failure screenshot, JSON report, and standalone HTML report. The temporary
-assertion was restored before the passing full-suite run. An invalid
+The desktop feature journeys verify a 400×300 rectangular marquee at the
+expected coordinates without changing raster pixels; Deselect clears the
+handles and restores an explicitly selected Brush; and the 50% resize
+preserves the drawn center pixel through resize, Undo, and Redo. Each journey
+passed alone and the desktop group passed with the three feature journeys in
+reverse order. The full local suite and diagnostics run include all current
+journeys. The test guide and ADR retain the limitation to intercepted HTTP(S),
+not a complete network sandbox.
+
+A temporary controlled assertion expected 801×600 from Paint's normal
+800×600 canvas and returned exit code 1 with a failed-step message, browser
+diagnostics, screenshot, JSON report, and standalone HTML report. The
+temporary test was removed. Sanitized successful and controlled-failure
+reports plus actual screenshots are available in the
+[test examples and visual gallery](../tests/examples/README.md). An invalid
 `CHROME_BIN` also produced a structured infrastructure-failure report before
 any browser test started.
 

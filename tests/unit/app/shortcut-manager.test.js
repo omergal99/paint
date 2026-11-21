@@ -20,6 +20,19 @@ test('shortcut normalization is stable across keyboard naming conventions', () =
 	assert.equal(formatShortcut('mod+arrowright'), 'Ctrl/Cmd+→');
 });
 
+test('default paste shortcut normalizes both Ctrl+V and Meta+V', () => {
+	const manager = createShortcutManager();
+	for (const event of [
+		{ code: 'KeyV', ctrlKey: true, metaKey: false },
+		{ code: 'KeyV', ctrlKey: false, metaKey: true },
+	]) {
+		const shortcut = shortcutFromEvent(event);
+		assert.equal(shortcut, 'mod+v');
+		assert.equal(manager.resolve(shortcut), SHORTCUT_ACTIONS.paste);
+		assert.equal(manager.isDefault(SHORTCUT_ACTIONS.paste, shortcut), true);
+	}
+});
+
 test('shortcut assignments reject conflicts and resolve custom bindings', () => {
 	const manager = createShortcutManager();
 	assert.equal(manager.resolve('mod+z'), SHORTCUT_ACTIONS.undo);

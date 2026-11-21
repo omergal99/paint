@@ -64,21 +64,30 @@ export const createPaintAdapter = async ({ browser, baseUrl } = {}) => {
     };
   })()`);
 
-  const selectBrush = async () => {
-    const bounds = await browser.evaluate(`(() => {
-      const button = document.querySelector('button[data-tool="brush"]');
-      if (!button) return null;
-      button.scrollIntoView({ block: 'center', inline: 'center' });
-      const rect = button.getBoundingClientRect();
-      const visible = getComputedStyle(button).display !== 'none'
-        && getComputedStyle(button).visibility !== 'hidden'
-        && rect.width > 0
-        && rect.height > 0;
-      return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2, visible };
-    })()`);
-    if (!bounds?.visible) throw new Error('The Paint adapter could not find a visible Brush tool button.');
+  const controlBounds = (selector) => browser.waitForFunction(`(() => {
+    const control = document.querySelector(${JSON.stringify(selector)});
+    if (!control || control.hidden) return false;
+    const style = getComputedStyle(control);
+    if (style.display === 'none' || style.visibility === 'hidden') return false;
+    control.scrollIntoView({ block: 'center', inline: 'center' });
+    const rect = control.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) return false;
+    return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+  })()`);
+
+  const clickControl = async (selector) => {
+    const bounds = await controlBounds(selector);
     await browser.mouseClick(bounds);
   };
+
+  const selectTool = async (toolName) => {
+    if (typeof toolName !== 'string' || !/^[a-z][a-z0-9-]*$/.test(toolName)) {
+      throw new Error('A valid Paint tool name is required.');
+    }
+    await clickControl(`button[data-tool="${toolName}"]`);
+  };
+
+  const selectBrush = () => selectTool('brush');
 
   const assertActiveTool = async (toolName) => {
     if (typeof toolName !== 'string' || !toolName.trim()) {
@@ -119,5 +128,114 @@ export const createPaintAdapter = async ({ browser, baseUrl } = {}) => {
     `(${canvasSampleHash}) !== ${previousHash}`,
   );
 
-  return Object.freeze({ open, canvasGeometry, selectBrush, assertActiveTool, drawStroke, sampleHash, waitForHashChange });
+  const selectCanvasRectangle = async ({
+    left = 0.25,
+    top = 0.25,
+    right = 0.75,
+    bottom = 0.75,
+  } = {}) => {
+    if (![left, top, right, bottom].every(Number.isFinite)
+      || left < 0 || top < 0 || right > 1 || bottom > 1 || left >= right || top >= bottom) {
+      throw new Error('A rectangular selection requires increasing canvas-relative bounds between 0 and 1.');
+    }
+    const rect = await canvasGeometry();
+    if (!rect || rect.width <= 0 || rect.height <= 0) {
+      throw new Error('The Paint canvas is not visible for selection input.');
+    }
+    await browser.mouseDrag({
+      fromX: rect.left + rect.width * left,
+      fromY: rect.top + rect.height * top,
+      toX: rect.left + rect.width * right,
+      toY: rect.top + rect.height * bottom,
+    });
+  };
+
+  const selectionState = () => browser.evaluate(`(() => {
+    const canvas = document.querySelector('#paint-canvas');
+    const northwest = document.querySelector('[data-selection-handle="nw"]');
+    const southeast = document.querySelector('[data-selection-handle="se"]');
+    if (!canvas || !northwest || !southeast) return null;
+    const canvasRect = canvas.getBoundingClientRect();
+    const center = (element) => {
+      const rect = element.getBoundingClientRect();
+      return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+    };
+    const nw = center(northwest);
+    const se = center(southeast);
+    const visible = !northwest.hidden && !southeast.hidden;
+    return {
+      activeTool: document.querySelector('.tool-btn.active')?.dataset.tool || null,
+      handlesVisible: visible,
+      bounds: visible ? {
+        x: Math.round(nw.x - canvasRect.left),
+        y: Math.round(nw.y - canvasRect.top),
+        width: Math.round(se.x - nw.x),
+        height: Math.round(se.y - nw.y),
+      } : null,
+    };
+  })()`);
+
+  const deselectSelection = async () => {
+    await clickControl('#btn-image-more');
+    await clickControl('.image-more-menu-items .action-submenu-trigger[aria-label="Selection"]');
+    await clickControl('#btn-deselect');
+  };
+
+  const openCanvasResizeDialog = async () => {
+    await clickControl('#btn-resize-quick');
+    await browser.waitForFunction('document.querySelector("#resize-dialog")?.open === true');
+  };
+
+  const chooseResizeScale = async (percent) => {
+    if (!Number.isInteger(percent) || percent < 1 || percent > 1000) {
+      throw new Error('A resize scale must be an integer between 1 and 1000.');
+    }
+    await clickControl(`[data-resize-scale="${percent}"]`);
+  };
+
+  const confirmCanvasResize = async () => {
+    await clickControl('#resize-ok');
+    await browser.waitForFunction('document.querySelector("#resize-dialog")?.open === false');
+  };
+
+  const canvasDimensions = () => browser.evaluate(`(() => {
+    const canvas = document.querySelector('#paint-canvas');
+    return canvas ? { width: canvas.width, height: canvas.height } : null;
+  })()`);
+
+  const canvasCenterPixel = () => browser.evaluate(`(() => {
+    const canvas = document.querySelector('#paint-canvas');
+    if (!canvas) return null;
+    const { data } = canvas.getContext('2d').getImageData(
+      Math.floor(canvas.width / 2),
+      Math.floor(canvas.height / 2),
+      1,
+      1,
+    );
+    return [...data];
+  })()`);
+
+  const undo = () => clickControl('#btn-undo');
+  const redo = () => clickControl('#btn-redo');
+
+  return Object.freeze({
+    open,
+    canvasGeometry,
+    selectTool,
+    selectBrush,
+    assertActiveTool,
+    drawStroke,
+    sampleHash,
+    waitForHashChange,
+    selectCanvasRectangle,
+    selectionState,
+    deselectSelection,
+    openCanvasResizeDialog,
+    chooseResizeScale,
+    confirmCanvasResize,
+    canvasDimensions,
+    canvasCenterPixel,
+    undo,
+    redo,
+  });
 };
