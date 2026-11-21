@@ -47,6 +47,6 @@ These cannot be proven by local files alone:
 ## Operating rule
 
 Run the project skill at
-`.skills/community-standards-audit/SKILL.md` after major feature, security,
+`.agents/skills/community-standards-audit/SKILL.md` after major feature, security,
 workflow, or public-documentation changes. Keep this document evidence-based;
 do not mark external GitHub settings as complete without checking them there.

@@ -28,8 +28,8 @@ rendering, video/audio content, ad surface, or multi-page navigation to audit.
    console output, network output, and traces.
 4. Use Lighthouse for rendered Accessibility, SEO, Best Practices, and PWA
    evidence. Use a performance trace or Lighthouse Performance separately.
-5. Use `scripts/analyze.sh paint/index.html` for source smoke checks; it is not
-   a replacement for rendered evidence.
+5. Use `npm run audit:runtime` for static storage/event contract checks; it is
+   not a replacement for rendered or performance evidence.
 6. Re-run the same journey after a fix and report browser-only checks that were
    not available.
 

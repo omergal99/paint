@@ -20,20 +20,21 @@ wrapper uses `npx --package @playwright/cli playwright-cli`.
 
 ## Project setup
 
-Run from `paint/` and keep artifacts inside the repository:
+Run from the repository root and keep artifacts inside the repository:
 
 ```bash
 export PAINT_ROOT="$(pwd)"
 export PWCLI="${PAINT_ROOT}/.agents/skills/playwright/scripts/playwright_cli.sh"
-mkdir -p output/playwright/phase-2
-python3 -m http.server 4173
+export PW_OUTPUT="${PAINT_ROOT}/output/playwright/paint-check"
+mkdir -p "$PW_OUTPUT"
 ```
 
-Use a named session for repeatable checks:
+Start `npm run serve` in a separate terminal, then use a named session for
+repeatable checks:
 
 ```bash
-"$PWCLI" --session paint-phase2 open http://127.0.0.1:4173/
-"$PWCLI" --session paint-phase2 snapshot
+"$PWCLI" --session paint-check open http://127.0.0.1:4173/
+"$PWCLI" --session paint-check snapshot
 ```
 
 ## Required interaction loop
@@ -63,7 +64,7 @@ Use a named session for repeatable checks:
 "$PWCLI" click e12
 "$PWCLI" press Escape
 "$PWCLI" resize 320 720
-"$PWCLI" screenshot output/playwright/phase-2/settings.png
+"$PWCLI" screenshot "$PW_OUTPUT/settings.png"
 "$PWCLI" console warning
 "$PWCLI" network
 "$PWCLI" tracing-start

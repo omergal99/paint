@@ -90,7 +90,9 @@ is answered with numbers, not with a guess about `localStorage`.
 
 ## Consequences
 
-- `.skills/work3-delivery.md` gained a step for `npm run sw:sync`.
+- The reusable feature-delivery guide is now
+  [`.skills/workflows/ui-delivery.md`](../.skills/workflows/ui-delivery.md);
+  it retains the `npm run sw:sync` step for module moves.
 - `docs/RELEASING.md` and `docs/UI-PATTERNS.md` document the version/shell
   workflow and the reusable interaction contracts.
 - Every module extraction ships with a contract test, so a future session

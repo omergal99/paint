@@ -1136,7 +1136,7 @@ test('Community standards files and contributor templates are discoverable', () 
     '.github/ISSUE_TEMPLATE/bug_report.md',
     '.github/ISSUE_TEMPLATE/feature_request.md',
     'docs/COMMUNITY_STANDARDS.md',
-    '.skills/community-standards-audit/SKILL.md',
+    '.agents/skills/community-standards-audit/SKILL.md',
   ]) {
     assert.ok(fs.existsSync(path.join(root, file)), `Missing community file: ${file}`);
   }

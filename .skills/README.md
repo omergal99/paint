@@ -1,19 +1,39 @@
-# Local paint skills
+# Paint agent guidance
 
-These concise notes are the project contract for future agents. Read the
-relevant note before editing; read `AGENTS.md` first for the required baseline.
+`AGENTS.md` is the required entry point. This directory contains project
+guides; loadable Agent Skills live in `.agents/skills/`. Read only the notes
+relevant to the task.
 
-- [`coding.md`](coding.md) - clean code, KISS, SSOT, no duplication.
-- [`agent-workflow.md`](agent-workflow.md) - bounded, budgeted, deterministic,
-  documented, and independently reviewed AI-agent sessions.
-- [`architecture.md`](architecture.md) - logic/data/UI separation and module boundaries.
-- [`ui-components.md`](ui-components.md) - reusable, responsive infrastructure UI.
-- [`performance.md`](performance.md) - browser/canvas performance rules.
-- [`rtl-browser-audit.md`](rtl-browser-audit.md) - whole-app direction,
-  positioning, keyboard, responsive, and browser-matrix checks.
-- [`seo.md`](seo.md) - metadata, accessibility, and discoverability.
-- [`validation.md`](validation.md) - tests, smoke checks, and safe handoff.
-- [`token-efficiency.md`](token-efficiency.md) - surgical edits and deterministic verification.
-- [`community-standards-audit/SKILL.md`](community-standards-audit/SKILL.md) - open-source community, security, documentation, and contribution readiness.
-- [`work3-delivery.md`](work3-delivery.md) - Work 3 phased delivery: one reusable
-  mirror/control per phase, SSOT hooks, i18n + validation habit.
+## Engineering
+
+- [Coding](engineering/coding.md) - KISS, SSOT, readable ES modules.
+- [Architecture](engineering/architecture.md) - logic/data/UI boundaries.
+- [UI components](engineering/ui-components.md) - reusable, accessible UI.
+- [Performance](engineering/performance.md) - browser and canvas hot paths.
+- [Modern Web Guidance](engineering/modern-web-guidance.md) - concise local
+  principles derived from Google's web-platform guidance.
+
+## Quality
+
+- [RTL and browser audit](quality/rtl-browser-audit.md) - shared layout,
+  direction, positioning, canvas, and input changes.
+- [SEO](quality/seo.md) - metadata and discoverability.
+- [Validation](quality/validation.md) - tests, audits, and handoff evidence.
+
+## Workflows
+
+- [Agent workflow](workflows/agent-workflow.md) - bounded, deterministic,
+  budget-conscious work and human approval gates.
+- [Token efficiency](workflows/token-efficiency.md) - focused context and
+  verification without sacrificing quality.
+- [Feature delivery](workflows/ui-delivery.md) - reusable UI and feature
+  delivery contracts; not tied to a numbered workstream.
+- [Retro](workflows/retro.md) - short session review; see the loadable
+  [maintenance skill](../.agents/skills/maintenance/SKILL.md) for ADLC.
+
+## Audit and reference
+
+- [Skill usage records](audit/statistics/usage/README.md) - evidence-based
+  session tracking and review thresholds.
+- [Project scaffold template](references/project-scaffold.md) - archived
+  generic reference, not current Paint architecture or policy.

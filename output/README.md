@@ -12,5 +12,7 @@ current Phase 2 documents:
 Timestamped screenshots, raw Lighthouse iterations, and exploratory traces are
 not release inputs. They are moved to the ignored `docs-internal/evidence-archive/`
 directory when no current document links to them. Re-run `npm run audit:runtime`
-for a live contract check; use `npm run audit:snapshot` only when a new snapshot
-is deliberately requested.
+for a live contract check. Use `npm run audit:snapshot` only when a new snapshot
+is deliberately requested; it writes the generic
+`quality/runtime-audit-latest.json` path and does not replace the historical
+step-specific snapshot listed above.

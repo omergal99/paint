@@ -1,7 +1,9 @@
----
-name: init-project-work
-description: A maintainable project scaffold and operating model for long-term AI-enabled engineering teams.
----
+# Archived reference
+
+This is a generic, historical scaffold example, not the current Paint
+architecture or agent policy. Its example framework, runtime, directory names,
+and release practices may be stale or inapplicable. For this repository, follow
+`AGENTS.md`, the root `README.md`, and the focused guides in `.skills/`.
 
 # Project Scaffold for Long-Term AI-Enabled Engineering Teams
 
