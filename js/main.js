@@ -61,6 +61,8 @@ import { createAdjustmentMaskTool } from "./tools/AdjustmentMaskTool.js";
 import { createColorPalette } from "./ui/ColorPalette.js";
 import { createColorInspector } from "./ui/ColorInspector.js";
 import { createStatusBar } from "./ui/StatusBar.js";
+import { createStatusHistoryPanel } from "./ui/StatusHistoryPanel.js";
+import { createSettingsContextMenu } from "./ui/SettingsContextMenu.js";
 import { Toolbar } from "./ui/Toolbar.js";
 import { Sidebar } from "./ui/Sidebar.js";
 import {
@@ -92,12 +94,14 @@ import {
   STORAGE_KEYS,
   DEFAULT_TEXT_FONT_FAMILY,
   TEXT_FONT_FAMILIES,
+  isValidStatusFlashDuration,
 } from "./core/constants.js";
 import { createPaintSettingsStore } from "./app/settingsStore.js";
 import { createCommandRegistry } from "./app/CommandRegistry.js";
 import { createGlobalShortcutController } from "./app/GlobalShortcutController.js";
 import { createTextDocumentStore } from "./document/TextDocumentStore.js";
 import { createTextHistoryStore } from "./document/TextHistoryStore.js";
+import { createStatusHistoryStore } from "./storage/StatusHistoryStore.js";
 import { createTextLayerService } from "./document/TextLayerService.js";
 import { createTextSelectionOverlay } from "./ui/TextSelectionOverlay.js";
 import { createTabBar } from "./ui/TabBar.js";
@@ -114,7 +118,10 @@ import {
   createAdjustmentOption,
 } from "./ui/AdjustmentsDialog.js";
 import { createDialogSearch } from "./ui/DialogSearch.js";
-import { standardizeDialogFrames } from "./ui/DialogFrame.js";
+import {
+  isDialogBackdropClick,
+  standardizeDialogFrames,
+} from "./ui/DialogFrame.js";
 import { createSettingsDialog } from "./ui/SettingsDialog.js";
 import { createBrowserInfoPanel } from "./ui/BrowserInfoPanel.js";
 import { createCheckboxRowController } from "./ui/CheckboxRowController.js";
@@ -253,6 +260,12 @@ const dmCheckbox = document.getElementById("setting-dark-mode");
 const sbCheckbox = document.getElementById("setting-show-status-bar");
 const ciCheckbox = document.getElementById("setting-show-color-inspector");
 const aiCheckbox = document.getElementById("setting-show-ai-chat");
+const statusFlashDurationSelect = document.getElementById("setting-status-flash-duration");
+const statusFlashDurationCustomInput = document.getElementById("setting-status-flash-duration-custom");
+const showStatusPointerCheckbox = document.getElementById("setting-show-status-pointer");
+const showStatusSelectionCheckbox = document.getElementById("setting-show-status-selection");
+const showZoomSliderCheckbox = document.getElementById("setting-show-zoom-slider");
+const showStatusBarFooterCheckbox = document.getElementById("setting-show-status-bar-footer");
 const directionSelect = document.getElementById("setting-direction");
 const solidBackgroundColorInput = document.getElementById(
   "setting-solid-background-color",
@@ -291,6 +304,15 @@ const { shortcutManager, renderShortcutSettings } = initShortcutSettings({
 // settings are saved during startup.
 let readRibbonLayout = () => ({ visible: true, position: "top" });
 
+const getStatusFlashDuration = () => {
+  const duration = statusFlashDurationSelect?.value === "custom"
+    ? Math.round(Number(statusFlashDurationCustomInput?.value) * 1000)
+    : Number(statusFlashDurationSelect?.value);
+  return isValidStatusFlashDuration(duration)
+    ? duration
+    : Number(readSettings().statusFlashDuration ?? DEFAULT_SETTINGS.statusFlashDuration);
+};
+
 const saveSettings = () => {
   try {
     const ribbonVisibility = {};
@@ -321,6 +343,10 @@ const saveSettings = () => {
     settingsStore.set({
       darkMode: dmCheckbox.checked,
       showStatusBar: sbCheckbox.checked,
+      statusFlashDuration: getStatusFlashDuration(),
+      showStatusPointer: showStatusPointerCheckbox?.checked !== false,
+      showStatusSelection: showStatusSelectionCheckbox?.checked !== false,
+      showStatusCanvasSize: showZoomSliderCheckbox?.checked !== false,
       showColorInspector: ciCheckbox.checked,
       showAiChat: aiCheckbox?.checked === true,
       interfaceDirection: directionSelect?.value || "auto",
@@ -438,12 +464,51 @@ const backgroundRemovalService = createBackgroundRemovalService({
 });
 const textDocumentStore = createTextDocumentStore();
 const textHistoryStore = createTextHistoryStore();
+const statusHistoryStore = createStatusHistoryStore();
+const statusHistoryPanel = createStatusHistoryPanel({
+  root: document.getElementById("status-history-panel"),
+  list: document.getElementById("status-history-list"),
+  error: document.getElementById("status-history-error"),
+  locale: () => document.getElementById("setting-locale")?.value,
+});
+let statusHistoryErrorReported = false;
+const reportStatusHistoryError = (error) => {
+  if (!statusHistoryErrorReported) {
+    console.error("Could not persist Paint status history", error);
+    statusHistoryErrorReported = true;
+  }
+  statusHistoryPanel.showError();
+};
+const renderStatusHistory = () => {
+  try {
+    statusHistoryPanel.render(statusHistoryStore.getEntries());
+    statusHistoryErrorReported = false;
+  } catch (error) {
+    reportStatusHistoryError(error);
+  }
+};
+const recordStatusHistory = (entry) => {
+  try {
+    statusHistoryPanel.render(statusHistoryStore.record(entry));
+    statusHistoryErrorReported = false;
+  } catch (error) {
+    reportStatusHistoryError(error);
+  }
+};
+renderStatusHistory();
+document.documentElement?.addEventListener("paint:locale-change", renderStatusHistory);
 
 const statusBar = createStatusBar({
   pointerEl: document.getElementById("status-pointer"),
   selectionEl: document.getElementById("status-selection"),
   canvasSizeEl: document.getElementById("status-canvas-size"),
+  zoomSliderEl: document.getElementById("zoom-slider"),
   flashEl: document.getElementById("status-flash"),
+  flashDurationMs: readSettings().statusFlashDuration,
+  showPointer: readSettings().showStatusPointer,
+  showSelection: readSettings().showStatusSelection,
+  showZoomSlider: readSettings().showStatusCanvasSize,
+  onStatus: recordStatusHistory,
 });
 
 // Step 13 keeps the parent session as the pane-assignment source of truth.
@@ -555,8 +620,20 @@ document
   .getElementById("btn-toggle-split-view")
   ?.addEventListener("click", () => workspaceSplitView.openSplit?.());
 statusBar.setCanvasSize(canvasManager.width, canvasManager.height);
-canvasManager.onAdmissionRejected = (admission) =>
-  statusBar.flash(admission.message);
+canvasManager.onAdmissionRejected = (admission) => {
+  if (admission.reason === 'canvas-allocation-failed') {
+    statusBar.flash(t('status.canvasAllocationFailed'));
+    return;
+  }
+  const key = {
+    'invalid-dimensions': 'ui.imageDimensionsInvalid',
+    'source-dimension-limit': 'ui.imageDimensionLimit',
+    'source-pixel-limit': 'ui.imagePixelLimit',
+    'target-dimension-limit': 'ui.imagePlacementDimensionLimit',
+    'target-pixel-limit': 'ui.imagePlacementPixelLimit',
+  }[admission.reason];
+  statusBar.flash(key ? t(key) : admission.message);
+};
 canvasManager.onImageLoadError = (error) => statusBar.flash(error.message);
 historyManager.onSnapshotRejected = (admission) =>
   statusBar.flash(admission.message);
@@ -659,6 +736,9 @@ const textSelectionOverlay = createTextSelectionOverlay({
   onDelete: ({ id }) => {
     historyManager.snapshot({ force: true });
     if (textDocumentStore.remove(id)) canvasManager.persistToStorage();
+  },
+  onCopyResult: ({ copied }) => {
+    statusBar.flash(copied ? t('status.copied') : t('status.textCopyFailed'));
   },
 });
 
@@ -1651,7 +1731,7 @@ const destroySelectionHandleBindings =
 // interactions lightweight and predictable, like the ribbon menus.
 document.querySelectorAll("dialog").forEach((dialog) =>
   dialog.addEventListener("click", (event) => {
-    if (event.target === dialog) dialog.close();
+    if (isDialogBackdropClick({ dialog, event })) dialog.close();
   }),
 );
 
@@ -1714,6 +1794,7 @@ const settingsDialogController = createSettingsDialog({
     if (tab === "about") updateAboutStats();
     if (tab === "browser") browserInfoPanel.activate();
     else browserInfoPanel.deactivate();
+    if (tab === "footer") renderStatusHistory();
     if (settingsDialog.open) setDialogUrl("settings", { tab });
   },
 });
@@ -1783,10 +1864,36 @@ pwaInstallManager.start();
 const setPwaUpdateSafetyGuard = (guard) =>
   pwaInstallManager.setReloadGuard(guard);
 
-const openSettingsDialog = (tab = getLastSettingsTab()) => {
-  settingsDialogController.open(tab);
+const openSettingsDialog = (tab = getLastSettingsTab(), trigger = document.activeElement) => {
+  if (tab === "footer") renderStatusHistory();
+  settingsDialogController.open(tab, trigger);
   setDialogUrl("settings", { tab });
 };
+const statusFooter = document.querySelector(".status-bar");
+const settingsContextMenu = createSettingsContextMenu({
+  bindings: [
+    {
+      target: document.querySelector(".ribbon-group-extras"),
+      menu: document.getElementById("settings-context-menu"),
+      focusTarget: document.getElementById("btn-settings"),
+    },
+    {
+      target: statusFooter,
+      menu: document.getElementById("settings-context-menu"),
+      focusTarget: statusFooter,
+    },
+    {
+      target: settingsDialog.querySelector(".settings-header"),
+      menu: document.getElementById("settings-dialog-context-menu"),
+      focusTarget: document.getElementById("settings-close"),
+    },
+  ].filter((binding) => binding.target && binding.menu),
+  openMenuAt: actionMenuController.openAt,
+  closeMenus: actionMenuController.closeAll,
+  onSelect: ({ action, trigger }) => {
+    openSettingsDialog(action === "footer" ? "footer" : getLastSettingsTab(), trigger);
+  },
+});
 
 const syncRibbonLayoutControls = (state) => {
   const show = document.getElementById("setting-show-ribbon");
@@ -1958,6 +2065,7 @@ const hydration = initSettingsHydration({
   syncHistoryLimitSelect,
   syncRibbonSettingsControls,
   getDefaultCanvasSize,
+  statusBar,
 });
 const {
   applySavedSettings,
@@ -2035,10 +2143,53 @@ dmCheckbox.addEventListener("change", (e) => {
   saveSettings();
 });
 sbCheckbox.addEventListener("change", (e) => {
-  document.querySelector(".status-bar").style.display = e.target.checked
+  const visible = e.target.checked;
+  showStatusBarFooterCheckbox.checked = visible;
+  statusFooter.style.display = visible
     ? "grid"
     : "none";
   saveSettings();
+});
+showStatusBarFooterCheckbox?.addEventListener("change", (event) => {
+  sbCheckbox.checked = event.target.checked;
+  statusFooter.style.display = event.target.checked ? "grid" : "none";
+  saveSettings();
+});
+const applyStatusFooterSettings = () => {
+  statusBar.setConfig({
+    durationMs: getStatusFlashDuration(),
+    pointer: showStatusPointerCheckbox?.checked !== false,
+    selection: showStatusSelectionCheckbox?.checked !== false,
+    zoomSlider: showZoomSliderCheckbox?.checked !== false,
+  });
+  saveSettings();
+};
+statusFlashDurationSelect?.addEventListener("change", () => {
+  if (statusFlashDurationSelect.value === "custom" && !statusFlashDurationCustomInput.checkValidity()) {
+    statusFlashDurationCustomInput.reportValidity();
+    return;
+  }
+  applyStatusFooterSettings();
+});
+statusFlashDurationCustomInput?.addEventListener("input", () => {
+  if (!statusFlashDurationCustomInput.checkValidity()) return;
+  applyStatusFooterSettings();
+});
+statusFlashDurationCustomInput?.addEventListener("change", () => {
+  if (!statusFlashDurationCustomInput.checkValidity()) {
+    statusFlashDurationCustomInput.reportValidity();
+    return;
+  }
+  applyStatusFooterSettings();
+});
+showStatusPointerCheckbox?.addEventListener("change", () => {
+  applyStatusFooterSettings();
+});
+showStatusSelectionCheckbox?.addEventListener("change", () => {
+  applyStatusFooterSettings();
+});
+showZoomSliderCheckbox?.addEventListener("change", () => {
+  applyStatusFooterSettings();
 });
 ciCheckbox.addEventListener("change", (e) => {
   document.getElementById("color-inspector").style.display = e.target.checked
@@ -2422,6 +2573,7 @@ const destroyEditor = () => {
   window.removeEventListener(EVENTS.openAdjustments, openAdjustments);
   window.removeEventListener("resize", onWindowResizeMeasureAutoScrollRect);
   ribbonLayoutManager.destroy();
+  settingsContextMenu.destroy();
   actionMenuController.destroy();
   canvasContextMenu.destroy();
   backgroundRemovalController.destroy();

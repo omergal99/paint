@@ -30,6 +30,15 @@ export const initResizeDialog = ({
   let aspectRatio = 1;
   let resizeTarget = { kind: 'canvas', x: 0, y: 0, width: 800, height: 600 };
 
+  const admissionMessage = (admission) => {
+    if (admission.reason === 'invalid-dimensions') return t('ui.imageDimensionsInvalid');
+    if (admission.reason === 'source-dimension-limit') return t('ui.imageDimensionLimit');
+    if (admission.reason === 'source-pixel-limit') return t('ui.imagePixelLimit');
+    if (admission.reason === 'target-dimension-limit') return t('ui.imagePlacementDimensionLimit');
+    if (admission.reason === 'target-pixel-limit') return t('ui.imagePlacementPixelLimit');
+    return admission.message;
+  };
+
   const readDraft = (input) => {
     const value = input.value.trim();
     if (!value) return null;
@@ -104,8 +113,33 @@ export const initResizeDialog = ({
     const newHeight = readDraft(resizeHeightInput);
     if (newWidth === null || newHeight === null || newWidth <= 0 || newHeight <= 0) {
       resizeSummary.textContent = '';
+      resizeSummary.removeAttribute?.('data-admission-error');
+      resizeWidthInput.removeAttribute?.('aria-invalid');
+      resizeHeightInput.removeAttribute?.('aria-invalid');
       return;
     }
+    const requiredWidth = resizeTarget.kind === 'selection'
+      ? Math.max(canvasManager.width, resizeTarget.x + newWidth)
+      : newWidth;
+    const requiredHeight = resizeTarget.kind === 'selection'
+      ? Math.max(canvasManager.height, resizeTarget.y + newHeight)
+      : newHeight;
+    const admission = assessImageAdmission({
+      width: newWidth,
+      height: newHeight,
+      targetWidth: requiredWidth,
+      targetHeight: requiredHeight,
+    });
+    if (!admission.ok) {
+      resizeSummary.textContent = admissionMessage(admission);
+      resizeSummary.setAttribute?.('data-admission-error', admission.reason);
+      resizeWidthInput.setAttribute?.('aria-invalid', 'true');
+      resizeHeightInput.setAttribute?.('aria-invalid', 'true');
+      return;
+    }
+    resizeSummary.removeAttribute?.('data-admission-error');
+    resizeWidthInput.removeAttribute?.('aria-invalid');
+    resizeHeightInput.removeAttribute?.('aria-invalid');
     const unchanged = newWidth === resizeTarget.width && newHeight === resizeTarget.height;
     resizeSummary.textContent = unchanged
       ? t('ui.resizeNoChange', { width: resizeTarget.width, height: resizeTarget.height })

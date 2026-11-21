@@ -7,6 +7,50 @@ import { t } from '../i18n/messages.js';
 const TEXT_TARGET_PADDING = 4;
 const MIN_TEXT_TARGET_WIDTH = 24;
 
+export const copyTextToClipboard = async ({
+	text,
+	navigatorRef = globalThis.navigator,
+	documentRef = globalThis.document,
+} = {}) => {
+	const value = String(text || '');
+	if (!value) return false;
+
+	try {
+		const clipboard = navigatorRef?.clipboard;
+		if (typeof clipboard?.writeText === 'function') {
+			await clipboard.writeText(value);
+			return true;
+		}
+	} catch {}
+
+	if (!documentRef?.createElement || typeof documentRef.execCommand !== 'function') return false;
+
+	const activeElement = documentRef.activeElement;
+	const textarea = documentRef.createElement('textarea');
+	textarea.value = value;
+	textarea.style.position = 'fixed';
+	textarea.style.left = '-9999px';
+	textarea.style.opacity = '0';
+	documentRef.body?.appendChild(textarea);
+
+	let copied = false;
+	try {
+		textarea.focus();
+		textarea.select();
+		copied = documentRef.execCommand('copy') === true;
+	} catch {
+		copied = false;
+	} finally {
+		if (typeof textarea.remove === 'function') {
+			textarea.remove();
+		} else {
+			documentRef.body?.removeChild?.(textarea);
+		}
+		activeElement?.focus?.();
+	}
+	return copied;
+};
+
 const labelFor = (object) => {
 	const text = String(object.text || '').replace(/\s+/g, ' ').trim();
 	return text ? `Focus text: ${text.slice(0, 60)}` : 'Focus text object';
@@ -21,6 +65,7 @@ export const createTextSelectionOverlay = ({
 	onMove,
 	onMoveEnd,
 	onDelete,
+	onCopyResult,
 } = {}) => {
 	const layer = document.createElement('div');
 	layer.className = 'text-object-focus-layer';
@@ -91,20 +136,11 @@ copyBtn.type = 'button';
 			copyBtn.setAttribute('aria-label', t('ui.textCopy'));
 			copyBtn.title = t('ui.textCopy');
 			copyBtn.innerHTML = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="7" width="9" height="9" rx="1"/><rect x="4" y="4" width="9" height="9" rx="1"/></svg>';
-			const copyText = () => {
+			const copyText = async () => {
 				const text = String(object.text || '');
 				if (!text) return;
-				navigator.clipboard?.writeText(text).catch(() => {
-					const ta = document.createElement('textarea');
-					ta.value = text;
-					ta.style.position = 'fixed';
-					ta.style.left = '-9999px';
-					document.body.appendChild(ta);
-					ta.focus();
-					ta.select();
-					try { document.execCommand('copy'); } catch {}
-					document.body.removeChild(ta);
-				});
+				const copied = await copyTextToClipboard({ text });
+				onCopyResult?.({ copied });
 			};
 			copyBtn.addEventListener('click', (event) => {
 				event.preventDefault();

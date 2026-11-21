@@ -911,17 +911,18 @@ test('memory report separates known history bytes from browser quota', () => {
 });
 
 test('image admission accepts bounded decoded sources and leaves target optional', () => {
-	const result = assessImageAdmission({ width: 4096, height: 8192 });
+	const result = assessImageAdmission({ width: 6000, height: 6000 });
 	assert.deepEqual(result, {
 		ok: true,
 		reason: null,
 		message: '',
-		width: 4096,
-		height: 8192,
+		width: 6000,
+		height: 6000,
 		targetWidth: null,
 		targetHeight: null,
 	});
-	assert.equal(4096 * 8192, LIMITS.maxImportPixels);
+	assert.equal(6000 * 6000, 36000000);
+	assert.equal(6000 * 6000 <= LIMITS.maxImportPixels, true);
 	const placement = assessImageAdmission({ width: 10, height: 10, targetWidth: 500, targetHeight: 400 });
 	assert.equal(placement.ok, true);
 	assert.equal(placement.targetWidth, 500);
@@ -938,7 +939,7 @@ test('image admission rejects invalid, oversized, and over-pixel decoded sources
 		IMAGE_ADMISSION_REASONS.sourceDimensionLimit,
 	);
 	assert.equal(
-		assessImageAdmission({ width: 4096, height: 8193 }).reason,
+		assessImageAdmission({ width: 7000, height: 7000 }).reason,
 		IMAGE_ADMISSION_REASONS.sourcePixelLimit,
 	);
 });
@@ -949,7 +950,7 @@ test('image admission independently validates a final target canvas', () => {
 		IMAGE_ADMISSION_REASONS.targetDimensionLimit,
 	);
 	assert.equal(
-		assessImageAdmission({ width: 10, height: 10, targetWidth: 4096, targetHeight: 8193 }).reason,
+		assessImageAdmission({ width: 10, height: 10, targetWidth: 7000, targetHeight: 7000 }).reason,
 		IMAGE_ADMISSION_REASONS.targetPixelLimit,
 	);
 	assert.equal(
@@ -977,6 +978,35 @@ test('CanvasManager rejects unsafe resizes before replacing the current canvas',
 		assert.equal(manager.resize(LIMITS.maxCanvasDimension + 1, 20), false);
 		assert.deepEqual([manager.width, manager.height], [40, 20]);
 		assert.equal(rejection.reason, IMAGE_ADMISSION_REASONS.sourceDimensionLimit);
+	} finally {
+		if (previousDocument) globalThis.document = previousDocument;
+		else delete globalThis.document;
+	}
+});
+
+test('CanvasManager reports browser allocation failures without resizing state', () => {
+	const context = {
+		fillRect: () => {},
+		clearRect: () => {},
+		getImageData: (_x, _y, width, height) => ({ data: new Uint8ClampedArray(width * height * 4) }),
+		save: () => {},
+		restore: () => {},
+		drawImage: () => {},
+	};
+	const canvas = { width: 800, height: 600, getContext: () => context };
+	const overlay = { width: 800, height: 600, getContext: () => context };
+	const previousDocument = globalThis.document;
+	globalThis.document = {
+		createElement: () => { throw new Error('canvas allocation failed'); },
+	};
+	try {
+		const manager = new CanvasManager({ canvas, overlay, width: 800, height: 600 });
+		let rejection = null;
+		manager.onAdmissionRejected = (result) => { rejection = result; };
+		assert.equal(manager.resize(6000, 6000), false);
+		assert.deepEqual([manager.width, manager.height], [800, 600]);
+		assert.equal(rejection.reason, 'canvas-allocation-failed');
+		assert.match(rejection.message, /could not allocate memory/i);
 	} finally {
 		if (previousDocument) globalThis.document = previousDocument;
 		else delete globalThis.document;

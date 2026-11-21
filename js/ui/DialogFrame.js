@@ -23,6 +23,14 @@ const configureCloseButton = (button, dialog, documentRef) => {
 	return button;
 };
 
+export const isDialogBackdropClick = ({ dialog, event } = {}) => {
+	if (!dialog || event?.target !== dialog) return false;
+	const { left, right, top, bottom } = dialog.getBoundingClientRect();
+	const { clientX, clientY } = event;
+	if (!Number.isFinite(clientX) || !Number.isFinite(clientY)) return false;
+	return clientX < left || clientX > right || clientY < top || clientY > bottom;
+};
+
 const groupDialogHeader = ({ header, closeButton, documentRef }) => {
 	let content = [...header.children].find((child) => child.classList.contains('dialog-header-content'));
 	let closeGroup = [...header.children].find((child) => child.classList.contains('dialog-header-close'));

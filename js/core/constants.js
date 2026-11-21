@@ -4,6 +4,7 @@
 export const STORAGE_KEYS = Object.freeze({
 	settings: 'omerpaint:settings',
 	settingsTab: 'omerpaint:settings-tab',
+	statusHistory: 'paint:status-history',
 	colors: 'paint:colors',
 	zoom: 'paint:zoom',
 	initialZoom: 'paint:initial-zoom',
@@ -48,6 +49,8 @@ export const KEYBOARD_KEYS = Object.freeze({
 	arrowDown: 'ArrowDown',
 	arrowLeft: 'ArrowLeft',
 	arrowRight: 'ArrowRight',
+	contextMenu: 'ContextMenu',
+	f10: 'F10',
 	arrows: Object.freeze(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight']),
 	horizontalArrows: Object.freeze(['ArrowLeft', 'ArrowRight']),
 });
@@ -175,9 +178,24 @@ export const RIGHT_DRAG_THRESHOLD_PX = 4;
 export const LIMITS = Object.freeze({
 	maxHistoryEntries: 20,
 	maxTextHistoryEntries: 20,
+	maxStatusHistoryEntries: 50,
 	maxCanvasDimension: 10000,
-	maxImportPixels: 32 * 1024 * 1024,
+	maxImportPixels: 40 * 1024 * 1024,
 });
+
+export const STATUS_FLASH_DURATION = Object.freeze({
+	presets: Object.freeze([0, 1000, 2200, 5000]),
+	minMs: 100,
+	maxMs: 60000,
+	defaultMs: 5000,
+});
+
+export const isValidStatusFlashDuration = (value) => {
+	const duration = Number(value);
+	return Number.isFinite(duration)
+		&& (STATUS_FLASH_DURATION.presets.includes(duration)
+			|| (duration >= STATUS_FLASH_DURATION.minMs && duration <= STATUS_FLASH_DURATION.maxMs));
+};
 
 export const SCHEMA_VERSIONS = Object.freeze({
 	settings: 1,
@@ -203,6 +221,10 @@ export const DEFAULT_SETTINGS = Object.freeze({
 	historyAutoSave: true,
 	historyAutoSaveMode: 'all',
 	historyLimit: 50,
+	statusFlashDuration: STATUS_FLASH_DURATION.defaultMs,
+	showStatusPointer: true,
+	showStatusSelection: true,
+	showStatusCanvasSize: true, // Retained storage key for the Show zoom slider setting.
 	restoreLastImage: false,
 	ribbonLayout: null,
 	// The Clipboard group lives in File > More by default; "Show Entire Group"

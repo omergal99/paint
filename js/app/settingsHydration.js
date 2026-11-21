@@ -4,7 +4,7 @@
 // choice summaries. Phase 3 modularisation.
 import { renderSegmentedChoices } from '../ui/segmentedChoices.js';
 import { appState } from './appState.js';
-import { DEFAULT_SETTINGS } from '../core/constants.js';
+import { DEFAULT_SETTINGS, STATUS_FLASH_DURATION } from '../core/constants.js';
 
 const byId = (id) => document.getElementById(id);
 
@@ -21,7 +21,7 @@ export const getDefaultZoom = () => {
     ? byId('setting-default-zoom-custom')?.value
     : byId('setting-default-zoom')?.value;
   const value = Number(raw);
-  return Number.isFinite(value) ? Math.min(800, Math.max(10, Math.round(value))) : 100;
+  return Number.isFinite(value) ? Math.min(2500, Math.max(5, Math.round(value))) : 100;
 };
 
 /**
@@ -42,6 +42,7 @@ export const initSettingsHydration = ({
   syncHistoryLimitSelect,
   syncRibbonSettingsControls,
   getDefaultCanvasSize,
+  statusBar,
 }) => {
   const applyCanvasBackgroundMode = (mode) => {
     const value = mode || 'none';
@@ -77,6 +78,10 @@ const applySavedSettings = () => {
     };
     setChecked('setting-dark-mode', Boolean(saved.darkMode));
     setChecked('setting-show-status-bar', saved.showStatusBar !== false);
+    setChecked('setting-show-status-bar-footer', saved.showStatusBar !== false);
+    setChecked('setting-show-status-pointer', saved.showStatusPointer !== false);
+    setChecked('setting-show-status-selection', saved.showStatusSelection !== false);
+    setChecked('setting-show-zoom-slider', saved.showStatusCanvasSize !== false);
     setChecked('setting-show-color-inspector', saved.showColorInspector !== false);
     setChecked('setting-show-ai-chat', saved.showAiChat === true);
     setChecked('setting-show-zoom-reset', saved.showZoomReset === true);
@@ -110,7 +115,7 @@ const applySavedSettings = () => {
     zoomSelect.value = [...zoomSelect.options].some((option) => option.value === String(savedZoom))
       ? String(savedZoom)
       : 'custom';
-    byId('setting-default-zoom-custom').value = Math.min(800, Math.max(10, Math.round(savedZoom)));
+    byId('setting-default-zoom-custom').value = Math.min(2500, Math.max(5, Math.round(savedZoom)));
     applyCanvasBackgroundMode(bgSelect.value);
     // Repaint the blank surface with the saved background now that both the
     // colour and the mode are known. Without this a reload keeps the white the
@@ -130,6 +135,19 @@ const applySavedSettings = () => {
     document.body.classList.toggle('dark-mode', Boolean(saved.darkMode));
     localeController.setDirection(directionSelect?.value || 'auto');
     document.querySelector('.status-bar').style.display = saved.showStatusBar !== false ? 'grid' : 'none';
+    const duration = Number(saved.statusFlashDuration ?? DEFAULT_SETTINGS.statusFlashDuration);
+    const durationSelect = byId('setting-status-flash-duration');
+    if (durationSelect) {
+      durationSelect.value = STATUS_FLASH_DURATION.presets.includes(duration) ? String(duration) : 'custom';
+    }
+    const customDurationInput = byId('setting-status-flash-duration-custom');
+    if (customDurationInput) customDurationInput.value = String(Math.max(STATUS_FLASH_DURATION.minMs, duration) / 1000);
+    statusBar?.setConfig({
+      durationMs: duration,
+      pointer: saved.showStatusPointer !== false,
+      selection: saved.showStatusSelection !== false,
+      zoomSlider: saved.showStatusCanvasSize !== false,
+    });
     document.getElementById('color-inspector').style.display = saved.showColorInspector !== false ? 'flex' : 'none';
 const ribbonVisibility = saved.ribbonVisibility || {};
     document.querySelectorAll('.ribbon-group').forEach((groupSection) => {

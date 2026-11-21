@@ -61,12 +61,12 @@ const createCommandDefinitions = (actions) => {
       id: 'zoom',
       label: 'Zoom 100%',
       command: '/zoom 100',
-      matches: (text) => /^\/zoom\s+(\d{2,3})%?$/.test(text) || /^zoom\s+(\d{2,3})%?$/.test(text),
+      matches: (text) => /^\/zoom\s+(\d{1,4})%?$/.test(text) || /^zoom\s+(\d{1,4})%?$/.test(text),
       run: (text) => {
-        const value = Number(text.match(/(?:zoom\s+|\/zoom\s+)(\d{2,3})%?$/)?.[1]);
-        if (!Number.isFinite(value)) return 'Use a zoom between 10 and 800 percent.';
+        const value = Number(text.match(/(?:zoom\s+|\/zoom\s+)(\d{1,4})%?$/)?.[1]);
+        if (!Number.isFinite(value)) return 'Use a zoom between 5 and 2500 percent.';
         actions.setZoom?.(value);
-        return `Zoom set to ${Math.min(800, Math.max(10, Math.round(value)))}%.`;
+        return `Zoom set to ${Math.min(2500, Math.max(5, Math.round(value)))}%.`;
       },
     },
     {

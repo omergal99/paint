@@ -255,10 +255,22 @@ export class CanvasManager {
     if (!admission.ok) return false;
     if (newWidth === this.width && newHeight === this.height) return true;
 
-    const snapshot = document.createElement('canvas');
-    snapshot.width = this.width;
-    snapshot.height = this.height;
-    snapshot.getContext('2d').drawImage(this.canvas, 0, 0);
+    let snapshot;
+    try {
+      snapshot = document.createElement('canvas');
+      snapshot.width = this.width;
+      snapshot.height = this.height;
+      snapshot.getContext('2d').drawImage(this.canvas, 0, 0);
+    } catch {
+      this.onAdmissionRejected?.({
+        ok: false,
+        reason: 'canvas-allocation-failed',
+        message: 'The browser could not allocate memory for this canvas size.',
+        width: newWidth,
+        height: newHeight,
+      });
+      return false;
+    }
 
     // Preserve an active selection (and any floating image) across the resize,
     // clamped to the new canvas bounds, so resizing never silently drops it.
@@ -268,12 +280,26 @@ export class CanvasManager {
     const prevFloating = this.floatingCanvas;
     const offsetX = anchorX === 'right' ? newWidth - this.width : 0;
     const offsetY = anchorY === 'bottom' ? newHeight - this.height : 0;
+    const previousWidth = this.width;
+    const previousHeight = this.height;
 
-    this._setSize(newWidth, newHeight);
-    this.ctx.save();
-    this._paintBackground(this.ctx, 0, 0, newWidth, newHeight, fillColor);
-    this.ctx.drawImage(snapshot, offsetX, offsetY);
-    this.ctx.restore();
+    try {
+      this._setSize(newWidth, newHeight);
+      this.ctx.save();
+      this._paintBackground(this.ctx, 0, 0, newWidth, newHeight, fillColor);
+      this.ctx.drawImage(snapshot, offsetX, offsetY);
+      this.ctx.restore();
+    } catch {
+      try { this._setSize(previousWidth, previousHeight); } catch {}
+      this.onAdmissionRejected?.({
+        ok: false,
+        reason: 'canvas-allocation-failed',
+        message: 'The browser could not allocate memory for this canvas size.',
+        width: newWidth,
+        height: newHeight,
+      });
+      return false;
+    }
 
     this.clearOverlay();
     this.selection = prevSelection
@@ -388,14 +414,26 @@ export class CanvasManager {
     if (nextWidth === this.width && nextHeight === this.height
       && source === this.canvas) return true;
 
-    const scaled = document.createElement('canvas');
-    scaled.width = nextWidth;
-    scaled.height = nextHeight;
-    const context = scaled.getContext('2d');
-    if (!context) return false;
-    context.imageSmoothingEnabled = true;
-    context.imageSmoothingQuality = 'high';
-    context.drawImage(source, 0, 0, source.width, source.height, 0, 0, nextWidth, nextHeight);
+    let scaled;
+    try {
+      scaled = document.createElement('canvas');
+      scaled.width = nextWidth;
+      scaled.height = nextHeight;
+      const context = scaled.getContext('2d');
+      if (!context) return false;
+      context.imageSmoothingEnabled = true;
+      context.imageSmoothingQuality = 'high';
+      context.drawImage(source, 0, 0, source.width, source.height, 0, 0, nextWidth, nextHeight);
+    } catch {
+      this.onAdmissionRejected?.({
+        ok: false,
+        reason: 'canvas-allocation-failed',
+        message: 'The browser could not allocate memory for this canvas size.',
+        width: nextWidth,
+        height: nextHeight,
+      });
+      return false;
+    }
     if (!this.loadFromSource(scaled)) return false;
     this.markDocumentDirty();
     return true;

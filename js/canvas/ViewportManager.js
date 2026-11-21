@@ -14,12 +14,12 @@
 //                    All drawing/handle math stays in true image coordinates.
 
 // Zoom percent bounds for the editable input and every runtime clamp
-// (matches `#zoom-input` min="2" max="2000"). The slider is a coarse control
-// with fixed 0–1000 tracks, so it keeps its own tighter 5–800 mapping.
-const MIN_ZOOM = 2;
-const MAX_ZOOM = 2000;
+// (matches `#zoom-input` min="5" max="2500"). The range slider is a coarse
+// control with fixed 0–1000 tracks and a 5–2500 mapping.
+const MIN_ZOOM = 5;
+const MAX_ZOOM = 2500;
 const SLIDER_ZOOM_MIN = 5;
-const SLIDER_ZOOM_MAX = 800;
+const SLIDER_ZOOM_MAX = 2500;
 const STEP_BELOW_200 = 5;
 const STEP_ABOVE_200 = 10;
 const SLIDER_MIN = 0;
@@ -40,7 +40,7 @@ const sliderPositionFromZoom = (zoom) => {
   const position = zoom <= 100
     ? ((zoom - SLIDER_ZOOM_MIN) / (100 - SLIDER_ZOOM_MIN)) * SLIDER_MID
     : SLIDER_MID + ((zoom - 100) / (SLIDER_ZOOM_MAX - 100)) * (SLIDER_MAX - SLIDER_MID);
-  // Outside the slider's 5–800 window (e.g. a typed 2000%) the handle parks at
+  // Outside the slider's 5–2500 window the handle parks at
   // the matching end stop instead of clamping to a bogus track value.
   return String(Math.round(Math.min(SLIDER_MAX, Math.max(SLIDER_MIN, position))));
 };
@@ -233,7 +233,7 @@ export class ViewportManager {
   /**
    * Keep the number-input spinner increment in sync with the current zoom: the
    * native +/- arrows step by 5 up to 200% and by 10 above it, so coarse steps
-   * stay usable near the 800% ceiling without flooding the canvas with redraws.
+   * stay usable near the 2500% ceiling without flooding the canvas with redraws.
    */
   _syncZoomInputStep(percent) {
     this.zoomInput.step = Number(percent) > 200 ? '10' : '5';

@@ -33,6 +33,12 @@ export const createSegmentedChoice = ({ root, select, selectedLabel } = {}) => {
       const option = select.options[select.selectedIndex];
       label.textContent = option ? option.textContent : '';
     }
+    const hasCustomChoice = root.dataset.customValue !== undefined;
+    const customSelected = hasCustomChoice && select.value === root.dataset.customValue;
+    const summaryLabel = root.querySelector('[data-choice-summary-label]');
+    const customInputs = root.querySelector('[data-custom-inputs]');
+    if (summaryLabel) summaryLabel.hidden = customSelected;
+    if (customInputs) customInputs.hidden = !customSelected;
   }
 
   select.addEventListener('change', render);

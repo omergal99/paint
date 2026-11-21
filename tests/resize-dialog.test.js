@@ -245,6 +245,40 @@ test('empty scale drafts retain dimensions and normalize on blur', () => {
 	}
 });
 
+test('Resize dialog validates 6000px and reports larger pixel limits before submit', () => {
+	const accepted = createResizeDialogFixture();
+	try {
+		accepted.controller.openResizeDialog();
+		accepted.elements['resize-width'].value = '6000';
+		accepted.elements['resize-height'].value = '6000';
+		accepted.elements['resize-width'].dispatch('input');
+		assert.equal(accepted.elements['resize-summary'].getAttribute('data-admission-error'), null);
+		assert.equal(accepted.elements['resize-width'].getAttribute('aria-invalid'), null);
+	} finally {
+		accepted.restoreDocument();
+	}
+
+	const rejected = createResizeDialogFixture();
+	try {
+		rejected.controller.openResizeDialog();
+		rejected.elements['resize-keep-aspect'].checked = false;
+		rejected.elements['resize-width'].value = '7000';
+		rejected.elements['resize-height'].value = '7000';
+		rejected.elements['resize-width'].dispatch('input');
+		assert.equal(
+			rejected.elements['resize-summary'].getAttribute('data-admission-error'),
+			'source-pixel-limit',
+		);
+		assert.equal(rejected.elements['resize-width'].getAttribute('aria-invalid'), 'true');
+		rejected.elements['resize-form'].dispatch('submit', { preventDefault() {} });
+		assert.deepEqual(rejected.resampled, []);
+		assert.deepEqual(rejected.history, []);
+		assert.equal(rejected.status.length, 1);
+	} finally {
+		rejected.restoreDocument();
+	}
+});
+
 test('submit rounds valid numeric drafts and closes only after resizing succeeds', () => {
 	const fixture = createResizeDialogFixture();
 	try {

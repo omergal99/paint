@@ -147,9 +147,9 @@ test('zoom slider centers 100% and maps its endpoints to the supported range', (
 		assert.equal(zoomSlider.value, '500');
 		assert.equal(zoomSlider.getAttribute('aria-valuetext'), '100%');
 
-		manager.setZoom(800);
+		manager.setZoom(2500);
 		assert.equal(zoomSlider.value, '1000');
-		assert.equal(zoomSlider.getAttribute('aria-valuetext'), '800%');
+		assert.equal(zoomSlider.getAttribute('aria-valuetext'), '2500%');
 
 		zoomSlider.value = '500';
 		zoomSlider.dispatch('input');
@@ -159,22 +159,22 @@ test('zoom slider centers 100% and maps its endpoints to the supported range', (
 		assert.equal(manager.zoom, 5);
 		zoomSlider.value = '1000';
 		zoomSlider.dispatch('input');
-		assert.equal(manager.zoom, 800);
+		assert.equal(manager.zoom, 2500);
 	});
 });
 
 test('zoom clamps valid values, ignores invalid values, and preserves image coordinate mapping', () => {
 	withViewport((fixture) => {
 		const { manager, canvas, zoomInput } = fixture;
-		// The editable input allows 2%–2000%, so the runtime clamp must too.
+		// The editable input allows 5%–2500%, so the runtime clamp must too.
 		manager.setZoom(900);
 		assert.equal(manager.zoom, 900);
 		manager.setZoom(5000);
-		assert.equal(manager.zoom, 2000);
+		assert.equal(manager.zoom, 2500);
 		manager.setZoom(1);
-		assert.equal(manager.zoom, 2);
+		assert.equal(manager.zoom, 5);
 		manager.setZoom(Number.NaN);
-		assert.equal(manager.zoom, 2);
+		assert.equal(manager.zoom, 5);
 		manager.setZoom(50);
 		assert.deepEqual(manager.clientToImage(70, 80), { x: 100, y: 100 });
 		zoomInput.value = '';

@@ -3,6 +3,7 @@ import { readFileSync as readFileSyncNode } from 'node:fs';
 import test from 'node:test';
 
 import { measureTextObject, renderTextObject, getTextStrokeWidth } from '../js/document/TextLayerRenderer.js';
+import { copyTextToClipboard } from '../js/ui/TextSelectionOverlay.js';
 import { DEFAULT_TEXT_FONT_FAMILY, TEXT_FONT_FAMILIES } from '../js/core/constants.js';
 
 const fakeContext = () => {
@@ -95,6 +96,99 @@ test('outline preview and raster strokes share the same width calculation', () =
 	assert.equal(context.lineWidth, 5, 'the raster stroke uses the exact CSS preview width in canvas pixels');
 	assert.equal(context.lineJoin, 'round');
 	assert.equal(context.lineCap, 'round');
+});
+
+test('text copy uses the Clipboard API when available', async () => {
+	let written = '';
+	const navigatorRef = {
+		clipboard: {
+			writeText: async (text) => { written = text; },
+		},
+	};
+	const documentRef = {
+		createElement: () => { throw new Error('fallback should not create a textarea'); },
+	};
+
+	assert.equal(await copyTextToClipboard({
+		text: '  Hello Paint  ',
+		navigatorRef,
+		documentRef,
+	}), true);
+	assert.equal(written, '  Hello Paint  ');
+});
+
+test('text copy falls back to execCommand for denied, missing, or throwing Clipboard API', async () => {
+	const makeDocument = (execCommandResult) => {
+		const textarea = {
+			style: {},
+			value: '',
+			focus() { this.focused = true; },
+			select() { this.selected = true; },
+			remove() { this.removed = true; },
+		};
+		return {
+			textarea,
+			activeElement: { focused: false, focus() { this.focused = true; } },
+			body: { appendChild() {}, removeChild() {} },
+			createElement: (tag) => tag === 'textarea' ? textarea : null,
+			execCommand: () => execCommandResult,
+		};
+	};
+
+	const deniedDocument = makeDocument(true);
+	assert.equal(await copyTextToClipboard({
+		text: 'fallback denied',
+		navigatorRef: { clipboard: { writeText: async () => { throw new Error('denied'); } } },
+		documentRef: deniedDocument,
+	}), true);
+	assert.equal(deniedDocument.textarea.value, 'fallback denied');
+	assert.equal(deniedDocument.textarea.focused, true);
+	assert.equal(deniedDocument.textarea.selected, true);
+	assert.equal(deniedDocument.textarea.removed, true);
+
+	const missingDocument = makeDocument(true);
+	assert.equal(await copyTextToClipboard({
+		text: 'fallback missing',
+		navigatorRef: {},
+		documentRef: missingDocument,
+	}), true);
+
+	const throwingDocument = makeDocument(true);
+	assert.equal(await copyTextToClipboard({
+		text: 'fallback synchronous throw',
+		navigatorRef: { clipboard: { writeText: () => { throw new Error('throws'); } } },
+		documentRef: throwingDocument,
+	}), true);
+});
+
+test('text copy reports failure when every clipboard route is unavailable', async () => {
+	const makeDocument = (execCommandResult) => {
+		const textarea = {
+			style: {},
+			value: '',
+			focus() {},
+			select() {},
+			remove() {},
+		};
+		return {
+			activeElement: null,
+			body: { appendChild() {}, removeChild() {} },
+			createElement: (tag) => tag === 'textarea' ? textarea : null,
+			execCommand: () => execCommandResult,
+		};
+	};
+	const documentRef = makeDocument(false);
+
+	assert.equal(await copyTextToClipboard({
+		text: 'cannot copy',
+		navigatorRef: {},
+		documentRef,
+	}), false);
+	assert.equal(await copyTextToClipboard({
+		text: '',
+		navigatorRef: { clipboard: { writeText: async () => {} } },
+		documentRef,
+	}), false);
 });
 
 // --- W4-11: the committed-text focus layer is opt-in ---------------------

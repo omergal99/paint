@@ -1,11 +1,18 @@
 import { t } from '../i18n/messages.js';
+import { STATUS_FLASH_DURATION, isValidStatusFlashDuration } from '../core/constants.js';
 
 // js/ui/StatusBar.js
 export const createStatusBar = ({
   pointerEl,
   selectionEl,
   canvasSizeEl,
+  zoomSliderEl,
   flashEl,
+  flashDurationMs = STATUS_FLASH_DURATION.defaultMs,
+  showPointer = true,
+  showSelection = true,
+  showZoomSlider = true,
+  onStatus = () => {},
   eventTarget = globalThis.document?.documentElement,
   schedule = globalThis.setTimeout,
   cancel = globalThis.clearTimeout,
@@ -14,6 +21,39 @@ export const createStatusBar = ({
   let flashTimer = null;
   let lastSelection = null;
   let destroyed = false;
+  let pointerVisible = showPointer !== false;
+  let selectionVisible = showSelection !== false;
+  let zoomSliderVisible = showZoomSlider !== false;
+  let flashDuration = isValidStatusFlashDuration(flashDurationMs)
+    ? Number(flashDurationMs)
+    : STATUS_FLASH_DURATION.defaultMs;
+
+  const setConfig = ({
+    durationMs = flashDuration,
+    pointer = pointerVisible,
+    selection = selectionVisible,
+    zoomSlider = zoomSliderVisible,
+  } = {}) => {
+    flashDuration = isValidStatusFlashDuration(durationMs)
+      ? Number(durationMs)
+      : STATUS_FLASH_DURATION.defaultMs;
+    pointerVisible = pointer === true;
+    selectionVisible = selection === true;
+    zoomSliderVisible = zoomSlider === true;
+    if (pointerEl) pointerEl.hidden = !pointerVisible;
+    if (selectionEl) selectionEl.hidden = !selectionVisible;
+    if (zoomSliderEl) zoomSliderEl.hidden = !zoomSliderVisible;
+  };
+  setConfig({
+    durationMs: flashDuration,
+    pointer: pointerVisible,
+    selection: selectionVisible,
+    zoomSlider: zoomSliderVisible,
+  });
+  // The live coordinate string must not be re-translated from its initial "-".
+  pointerEl?.setAttribute?.('data-i18n-ignore', '');
+  pointerEl?.removeAttribute?.('data-i18n-runtime');
+  pointerEl?.removeAttribute?.('data-i18n-runtime-source');
   selectionEl?.setAttribute?.('data-i18n-ignore', '');
   selectionEl?.removeAttribute?.('data-i18n-runtime');
   selectionEl?.removeAttribute?.('data-i18n-runtime-source');
@@ -84,10 +124,13 @@ export const createStatusBar = ({
     if (flashEl) flashEl.textContent = '';
   };
 
-  const flash = (message, ms = 2200) => {
+  const flash = (message, ms) => {
     if (destroyed || !flashEl) return;
     clearFlash();
     flashEl.textContent = message;
+    onStatus({ message: String(message), timestamp: new Date().toISOString() });
+    if (ms === undefined) ms = flashDuration;
+    if (Number(ms) === 0) return;
     flashTimer = schedule(() => {
       flashTimer = null;
       if (!destroyed) flashEl.textContent = '';
@@ -110,6 +153,7 @@ export const createStatusBar = ({
     flash,
     clearFlash,
     destroy,
+    setConfig,
     get currentPointer() { return currentPointer; },
   });
 }

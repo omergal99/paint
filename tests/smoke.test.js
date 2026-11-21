@@ -136,6 +136,8 @@ test('Image action submenus expose consistent icons and translated labels', () =
 
 test('resize scale presets are grouped with the scale field and zoom has a 100% midpoint', () => {
 	const resizeDialog = html.slice(html.indexOf('id="resize-dialog"'), html.indexOf('id="settings-dialog"'));
+	assert.match(resizeDialog, /id="resize-width"[^>]*aria-describedby="resize-summary"/);
+	assert.match(resizeDialog, /id="resize-height"[^>]*aria-describedby="resize-summary"/);
 	assert.ok(resizeDialog.indexOf('id="resize-percent"') < resizeDialog.indexOf('data-resize-scale="50"'));
 	assert.match(resizeDialog, /class="resize-scale-row"[\s\S]*id="resize-percent"[\s\S]*class="resize-scale-presets"/);
 	assert.doesNotMatch(resizeDialog.slice(0, resizeDialog.indexOf('class="resize-presets"')), /resize-scale-presets/);
@@ -158,6 +160,14 @@ test('zoom controls provide a localized direct return to actual size', () => {
 
 test('status feedback is announced accessibly and its controller is disposable', () => {
 	assert.match(html, /id="status-flash"[^>]*role="status"[\s\S]*aria-live="polite"[\s\S]*aria-atomic="true"/);
+	assert.match(html, /data-settings-tab="footer"[^>]*data-i18n="ui\.tabFooter"/);
+	assert.match(html, /id="setting-status-flash-duration"/);
+	assert.match(html, /id="setting-show-status-pointer"/);
+	assert.match(html, /id="setting-show-status-selection"/);
+	assert.match(html, /id="setting-show-zoom-slider"/);
+	assert.match(html, /data-i18n="ui\.showZoomSliderPrefix"[\s\S]*data-i18n="ui\.sliderEmphasis"/);
+	assert.match(html, /id="settings-context-menu"[\s\S]*data-settings-context-action="footer"/);
+	assert.match(read('js/ui/StatusBar.js'), /if \(zoomSliderEl\) zoomSliderEl\.hidden = !zoomSliderVisible/);
 	const statusBar = read('js/ui/StatusBar.js');
 	assert.match(statusBar, /eventTarget\?\.addEventListener\?\.\('paint:locale-change', refresh\)/);
 	assert.match(statusBar, /eventTarget\?\.removeEventListener\?\.\('paint:locale-change', refresh\)/);
@@ -665,13 +675,13 @@ test('Settings dialog has a HISTORY tab with history controls', () => {
 
 test('zoom slider has 5% minimum step and zoom input accepts wide manual range', () => {
   assert.match(html, /id="zoom-slider"[^>]*step="5"/);
-  assert.match(html, /id="zoom-input"[^>]*min="2"[^>]*max="2000"/);
+  assert.match(html, /id="zoom-input"[^>]*min="5"[^>]*max="2500"/);
   const vpm = read('js/canvas/ViewportManager.js');
-  assert.match(vpm, /const MIN_ZOOM = 2;/);
-  assert.match(vpm, /const MAX_ZOOM = 2000;/);
-  // The slider keeps its own tighter 5–800 mapping independent of the clamp.
+  assert.match(vpm, /const MIN_ZOOM = 5;/);
+  assert.match(vpm, /const MAX_ZOOM = 2500;/);
+  // The slider keeps its own 5–2500 mapping independent of typed values.
   assert.match(vpm, /const SLIDER_ZOOM_MIN = 5;/);
-  assert.match(vpm, /const SLIDER_ZOOM_MAX = 800;/);
+  assert.match(vpm, /const SLIDER_ZOOM_MAX = 2500;/);
   assert.match(vpm, /step = Number\(percent\) > 200 \? '10' : '5'/);
 });
 
@@ -681,6 +691,9 @@ test('text object copy button is a real button with click handler', () => {
   assert.match(tso, /copyBtn\.type = 'button'/);
   assert.match(tso, /copyBtn\.addEventListener\('click',/);
   assert.match(tso, /event\.stopPropagation\(\)/);
+  assert.match(tso, /export const copyTextToClipboard/);
+  assert.match(tso, /typeof clipboard\?\.\w+ === 'function'/);
+  assert.match(tso, /documentRef\.execCommand\('copy'\)/);
 });
 
 test('settings history export button has data-tag and dialog-button-secondary class', () => {

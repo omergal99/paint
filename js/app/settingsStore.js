@@ -4,7 +4,12 @@
 // so the schema has exactly one owner and can grow new keys without touching the
 // composition root.
 import { createSettingsStore } from '../settings/SettingsStore.js';
-import { DEFAULT_SETTINGS, HISTORY_LIMIT_OPTIONS, STORAGE_KEYS } from '../core/constants.js';
+import {
+  DEFAULT_SETTINGS,
+  HISTORY_LIMIT_OPTIONS,
+  isValidStatusFlashDuration,
+  STORAGE_KEYS,
+} from '../core/constants.js';
 import { ADJUSTMENTS } from '../canvas/AdjustmentEngine.js';
 
 const isAdjustmentParams = (value) => {
@@ -33,6 +38,10 @@ const SETTINGS_VALIDATORS = Object.freeze({
   interfaceDirection: (value) => ['auto', 'ltr', 'rtl'].includes(value),
   historyAutoSaveMode: (value) => ['all', 'close', 'lifecycle'].includes(value),
   historyLimit: (value) => HISTORY_LIMIT_OPTIONS.includes(Number(value)),
+  statusFlashDuration: isValidStatusFlashDuration,
+  showStatusPointer: (value) => typeof value === 'boolean',
+  showStatusSelection: (value) => typeof value === 'boolean',
+  showStatusCanvasSize: (value) => typeof value === 'boolean',
   favoriteShapes: (value) => Array.isArray(value) && value.every((item) => typeof item === 'string' && item),
   adjustParams: isAdjustmentParams,
 });

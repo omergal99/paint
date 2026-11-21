@@ -1289,7 +1289,8 @@
 		</div>
 
 		<!-- ===================== STATUS BAR ===================== -->
-		<footer class="status-bar">
+		<footer class="status-bar" tabindex="0" aria-label="Status bar. Right-click or press Shift+F10 for the context menu."
+			data-i18n-attr="aria-label:ui.footerContextHelp">
 			<div>
 				<span class="status-item location" id="status-pointer" data-tag="status-pointer">Pointer: -</span>
 				<span class="status-item" id="status-selection" data-tag="status-selection"></span>
@@ -1323,9 +1324,9 @@
 						aria-label="Zoom to 100%" data-i18n-attr="title:ui.zoomTo100,aria-label:ui.zoomTo100">
 						<span data-i18n="ui.zoom100">100%</span>
 					</button>
-					<input type="number" id="zoom-input" data-tag="zoom-input" min="2" max="2000" value="100"
-						aria-label="Zoom percentage" />
-					<span>%</span>
+					<span id="status-zoom-readout"><input type="number" id="zoom-input" data-tag="zoom-input" min="5" max="2500"
+							value="100" aria-label="Zoom percentage" />
+						<span>%</span></span>
 					<button id="zoom-in" data-tag="zoom-in" title="Zoom in">
 						<svg class="icon" viewBox="0 0 20 20" aria-hidden="true" focusable="false">
 							<circle cx="8.5" cy="8.5" r="5.5" fill="none" stroke="currentColor" stroke-width="1.6" />
@@ -1376,9 +1377,9 @@
 						class="resize-preset-name">4K</span><span class="resize-preset-size">3840 × 2160 px</span></button>
 			</div>
 			<label class="resize-dimension-row" for="resize-width"><span>Width (px)</span><input type="number"
-					id="resize-width" data-tag="resize-width" min="1" max="10000" step="any" required /></label>
+			id="resize-width" data-tag="resize-width" min="1" max="10000" step="any" required aria-describedby="resize-summary" /></label>
 			<label class="resize-dimension-row" for="resize-height"><span>Height (px)</span><input type="number"
-					id="resize-height" data-tag="resize-height" min="1" max="10000" step="any" required /></label>
+					id="resize-height" data-tag="resize-height" min="1" max="10000" step="any" required aria-describedby="resize-summary" /></label>
 			<div class="resize-scale-controls">
 				<div class="resize-scale-row">
 					<label for="resize-percent" id="resize-percent-label" data-i18n="ui.scalePercent">Scale (%)</label>
@@ -1434,6 +1435,7 @@
 				<button type="button" class="settings-tab" data-settings-tab="canvas">CANVAS</button>
 				<button type="button" class="settings-tab" data-settings-tab="history">HISTORY</button>
 				<button type="button" class="settings-tab" data-settings-tab="ribbon">RIBBON</button>
+				<button type="button" class="settings-tab" data-settings-tab="footer" data-i18n="ui.tabFooter">FOOTER</button>
 				<button type="button" class="settings-tab" data-settings-tab="release">RELEASE NOTES</button>
 				<button type="button" class="settings-tab" data-settings-tab="about">ABOUT</button>
 				<button type="button" class="settings-tab" data-settings-tab="browser" data-i18n="ui.tabBrowser">BROWSER
@@ -1542,7 +1544,7 @@
 						<span class="choice-summary-label"><span data-i18n="ui.selected">Selected:</span> <strong
 								data-selected-label></strong>
 							<span class="choice-custom-inputs">
-								<input type="number" id="setting-default-zoom-custom" min="2" max="2000" step="1" value="100"
+								<input type="number" id="setting-default-zoom-custom" min="5" max="2500" step="1" value="100"
 									aria-label="Custom initial zoom percentage" />%
 							</span>
 						</span>
@@ -1560,6 +1562,65 @@
 				<p id="shortcut-settings-status" class="pwa-status" role="status" aria-live="polite"
 					data-i18n="ui.defaultsActive">Defaults are active.</p>
 				<div id="shortcut-settings-list" class="shortcut-settings-list"></div>
+			</section>
+			<section class="settings-panel settings-body" data-settings-panel="footer" hidden>
+				<h3 data-i18n="ui.footerSettings">Footer</h3>
+				<div class="settings-field choice-field">
+					<label for="setting-status-flash-duration" data-i18n="ui.statusFlashDuration">Status message duration</label>
+					<select id="setting-status-flash-duration">
+						<option value="1000" data-i18n="ui.oneSecond">1 second</option>
+						<option value="2200" data-i18n="ui.twoPointTwoSeconds">2.2 seconds</option>
+						<option value="5000" data-i18n="ui.fiveSeconds">5 seconds</option>
+						<option value="0" data-i18n="ui.untilNextStatus">Until the next status</option>
+						<option value="custom" data-i18n="ui.custom">Custom</option>
+					</select>
+					<div class="choice-summary" id="setting-status-flash-duration-choice"
+						data-select-id="setting-status-flash-duration" data-custom-value="custom">
+						<span class="choice-summary-label" data-choice-summary-label>
+							<span data-i18n="ui.selected">Selected:</span> <strong data-selected-label></strong>
+						</span>
+						<span class="choice-custom-inputs status-duration-custom-input" data-custom-inputs hidden>
+							<input type="number" id="setting-status-flash-duration-custom" min="0.1" max="60" step="0.1"
+								value="5" aria-label="Custom duration (seconds)"
+								data-i18n-attr="aria-label:ui.customStatusDuration" />
+						</span>
+					</div>
+				</div>
+				<div class="settings-general-options status-footer-options" role="group"
+					aria-label="Footer settings" data-i18n-attr="aria-label:ui.footerSettings">
+					<div class="checkbox-row" data-tag="setting-show-status-bar-footer-row">
+						<input type="checkbox" id="setting-show-status-bar-footer" checked />
+						<label for="setting-show-status-bar-footer" data-i18n="ui.showStatusBar">Show Status Bar</label>
+					</div>
+					<div class="checkbox-row" data-tag="setting-show-status-pointer-row">
+						<input type="checkbox" id="setting-show-status-pointer" checked />
+						<label for="setting-show-status-pointer" data-i18n="ui.showStatusPointer">Show pointer position</label>
+					</div>
+					<div class="checkbox-row" data-tag="setting-show-status-selection-row">
+						<input type="checkbox" id="setting-show-status-selection" checked />
+						<label for="setting-show-status-selection" aria-label="Show selection size"
+							data-i18n-attr="aria-label:ui.showStatusSelection">
+							<span data-i18n="ui.showStatusSelectionPrefix">Show </span><strong
+								data-i18n="ui.selectionEmphasis">selection</strong><span
+								data-i18n="ui.showStatusSelectionSuffix"> size</span>
+						</label>
+					</div>
+					<div class="checkbox-row" data-tag="setting-show-zoom-slider-row">
+						<input type="checkbox" id="setting-show-zoom-slider" checked />
+						<label for="setting-show-zoom-slider" aria-label="Show zoom slider"
+							data-i18n-attr="aria-label:ui.showZoomSlider">
+							<span data-i18n="ui.showZoomSliderPrefix">Show zoom </span><strong
+								data-i18n="ui.sliderEmphasis">slider</strong><span
+								data-i18n="ui.showZoomSliderSuffix"></span>
+						</label>
+					</div>
+				</div>
+				<section class="status-history-panel" id="status-history-panel" aria-labelledby="status-history-title">
+					<h4 id="status-history-title" data-i18n="ui.statusHistoryTitle">Recent status messages</h4>
+					<p class="settings-help" data-i18n="ui.statusHistoryHelp">Newest first. Up to 50 messages are kept on this device.</p>
+					<p id="status-history-error" class="settings-error" role="status" hidden></p>
+					<ol id="status-history-list" class="status-history-list"></ol>
+				</section>
 			</section>
 			<section class="settings-panel settings-body" data-settings-panel="history" hidden>
 				<h3 data-i18n="history.title">History</h3>
@@ -1782,6 +1843,24 @@
 			<div class="settings-footer settings-footer-nav" aria-hidden="true"></div>
 			<footer class="settings-footer"><button type="button" class="dialog-button-secondary" id="settings-footer-close"
 					data-tag="settings-footer-close">Close</button></footer>
+		</div>
+		<div class="action-menu settings-context-menu" id="settings-dialog-context-menu" hidden>
+			<div class="action-menu-items settings-context-menu-items" role="menu"
+				aria-label="Settings" data-i18n-attr="aria-label:settings.title">
+				<button type="button" role="menuitem" data-settings-context-action="settings">
+					<svg class="icon" viewBox="0 0 20 20" aria-hidden="true">
+						<path d="M8.2 2.5h3.6l.5 2a6 6 0 0 1 1.3.8l1.9-.7 1.8 3.1-1.5 1.4a6 6 0 0 1 0 1.7l1.5 1.4-1.8 3.1-1.9-.7a6 6 0 0 1-1.3.8l-.5 2H8.2l-.5-2a6 6 0 0 1-1.3-.8l-1.9.7-1.8-3.1 1.5-1.4a6 6 0 0 1 0-1.7L2.7 7.7l1.8-3.1 1.9.7a6 6 0 0 1 1.3-.8z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round" />
+						<circle cx="10" cy="10" r="2.2" fill="none" stroke="currentColor" stroke-width="1.3" />
+					</svg>
+					<span data-i18n="settings.title">Settings</span>
+				</button>
+				<button type="button" role="menuitem" data-settings-context-action="footer">
+					<svg class="icon" viewBox="0 0 20 20" aria-hidden="true">
+						<path d="M3 5.5h14M3 10h8M3 14.5h14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+					</svg>
+					<span data-i18n="ui.footerSettingsMenu">Footer settings</span>
+				</button>
+			</div>
 		</div>
 	</dialog>
 
@@ -2084,6 +2163,24 @@
 						</svg><span data-i18n="ui.formatWebp">WebP image</span></button>
 				</div>
 			</div>
+		</div>
+	</div>
+	<div class="action-menu settings-context-menu" id="settings-context-menu" hidden>
+		<div class="action-menu-items settings-context-menu-items" role="menu"
+			aria-label="Settings" data-i18n-attr="aria-label:settings.title">
+			<button type="button" role="menuitem" data-settings-context-action="settings">
+				<svg class="icon" viewBox="0 0 20 20" aria-hidden="true">
+					<path d="M8.2 2.5h3.6l.5 2a6 6 0 0 1 1.3.8l1.9-.7 1.8 3.1-1.5 1.4a6 6 0 0 1 0 1.7l1.5 1.4-1.8 3.1-1.9-.7a6 6 0 0 1-1.3.8l-.5 2H8.2l-.5-2a6 6 0 0 1-1.3-.8l-1.9.7-1.8-3.1 1.5-1.4a6 6 0 0 1 0-1.7L2.7 7.7l1.8-3.1 1.9.7a6 6 0 0 1 1.3-.8z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round" />
+					<circle cx="10" cy="10" r="2.2" fill="none" stroke="currentColor" stroke-width="1.3" />
+				</svg>
+				<span data-i18n="settings.title">Settings</span>
+			</button>
+			<button type="button" role="menuitem" data-settings-context-action="footer">
+				<svg class="icon" viewBox="0 0 20 20" aria-hidden="true">
+					<path d="M3 5.5h14M3 10h8M3 14.5h14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+				</svg>
+				<span data-i18n="ui.footerSettingsMenu">Footer settings</span>
+			</button>
 		</div>
 	</div>
 </body>

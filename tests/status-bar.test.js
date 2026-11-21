@@ -49,14 +49,20 @@ const timerQueue = () => {
 const createFixture = () => {
 	const localeTarget = eventTarget();
 	const timers = timerQueue();
-	const pointerEl = { textContent: '' };
+	const pointerEl = {
+		textContent: '',
+		attributes: new Set(),
+		setAttribute(name) { this.attributes.add(name); },
+		removeAttribute(name) { this.attributes.delete(name); },
+	};
+	const zoomSliderEl = { hidden: false };
 	const selectionEl = {
 		textContent: '',
 		attributes: new Set(),
 		setAttribute(name) { this.attributes.add(name); },
 		removeAttribute(name) { this.attributes.delete(name); },
 	};
-	const canvasSizeEl = { textContent: '800 × 600px' };
+	const canvasSizeEl = { textContent: '800 × 600px', hidden: false };
 	const flashEl = {
 		textContent: '',
 		attributes: new Set(),
@@ -67,12 +73,13 @@ const createFixture = () => {
 		pointerEl,
 		selectionEl,
 		canvasSizeEl,
+		zoomSliderEl,
 		flashEl,
 		eventTarget: localeTarget,
 		schedule: timers.schedule,
 		cancel: timers.cancel,
 	});
-	return { localeTarget, timers, pointerEl, selectionEl, canvasSizeEl, flashEl, statusBar };
+	return { localeTarget, timers, pointerEl, selectionEl, canvasSizeEl, zoomSliderEl, flashEl, statusBar };
 };
 
 test('flash messages stay owned by the timer, not the locale controller', () => {
@@ -82,6 +89,8 @@ test('flash messages stay owned by the timer, not the locale controller', () => 
 	assert.equal(fixture.flashEl.attributes.has('data-i18n-ignore'), true);
 	assert.equal(fixture.flashEl.attributes.has('data-i18n-runtime'), false);
 	assert.equal(fixture.flashEl.attributes.has('data-i18n-runtime-source'), false);
+	assert.equal(fixture.pointerEl.attributes.has('data-i18n-ignore'), true);
+	assert.equal(fixture.pointerEl.attributes.has('data-i18n-runtime'), false);
 	fixture.statusBar.flash('Loaded from history');
 	const timer = [...fixture.timers.pending.keys()][0];
 	fixture.timers.run(timer);
@@ -133,4 +142,56 @@ test('status flashes replace, expire, clear, and dispose their owned timers', ()
 	assert.equal(fixture.timers.pending.size, 0);
 	fixture.statusBar.flash('Must not come back');
 	assert.equal(fixture.flashEl.textContent, '');
+});
+
+test('default status duration is five seconds and each flash records its timestamp', () => {
+	const fixture = createFixture();
+	let recorded = null;
+	const statusBar = createStatusBar({
+		pointerEl: fixture.pointerEl,
+		selectionEl: fixture.selectionEl,
+		canvasSizeEl: fixture.canvasSizeEl,
+		zoomSliderEl: fixture.zoomSliderEl,
+		flashEl: fixture.flashEl,
+		schedule: fixture.timers.schedule,
+		cancel: fixture.timers.cancel,
+		onStatus: (entry) => { recorded = entry; },
+	});
+
+	statusBar.flash('Saved');
+	const timer = [...fixture.timers.pending.keys()][0];
+	assert.equal(fixture.timers.pending.get(timer).delay, 5000);
+	assert.equal(recorded.message, 'Saved');
+	assert.equal(Number.isFinite(Date.parse(recorded.timestamp)), true);
+	statusBar.destroy();
+	fixture.statusBar.destroy();
+});
+
+test('status footer config applies persisted duration and visible fields', () => {
+	const fixture = createFixture();
+	fixture.statusBar.setConfig({
+		durationMs: 5000,
+		pointer: false,
+		selection: false,
+		zoomSlider: true,
+	});
+
+	fixture.statusBar.flash('Long status');
+	const timer = [...fixture.timers.pending.keys()][0];
+	assert.equal(fixture.timers.pending.get(timer).delay, 5000);
+	assert.equal(fixture.pointerEl.hidden, true);
+	assert.equal(fixture.selectionEl.hidden, true);
+	assert.equal(fixture.canvasSizeEl.hidden, false);
+	assert.equal(fixture.zoomSliderEl.hidden, false);
+
+	fixture.statusBar.setConfig({ zoomSlider: false });
+	assert.equal(fixture.canvasSizeEl.hidden, false);
+	assert.equal(fixture.zoomSliderEl.hidden, true);
+
+	fixture.statusBar.setConfig({ durationMs: 0 });
+	assert.equal(fixture.pointerEl.hidden, true);
+	fixture.statusBar.flash('Keep until the next status');
+	assert.equal(fixture.flashEl.textContent, 'Keep until the next status');
+	assert.equal(fixture.timers.pending.size, 0);
+	fixture.statusBar.destroy();
 });

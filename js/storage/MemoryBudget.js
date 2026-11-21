@@ -1,10 +1,11 @@
 // Browser memory is not storage quota. Keep this report deliberately honest:
 // it measures known application-owned surfaces and labels unknown browser
 // internals as estimates instead of presenting quota as RAM availability.
+import { LIMITS } from '../core/constants.js';
 
 export const DEFAULT_MEMORY_BUDGET = Object.freeze({
 	maxUndoBytes: 64 * 1024 * 1024,
-	maxDecodedPixels: 32 * 1024 * 1024,
+	maxDecodedPixels: LIMITS.maxImportPixels,
 	maxScratchPixels: 16 * 1024 * 1024,
 });
 
