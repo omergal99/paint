@@ -1,3 +1,5 @@
+import { DEFAULT_TEST_CONFIG } from './test-config.mjs';
+
 const asText = async (data) => {
   if (typeof data === 'string') return data;
   if (typeof data?.text === 'function') return data.text();
@@ -8,7 +10,11 @@ const asText = async (data) => {
   throw new Error('Unsupported Chrome DevTools Protocol message payload.');
 };
 
-export const connectCdp = async ({ url, timeoutMs = 5000 } = {}) => {
+export const connectCdp = async ({
+  url,
+  timeoutMs = DEFAULT_TEST_CONFIG.browserCommandTimeoutMs,
+  closeTimeoutMs = DEFAULT_TEST_CONFIG.browserCloseTimeoutMs,
+} = {}) => {
   if (typeof WebSocket !== 'function') {
     throw new Error('This Node.js runtime does not provide the built-in WebSocket API.');
   }
@@ -113,7 +119,7 @@ export const connectCdp = async ({ url, timeoutMs = 5000 } = {}) => {
   const close = async () => {
     if (socket.readyState === WebSocket.CLOSED) return;
     await new Promise((resolve) => {
-      const timer = setTimeout(resolve, 250);
+      const timer = setTimeout(resolve, closeTimeoutMs);
       socket.addEventListener('close', () => {
         clearTimeout(timer);
         resolve();

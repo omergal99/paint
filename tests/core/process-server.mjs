@@ -1,12 +1,14 @@
 import { spawn } from 'node:child_process';
 import { terminateChildProcess } from './process-lifecycle.mjs';
+import { DEFAULT_TEST_CONFIG } from './test-config.mjs';
 
 export const startProcessServer = async ({
   command,
   args = [],
   cwd,
   readyPattern,
-  timeoutMs = 10000,
+  timeoutMs = DEFAULT_TEST_CONFIG.serverReadyTimeoutMs,
+  shutdownGraceMs = DEFAULT_TEST_CONFIG.processShutdownGraceMs,
 } = {}) => {
   if (!(readyPattern instanceof RegExp)) throw new Error('A server readyPattern is required.');
   const child = spawn(command, args, { cwd, stdio: ['ignore', 'pipe', 'pipe'] });
@@ -42,12 +44,12 @@ export const startProcessServer = async ({
     return Object.freeze({
       url,
       close: async () => {
-        await terminateChildProcess({ child });
+        await terminateChildProcess({ child, timeoutMs: shutdownGraceMs });
       },
     });
   } catch (error) {
     clearTimeout(timer);
-    await terminateChildProcess({ child });
+    await terminateChildProcess({ child, timeoutMs: shutdownGraceMs });
     throw error;
   }
 };

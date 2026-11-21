@@ -21,13 +21,18 @@ export const createPaintAdapter = async ({ browser, baseUrl } = {}) => {
   `);
 
   const open = async ({ width, height, mobile = false } = {}) => {
-    await browser.clearOrigin(new URL(baseUrl).origin);
+    const origin = new URL(baseUrl).origin;
+    await browser.clearOrigin(origin);
     await browser.setViewport({ width, height, mobile });
-    await browser.navigate(baseUrl);
-    await browser.resetSessionStorage(baseUrl);
-    await browser.waitForFunction(
-      'window.__paintLocalTestReady === true && document.querySelector("#paint-canvas")?.width > 0',
-    );
+    const sessionResetScript = await browser.clearSessionStorageBeforeNextNavigation(origin);
+    try {
+      await browser.navigate(baseUrl);
+      await browser.waitForApplication(
+        'window.__paintLocalTestReady === true && document.querySelector("#paint-canvas")?.width > 0',
+      );
+    } finally {
+      await browser.removeScriptOnNewDocument(sessionResetScript.identifier);
+    }
     return browser.evaluate(`(() => {
       const canvas = document.querySelector('#paint-canvas');
       return {

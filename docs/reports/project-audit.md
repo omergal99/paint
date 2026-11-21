@@ -11,7 +11,7 @@ change are recorded at handoff.
 |---|---|---|
 | Editor core | Strong foundation | Plain ES modules; canvas pixels, transient overlays, tools, and UI have named owners |
 | Local data | Separate bounded stores | Undo, working-canvas recovery, explicit image history, and settings are distinct |
-| Validation | Useful, with a hardened browser baseline | 418 Node tests plus two local Chromium journeys; browser coverage is initial and not in CI |
+| Validation | Useful, with a reporting browser harness | 425 Node tests plus two isolated local Chromium journeys; browser coverage is initial and not in CI |
 | Onboarding | Improved | README, documentation index, ADRs, and audit now point to the current structure |
 | Visual discovery | Missing | No component gallery/Storybook; reusable patterns are documented but not browsable as live examples |
 | Mobile workflow | Needs focused validation | A touch/brush smoke test exists; pan visibility, navigation, and location context still need deliberate mobile journeys |
@@ -37,7 +37,9 @@ change are recorded at handoff.
 - **A local browser baseline now exists:** `npm run test:local` runs the
   existing Node suite and desktop/mobile-emulated Chromium checks through a
   small CDP harness, without adding browser-test npm dependencies or changing
-  CI. Its current feature coverage is intentionally narrow.
+  CI. It supports individual/group selection, fresh BrowserContexts, named
+  steps, and per-run JSON/HTML reports; product coverage remains intentionally
+  narrow.
 - **No credentials are required for ordinary local editing.** Clipboard and
   file-system access are browser APIs and should remain explicit user actions.
 
@@ -57,6 +59,8 @@ storage map.
 | README screenshot showed an obsolete UI | Fixed | Replaced with a current 1280×800 local browser capture |
 | Local deterministic browser checks were missing | Added | `npm run test:local` checks desktop app/brush behavior and mobile touch/brush behavior; it remains outside GitHub Actions |
 | Process cleanup, session isolation, external-network policy, and active-tool assertion were missing from the initial harness | Fixed | Shared SIGTERM/SIGKILL cleanup, sessionStorage reset, loopback-only request policy, and Brush-active verification now cover the hardening findings |
+| Local harness lacked test selection, centralized timeouts, isolated contexts, and structured reports | Fixed | `test:browser` supports stable IDs/groups, each test uses a new BrowserContext/process, config is validated centrally, and every run writes JSON/HTML plus diagnostics |
+| Failure evidence needed end-to-end proof | Verified | A temporary assertion failure produced the expected failed step, stack, screenshot, JSON, HTML, and exit code 1; the assertion was restored and full suite rerun |
 
 The local release gates and initial desktop/mobile browser journeys pass.
 Coverage of selection, resize, history, settings, and physical-device UX is
@@ -123,11 +127,11 @@ links and the index whenever a document moves.
 
 | Check | Result |
 |---|---|
-| `npm run test:local` | PASS — 418 Node tests and 2 browser tests (desktop mouse + mobile touch) |
+| `npm run test:local` | PASS — 425 Node tests and 2 browser tests (desktop mouse + mobile touch) |
 | `npm run check:i18n` | PASS — 8 locales, 563 keys, 410 UI labels |
 | `npm run typecheck` | PASS |
 | `npm run verify:docs` | PASS — 21 guides checked |
-| `npm run audit:skills` | PASS — 7 valid skills, 2 recorded sessions |
+| `npm run audit:skills` | PASS — 7 valid skills, 4 recorded sessions |
 | `npm run sw:check` | PASS — 150 shell assets, 141 app modules |
 | `git diff --check` | PASS |
 | `npm run verify:release` | PASS — version 1.9.1, 144 app JavaScript files, runtime and release checks |
@@ -135,9 +139,17 @@ links and the index whenever a document moves.
 ### Browser evidence
 
 `npm run test:local` ran against local headless Chromium: the 1280×800 desktop
-journey loaded the editor and verified a brush stroke changed canvas pixels;
-the 390×844 mobile-emulated journey verified touch input and a canvas pixel
-change. The suite captured no failure screenshots.
+journey verified clean session storage before app scripts, active Brush
+selection, and a canvas pixel change; the 390×844 mobile-emulated journey
+verified active Brush selection and touch drawing. A separate reverse-order
+run with CLI timeout overrides also passed; each individual test ID has passed.
+
+A controlled temporary assertion failure returned exit code 1 and produced the
+expected failed step, assertion message/stack, browser diagnostics, 1280×800
+failure screenshot, JSON report, and standalone HTML report. The temporary
+assertion was restored before the passing full-suite run. An invalid
+`CHROME_BIN` also produced a structured infrastructure-failure report before
+any browser test started.
 
 Earlier manual evidence on local `http://127.0.0.1:4175/` showed a fresh-origin
 visit navigated once and reached the ready editor without a second navigation.

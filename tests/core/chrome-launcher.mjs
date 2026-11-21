@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { terminateChildProcess } from './process-lifecycle.mjs';
+import { DEFAULT_TEST_CONFIG } from './test-config.mjs';
 
 const delay = (durationMs) => new Promise((resolve) => setTimeout(resolve, durationMs));
 
@@ -21,15 +22,22 @@ const executableCandidates = () => {
   return ['google-chrome', 'google-chrome-stable', 'chromium', 'chromium-browser'];
 };
 
-const findChrome = () => {
+const findChrome = (timeoutMs = DEFAULT_TEST_CONFIG.chromeDiscoveryTimeoutMs) => {
   for (const candidate of executableCandidates()) {
-    const result = spawnSync(candidate, ['--version'], { encoding: 'utf8', timeout: 3000 });
-    if (!result.error && result.status === 0) return candidate;
+    const result = spawnSync(candidate, ['--version'], { encoding: 'utf8', timeout: timeoutMs });
+    if (!result.error && result.status === 0) {
+      return { executable: candidate, version: result.stdout.trim() };
+    }
   }
   throw new Error('Chrome/Chromium was not found. Install a browser locally or set CHROME_BIN to its executable.');
 };
 
-const waitForPageTarget = async ({ port, child, timeoutMs }) => {
+const waitForPageTarget = async ({
+  port,
+  child,
+  timeoutMs,
+  pollIntervalMs = DEFAULT_TEST_CONFIG.pollIntervalMs,
+}) => {
   const deadline = Date.now() + timeoutMs;
   let lastError = null;
   while (Date.now() < deadline) {
@@ -45,13 +53,18 @@ const waitForPageTarget = async ({ port, child, timeoutMs }) => {
     } catch (error) {
       lastError = error;
     }
-    await delay(50);
+    await delay(pollIntervalMs);
   }
   throw new Error(`Timed out waiting for a Chrome page target${lastError ? `: ${lastError.message}` : '.'}`);
 };
 
-export const launchHeadlessChrome = async ({ timeoutMs = 12000 } = {}) => {
-  const executable = findChrome();
+export const launchHeadlessChrome = async ({
+  discoveryTimeoutMs = DEFAULT_TEST_CONFIG.chromeDiscoveryTimeoutMs,
+  timeoutMs = DEFAULT_TEST_CONFIG.chromeStartupTimeoutMs,
+  pollIntervalMs = DEFAULT_TEST_CONFIG.pollIntervalMs,
+  shutdownGraceMs = DEFAULT_TEST_CONFIG.processShutdownGraceMs,
+} = {}) => {
+  const { executable, version } = findChrome(discoveryTimeoutMs);
   const profileDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'local-browser-test-'));
   const args = [
     '--headless=new',
@@ -70,14 +83,18 @@ export const launchHeadlessChrome = async ({ timeoutMs = 12000 } = {}) => {
   let output = '';
   let resolvePort;
   let rejectPort;
+  let browserWebSocketUrl = null;
   const portReady = new Promise((resolve, reject) => {
     resolvePort = resolve;
     rejectPort = reject;
   });
   const consumeOutput = (chunk) => {
     output = `${output}${chunk.toString()}`.slice(-8000);
-    const match = output.match(/DevTools listening on ws:\/\/127\.0\.0\.1:(\d+)\/devtools\/browser\//);
-    if (match) resolvePort(Number(match[1]));
+    const match = output.match(/DevTools listening on (ws:\/\/127\.0\.0\.1:(\d+)\/devtools\/browser\/[^\s]+)/);
+    if (match) {
+      browserWebSocketUrl = match[1];
+      resolvePort(Number(match[2]));
+    }
   };
   child.stderr.on('data', consumeOutput);
   child.once('error', (error) => rejectPort(new Error(`Could not launch Chrome: ${error.message}`)));
@@ -94,22 +111,30 @@ export const launchHeadlessChrome = async ({ timeoutMs = 12000 } = {}) => {
       }),
     ]);
     clearTimeout(startupTimer);
-    const target = await waitForPageTarget({ port, child, timeoutMs });
+    const target = await waitForPageTarget({ port, child, timeoutMs, pollIntervalMs });
 
     const close = async () => {
-      await terminateChildProcess({ child });
-      fs.rmSync(profileDirectory, { recursive: true, force: true });
+      try {
+        await terminateChildProcess({ child, timeoutMs: shutdownGraceMs });
+      } finally {
+        fs.rmSync(profileDirectory, { recursive: true, force: true });
+      }
     };
 
     return Object.freeze({
       executable,
+      version,
+      browserWebSocketUrl,
       pageWebSocketUrl: target.webSocketDebuggerUrl,
       close,
     });
   } catch (error) {
     clearTimeout(startupTimer);
-    await terminateChildProcess({ child });
-    fs.rmSync(profileDirectory, { recursive: true, force: true });
+    try {
+      await terminateChildProcess({ child, timeoutMs: shutdownGraceMs });
+    } finally {
+      fs.rmSync(profileDirectory, { recursive: true, force: true });
+    }
     throw error;
   }
 };

@@ -29,6 +29,8 @@ development dependencies, then run the checks relevant to the change:
 npm install
 npm test
 npm run test:local
+npm run test:browser -- --list
+npm run test:browser -- --test brush-desktop
 npm run check:i18n
 npm run typecheck
 npm run verify:docs
@@ -41,6 +43,9 @@ browser, adds no browser-automation npm dependency, and is local-only; the
 existing GitHub Actions test workflow is unchanged. See the
 [test harness guide](./tests/SKILL.md) and
 [testing ADR](./docs/adr/testing/ADR-0002-local-deterministic-browser-tests.md).
+Every browser run writes JSON and standalone HTML reports under
+`output/test-artifacts/runs/`; `output/test-artifacts/latest.json` points to the
+most recent run. See the harness guide for group selection and timeout options.
 
 For JavaScript changes, run `node --check` on changed modules. For service
 worker/module graph, version, or release changes, run `npm run verify:release`.
