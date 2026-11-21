@@ -17,6 +17,11 @@ tree and maintenance surface. The project already targets Node.js 24, whose
 built-in test runner and WebSocket API can control an installed Chrome or
 Chromium browser through the Chrome DevTools Protocol (CDP).
 
+CDP's own documentation states that it is not a public, supported Chrome API
+and does not guarantee backwards compatibility. This is a deliberate,
+Chrome-only infrastructure trade-off, not a claim that CDP is a stable
+cross-browser automation standard.
+
 ## Decision
 
 - Use Node's built-in `node:test` and WebSocket APIs to control a local Chrome
@@ -34,18 +39,25 @@ Chromium browser through the Chrome DevTools Protocol (CDP).
   before application scripts run.
 - Block and record external HTTP(S) requests; fail on HTTP error responses,
   failed requests, browser console/log errors, and uncaught exceptions.
+- Treat HTTP(S) interception as an observed/tested boundary, not a complete
+  network sandbox. WebSocket, WebRTC, other transports, and traffic from
+  browser targets not attached to the harness are not proven blocked.
+- Set deterministic browser defaults for locale (`en-US`), timezone (UTC),
+  color scheme (light), reduced motion, and DPR (1), with validated suite
+  configuration and explicit per-spec overrides.
 - Write versioned JSON and standalone HTML reports for passing, failing, and
   infrastructure-failed browser runs. Store screenshots and logs in an ignored
   per-run artifact directory; capture screenshots on failures and optionally at
   named steps. Use collision-resistant UUID run IDs and atomic replacement for
   run reports and the `latest.json` pointer; render only safe relative artifact
-  links and omit URL credentials, query strings, and fragments from network
-  diagnostics.
+  links, omit URL credentials, query strings, and fragments from network
+  diagnostics, and record only the browser executable basename/version.
 - Provide stable test IDs, group/single-test CLI selection, a validated shared
   timeout configuration, and a portable `latest.json` report pointer.
 - Use shared SIGTERM/SIGKILL lifecycle cleanup for startup failures and normal
   shutdown; close Chrome and the server independently so one close failure
-  cannot leave the other running.
+  cannot leave the other running. SIGINT/SIGTERM aborts are propagated through
+  server, Chrome, and test-child startup, with bounded cleanup and a report.
 - Keep test execution free of AI. AI may help diagnose and fix a regression,
   but must not delete or weaken a test to hide a failure, and must rerun the
   complete local suite after a fix.
@@ -69,9 +81,16 @@ Chromium browser through the Chrome DevTools Protocol (CDP).
 ### Trade-offs
 
 - The project owns and must maintain its CDP client and browser lifecycle code.
+  CDP is not a public, supported API and may change without compatibility
+  guarantees; Chrome upgrades therefore require running the full local suite.
+  If this maintenance cost becomes material, compare supported options such as
+  ChromeDriver before expanding the harness.
 - Contributors need a compatible local Chrome or Chromium installation.
 - Browser behavior is initially tested in Chromium, not across every browser
   engine.
+- HTTP(S) interception is not a full network sandbox. Protocols outside its
+  verified request path require separate controls before stronger isolation
+  claims can be made.
 - BrowserContext isolation increases per-test startup cost slightly, and the
   project owns the isolated-target and report-schema code.
 - Coverage is only as broad as the journeys encoded in specs; this first
@@ -84,4 +103,5 @@ Chromium browser through the Chrome DevTools Protocol (CDP).
 - [Local browser test harness guide](../../../tests/SKILL.md)
 - [Browser test catalog](../../../tests/browser-specs.mjs)
 - [Deterministic test fixer skill](../../../.agents/skills/deterministic-test-fixer/SKILL.md)
+- [Chrome DevTools Protocol scope and support](https://chromedevtools.github.io/devtools-protocol/)
 

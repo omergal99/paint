@@ -2,7 +2,11 @@ import { spawn } from 'node:child_process';
 import path from 'node:path';
 import { launchHeadlessChrome } from './chrome-launcher.mjs';
 import { configToEnvironment } from './test-config.mjs';
-import { terminateChildProcess } from './process-lifecycle.mjs';
+import {
+  createAbortError,
+  terminateChildProcess,
+  throwIfAborted,
+} from './process-lifecycle.mjs';
 import { createBrowserTargetFactory } from './browser-targets.mjs';
 
 const MAX_CAPTURED_OUTPUT = 2_000_000;
@@ -16,6 +20,7 @@ const runTestProcess = ({
   reporterPath,
   timeoutMs,
   shutdownGraceMs,
+  signal,
 }) => new Promise((resolve) => {
   const child = spawn(process.execPath, [
     '--test',
@@ -32,26 +37,37 @@ const runTestProcess = ({
   let spawnError = null;
   let timedOut = false;
   let timeoutCleanup = Promise.resolve();
-  const forwardInterrupt = () => child.kill('SIGINT');
+  let abortTimer;
+  const onAbort = () => {
+    clearTimeout(timer);
+    child.kill(signal.reason === 'SIGTERM' ? 'SIGTERM' : 'SIGINT');
+    abortTimer = setTimeout(() => {
+      if (child.exitCode !== null || child.signalCode !== null) return;
+      timeoutCleanup = terminateChildProcess({ child, timeoutMs: shutdownGraceMs })
+        .catch((error) => { spawnError ||= error; });
+    }, shutdownGraceMs);
+  };
   const timer = setTimeout(() => {
     timedOut = true;
     timeoutCleanup = terminateChildProcess({ child, timeoutMs: shutdownGraceMs });
   }, timeoutMs);
-  process.once('SIGINT', forwardInterrupt);
+  signal?.addEventListener('abort', onAbort, { once: true });
+  if (signal?.aborted) onAbort();
   child.stdout.on('data', (chunk) => { stdout = appendOutput(stdout, chunk); });
   child.stderr.on('data', (chunk) => { stderr = appendOutput(stderr, chunk); });
   child.once('error', (error) => { spawnError = error; });
-  child.once('close', async (code, signal) => {
+  child.once('close', async (code, exitSignal) => {
     clearTimeout(timer);
+    clearTimeout(abortTimer);
     try {
       await timeoutCleanup;
     } catch (error) {
       spawnError ||= error;
     }
-    process.off('SIGINT', forwardInterrupt);
+    signal?.removeEventListener('abort', onAbort);
     resolve({
-      exitCode: timedOut || signal ? 1 : code ?? 1,
-      signal,
+      exitCode: timedOut || exitSignal ? 1 : code ?? 1,
+      signal: exitSignal,
       spawnError: spawnError
         ? new Error(`Could not start browser tests: ${spawnError.message}`)
         : timedOut ? new Error(`Browser test process exceeded ${timeoutMs}ms.`) : null,
@@ -68,6 +84,7 @@ export const runLocalBrowserSuite = async ({
   reporterPath,
   runDirectory,
   config,
+  signal,
 } = {}) => {
   if (!cwd || typeof startServer !== 'function' || !Array.isArray(testSpecs) || testSpecs.length === 0) {
     throw new Error('Local browser suite requires cwd, startServer, and at least one test spec.');
@@ -79,16 +96,21 @@ export const runLocalBrowserSuite = async ({
   let infrastructureError = null;
   const testRuns = [];
   try {
+    throwIfAborted(signal);
     server = await startServer({
       timeoutMs: config.serverReadyTimeoutMs,
       shutdownGraceMs: config.processShutdownGraceMs,
+      signal,
     });
+    throwIfAborted(signal);
     chrome = await launchHeadlessChrome({
       discoveryTimeoutMs: config.chromeDiscoveryTimeoutMs,
       timeoutMs: config.chromeStartupTimeoutMs,
       pollIntervalMs: config.pollIntervalMs,
       shutdownGraceMs: config.processShutdownGraceMs,
+      signal,
     });
+    throwIfAborted(signal);
     browserTargets = await createBrowserTargetFactory({
       browserWebSocketUrl: chrome.browserWebSocketUrl,
       commandTimeoutMs: config.browserCommandTimeoutMs,
@@ -96,7 +118,9 @@ export const runLocalBrowserSuite = async ({
       timeoutMs: config.chromeStartupTimeoutMs,
       pollIntervalMs: config.pollIntervalMs,
     });
+    throwIfAborted(signal);
     for (const spec of testSpecs) {
+      throwIfAborted(signal);
       const page = await browserTargets.openPage();
       try {
         const testRun = await runTestProcess({
@@ -105,6 +129,7 @@ export const runLocalBrowserSuite = async ({
           reporterPath,
           timeoutMs: config.testExecutionTimeoutMs + config.processShutdownGraceMs,
           shutdownGraceMs: config.processShutdownGraceMs,
+          signal,
           env: {
             ...process.env,
             ...configToEnvironment(config),
@@ -114,6 +139,10 @@ export const runLocalBrowserSuite = async ({
           },
         });
         testRuns.push({ testId: spec.id, ...testRun });
+        if (signal?.aborted) {
+          infrastructureError ||= createAbortError(signal);
+          break;
+        }
         if (testRun.spawnError) {
           infrastructureError = testRun.spawnError;
           break;
@@ -123,7 +152,7 @@ export const runLocalBrowserSuite = async ({
       }
     }
   } catch (error) {
-    infrastructureError = error;
+    infrastructureError ||= error;
   } finally {
     try {
       await browserTargets?.close();
@@ -142,14 +171,22 @@ export const runLocalBrowserSuite = async ({
     }
   }
 
+  if (signal?.aborted) infrastructureError ||= createAbortError(signal);
   const failedTestRun = testRuns.some((run) => run.exitCode !== 0);
+  const signalName = signal?.aborted ? signal.reason : null;
   return Object.freeze({
-    exitCode: infrastructureError || failedTestRun ? 1 : 0,
+    exitCode: signalName === 'SIGINT' ? 130 : signalName === 'SIGTERM' ? 143 : infrastructureError || failedTestRun ? 1 : 0,
     infrastructureError,
+    signal: signalName,
     testRuns,
     environment: Object.freeze({
-      browser: chrome ? `${chrome.executable} ${chrome.version}` : null,
+      browser: chrome ? `${path.basename(chrome.executable)} ${chrome.version}` : null,
       serverUrl: server?.url || null,
+      locale: config.locale,
+      timezoneId: config.timezoneId,
+      colorScheme: config.colorScheme,
+      reducedMotion: config.reducedMotion,
+      deviceScaleFactor: config.deviceScaleFactor,
     }),
   });
 };

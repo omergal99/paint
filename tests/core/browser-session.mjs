@@ -110,20 +110,56 @@ export const createBrowserSession = async ({ webSocketUrl, config = createTestCo
       timeoutMs: config.appReadyTimeoutMs,
       pollMs: config.pollIntervalMs,
     });
-    const setViewport = async ({ width, height, mobile = false } = {}) => {
+    const setViewport = async ({
+      width,
+      height,
+      mobile = false,
+      deviceScaleFactor = config.deviceScaleFactor,
+    } = {}) => {
       if (!Number.isInteger(width) || width < 1 || !Number.isInteger(height) || height < 1) {
         throw new Error('Viewport width and height must be positive integers.');
+      }
+      if (!Number.isFinite(deviceScaleFactor) || deviceScaleFactor <= 0) {
+        throw new Error('deviceScaleFactor must be a positive finite number.');
       }
       await send('Emulation.setDeviceMetricsOverride', {
         width,
         height,
-        deviceScaleFactor: 1,
+        deviceScaleFactor,
         mobile,
       });
       await send('Emulation.setTouchEmulationEnabled', mobile
         ? { enabled: true, maxTouchPoints: 1 }
         : { enabled: false });
     };
+    const setEnvironment = async ({
+      locale = config.locale,
+      timezoneId = config.timezoneId,
+      colorScheme = config.colorScheme,
+      reducedMotion = config.reducedMotion,
+    } = {}) => {
+      if (typeof locale !== 'string' || !locale.trim()) throw new Error('locale must be a non-empty string.');
+      if (typeof timezoneId !== 'string' || !timezoneId.trim()) throw new Error('timezoneId must be a non-empty string.');
+      if (!['light', 'dark', 'no-preference'].includes(colorScheme)) {
+        throw new Error('colorScheme must be light, dark, or no-preference.');
+      }
+      if (!['reduce', 'no-preference'].includes(reducedMotion)) {
+        throw new Error('reducedMotion must be reduce or no-preference.');
+      }
+      await send('Emulation.setLocaleOverride', { locale });
+      await send('Network.setUserAgentOverride', {
+        userAgent: await evaluate('navigator.userAgent'),
+        acceptLanguage: locale,
+      });
+      await send('Emulation.setTimezoneOverride', { timezoneId });
+      await send('Emulation.setEmulatedMedia', {
+        features: [
+          { name: 'prefers-color-scheme', value: colorScheme },
+          { name: 'prefers-reduced-motion', value: reducedMotion },
+        ],
+      });
+    };
+    await setEnvironment();
     const navigate = async (url) => {
       const result = await send('Page.navigate', { url });
       if (result.errorText) throw new Error(`Browser navigation failed: ${result.errorText}`);
@@ -203,6 +239,7 @@ export const createBrowserSession = async ({ webSocketUrl, config = createTestCo
       waitForFunction,
       waitForApplication,
       setViewport,
+      setEnvironment,
       navigate,
       installScriptOnNewDocument,
       removeScriptOnNewDocument,

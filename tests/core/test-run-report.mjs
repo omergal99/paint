@@ -149,7 +149,11 @@ export const printTerminalReport = (report, paths, runDirectory, output = consol
     if (test.screenshot) output.error(`  Screenshot: ${path.resolve(runDirectory, test.screenshot)}`);
   }
   output.log(`Passed: ${report.summary.passed} · Failed: ${report.summary.failed} · Skipped: ${report.summary.skipped}`);
-  output.log(`JSON: ${paths.jsonPath}`);
-  output.log(`HTML: ${paths.htmlPath}\n`);
+  if (paths) {
+    output.log(`JSON: ${paths.jsonPath}`);
+    output.log(`HTML: ${paths.htmlPath}\n`);
+  } else {
+    output.error(`JSON/HTML report persistence failed; partial files may remain in ${path.resolve(runDirectory)}.\n`);
+  }
 };
 

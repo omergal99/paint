@@ -3,7 +3,12 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
-import { createRunId, renderHtmlReport, writeRunReports } from './core/test-run-report.mjs';
+import {
+  createRunId,
+  printTerminalReport,
+  renderHtmlReport,
+  writeRunReports,
+} from './core/test-run-report.mjs';
 
 const sampleReport = {
   schemaVersion: 1,
@@ -74,5 +79,17 @@ test('report writer creates versioned JSON, standalone HTML, and latest pointer'
   } finally {
     await fs.rm(artifactRoot, { recursive: true, force: true });
   }
+});
+
+test('terminal report retains test details when report files could not be saved', () => {
+  const logged = [];
+  const errors = [];
+  printTerminalReport(sampleReport, null, '/tmp/report-test', {
+    log: (message) => logged.push(message),
+    error: (message) => errors.push(message),
+  });
+  assert.ok(logged.some((message) => message.includes('[FAILED ] report-failure')));
+  assert.ok(errors.some((message) => message.includes('expected failure')));
+  assert.ok(errors.some((message) => message.includes('partial files may remain')));
 });
 

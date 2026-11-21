@@ -20,10 +20,15 @@ export const createPaintAdapter = async ({ browser, baseUrl } = {}) => {
     }, { once: true });
   `);
 
-  const open = async ({ width, height, mobile = false } = {}) => {
+  const open = async ({
+    width,
+    height,
+    mobile = false,
+    deviceScaleFactor,
+  } = {}) => {
     const origin = new URL(baseUrl).origin;
     await browser.clearOrigin(origin);
-    await browser.setViewport({ width, height, mobile });
+    await browser.setViewport({ width, height, mobile, deviceScaleFactor });
     const sessionResetScript = await browser.clearSessionStorageBeforeNextNavigation(origin);
     try {
       await browser.navigate(baseUrl);
@@ -38,6 +43,7 @@ export const createPaintAdapter = async ({ browser, baseUrl } = {}) => {
       return {
         title: document.title,
         viewport: { width: window.innerWidth, height: window.innerHeight },
+        deviceScaleFactor: window.devicePixelRatio,
         touchPoints: navigator.maxTouchPoints,
         canvas: { width: canvas.width, height: canvas.height },
       };

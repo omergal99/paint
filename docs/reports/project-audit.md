@@ -11,7 +11,7 @@ change are recorded at handoff.
 |---|---|---|
 | Editor core | Strong foundation | Plain ES modules; canvas pixels, transient overlays, tools, and UI have named owners |
 | Local data | Separate bounded stores | Undo, working-canvas recovery, explicit image history, and settings are distinct |
-| Validation | Useful, with a reporting browser harness | 427 Node tests plus two isolated local Chromium journeys; browser coverage is initial and not in CI |
+| Validation | Useful, with a reporting browser harness | 431 Node tests plus two isolated local Chromium journeys; browser coverage is initial and not in CI |
 | Onboarding | Improved | README, documentation index, ADRs, and audit now point to the current structure |
 | Visual discovery | Missing | No component gallery/Storybook; reusable patterns are documented but not browsable as live examples |
 | Mobile workflow | Needs focused validation | A touch/brush smoke test exists; pan visibility, navigation, and location context still need deliberate mobile journeys |
@@ -39,7 +39,9 @@ change are recorded at handoff.
   small CDP harness, without adding browser-test npm dependencies or changing
   CI. It supports individual/group selection, fresh BrowserContexts, named
   steps, and per-run JSON/HTML reports; product coverage remains intentionally
-  narrow.
+  narrow. Direct CDP use is not a public, supported Chrome API and has no
+  backwards-compatibility guarantee, so Chrome upgrades require a full-suite
+  check.
 - **No credentials are required for ordinary local editing.** Clipboard and
   file-system access are browser APIs and should remain explicit user actions.
 
@@ -58,12 +60,17 @@ storage map.
 | The public audit, README links, and docs consistency check were stale | Fixed | Current docs replace obsolete scores/claims; docs gate checks public links and optional local internal docs |
 | README screenshot showed an obsolete UI | Fixed | Replaced with a current 1280×800 local browser capture |
 | Local deterministic browser checks were missing | Added | `npm run test:local` checks desktop app/brush behavior and mobile touch/brush behavior; it remains outside GitHub Actions |
-| Process cleanup, session isolation, external-network policy, and active-tool assertion were missing from the initial harness | Fixed | Shared SIGTERM/SIGKILL cleanup, sessionStorage reset, loopback-only request policy, and Brush-active verification now cover the hardening findings |
+| Process cleanup, session isolation, external HTTP(S) policy, and active-tool assertion were missing from the initial harness | Fixed | Shared SIGTERM/SIGKILL cleanup, sessionStorage reset, external HTTP(S) blocking/recording, and Brush-active verification now cover the hardening findings; other transports are not claimed to be sandboxed |
 | Local harness lacked test selection, centralized timeouts, isolated contexts, and structured reports | Fixed | `test:browser` supports stable IDs/groups, each test uses a new BrowserContext/process, config is validated centrally, and every run writes JSON/HTML plus diagnostics |
+| Browser environment depended on host defaults | Fixed | Locale, timezone, color scheme, reduced motion, and DPR now have centralized deterministic defaults and per-spec overrides; both smoke journeys assert their emulated environment |
+| SIGINT/SIGTERM during startup or an active browser-test process could skip cleanup/reporting | Fixed and verified | Server-startup cancellation unit test and manual Chrome-startup/browser-test-process probes returned exit 130, wrote interruption reports, and left no observed owned processes |
+| Report persistence failure could hide already-collected test details | Fixed and unit-verified | Terminal test summary prints even when report files cannot be confirmed; log/result read failures are represented rather than thrown away |
+| Full Chrome executable path could be copied to report metadata | Fixed | Reports now retain only executable basename and version |
 | Failure evidence needed end-to-end proof | Verified | A temporary assertion failure produced the expected failed step, stack, screenshot, JSON, HTML, and exit code 1; the assertion was restored and full suite rerun |
 | Report writes and generated links needed stronger concurrency/path safety | Hardened and verified | Reports and `latest.json` are written via atomic rename; run IDs use full UUIDs; HTML links accept only safe relative artifact paths; concurrent Desktop/Mobile runs produced distinct valid reports and a valid latest pointer |
 | Diagnostic URLs could preserve credentials or query secrets | Hardened and unit-verified | Network diagnostic URLs drop userinfo, query strings, and fragments; HTML escapes dynamic text and test paths |
 | Reports needed predictable retention | Open maintenance decision | Artifacts are retained to preserve failure evidence; no automatic pruning currently exists |
+| Direct CDP use has no compatibility guarantee | Accepted, documented trade-off | Keep the harness Chromium-only and run the full suite on Chrome upgrades; reassess supported options such as ChromeDriver only if maintenance becomes material |
 
 The local release gates and initial desktop/mobile browser journeys pass.
 Coverage of selection, resize, history, settings, and physical-device UX is
@@ -105,7 +112,10 @@ maintainer's licensing decision and a stable consumer contract.
 ### C. Future browser coverage map
 
 The rows below are coverage gaps, not a request to add a large suite now.
-Chromium remains the only deterministic local browser baseline.
+Chromium remains the only deterministic local browser baseline. The harness
+uses CDP directly, which its documentation describes as unsupported for
+third-party automation and not backward-compatible; this is a known maintenance
+trade-off, not a cross-browser promise.
 
 | Area | Verified today | Future coverage / next gate |
 |---|---|---|
@@ -137,8 +147,9 @@ release scripts, and testable architecture seams. The process should make the
 evidence explicit at each PR; branch protection, required reviews, and
 deployment permissions must be verified in GitHub settings rather than assumed.
 
-[Google's Modern Web Guidance](https://github.com/GoogleChrome/modern-web-guidance)
-is a useful optional reference for performance, accessibility, CSS, and
+Google's [Modern Web Guidance](https://developer.chrome.com/docs/modern-web-guidance/)
+and its [source repository](https://github.com/GoogleChrome/modern-web-guidance-src)
+are useful optional references for performance, accessibility, CSS, and
 platform APIs. Adopt relevant recommendations selectively, then validate them
 against Paint's own local-first behavior and project rules; do not install every
 skill or replace the repository's existing governance by default.
@@ -154,27 +165,30 @@ links and the index whenever a document moves.
 
 | Check | Result |
 |---|---|
-| `npm run test:local` | PASS — 427 Node tests and 2 browser tests (desktop mouse + mobile touch) |
+| `npm run test:local` | PASS — 431 Node tests and 2 browser tests (desktop mouse + mobile touch) |
 | `npm run check:i18n` | PASS — 8 locales, 563 keys, 410 UI labels |
 | `npm run typecheck` | PASS |
 | `npm run verify:docs` | PASS — 21 guides checked |
-| `npm run audit:skills` | PASS — 7 valid skills, 5 recorded sessions |
+| `npm run audit:runtime` | PASS — static contract census; not runtime teardown proof |
 | `npm run sw:check` | PASS — 150 shell assets, 141 app modules |
+| `npm run verify:release` | PASS — version 1.9.1 |
+| `npm audit --audit-level=low` | PASS — 0 dependency vulnerabilities |
 | `git diff --check` | PASS |
-| `npm run verify:release` | PASS — version 1.9.1, 144 app JavaScript files, runtime and release checks |
 
 ### Browser evidence
 
 `npm run test:local` ran against local headless Chromium: the 1280×800 desktop
 journey verified clean session storage before app scripts, active Brush
 selection, and a canvas pixel change; the 390×844 mobile-emulated journey
-verified active Brush selection and touch drawing. A separate reverse-order
+verified active Brush selection and touch drawing. Locale/timezone/media
+preferences and DPR are explicitly emulated and asserted. A separate reverse-order
 run with CLI timeout overrides also passed; each individual test ID has passed.
 An isolated failed-run replay passed, the `--diagnostics` run passed both
 journeys, and concurrent Desktop/Mobile runs produced separate reports. A
 blocked external-request probe appeared in its report without its query or
-fragment. Infrastructure-failure probes produced reports without leaving
-Chrome or server processes behind.
+fragment. Infrastructure-failure and SIGINT interruption probes produced
+reports without leaving observed Chrome or server processes behind. The test
+guide and ADR explicitly limit the network claim to intercepted HTTP(S).
 
 A controlled temporary assertion failure returned exit code 1 and produced the
 expected failed step, assertion message/stack, browser diagnostics, 1280×800

@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { EventEmitter } from 'node:events';
 import test from 'node:test';
+import { startPaintServer } from './adapters/paint/server.mjs';
 import { terminateChildProcess } from './core/process-lifecycle.mjs';
 import { startProcessServer } from './core/process-server.mjs';
 
@@ -77,6 +78,34 @@ test('process server startup failure rejects and finishes child cleanup', async 
       timeoutMs: 1000,
     }),
     /Could not start the local server/,
+  );
+});
+
+test('process server startup cancellation rejects only after child cleanup', async () => {
+  const controller = new AbortController();
+  const startup = startProcessServer({
+    command: process.execPath,
+    args: ['-e', 'process.stdout.write("server started"); setInterval(() => {}, 1000)'],
+    cwd: process.cwd(),
+    readyPattern: /never-ready/,
+    timeoutMs: 5000,
+    shutdownGraceMs: 100,
+    signal: controller.signal,
+  });
+  setTimeout(() => controller.abort('SIGINT'), 25);
+  await assert.rejects(startup, { name: 'AbortError' });
+});
+
+test('Paint server forwards cancellation to the shared process lifecycle', async () => {
+  const controller = new AbortController();
+  controller.abort('SIGINT');
+  await assert.rejects(
+    startPaintServer({
+      timeoutMs: 5000,
+      shutdownGraceMs: 100,
+      signal: controller.signal,
+    }),
+    { name: 'AbortError' },
   );
 });
 

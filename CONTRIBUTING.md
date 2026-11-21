@@ -88,9 +88,9 @@ maintainer judgment or CI:
 These are references, not additional project requirements. Review the
 relevance and fit before incorporating any guidance:
 
-- [Google Modern Web Guidance](https://github.com/GoogleChrome/modern-web-guidance)
+- [Google Modern Web Guidance](https://developer.chrome.com/docs/modern-web-guidance/)
   — web-platform, compatibility, accessibility, and performance advice for
-  agents.
+  agents; browse its [source repository](https://github.com/GoogleChrome/modern-web-guidance-src).
 - [Web Platform Baseline](https://web.dev/baseline/)
   — cross-browser availability of web features.
 - [MDN Web Docs](https://developer.mozilla.org/en-US/docs/Web)

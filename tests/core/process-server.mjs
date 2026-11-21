@@ -1,5 +1,5 @@
 import { spawn } from 'node:child_process';
-import { terminateChildProcess } from './process-lifecycle.mjs';
+import { createAbortError, terminateChildProcess } from './process-lifecycle.mjs';
 import { DEFAULT_TEST_CONFIG } from './test-config.mjs';
 
 export const startProcessServer = async ({
@@ -9,6 +9,7 @@ export const startProcessServer = async ({
   readyPattern,
   timeoutMs = DEFAULT_TEST_CONFIG.serverReadyTimeoutMs,
   shutdownGraceMs = DEFAULT_TEST_CONFIG.processShutdownGraceMs,
+  signal,
 } = {}) => {
   if (!(readyPattern instanceof RegExp)) throw new Error('A server readyPattern is required.');
   const child = spawn(command, args, { cwd, stdio: ['ignore', 'pipe', 'pipe'] });
@@ -28,19 +29,21 @@ export const startProcessServer = async ({
   child.stdout.on('data', consumeOutput);
   child.stderr.on('data', consumeOutput);
   child.once('error', (error) => rejectReady(new Error(`Could not start the local server: ${error.message}`)));
-  child.once('exit', (code, signal) => {
-    rejectReady(new Error(`Local server exited before becoming ready (exit ${code ?? signal}). ${output.slice(-1200)}`));
+  child.once('exit', (code, exitSignal) => {
+    rejectReady(new Error(`Local server exited before becoming ready (exit ${code ?? exitSignal}). ${output.slice(-1200)}`));
   });
+  const onAbort = () => rejectReady(createAbortError(signal));
+  signal?.addEventListener('abort', onAbort, { once: true });
 
   let timer;
   try {
+    if (signal?.aborted) onAbort();
     const url = await Promise.race([
       ready,
       new Promise((resolve, reject) => {
         timer = setTimeout(() => reject(new Error(`Local server did not become ready within ${timeoutMs}ms. ${output.slice(-1200)}`)), timeoutMs);
       }),
     ]);
-    clearTimeout(timer);
     return Object.freeze({
       url,
       close: async () => {
@@ -48,8 +51,14 @@ export const startProcessServer = async ({
       },
     });
   } catch (error) {
-    clearTimeout(timer);
-    await terminateChildProcess({ child, timeoutMs: shutdownGraceMs });
+    try {
+      await terminateChildProcess({ child, timeoutMs: shutdownGraceMs });
+    } catch (cleanupError) {
+      throw new AggregateError([error, cleanupError], 'Local server startup failed and cleanup also failed.');
+    }
     throw error;
+  } finally {
+    clearTimeout(timer);
+    signal?.removeEventListener('abort', onAbort);
   }
 };

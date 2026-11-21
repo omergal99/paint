@@ -11,6 +11,16 @@ import { createTestConfig } from './core/test-config.mjs';
 import { createRunId, printTerminalReport, writeRunReports } from './core/test-run-report.mjs';
 
 const projectRoot = path.resolve(import.meta.dirname, '..');
+const shutdownController = new AbortController();
+const onSigint = () => {
+  if (!shutdownController.signal.aborted) shutdownController.abort('SIGINT');
+};
+const onSigterm = () => {
+  if (!shutdownController.signal.aborted) shutdownController.abort('SIGTERM');
+};
+
+process.on('SIGINT', onSigint);
+process.on('SIGTERM', onSigterm);
 
 const gitCommit = () => {
   const result = spawnSync('git', ['rev-parse', '--short', 'HEAD'], {
@@ -20,6 +30,28 @@ const gitCommit = () => {
   });
   return result.status === 0 ? result.stdout.trim() : null;
 };
+
+const createFallbackTestResult = ({
+  spec,
+  status,
+  failedStep,
+  durationMs = 0,
+  error = null,
+}) => ({
+  schemaVersion: 1,
+  id: spec.id,
+  name: spec.name,
+  category: spec.category || 'e2e-smoke',
+  device: spec.device,
+  viewport: spec.viewport,
+  status,
+  durationMs,
+  failedStep,
+  steps: [],
+  error,
+  browserDiagnostics: null,
+  screenshot: null,
+});
 
 const readTestResults = async (
   runDirectory,
@@ -37,27 +69,39 @@ const readTestResults = async (
       records.push(JSON.parse(await fs.readFile(filePath, 'utf8')));
       continue;
     } catch (error) {
-      if (error.code !== 'ENOENT') throw new Error(`Could not read test result ${filePath}: ${error.message}`);
+      if (error.code !== 'ENOENT') {
+        records.push(createFallbackTestResult({
+          spec,
+          status: 'failed',
+          failedStep: 'read browser test result',
+          error: {
+            name: 'TestResultReadError',
+            message: `Could not read the result for ${spec.id} (${error.code || error.name}).`,
+          },
+        }));
+        continue;
+      }
     }
 
     const runnerTest = reporterTests.find((test) => test.name?.includes(`[${spec.id}]`));
-    if (infrastructureFailure) continue;
+    if (infrastructureFailure && !runnerTest) {
+      records.push(createFallbackTestResult({
+        spec,
+        status: 'skipped',
+        failedStep: 'browser test did not produce a result',
+      }));
+      continue;
+    }
     const failed = runnerTest?.type === 'test:fail';
     const skipped = runnerTest?.type === 'test:skip' || runnerTest?.type === 'test:todo';
     const missingResult = runnerTest?.type === 'test:pass';
     const didNotStart = !runnerTest && (runnerStderr.trim() || runnerExitCode !== 0);
     if (failed || missingResult || didNotStart || skipped) {
-      records.push({
-        schemaVersion: 1,
-        id: spec.id,
-        name: spec.name,
-        category: 'e2e-smoke',
-        device: spec.device,
-        viewport: spec.viewport,
+      records.push(createFallbackTestResult({
+        spec,
         status: skipped ? 'skipped' : 'failed',
         durationMs: runnerTest?.durationMs ?? 0,
         failedStep: 'browser test module setup',
-        steps: [],
         error: skipped ? null : runnerTest?.error || {
           name: 'TestRunnerError',
           message: missingResult
@@ -65,9 +109,7 @@ const readTestResults = async (
             : runnerStderr.trim() || `The test runner failed before ${spec.id} produced a result.`,
           stack: runnerStderr.trim() || undefined,
         },
-        browserDiagnostics: null,
-        screenshot: null,
-      });
+      }));
     }
   }
   return records;
@@ -147,6 +189,7 @@ const main = async () => {
     reporterPath: resolveReporterPath(projectRoot),
     runDirectory,
     config,
+    signal: shutdownController.signal,
   });
   const finished = new Date();
   const parsedRuns = suite.testRuns.map((run) => ({
@@ -167,7 +210,10 @@ const main = async () => {
     run.exitCode !== 0
     && !run.reporter?.tests.some((event) => event.type === 'test:fail')
   ));
-  const infrastructureError = suite.infrastructureError
+  let infrastructureError = suite.infrastructureError
+    || (shutdownController.signal.aborted
+      ? new Error(`Local browser run interrupted by ${shutdownController.signal.reason}.`)
+      : null)
     || (reporterOutput.parseError
       ? new Error(`Could not parse Node test reporter output: ${reporterOutput.parseError}`)
       : null)
@@ -179,19 +225,34 @@ const main = async () => {
       : null);
 
   const logArtifacts = {};
+  const logWriteErrors = [];
   for (const run of parsedRuns) {
     if (run.stdout) {
       const file = path.join(runDirectory, 'logs', `${run.testId}.node-test.json`);
-      await fs.mkdir(path.dirname(file), { recursive: true });
-      await fs.writeFile(file, run.stdout);
-      logArtifacts[`${run.testId}Reporter`] = path.relative(runDirectory, file).split(path.sep).join('/');
+      try {
+        await fs.mkdir(path.dirname(file), { recursive: true });
+        await fs.writeFile(file, run.stdout);
+        logArtifacts[`${run.testId}Reporter`] = path.relative(runDirectory, file).split(path.sep).join('/');
+      } catch (error) {
+        logWriteErrors.push(error);
+      }
     }
     if (run.stderr) {
       const file = path.join(runDirectory, 'logs', `${run.testId}.stderr.txt`);
-      await fs.mkdir(path.dirname(file), { recursive: true });
-      await fs.writeFile(file, run.stderr);
-      logArtifacts[`${run.testId}Stderr`] = path.relative(runDirectory, file).split(path.sep).join('/');
+      try {
+        await fs.mkdir(path.dirname(file), { recursive: true });
+        await fs.writeFile(file, run.stderr);
+        logArtifacts[`${run.testId}Stderr`] = path.relative(runDirectory, file).split(path.sep).join('/');
+      } catch (error) {
+        logWriteErrors.push(error);
+      }
     }
+  }
+  if (logWriteErrors.length) {
+    const logError = new AggregateError(logWriteErrors, 'Could not persist browser test logs.');
+    infrastructureError = infrastructureError
+      ? new AggregateError([infrastructureError, logError], 'Browser test and log persistence failures occurred.')
+      : logError;
   }
 
   const runnerStderr = parsedRuns.map((run) => run.stderr).filter(Boolean).join('\n');
@@ -219,6 +280,11 @@ const main = async () => {
     environment: {
       node: process.version,
       browser: suite.environment.browser,
+      locale: suite.environment.locale,
+      timezoneId: suite.environment.timezoneId,
+      colorScheme: suite.environment.colorScheme,
+      reducedMotion: suite.environment.reducedMotion,
+      deviceScaleFactor: suite.environment.deviceScaleFactor,
       platform: `${process.platform} ${os.release()}`,
       architecture: process.arch,
     },
@@ -243,9 +309,18 @@ const main = async () => {
       ...logArtifacts,
     },
   };
-  const paths = await writeRunReports({ report, artifactRoot, runDirectory });
-  printTerminalReport(report, paths, runDirectory);
-  if (status !== 'passed') process.exitCode = 1;
+  try {
+    const paths = await writeRunReports({ report, artifactRoot, runDirectory });
+    printTerminalReport(report, paths, runDirectory);
+  } catch (error) {
+    printTerminalReport(report, null, runDirectory);
+    console.error(`Could not persist browser test reports: ${error.message}`);
+    process.exitCode = 1;
+    return;
+  }
+  if (shutdownController.signal.aborted) {
+    process.exitCode = shutdownController.signal.reason === 'SIGINT' ? 130 : 143;
+  } else if (status !== 'passed') process.exitCode = 1;
 };
 
 try {
@@ -254,4 +329,7 @@ try {
   console.error(error.message);
   if (process.argv.includes('--help') || process.argv.includes('-h')) console.log(runnerUsage);
   process.exitCode = 1;
+} finally {
+  process.off('SIGINT', onSigint);
+  process.off('SIGTERM', onSigterm);
 }

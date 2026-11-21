@@ -25,14 +25,25 @@ browserTest({
   name: 'Mobile viewport receives touch input and paints canvas pixels',
   category: 'e2e-smoke',
   device: 'Mobile emulation',
-  viewport: { width: 390, height: 844 },
-}, async ({ step }) => {
+  viewport: { width: 390, height: 844, deviceScaleFactor: 1 },
+  environment: { colorScheme: 'dark', reducedMotion: 'no-preference' },
+}, async ({ browser: session, step }) => {
   let before;
   await step('Open app with a clean mobile-emulated viewport', async () => {
-    const state = await paint.open({ width: 390, height: 844, mobile: true });
+    const state = await paint.open({
+      width: 390,
+      height: 844,
+      mobile: true,
+      deviceScaleFactor: 1,
+    });
     assert.equal(state.viewport.width, 390);
     assert.equal(state.viewport.height, 844);
     assert.ok(state.touchPoints > 0, 'Mobile emulation must expose touch input.');
+    assert.equal(state.deviceScaleFactor, 1);
+    assert.equal(await session.evaluate('navigator.language'), 'en-US');
+    assert.equal(await session.evaluate('Intl.DateTimeFormat().resolvedOptions().timeZone'), 'UTC');
+    assert.equal(await session.evaluate('matchMedia("(prefers-color-scheme: dark)").matches'), true);
+    assert.equal(await session.evaluate('matchMedia("(prefers-reduced-motion: no-preference)").matches'), true);
   });
   await step('Select Brush and verify active tool state', async () => {
     await paint.selectBrush();

@@ -1,5 +1,17 @@
 import { DEFAULT_TEST_CONFIG } from './test-config.mjs';
 
+export const createAbortError = (signal) => {
+  const reason = typeof signal?.reason === 'string' ? signal.reason : 'AbortSignal';
+  const error = new Error(`Local browser run interrupted by ${reason}.`);
+  error.name = 'AbortError';
+  error.signal = reason;
+  return error;
+};
+
+export const throwIfAborted = (signal) => {
+  if (signal?.aborted) throw createAbortError(signal);
+};
+
 export const waitForChildExit = (child) => new Promise((resolve) => {
   if (child.exitCode !== null || child.signalCode !== null) {
     resolve();

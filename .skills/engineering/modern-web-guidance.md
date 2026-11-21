@@ -2,7 +2,7 @@
 
 Reviewed 2026-11-21 against Google's
 [Modern Web Guidance](https://developer.chrome.com/docs/modern-web-guidance/)
-and [source repository](https://github.com/GoogleChrome/modern-web-guidance).
+and its [source repository](https://github.com/GoogleChrome/modern-web-guidance-src).
 This is a short, original summary, not a copy of the upstream catalog. Check
 the current source for detailed or fast-changing platform behavior.
 

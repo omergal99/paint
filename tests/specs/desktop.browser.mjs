@@ -25,7 +25,7 @@ browserTest({
   name: 'Desktop app loads and Brush changes canvas pixels',
   category: 'e2e-smoke',
   device: 'Desktop',
-  viewport: { width: 1280, height: 800 },
+  viewport: { width: 1280, height: 800, deviceScaleFactor: 1 },
 }, async ({ browser: session, step }) => {
   let state;
   await step('Seed stale session state on the app origin', async () => {
@@ -35,11 +35,16 @@ browserTest({
     await session.evaluate('sessionStorage.setItem("harness-isolation-probe", "stale")');
   });
   await step('Open app in a clean browser state before app scripts run', async () => {
-    state = await paint.open({ width: 1280, height: 800 });
+    state = await paint.open({ width: 1280, height: 800, deviceScaleFactor: 1 });
     assert.equal(state.viewport.width, 1280);
     assert.equal(state.viewport.height, 800);
     assert.equal(state.canvas.width, 800);
     assert.equal(state.canvas.height, 600);
+    assert.equal(state.deviceScaleFactor, 1);
+    assert.equal(await session.evaluate('navigator.language'), 'en-US');
+    assert.equal(await session.evaluate('Intl.DateTimeFormat().resolvedOptions().timeZone'), 'UTC');
+    assert.equal(await session.evaluate('matchMedia("(prefers-color-scheme: light)").matches'), true);
+    assert.equal(await session.evaluate('matchMedia("(prefers-reduced-motion: reduce)").matches'), true);
   });
   await step('Verify session storage is cleared before app startup', async () => {
     assert.equal(

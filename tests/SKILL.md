@@ -3,7 +3,13 @@
 This harness runs real Chromium browser checks locally without adding a browser
 automation package. It uses Node.js 24+, the built-in `node:test` runner and
 WebSocket, and an installed Chrome or Chromium binary. Test execution has no AI
-dependency and uses loopback-only browser and server connections.
+dependency; the harness's CDP and app-server connections use loopback.
+CDP is not a public, supported Chrome API and has no backwards-compatibility
+guarantee. The reusable core is portable across projects that accept this
+Chrome-specific maintenance trade-off; it does not promise cross-browser
+compatibility. Run the full suite when updating Chrome. If protocol maintenance
+becomes costly, reassess supported options such as ChromeDriver before adding
+more harness features.
 
 ## Run
 
@@ -79,17 +85,26 @@ Supported environment variables are `LOCAL_BROWSER_CHROME_TIMEOUT_MS`,
 `LOCAL_BROWSER_TEST_TIMEOUT_MS`, `LOCAL_BROWSER_POLL_INTERVAL_MS`,
 `LOCAL_BROWSER_SHUTDOWN_GRACE_MS`, `LOCAL_BROWSER_ARTIFACT_DIR`,
 `LOCAL_BROWSER_SCREENSHOT_ON_FAILURE`, and
-`LOCAL_BROWSER_DIAGNOSTIC_SCREENSHOTS`. Durations must be positive integers
-up to 600000 ms. `CHROME_BIN` may point to a compatible Chrome/Chromium binary.
+`LOCAL_BROWSER_DIAGNOSTIC_SCREENSHOTS`. Browser emulation can also be
+configured with `LOCAL_BROWSER_DEVICE_SCALE_FACTOR`, `LOCAL_BROWSER_LOCALE`,
+`LOCAL_BROWSER_TIMEZONE`, `LOCAL_BROWSER_COLOR_SCHEME`, and
+`LOCAL_BROWSER_REDUCED_MOTION`. Durations must be positive integers up to
+600000 ms; device scale factor must be a positive finite number. Defaults
+are DPR 1, `en-US`, UTC, light color scheme, and reduced motion. A spec may
+override locale, timezone, color scheme, or reduced motion in its
+`environment` metadata. `CHROME_BIN` may point to a compatible Chrome/Chromium
+binary; report output stores only its basename and version.
 
-HTTP(S) requests from browser tests are intercepted: loopback requests are
-continued, and external requests are blocked and recorded as failures. HTTP
-error responses, failed requests, browser log errors, console errors, and
-uncaught exceptions are also included in test diagnostics. There is no implicit
-external-host allowlist. Reported network URLs omit credentials, query strings,
-and fragments. Reports stay local under `output/`; review screenshots and
-application error text before sharing them, since those may reflect local test
-fixtures or application state.
+Browser HTTP(S) requests are intercepted: loopback requests are continued, and
+external HTTP(S) requests are blocked and recorded as failures. This is not a
+complete network sandbox; other transports such as WebSocket and WebRTC, and
+traffic from targets not attached to the harness, are not claimed to be
+blocked. HTTP error responses, failed requests, browser log errors, console
+errors, and uncaught exceptions are included in test diagnostics. There is no
+implicit external-host allowlist. Reported network URLs omit credentials,
+query strings, and fragments. Reports stay local under `output/`; review
+screenshots and application error text before sharing them, since those may
+reflect local test fixtures or application state.
 
 ## Structure and reuse
 
@@ -119,10 +134,18 @@ infrastructure.
 - Start each journey with clean origin storage and a known viewport.
 - Let uncaught page exceptions and browser console errors fail the run.
 - Do not let a browser journey rely on session state left by another journey.
-- Keep browser HTTP(S) requests loopback-only. A future external integration
-  allowlist requires an explicit reviewed policy; none is currently supported.
+- Keep browser HTTP(S) requests loopback-only. This does not block every
+  protocol or every browser target; do not describe the harness as a complete
+  network sandbox. A future external integration allowlist requires an explicit
+  reviewed policy; none is currently supported.
 - Keep each browser journey in a fresh BrowserContext; storage reset scripts
   must run before application code, not after navigation.
+- Use the default deterministic environment (locale `en-US`, timezone UTC,
+  light color scheme, reduced motion, and DPR 1) unless a journey explicitly
+  overrides it through its metadata or suite configuration.
+- SIGINT and SIGTERM trigger bounded child-process cleanup and an interruption
+  report. A report-write failure must not hide test failures already collected
+  in memory; partial report files may remain if persistence fails midway.
 - Use named `step()` checkpoints for meaningful actions. Failure reports retain
   the last failed step and browser evidence; avoid noisy screenshots on passing
   runs unless `--diagnostics` is explicitly requested.
@@ -140,7 +163,8 @@ infrastructure.
 
 - `runId`, optional `rerunOf`, `startedAt`, `finishedAt`, `durationMs`,
   `gitCommit`, and `status`;
-- `environment` with Node, browser, OS, and architecture;
+- `environment` with Node, browser basename/version, OS, architecture, locale,
+  timezone, color scheme, reduced-motion preference, and DPR;
 - `selection` and `summary` counts;
 - `infrastructureError` when setup or cleanup fails;
 - `tests[]` with stable ID/name/category, device, viewport, status, duration,

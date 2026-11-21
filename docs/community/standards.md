@@ -24,13 +24,20 @@ intended to be updated when community processes or GitHub settings change.
 - CI and local gates cover tests, localization, typing, docs, and release
   consistency. They do not prove physical-device behavior or replace an
   independent security review.
+- The Pages deployment job declares job-scoped permissions; the test workflow
+  has no explicit `permissions` block, and Actions are referenced by version
+  tags rather than immutable commit SHAs. Treat least-privilege and pinning as
+  a separate workflow-hardening decision; no workflow changes were made in the
+  current review.
 - `AGENTS.md`, `.skills/`, and `.agents/skills/` are contributor guidance and
   tooling, not app runtime. Keep the short project entry point and the skills
   that are actively used; periodically check for duplication or obsolete
   instructions before adding more. Do not remove them solely because their
   names are hidden files.
-- Dependency/security scanning and private vulnerability reporting still
-  require GitHub configuration or an explicit maintainer decision.
+- Local `npm audit --audit-level=low` reported no current dependency
+  vulnerabilities. Automated dependency updates, secret scanning, and private
+  vulnerability reporting still require GitHub configuration or an explicit
+  maintainer decision.
 
 ## GitHub-hosted controls to verify manually
 

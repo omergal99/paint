@@ -67,6 +67,7 @@ export const createBrowserTest = ({
       };
 
       try {
+        if (metadata.environment) await browser.setEnvironment(metadata.environment);
         await run({ browser, step });
         await step('Verify browser and network diagnostics', async () => {
           browser.assertNoBrowserErrors();

@@ -2,7 +2,11 @@ import { spawn, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { terminateChildProcess } from './process-lifecycle.mjs';
+import {
+  createAbortError,
+  terminateChildProcess,
+  throwIfAborted,
+} from './process-lifecycle.mjs';
 import { DEFAULT_TEST_CONFIG } from './test-config.mjs';
 
 const delay = (durationMs) => new Promise((resolve) => setTimeout(resolve, durationMs));
@@ -37,20 +41,23 @@ const waitForPageTarget = async ({
   child,
   timeoutMs,
   pollIntervalMs = DEFAULT_TEST_CONFIG.pollIntervalMs,
+  signal,
 }) => {
   const deadline = Date.now() + timeoutMs;
   let lastError = null;
   while (Date.now() < deadline) {
+    throwIfAborted(signal);
     if (child.exitCode !== null || child.signalCode !== null) {
       throw new Error(`Chrome exited before exposing a page target (exit ${child.exitCode ?? child.signalCode}).`);
     }
     try {
-      const response = await fetch(`http://127.0.0.1:${port}/json/list`);
+      const response = await fetch(`http://127.0.0.1:${port}/json/list`, { signal });
       if (!response.ok) throw new Error(`Chrome target list returned HTTP ${response.status}.`);
       const targets = await response.json();
       const page = targets.find((target) => target.type === 'page' && target.webSocketDebuggerUrl);
       if (page) return page;
     } catch (error) {
+      if (signal?.aborted) throw createAbortError(signal);
       lastError = error;
     }
     await delay(pollIntervalMs);
@@ -63,8 +70,10 @@ export const launchHeadlessChrome = async ({
   timeoutMs = DEFAULT_TEST_CONFIG.chromeStartupTimeoutMs,
   pollIntervalMs = DEFAULT_TEST_CONFIG.pollIntervalMs,
   shutdownGraceMs = DEFAULT_TEST_CONFIG.processShutdownGraceMs,
+  signal,
 } = {}) => {
   const { executable, version } = findChrome(discoveryTimeoutMs);
+  throwIfAborted(signal);
   const profileDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'local-browser-test-'));
   const args = [
     '--headless=new',
@@ -88,6 +97,8 @@ export const launchHeadlessChrome = async ({
     resolvePort = resolve;
     rejectPort = reject;
   });
+  const onAbort = () => rejectPort(createAbortError(signal));
+  signal?.addEventListener('abort', onAbort, { once: true });
   const consumeOutput = (chunk) => {
     output = `${output}${chunk.toString()}`.slice(-8000);
     const match = output.match(/DevTools listening on (ws:\/\/127\.0\.0\.1:(\d+)\/devtools\/browser\/[^\s]+)/);
@@ -104,14 +115,16 @@ export const launchHeadlessChrome = async ({
 
   let startupTimer;
   try {
+    if (signal?.aborted) onAbort();
     const port = await Promise.race([
       portReady,
       new Promise((resolve, reject) => {
         startupTimer = setTimeout(() => reject(new Error(`Chrome did not start within ${timeoutMs}ms. ${output.slice(-1200)}`)), timeoutMs);
       }),
     ]);
-    clearTimeout(startupTimer);
-    const target = await waitForPageTarget({ port, child, timeoutMs, pollIntervalMs });
+    throwIfAborted(signal);
+    const target = await waitForPageTarget({ port, child, timeoutMs, pollIntervalMs, signal });
+    throwIfAborted(signal);
 
     const close = async () => {
       try {
@@ -129,12 +142,28 @@ export const launchHeadlessChrome = async ({
       close,
     });
   } catch (error) {
-    clearTimeout(startupTimer);
+    let cleanupError = null;
     try {
       await terminateChildProcess({ child, timeoutMs: shutdownGraceMs });
-    } finally {
+    } catch (failure) {
+      cleanupError = failure;
+    }
+    try {
       fs.rmSync(profileDirectory, { recursive: true, force: true });
+    } catch (failure) {
+      cleanupError = cleanupError
+        ? new AggregateError([cleanupError, failure], 'Chrome startup cleanup failed.')
+        : failure;
+    } finally {
+      signal?.removeEventListener('abort', onAbort);
+      clearTimeout(startupTimer);
+    }
+    if (cleanupError) {
+      throw new AggregateError([error, cleanupError], 'Chrome startup failed and cleanup also failed.');
     }
     throw error;
+  } finally {
+    if (!signal?.aborted) signal?.removeEventListener('abort', onAbort);
+    clearTimeout(startupTimer);
   }
 };
