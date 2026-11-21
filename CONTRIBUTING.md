@@ -41,7 +41,8 @@ git diff --check
 desktop and mobile browser checks. It requires an installed Chrome or Chromium
 browser, adds no browser-automation npm dependency, and is local-only; the
 existing GitHub Actions test workflow is unchanged. See the
-[test harness guide](./tests/SKILL.md) and
+[tests overview](./docs/tests/README.md),
+[test harness guide](./tests/skills/SKILL.md), and
 [testing ADR](./docs/adr/testing/ADR-0002-local-deterministic-browser-tests.md).
 Every browser run writes JSON and standalone HTML reports under
 `output/test-artifacts/runs/`; `output/test-artifacts/latest.json` points to the

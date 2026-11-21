@@ -28,9 +28,10 @@ cross-browser automation standard.
   or Chromium instance over CDP. Do not add Cypress, Playwright, or another
   browser-automation npm dependency.
 - Keep generic process, browser lifecycle, CDP, viewport, input, error capture,
-  isolation, configuration, reporting, and diagnostic logic in `tests/core/`.
+  isolation, and diagnostic logic in `tests/core/` by concern; keep shared
+  defaults and Paint overrides in `tests/config/`.
 - Keep Paint-specific server setup, selectors, canvas checks, and user journeys
-  in `tests/adapters/paint/` and `tests/specs/`.
+  in `tests/adapters/paint/` and `tests/specs/browser/`.
 - Run the existing Node suite and the local desktop/mobile browser suite with
   `npm run test:local`. The browser specs use `.browser.mjs` names so the
   existing `npm test` command and GitHub Actions workflow remain unchanged.
@@ -100,8 +101,9 @@ cross-browser automation standard.
 
 ## Implementation references
 
-- [Local browser test harness guide](../../../tests/SKILL.md)
-- [Browser test catalog](../../../tests/browser-specs.mjs)
+- [Local browser test harness guide](../../../tests/skills/SKILL.md)
+- [Browser test catalog](../../../tests/specs/browser/catalog.mjs)
+- [Test structure and successful-run example](../../tests/README.md)
 - [Deterministic test fixer skill](../../../.agents/skills/deterministic-test-fixer/SKILL.md)
 - [Chrome DevTools Protocol scope and support](https://chromedevtools.github.io/devtools-protocol/)
 

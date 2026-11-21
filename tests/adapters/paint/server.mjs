@@ -1,5 +1,5 @@
 import path from 'node:path';
-import { startProcessServer } from '../../core/process-server.mjs';
+import { startProcessServer } from '../../core/process/process-server.mjs';
 
 const projectRoot = path.resolve(import.meta.dirname, '../../..');
 

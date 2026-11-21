@@ -92,13 +92,13 @@ the skeleton effect, spinner, layout, RTL behaviour, etc.
 > **Warning:** This is a source-code constant, not an environment variable or
 > URL parameter. It must never be committed as `true`. A CI guard
 > (`DEV_LOADING_HOLD is disabled by default (CI guard)` in
-> `tests/init-app-loading-service.test.js`) asserts that `isDevLoadingHold()`
+> `tests/unit/app/init-app-loading-service.test.js`) asserts that `isDevLoadingHold()`
 > returns `false`; if the constant is accidentally committed as `true`, this
 > test fails and the pipeline blocks the merge.
 
 ## CI guard
 
-`tests/init-app-loading-service.test.js` contains a test named:
+`tests/unit/app/init-app-loading-service.test.js` contains a test named:
 
 ```
 DEV_LOADING_HOLD is disabled by default (CI guard)
@@ -108,7 +108,7 @@ This test imports `isDevLoadingHold()` from `initAppLoadingService.js` and
 asserts it returns `false`. Run it locally with:
 
 ```sh
-node --test tests/init-app-loading-service.test.js
+node --test tests/unit/app/init-app-loading-service.test.js
 ```
 
 ## Skeleton effect behind the ribbon mask

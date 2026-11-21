@@ -45,7 +45,7 @@ data-flow guide](./docs/architecture/overview.md) for what each store owns.
 | [Documentation index](./docs/README.md) | Map to architecture, guides, ADRs, reports, and community docs |
 | [Architecture](./docs/architecture/overview.md) | Source map, UI/action flow, persistence, and trust boundaries |
 | [Project audit](./docs/reports/project-audit.md) | Strengths, evidence-based gaps, and recommended work order |
-| [Local browser tests](./tests/SKILL.md) | Deterministic desktop/mobile checks before handoff |
+| [Tests and reports](./docs/tests/README.md) | Test structure, coverage, and a successful-run report |
 | [Contributing](./CONTRIBUTING.md) | Local checks and human-reviewed AI-assisted contributions |
 | [Security policy](./SECURITY.md) | Private vulnerability reporting guidance |
 | [Community standards](./docs/community/standards.md) | Repository files and maintainer decisions |

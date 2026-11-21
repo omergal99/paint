@@ -6,7 +6,7 @@ description: Run the local deterministic browser suite, diagnose browser regress
 # Deterministic test and fix loop
 
 Use this skill when running or diagnosing Paint's local browser tests. Read the
-[harness guide](../../../tests/SKILL.md) for runner layout, environment, and
+[harness guide](../../../tests/skills/SKILL.md) for runner layout, environment, and
 cross-project reuse.
 
 ## Non-negotiable rules

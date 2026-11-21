@@ -16,6 +16,7 @@ const requiredFiles = [
   'docs/adr/README.md',
   'docs/adr/architecture/ADR-0001-module-extraction-lessons.md',
   'docs/adr/testing/ADR-0002-local-deterministic-browser-tests.md',
+  'docs/tests/README.md',
   'docs/community/standards.md',
   'docs/guides/initial-loading.md',
   'docs/guides/loading-params.md',
@@ -23,7 +24,7 @@ const requiredFiles = [
   'docs/guides/ui-patterns.md',
   'docs/reports/project-audit.md',
   'tests/README.md',
-  'tests/SKILL.md',
+  'tests/skills/SKILL.md',
 ];
 
 requiredFiles.forEach((file) => {
