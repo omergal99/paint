@@ -28,7 +28,7 @@ relevant to the task.
   verification without sacrificing quality.
 - [Feature delivery](workflows/ui-delivery.md) - reusable UI and feature
   delivery contracts; not tied to a numbered workstream.
-- [Retro](workflows/retro.md) - short session review; see the loadable
+- [Retro](retro/retro.md) - short session review; see the loadable
   [maintenance skill](../.agents/skills/maintenance/SKILL.md) for ADLC.
 
 ## Audit and reference

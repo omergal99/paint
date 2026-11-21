@@ -1,6 +1,6 @@
 # Project status and improvement plan
 
-**Reviewed:** 2026-11-20 · **Repository version:** 1.9.1
+**Reviewed:** 2026-11-21 · **Repository version:** 1.9.1
 This is a repository/source review, not a claim of full browser, device, or
 Lighthouse certification. Exact commands and the final results from this
 change are recorded at handoff.
@@ -11,12 +11,12 @@ change are recorded at handoff.
 |---|---|---|
 | Editor core | Strong foundation | Plain ES modules; canvas pixels, transient overlays, tools, and UI have named owners |
 | Local data | Separate bounded stores | Undo, working-canvas recovery, explicit image history, and settings are distinct |
-| Validation | Useful and automated | Node tests, typecheck, i18n, service-worker, docs, and release gates are available |
-| Onboarding | Improved | README and audit now describe the current code, architecture, and prioritized roadmap |
+| Validation | Useful, with a new browser baseline | 416 Node tests plus two local Chromium journeys; browser coverage is initial and not in CI |
+| Onboarding | Improved | README, documentation index, ADRs, and audit now point to the current structure |
 | Visual discovery | Missing | No component gallery/Storybook; reusable patterns are documented but not browsable as live examples |
-| Mobile workflow | Needs focused validation | Pan exists as a tool, but touch-first mode visibility, navigation, and location context need a deliberate mobile journey |
+| Mobile workflow | Needs focused validation | A touch/brush smoke test exists; pan visibility, navigation, and location context still need deliberate mobile journeys |
 | Architecture scale | Incremental work needed | The app is modular, but the composition root and some UI modules remain large |
-| Launch evidence | Incomplete | Source/static checks do not replace real-browser, real-device, or production Lighthouse evidence |
+| Launch evidence | Incomplete | Local Chromium smoke tests help, but do not replace broad browser, physical-device, or production Lighthouse evidence |
 | Licensing | Owner decision | No `LICENSE` file; do not describe the repository as licensed open source until the maintainer decides |
 
 ## What is already good
@@ -34,10 +34,14 @@ change are recorded at handoff.
 - **The release path is reproducible:** service-worker assets are generated
   from the module graph, versions are synchronized, and checks cover tests,
   localization, syntax, docs, and release metadata.
+- **A local browser baseline now exists:** `npm run test:local` runs the
+  existing Node suite and desktop/mobile-emulated Chromium checks through a
+  small CDP harness, without adding browser-test npm dependencies or changing
+  CI. Its current feature coverage is intentionally narrow.
 - **No credentials are required for ordinary local editing.** Clipboard and
   file-system access are browser APIs and should remain explicit user actions.
 
-See [Architecture and data flow](./ARCHITECTURE.md) for the visual source and
+See [Architecture and data flow](../architecture/overview.md) for the visual source and
 storage map.
 
 ## Findings and recommended order
@@ -51,10 +55,12 @@ storage map.
 | First service-worker control could trigger the same unconditional reload as an update | Fixed and verified locally | Fresh origin reported one navigation of type `navigate` and reached ready state; production update behavior still needs a separate deployment check |
 | The public audit, README links, and docs consistency check were stale | Fixed | Current docs replace obsolete scores/claims; docs gate checks public links and optional local internal docs |
 | README screenshot showed an obsolete UI | Fixed | Replaced with a current 1280×800 local browser capture |
+| Local deterministic browser checks were missing | Added | `npm run test:local` checks desktop app/brush behavior and mobile touch/brush behavior; it remains outside GitHub Actions |
 
-The local release gates and targeted browser journeys have passed. Production
-service-worker update behavior, physical-device UX, and Lighthouse/field
-performance remain separate validation work.
+The local release gates and initial desktop/mobile browser journeys pass.
+Coverage of selection, resize, history, settings, and physical-device UX is
+still separate work; production service-worker behavior and Lighthouse/field
+performance also remain unverified.
 
 ## Agent guidance and hidden files
 
@@ -71,7 +77,7 @@ ignored by Git and remains local working material.
 
 | Priority | Work | Why now | Done when |
 |---|---|---|---|
-| 1 | Verify cold startup, selection exit, blank/manual history, and narrow-screen journeys | These are direct user friction and data-integrity paths | Fresh-context first visit does not reload twice; selection clears and restores the prior drawing tool; blank/no-op saves add no entry; browser console stays clean |
+| 1 | Expand browser regression coverage to selection/resize, history saves, settings, and narrow screens | The new suite currently covers only cold load and brush input | Deterministic journeys prove selection exit/resize, blank or duplicate saves, settings behavior, and narrow-screen layout without console errors |
 | 2 | Mobile canvas ergonomics: make Hand/Pan and drawing/selection state unmistakable; assess a viewport minimap | A narrow canvas needs navigation without hiding the active mode | Touch journey is tested at 320–375 px; pan is easy to enter/exit; viewport position is understandable; desktop interaction remains unchanged |
 | 3 | Build a lightweight UI gallery | A live, maintained gallery will make UI behavior easier to explain and regression-test than screenshots alone | Gallery uses actual components/controllers, has no copied state logic, and covers key, selected, disabled, open, RTL, and narrow states |
 | 4 | Add configurable Quick Actions | Valuable customization, but depends on a clear action catalog and mobile/keyboard interaction rules | Users can add, reorder, remove, and reset actions; persistence is versioned; drag has a keyboard alternative; mirrors stay synchronized |
@@ -105,40 +111,36 @@ platform APIs. Adopt relevant recommendations selectively, then validate them
 against Paint's own local-first behavior and project rules; do not install every
 skill or replace the repository's existing governance by default.
 
-## Documentation and folder order
+## Documentation navigation
 
-Public documentation should stay small and reader-oriented:
-
-1. `README.md` — purpose, start, key capabilities, links.
-2. `docs/ARCHITECTURE.md` — source map, data flow, storage, trust boundaries.
-3. `docs/AUDIT-REPORT.md` — current state and prioritized next work.
-4. `docs/UI-PATTERNS.md`, `docs/INITIAL_LOADING.md` — focused implementation guides.
-5. `docs/COMMUNITY_STANDARDS.md`, `CONTRIBUTING.md`, `SECURITY.md`, and
-   `docs/RELEASING.md` — contributor and maintainer process.
-
-The local-only `docs-internal/` tree has valuable plans and evidence, but its
-multiple workstreams contain historical/conflicting status pages. The local
-`docs-internal/README.md` and `docs-internal/CURRENT-PLAN.md` provide a single
-entry and current queue. Preserve the old paths as evidence; do not mass-move
-files until links and ownership are reconciled.
+The concise [documentation index](../README.md) points to topic-based folders:
+architecture, contributor guides, community standards, audit reports, and
+architecture/testing ADRs. Keep `docs/` itself limited to that index; update
+links and the index whenever a document moves.
 
 ## Verification results
 
 | Check | Result |
 |---|---|
-| `npm test` | PASS — 397 tests |
-| `npm run check:i18n` | PASS — 8 locales, 533 keys, 387 UI labels |
+| `npm run test:local` | PASS — 416 Node tests and 2 browser tests (desktop mouse + mobile touch) |
+| `npm run check:i18n` | PASS — 8 locales, 563 keys, 410 UI labels |
 | `npm run typecheck` | PASS |
-| `npm run verify:docs` | PASS — 11 guides checked |
-| `npm run sw:check` | PASS — 147 shell assets, 138 app modules |
-| Changed-module `node --check` checks | PASS |
+| `npm run verify:docs` | PASS — 21 guides checked |
+| `npm run audit:skills` | PASS — 7 valid skills, 2 recorded sessions |
+| `npm run sw:check` | PASS — 150 shell assets, 141 app modules |
 | `git diff --check` | PASS |
-| `npm run verify:release` | PASS — version 1.9.1, 192 JavaScript files, 147 service-worker assets |
+| `npm run verify:release` | PASS — version 1.9.1, 144 app JavaScript files, runtime and release checks |
 
 ### Browser evidence
 
-On local `http://127.0.0.1:4175/`, a fresh-origin visit navigated once and
-reached the ready editor without a second navigation. Deselect cleared a
+`npm run test:local` ran against local headless Chromium: the 1280×800 desktop
+journey loaded the editor and verified a brush stroke changed canvas pixels;
+the 390×844 mobile-emulated journey verified touch input and a canvas pixel
+change. The suite captured no failure screenshots.
+
+Earlier manual evidence on local `http://127.0.0.1:4175/` showed a fresh-origin
+visit navigated once and reached the ready editor without a second navigation.
+Deselect cleared a
 200×150 selection and restored Brush; both menu surfaces exposed Deselect.
 “Save Current” on an untouched blank canvas added no global-history entry or
 session snapshot. At 320×720, document width matched the viewport and the
@@ -147,5 +149,6 @@ browser reported zero warnings.
 The background-only save case was source-verified but not directly exercised
 through the browser because the swatch click was intercepted by an overlapping
 control. Production service-worker update/reload behavior, physical-device
-mobile interaction, Lighthouse, and large-canvas performance remain untested;
-do not infer them from these local checks.
+mobile interaction, Lighthouse, broad feature regression coverage, and
+large-canvas performance remain untested; do not infer them from these local
+checks.

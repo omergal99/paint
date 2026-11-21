@@ -64,7 +64,7 @@ autosave and saved image history are separate features with separate controls.
 | `js/document/`, `js/session/` | Editable text/document and workspace-session foundations; consult their contracts before extending them |
 | `js/background/`, `js/ai/` | Optional background-removal providers and deterministic command/connection seams |
 | `css/` | Theme, component, and progressive styles |
-| `tests/` | Node contract, regression, UI-controller, storage, and source-integrity checks |
+| `tests/` | Node contracts plus a portable CDP core, Paint adapter, and local desktop/mobile browser specs |
 | `scripts/` | Build, service-worker synchronization, release, localization, and audit gates |
 
 ## UI and command flow
@@ -97,7 +97,7 @@ of duplicating transitions in each surface.
 There is no Storybook or standalone visual component workbench today. Current
 search is purpose-specific: settings/dialog search and searchable shape
 catalogs are implemented by their owning UI modules. Use
-[`UI-PATTERNS.md`](./UI-PATTERNS.md) as the current interaction catalog.
+[`UI patterns`](../guides/ui-patterns.md) as the current interaction catalog.
 Recommended next step: add a small local UI gallery that renders existing
 components and states from their real implementations, rather than copying
 markup or installing a framework that creates a second source of truth.
@@ -115,4 +115,4 @@ markup or installing a framework that creates a second source of truth.
   they are enabled; do not put credentials in source or browser storage.
 
 For the reason behind each boundary and the current quality priorities, see
-the [audit and roadmap](./AUDIT-REPORT.md).
+the [audit and roadmap](../reports/project-audit.md).

@@ -36,20 +36,19 @@ Images and settings are handled in the browser. Paint uses IndexedDB for the
 working-canvas recovery record and cross-refresh image history, and
 `localStorage` for small settings and compatibility fallbacks. Clipboard access
 happens only when a user invokes a clipboard action. See the [architecture and
-data-flow guide](./docs/ARCHITECTURE.md) for what each store owns.
+data-flow guide](./docs/architecture/overview.md) for what each store owns.
 
 ## Project guide
 
 | Start here | For |
 |---|---|
-| [Architecture](./docs/ARCHITECTURE.md) | Source map, UI/action flow, persistence, and trust boundaries |
-| [Audit and roadmap](./docs/AUDIT-REPORT.md) | Current strengths, evidence-based gaps, and recommended work order |
-| [UI patterns](./docs/UI-PATTERNS.md) | Reusable menus, dialogs, mirrors, and localization rules |
-| [Loading behavior](./docs/INITIAL_LOADING.md) | First paint, editor startup, and service-worker updates |
-| [Release guide](./docs/RELEASING.md) | Build, version, and offline-shell checks |
+| [Documentation index](./docs/README.md) | Map to architecture, guides, ADRs, reports, and community docs |
+| [Architecture](./docs/architecture/overview.md) | Source map, UI/action flow, persistence, and trust boundaries |
+| [Project audit](./docs/reports/project-audit.md) | Strengths, evidence-based gaps, and recommended work order |
+| [Local browser tests](./tests/SKILL.md) | Deterministic desktop/mobile checks before handoff |
 | [Contributing](./CONTRIBUTING.md) | Local checks and human-reviewed AI-assisted contributions |
 | [Security policy](./SECURITY.md) | Private vulnerability reporting guidance |
-| [Community standards](./docs/COMMUNITY_STANDARDS.md) | Repository files and maintainer decisions |
+| [Community standards](./docs/community/standards.md) | Repository files and maintainer decisions |
 
 The contributor workflow and focused code checks are in
 [`CONTRIBUTING.md`](./CONTRIBUTING.md). The project does not currently
@@ -63,5 +62,5 @@ to a chosen file may use the File System Access API where supported and a
 download elsewhere. The app remains usable without that API.
 
 For versioned releases, run `npm run version:patch` (or the appropriate npm
-version command) and follow [the release guide](./docs/RELEASING.md). Do not
-edit the service-worker cache name or shell list by hand.
+version command) and follow [the release guide](./docs/guides/releasing.md).
+Do not edit the service-worker cache name or shell list by hand.

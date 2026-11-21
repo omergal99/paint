@@ -15,11 +15,11 @@ reproducible bug reports, tests, and focused code changes are all welcome.
 
 ## Local development
 
-The app is a static browser application. Serve the project over HTTP so ES
-modules and browser APIs work:
+The app is a static browser application. Start the repository's local server
+so ES modules and browser APIs work:
 
 ```bash
-python3 -m http.server 8000
+npm run serve
 ```
 
 Node.js 24 or newer is required for repository scripts. Install the locked
@@ -28,11 +28,19 @@ development dependencies, then run the checks relevant to the change:
 ```bash
 npm install
 npm test
+npm run test:local
 npm run check:i18n
 npm run typecheck
 npm run verify:docs
 git diff --check
 ```
+
+`npm run test:local` runs the existing Node suite followed by deterministic
+desktop and mobile browser checks. It requires an installed Chrome or Chromium
+browser, adds no browser-automation npm dependency, and is local-only; the
+existing GitHub Actions test workflow is unchanged. See the
+[test harness guide](./tests/SKILL.md) and
+[testing ADR](./docs/adr/testing/ADR-0002-local-deterministic-browser-tests.md).
 
 For JavaScript changes, run `node --check` on changed modules. For service
 worker/module graph, version, or release changes, run `npm run verify:release`.
@@ -70,10 +78,30 @@ maintainer judgment or CI:
    CI and a human maintainer decide whether it is ready; do not grant an agent
    merge or deployment authority by default.
 
-[Google's Modern Web Guidance](https://github.com/GoogleChrome/modern-web-guidance)
-can inform performance, accessibility, CSS, and platform API decisions. Use
-only guidance relevant to the change and reconcile it with Paint's local-first
-architecture and repository instructions; do not install it wholesale.
+## Optional references for review
+
+These are references, not additional project requirements. Review the
+relevance and fit before incorporating any guidance:
+
+- [Google Modern Web Guidance](https://github.com/GoogleChrome/modern-web-guidance)
+  — web-platform, compatibility, accessibility, and performance advice for
+  agents.
+- [Web Platform Baseline](https://web.dev/baseline/)
+  — cross-browser availability of web features.
+- [MDN Web Docs](https://developer.mozilla.org/en-US/docs/Web)
+  — HTML, CSS, JavaScript, and Web API reference.
+- [WAI-ARIA Authoring Practices Guide](https://www.w3.org/WAI/ARIA/apg/)
+  — accessible widget patterns and keyboard behavior.
+- [WCAG 2.2 Quick Reference](https://www.w3.org/WAI/WCAG22/quickref/)
+  — accessibility criteria and techniques.
+- [web.dev Learn Performance](https://web.dev/learn/performance/)
+  — practical performance fundamentals.
+- [Agent Skills specification](https://agentskills.io/specification)
+  — portable format and progressive-disclosure guidance for agent skills.
+
+Paint keeps a short local summary of selected web principles in
+`.skills/engineering/modern-web-guidance.md`; it does not install or vendor the
+upstream catalog.
 
 ## Pull requests
 

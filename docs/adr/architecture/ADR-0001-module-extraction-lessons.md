@@ -1,4 +1,4 @@
-# ADR 0001 — Work 3 lessons: extraction, ordering and drift
+# ADR-0001: Module extraction lessons
 
 Status: accepted · Context: Phase 3 modularisation (2026-10-01)
 
@@ -91,9 +91,9 @@ is answered with numbers, not with a guess about `localStorage`.
 ## Consequences
 
 - The reusable feature-delivery guide is now
-  [`.skills/workflows/ui-delivery.md`](../.skills/workflows/ui-delivery.md);
+  [`.skills/workflows/ui-delivery.md`](../../../.skills/workflows/ui-delivery.md);
   it retains the `npm run sw:sync` step for module moves.
-- `docs/RELEASING.md` and `docs/UI-PATTERNS.md` document the version/shell
+- `docs/guides/releasing.md` and `docs/guides/ui-patterns.md` document the version/shell
   workflow and the reusable interaction contracts.
 - Every module extraction ships with a contract test, so a future session
   cannot silently undo the split.

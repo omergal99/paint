@@ -9,7 +9,7 @@ intended to be updated when community processes or GitHub settings change.
 | --- | --- | --- |
 | Project description and setup | Present | `README.md` describes purpose, local serving, key capabilities, data flow, and documentation entry points. |
 | Contributing guide | Present | `CONTRIBUTING.md` documents setup, local checks, review expectations, and a human-reviewed AI contribution path. |
-| Code of conduct | Present | `CODE_OF_CONDUCT.md` defines scope, expected behavior, reporting, and enforcement. |
+| Code of conduct | Present | `.github/CODE_OF_CONDUCT.md` defines scope, expected behavior, reporting, and enforcement. |
 | Security policy | Present | `SECURITY.md` directs reports away from public issues and documents scope and response. |
 | Bug/feature issue templates | Present | `.github/ISSUE_TEMPLATE/` contains privacy-safe templates and security contact guidance. |
 | Pull request template | Present | `.github/pull_request_template.md` asks for validation, accessibility, and security review. |

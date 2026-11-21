@@ -7,19 +7,42 @@ const requiredFiles = [
   'README.md',
   'CONTRIBUTING.md',
   'SECURITY.md',
-  'docs/ARCHITECTURE.md',
-  'docs/AUDIT-REPORT.md',
-  'docs/COMMUNITY_STANDARDS.md',
-  'docs/INITIAL_LOADING.md',
-  'docs/RELEASING.md',
-  'docs/UI-PATTERNS.md',
+  '.github/CODE_OF_CONDUCT.md',
+  '.agents/skills/README.md',
+  '.agents/skills/deterministic-test-fixer/SKILL.md',
+  '.skills/README.md',
+  'docs/README.md',
+  'docs/architecture/overview.md',
+  'docs/adr/README.md',
+  'docs/adr/architecture/ADR-0001-module-extraction-lessons.md',
+  'docs/adr/testing/ADR-0002-local-deterministic-browser-tests.md',
+  'docs/community/standards.md',
+  'docs/guides/initial-loading.md',
+  'docs/guides/loading-params.md',
+  'docs/guides/releasing.md',
+  'docs/guides/ui-patterns.md',
+  'docs/reports/project-audit.md',
+  'tests/README.md',
+  'tests/SKILL.md',
 ];
 
 requiredFiles.forEach((file) => {
-  if (!fs.existsSync(path.join(root, file))) errors.push(`Missing public guide: ${file}`);
+  if (!fs.existsSync(path.join(root, file))) errors.push(`Missing documentation: ${file}`);
 });
 
-const documents = [...requiredFiles];
+const walkMarkdown = (directory) => {
+  if (!fs.existsSync(directory)) return [];
+  return fs.readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+    const entryPath = path.join(directory, entry.name);
+    if (entry.isDirectory()) return walkMarkdown(entryPath);
+    if (entry.isFile() && entry.name.endsWith('.md')) {
+      return [path.relative(root, entryPath).split(path.sep).join('/')];
+    }
+    return [];
+  });
+};
+
+const documents = [...new Set([...requiredFiles, ...walkMarkdown(path.join(root, 'docs'))])];
 if (fs.existsSync(path.join(root, 'docs-internal/README.md'))) {
   documents.push('docs-internal/README.md');
 }

@@ -8,6 +8,7 @@ The project-wide entry point is `../../AGENTS.md`.
 |---|---|
 | [Accessibility](accessibility/SKILL.md) | Auditing or changing rendered accessibility |
 | [Community standards audit](community-standards-audit/SKILL.md) | Reviewing public-project readiness, security, or contribution workflows |
+| [Deterministic test fixer](deterministic-test-fixer/SKILL.md) | Running local browser tests and fixing regressions without weakening tests |
 | [Maintenance](maintenance/SKILL.md) | Session retro, skill usage records, or skill lifecycle review |
 | [Paint architecture](paint-architecture/SKILL.md) | Changing JavaScript module seams, UI state, or cross-feature contracts |
 | [Playwright](playwright/SKILL.md) | Validating Paint in a real browser through the CLI |

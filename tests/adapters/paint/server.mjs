@@ -1,0 +1,11 @@
+import path from 'node:path';
+import { startProcessServer } from '../../core/process-server.mjs';
+
+const projectRoot = path.resolve(import.meta.dirname, '../../..');
+
+export const startPaintServer = () => startProcessServer({
+  command: process.execPath,
+  args: [path.join(projectRoot, 'scripts/serve.mjs'), '--port', '0'],
+  cwd: projectRoot,
+  readyPattern: /Paint local server: (http:\/\/127\.0\.0\.1:\d+\/)/,
+});

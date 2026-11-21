@@ -1130,19 +1130,19 @@ test('Settings reset is centralized and lives with destructive About actions', (
 test('Community standards files and contributor templates are discoverable', () => {
   for (const file of [
     'CONTRIBUTING.md',
-    'docs/CODE_OF_CONDUCT.md',
+    '.github/CODE_OF_CONDUCT.md',
     'SECURITY.md',
     '.github/pull_request_template.md',
     '.github/ISSUE_TEMPLATE/bug_report.md',
     '.github/ISSUE_TEMPLATE/feature_request.md',
-    'docs/COMMUNITY_STANDARDS.md',
+    'docs/community/standards.md',
     '.agents/skills/community-standards-audit/SKILL.md',
   ]) {
     assert.ok(fs.existsSync(path.join(root, file)), `Missing community file: ${file}`);
   }
   assert.match(read('README.md'), /CONTRIBUTING\.md/);
   assert.match(read('README.md'), /SECURITY\.md/);
-  assert.match(read('docs/COMMUNITY_STANDARDS.md'), /Needs owner decision/);
+  assert.match(read('docs/community/standards.md'), /Needs owner decision/);
 });
 
 test('P0 quick wins: hover affordance, slider, release notes, fresh paste, undo keys', () => {
